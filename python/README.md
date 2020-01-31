@@ -25,7 +25,7 @@ source env/.ranking_venv3/bin/activate
 
 Install all dependencies (carefully)
 ```
-pip3 uninstall setuptools
+pip3 install --upgrade setuptools
 pip install --upgrade pip
 pip3 install -r requirements.txt
 ```
@@ -44,8 +44,8 @@ ERROR: tfx-bsl 0.15.3 has requirement apache-beam[gcp]<2.17,>=2.16, but you'll h
 ERROR: tensorflow-transform 0.15.0 has requirement absl-py<0.9,>=0.7, but you'll have absl-py 0.9.0 which is incompatible.
 ```
 
-Pre-commit-hooks: required!
-Execute `pre-commit install` to install git hooks in your .git/ directory.
+Note that pre-commit-hooks are required, and installed as a requirement if needed. 
+If an error results that they didn't install, execute `pre-commit install` to install git hooks in your .git/ directory.
 
 
 Set the PYTHONPATH environment variable
