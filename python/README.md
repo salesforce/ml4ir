@@ -33,6 +33,14 @@ Note, there are some AWS incompatibilities, gotta fix that:
 ```
 ERROR: botocore 1.14.9 has requirement docutils<0.16,>=0.10, but you'll have docutils 0.16 which is incompatible.
 ERROR: awscli 1.17.9 has requirement docutils<0.16,>=0.10, but you'll have docutils 0.16 which is incompatible.
+ERROR: awscli 1.17.9 has requirement rsa<=3.5.0,>=3.1.2, but you'll have rsa 4.0 which is incompatible.
+ERROR: tensorflow-probability 0.8.0 has requirement cloudpickle==1.1.1, but you'll have cloudpickle 1.2.2 which is incompatible.
+ERROR: apache-beam 2.18.0 has requirement dill<0.3.2,>=0.3.1.1, but you'll have dill 0.3.0 which is incompatible.
+ERROR: apache-beam 2.18.0 has requirement httplib2<=0.12.0,>=0.8, but you'll have httplib2 0.17.0 which is incompatible.
+ERROR: apache-beam 2.18.0 has requirement pyarrow<0.16.0,>=0.15.1; python_version >= "3.0" or platform_system != "Windows", but you'll have pyarrow 0.14.1 which is incompatible.
+ERROR: tfx-bsl 0.15.3 has requirement absl-py<0.9,>=0.7, but you'll have absl-py 0.9.0 which is incompatible.
+ERROR: tfx-bsl 0.15.3 has requirement apache-beam[gcp]<2.17,>=2.16, but you'll have apache-beam 2.18.0 which is incompatible.
+ERROR: tensorflow-transform 0.15.0 has requirement absl-py<0.9,>=0.7, but you'll have absl-py 0.9.0 which is incompatible.
 ```
 
 Execute `pre-commit install` to install git hooks in your .git/ directory.
