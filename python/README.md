@@ -100,8 +100,10 @@ python3 -m pytest /path/to/test/module
 ```
 
 NOTE: Make sure to add the right data and feature config before training models.
+TODO: describe how to do this
 
 ## Project Organization
+The following structure is a little out of date (TODO(jake) - fix it!)
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
