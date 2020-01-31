@@ -1,0 +1,66 @@
+{
+    "feat_0": {
+      "type": "numeric",
+      "trainable": true,
+      "tfrecord_info": {
+        "type": "sequence",
+        "dtype": "float",
+        "query_key": false
+      }
+    },
+    "feat_1": {
+      "type": "numeric",
+      "trainable": true,
+      "tfrecord_info": {
+        "type": "sequence",
+        "dtype": "float",
+        "query_key": false
+      }
+    },
+    "feat_2": {
+      "type": "numeric",
+      "trainable": true,
+      "tfrecord_info": {
+        "type": "sequence",
+        "dtype": "float",
+        "query_key": false
+      }
+    },
+    "label": {
+      "type": "label",
+      "trainable": false,
+      "tfrecord_info": {
+        "type": "sequence",
+        "dtype": "int",
+        "query_key": false
+      }
+    },
+    "query_key": {
+      "type": "numeric",
+      "trainable": false,
+      "tfrecord_info": {
+        "type": "context",
+        "dtype": "int",
+        "query_key": true
+      }
+    },
+    "query_str": {
+      "type": "string",
+      "trainable": false,
+      "max_length": 20,
+      "tfrecord_info": {
+        "type": "context",
+        "dtype": "bytes",
+        "query_key": false
+      }
+    },
+    "pos": {
+      "type": "numeric",
+      "trainable": false,
+      "tfrecord_info": {
+        "type": "sequence",
+        "dtype": "int",
+        "query_key": false
+      }
+    }
+}
