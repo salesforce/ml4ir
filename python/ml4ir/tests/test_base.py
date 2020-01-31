@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import random
-from args_parse import Namespace
+from argparse import ArgumentParser, Namespace
 
 from ml4ir.io import file_io
 from ml4ir.io.logging_utils import setup_logging
