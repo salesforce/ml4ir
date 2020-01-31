@@ -77,7 +77,7 @@ sklearn==0.0
 swifter==0.296
 tblib==1.5.0
 tensorboard==2.0.1
-tensorflow==2.0.0
+tensorflow==2.0.1
 tensorflow-estimator==2.0.1
 tensorflow-hub==0.7.0
 tensorflow-metadata==0.15.1
