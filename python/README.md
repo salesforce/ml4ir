@@ -11,9 +11,10 @@ Install virtualenv
 pip3 install virtualenv
 ```
 
-Create new python3 virtual environment
+Create new python3 virtual environment inside your git repo (it's .gitignored, don't worry)
 ```
-python3 -m venv env/.ranking_venv3
+cd $PLACE_YOU_CAlLED_GIT_CLONE/ml4ir
+python3 -m venv python/env/.ranking_venv3
 ```
 
 Activate virtualenv
@@ -29,7 +30,7 @@ pip install --upgrade pip
 pip3 install -r requirements.txt
 ```
 
-Note, there are some AWS incompatibilities, gotta fix that:
+Note, there are some AWS incompatibilities, gotta fix that, but you can ignore them for now
 ```
 ERROR: botocore 1.14.9 has requirement docutils<0.16,>=0.10, but you'll have docutils 0.16 which is incompatible.
 ERROR: awscli 1.17.9 has requirement docutils<0.16,>=0.10, but you'll have docutils 0.16 which is incompatible.
@@ -43,6 +44,7 @@ ERROR: tfx-bsl 0.15.3 has requirement apache-beam[gcp]<2.17,>=2.16, but you'll h
 ERROR: tensorflow-transform 0.15.0 has requirement absl-py<0.9,>=0.7, but you'll have absl-py 0.9.0 which is incompatible.
 ```
 
+Pre-commit-hooks: required!
 Execute `pre-commit install` to install git hooks in your .git/ directory.
 
 
