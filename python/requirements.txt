@@ -58,7 +58,6 @@ pyflakes==2.1.1
 pytest==4.6.3
 pytest-cov==2.5.1
 python-dateutil==2.8.1
-PyYAML==3.13
 parso==0.5.2
 pexpect==4.7.0
 pickleshare==0.7.5
