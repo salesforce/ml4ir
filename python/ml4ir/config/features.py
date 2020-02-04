@@ -153,7 +153,8 @@ class Features:
                         query_key.append(feature)
         return query_key
 
-    # by updating the feature_config hashmap with this mask, we break tfrecord_reader:
+    # FIXME
+    # By updating the feature_config hashmap with this mask, we break tfrecord_reader:
     # tfrecord_info = feature_info['tfrecord_info'] will throw a KeyException
     # this kind of bug is exactly why we don't use mutable state.
     # The mask info should be kept in another structure in the Features object, not in this dict.
