@@ -120,11 +120,11 @@ class RankingModel:
         being used
 
         - pointwise loss + pointwise scoring
-            [batch_size, record_features_size]
+            [batch_size, max_num_records, record_features_size]
         - listwise loss + pointwise scoring
             [batch_size, max_num_records, record_features_size]
         - pointwise loss + groupwise scoring
-            [batch_size, group_size, record_features_size]
+            [batch_size, num_groups, group_size, record_features_size]
         """
         ranking_features, metadata_features = self._transform_features(
             ranking_features, metadata_features, loss
