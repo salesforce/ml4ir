@@ -56,8 +56,6 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
             sequence_example_proto: tfrecord SequenceExample protobuf data
 
         Returns:
-            TODO(ashish): note - "features" is not a Features object.  It's a {feat_name: tf.Tensor} mapping
-            (so perhaps a bad name?)
             features: parsed features extracted from the protobuf
             labels: parsed label extracted from the protobuf
         """
@@ -67,7 +65,7 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
             sequence_features=sequence_features_spec,
         )
 
-        features = dict()
+        features_dict = dict()
 
         # Explode context features into all records
         for feat, t in context.items():
@@ -83,7 +81,7 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
                 )
                 t = tf.cast(t, tf.float32)
 
-            features[feat] = t
+            features_dict[feat] = t
 
         # Pad sequence features to max_num_records
         for feat, t in examples.items():
@@ -99,7 +97,7 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
                         target_height=1,
                         target_width=max_num_records,
                     )
-                    features["mask"] = tf.squeeze(mask)
+                    features_dict["mask"] = tf.squeeze(mask)
 
                 t = sparse.reset_shape(t, new_shape=[1, max_num_records])
                 t = sparse.to_dense(t)
@@ -126,10 +124,10 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
                 #     raise Exception('Invalid input : {}'.format(feat))
                 raise ValueError("Invalid input : {}".format(feat))
 
-            features[feat] = t
+            features_dict[feat] = t
 
-        labels = features.pop(feature_config.label)
-        return features, labels
+        labels = features_dict.pop(feature_config.label)
+        return features_dict, labels
 
     return _parse_sequence_example_fn
 
