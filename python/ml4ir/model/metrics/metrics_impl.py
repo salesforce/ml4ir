@@ -66,6 +66,15 @@ class MeanRankMetric(MeanMetricWrapper):
             mask: 2D tensor representing 0/1 mask for padded records
 
         NOTE: pos and mask should be same shape as y_pred and y_true
+
+        This metric creates two local variables, `total` and `count` that are used to
+        compute the frequency with which `y_pred` matches `y_true`. This frequency is
+        ultimately returned as `categorical accuracy`: an idempotent operation that
+        simply divides `total` by `count`.
+        `y_pred` and `y_true` should be passed in as vectors of probabilities, rather
+        than as labels. If necessary, use `tf.one_hot` to expand `y_true` as a vector.
+        If `sample_weight` is `None`, weights default to 1.
+        Use `sample_weight` of 0 to mask values.
         """
         super(MeanRankMetric, self).__init__(self._compute, name, dtype=dtype, pos=pos, mask=mask)
 
@@ -95,27 +104,45 @@ class MeanRankMetric(MeanMetricWrapper):
 
 class MRR(MeanRankMetric):
     """
-    Custom metric class to compute Mean Reciprocal Rank
+    Custom metric class to compute the Mean Reciprocal Rank.
 
+    Calculates the mean of the reciprocal ranks of the
+    clicked records from a list of queries.
 
+    For example, if
+    `y_true` is [[0, 0, 1], [0, 1, 0]]
+    `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
+    `mask` is [[1, 1, 1], [1, 1, 1]] and
+    `pos` is [[1, 3, 2], [3, 1, 2]]
+    then the MRR is 0.75
     """
 
     def __init__(self, name="MRR", **kwargs):
         super(MRR, self).__init__(name=name, **kwargs)
 
     def _get_matches_hook(self, y_pred_click_ranks):
+        """Return reciprocal click ranks for MRR"""
         return math_ops.reciprocal(tf.cast(y_pred_click_ranks, tf.float32))
 
 
 class ACR(MeanRankMetric):
     """
-    Custom metric class to compute Average Click Rank
+    Custom metric class to compute the Average Click Rank.
 
+    Calculates the mean of the ranks of the
+    clicked records from a list of queries.
 
+    For example, if
+    `y_true` is [[0, 0, 1], [0, 1, 0]]
+    `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
+    `mask` is [[1, 1, 1], [1, 1, 1]] and
+    `pos` is [[1, 3, 2], [3, 1, 2]]
+    then the ACR is 1.50
     """
 
     def __init__(self, name="ACR", **kwargs):
         super(ACR, self).__init__(name=name, **kwargs)
 
     def _get_matches_hook(self, y_pred_click_ranks):
+        """Return click ranks for MRR"""
         return tf.cast(y_pred_click_ranks, tf.float32)
