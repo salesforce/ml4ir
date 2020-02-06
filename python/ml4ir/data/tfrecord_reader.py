@@ -140,7 +140,7 @@ def read(
     parse_tfrecord: bool = True,
     logger: Logger = None,
     **kwargs
-) -> tf.data.TFRecordDataset:
+) -> data.TFRecordDataset:
     """
     - reads tfrecord data from an input directory
     - selects relevant features
@@ -165,7 +165,7 @@ def read(
     tfrecord_files = file_io.get_files_in_directory(data_dir, extension=".tfrecord")
 
     # Parse the protobuf data to create a TFRecordDataset
-    dataset = tf.data.TFRecordDataset(tfrecord_files)
+    dataset = data.TFRecordDataset(tfrecord_files)
     if parse_tfrecord:
         dataset = dataset.map(parse_sequence_example_fn)
     dataset = dataset.batch(batch_size)

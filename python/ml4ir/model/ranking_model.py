@@ -46,28 +46,38 @@ class RankingModel:
         self.logger: Logger = logger
         self.max_num_records = max_num_records
 
-        # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            optimizer_key=optimizer_key,
-            learning_rate=learning_rate,
-            learning_rate_decay=learning_rate_decay,
-        )
-
-        # Define loss function
-        loss: RankingLossBase = loss_factory.get_loss(loss_key=loss_key, scoring_key=scoring_key)
-
-        # Define metrics
-        metrics: List[str] = [metric_factory.get_metric(metric_key=key) for key in metrics_keys]
-
         # Load/Build Model
         if model_file:
             """
             NOTE: Retraining not supported. Currently loading SavedModel
                   as a low level AutoTrackable object for inference
             """
-            self.model: Model = self.load_model(model_file, optimizer, loss, metrics)
+            self.model: Model = self.load_model(model_file)
             self.is_compiled = False
         else:
+            # Define optimizer
+            optimizer: Optimizer = get_optimizer(
+                optimizer_key=optimizer_key,
+                learning_rate=learning_rate,
+                learning_rate_decay=learning_rate_decay,
+            )
+
+            # Define loss function
+            loss: RankingLossBase = loss_factory.get_loss(
+                loss_key=loss_key, scoring_key=scoring_key
+            )
+
+            # Define metrics
+            metrics: List[str] = [
+                metric_factory.get_metric(metric_key=key) for key in metrics_keys
+            ]
+
+            """
+            Specify inputs to the model
+
+            Individual input nodes are defined for each feature
+            Each data point represents features for all records in a single query
+            """
             inputs: Dict[str, Input] = features.define_inputs(max_num_records)
             self.model = self.build_model(inputs, optimizer, loss, metrics)
             self.is_compiled = True
@@ -89,13 +99,6 @@ class RankingModel:
 
         Returns:
             compiled tf keras model
-        """
-
-        """
-        Specify inputs to the model
-
-        Define the individual input nodes are defined for each feature
-        Each data sample represents features for a single record
         """
 
         """
@@ -152,11 +155,20 @@ class RankingModel:
         # Create model with functional Keras API
         model = Model(inputs=inputs, outputs={"ranking_scores": predictions})
 
+        # Get loss and metrics
+        loss_fn = loss.get_loss_fn(mask=metadata_features["mask"])
+        metric_fns = [
+            metric_factory.get_metric_impl(
+                metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+            )
+            for metric in metrics
+        ]
+
         # Compile model
         model.compile(
             optimizer=optimizer,
-            loss=loss.get_loss_fn(mask=metadata_features["mask"]),
-            metrics=metrics,
+            loss=loss_fn,
+            metrics=metric_fns,
             experimental_run_tf_function=False,
         )
 
@@ -278,9 +290,7 @@ class RankingModel:
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
-    def load_model(
-        self, model_file: str, optimizer: Optimizer, loss: RankingLossBase, metrics: List[str]
-    ) -> Model:
+    def load_model(self, model_file: str) -> Model:
         """
         Loads model from the SavedModel file specified
 
