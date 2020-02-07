@@ -19,6 +19,10 @@ def get_metric(metric_key):
 
 def get_metric_impl(metric: Union[str, Type[MeanMetricWrapper]], **kwargs) -> Union[str, Metric]:
     if isinstance(metric, str):
-        return metric
+        return [metric]
     else:
-        return metric(**kwargs)
+        # Compute both current and new metric after reranking
+        return [
+            metric(rerank=False, **kwargs),
+            metric(rerank=True, **kwargs),
+        ]

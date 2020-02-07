@@ -3,7 +3,7 @@ from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
 import numpy as np
 from tensorflow import Tensor
-from tensorflow.dtypes import DType
+from tensorflow import dtypes
 from typing import Optional
 
 
@@ -54,7 +54,12 @@ class MeanMetricWrapper(metrics.Mean):
 
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
-        self, pos: Tensor, mask: Tensor, name="MeanRankMetric", dtype: Optional[DType] = None,
+        self,
+        pos: Tensor,
+        mask: Tensor,
+        name="MeanRankMetric",
+        rerank: bool = True,
+        dtype: Optional[dtypes.DType] = None,
     ):
         """
         Creates a `MeanRankMetric` instance.
@@ -76,27 +81,39 @@ class MeanRankMetric(MeanMetricWrapper):
         If `sample_weight` is `None`, weights default to 1.
         Use `sample_weight` of 0 to mask values.
         """
+        name = "{}_{}".format("new" if rerank else "old", name)
         super(MeanRankMetric, self).__init__(self._compute, name, dtype=dtype, pos=pos, mask=mask)
+        self.rerank = rerank
 
     def _compute(self, y_true, y_pred, pos, mask):
-        # Convert y_pred for the masked records to -inf
-        y_pred = tf.where(tf.equal(mask, 0), tf.constant(-np.inf), y_pred)
+        if self.rerank:
+            """Rerank using trained model"""
+            # Convert y_pred for the masked records to -inf
+            y_pred = tf.where(tf.equal(mask, 0), tf.constant(-np.inf), y_pred)
 
-        # Convert predicted ranking scores into ranks for each record per query
-        y_pred_ranks = tf.add(
-            tf.argsort(
-                tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
-            ),
-            tf.constant(1),
-        )
+            # Convert predicted ranking scores into ranks for each record per query
+            y_pred_ranks = tf.add(
+                tf.argsort(
+                    tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
+                ),
+                tf.constant(1),
+            )
 
-        # Fetch indices of clicked records from y_true
-        y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
+            # Fetch indices of clicked records from y_true
+            y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
 
-        # Compute rank of clicked record from predictions
-        y_pred_click_ranks = tf.gather_nd(y_pred_ranks, indices=y_true_clicks)
+            # Compute rank of clicked record from predictions
+            click_ranks = tf.gather_nd(y_pred_ranks, indices=y_true_clicks)
 
-        return self._get_matches_hook(y_pred_click_ranks)
+        else:
+            """Compute mean rank metric for existing data"""
+            # Fetch indices of clicked records from y_true
+            y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
+
+            # Compute rank of clicked record from predictions
+            click_ranks = tf.gather_nd(pos, indices=y_true_clicks)
+
+        return self._get_matches_hook(click_ranks)
 
     def _get_matches_hook(self, y_pred_click_ranks):
         raise NotImplementedError
@@ -117,8 +134,8 @@ class MRR(MeanRankMetric):
     then the MRR is 0.75
     """
 
-    def __init__(self, name="MRR", **kwargs):
-        super(MRR, self).__init__(name=name, **kwargs)
+    def __init__(self, name="MRR", rerank=True, **kwargs):
+        super(MRR, self).__init__(name=name, rerank=rerank, **kwargs)
 
     def _get_matches_hook(self, y_pred_click_ranks):
         """Return reciprocal click ranks for MRR"""
@@ -140,8 +157,8 @@ class ACR(MeanRankMetric):
     then the ACR is 1.50
     """
 
-    def __init__(self, name="ACR", **kwargs):
-        super(ACR, self).__init__(name=name, **kwargs)
+    def __init__(self, name="ACR", rerank=True, **kwargs):
+        super(ACR, self).__init__(name=name, rerank=rerank, **kwargs)
 
     def _get_matches_hook(self, y_pred_click_ranks):
         """Return click ranks for MRR"""

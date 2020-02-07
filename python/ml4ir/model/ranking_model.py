@@ -1,6 +1,5 @@
 import os
 from logging import Logger
-from typing import List
 import tensorflow as tf
 from tensorflow import feature_column
 from tensorflow.keras import callbacks, layers, Input, Model
@@ -8,6 +7,7 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
 from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
+from tensorflow.keras import kmetrics
 
 from ml4ir.config.features import Features
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
@@ -18,10 +18,15 @@ from ml4ir.model.losses import loss_factory
 from ml4ir.model.metrics import metric_factory
 from ml4ir.model.scoring import scoring_factory
 from ml4ir.data.tfrecord_reader import make_parse_fn
+from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
 
-from typing import Dict
+from typing import Dict, Optional, List
+
+
+# Constants
+MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
 
 
 class RankingModel:
@@ -157,12 +162,13 @@ class RankingModel:
 
         # Get loss and metrics
         loss_fn = loss.get_loss_fn(mask=metadata_features["mask"])
-        metric_fns = [
-            metric_factory.get_metric_impl(
-                metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+        metric_fns: List[kmetrics.Metric] = list()
+        for metric in metrics:
+            metric_fns.extend(
+                metric_factory.get_metric_impl(
+                    metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+                )
             )
-            for metric in metrics
-        ]
 
         # Compile model
         model.compile(
@@ -205,6 +211,7 @@ class RankingModel:
         self,
         test_dataset: data.TFRecordDataset,
         inference_signature: str = None,
+        logs_dir: Optional[str] = None,
         rerank: bool = False,
     ):
         """
@@ -225,6 +232,23 @@ class RankingModel:
             # If SavedModel was loaded without compilation
             infer = self.model.signatures[inference_signature]
 
+        # Get features to log
+        features_to_log = self.features.features_to_log
+
+        if logs_dir:
+            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            file_io.rm_file(outfile)
+
+        @tf.function
+        def _flatten_records(x):
+            """Collapse first two dimensions -> [batch_size, max_num_records]"""
+            return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
+
+        @tf.function
+        def _filter_records(x, mask):
+            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
+
         @tf.function
         def _predict_score(features, label):
             features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
@@ -235,16 +259,54 @@ class RankingModel:
 
             # Set scores of padded records to 0
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-            return scores
+            new_pos = tf.add(
+                tf.argsort(
+                    tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True
+                ),
+                tf.constant(1),
+            )
 
-        scores_list = list()
-        for scores in test_dataset.map(_predict_score).take(-1):
-            scores_list.append(scores.numpy())
+            predictions_dict = dict()
+            mask = _flatten_records(features["mask"])
+            for feature_name in features_to_log:
+                if feature_name == "label":
+                    feat_ = label
+                elif feature_name == "new_score":
+                    feat_ = scores
+                elif feature_name == "new_pos":
+                    feat_ = new_pos
+                else:
+                    if feature_name in features:
+                        feat_ = features[feature_name]
+                    else:
+                        raise KeyError(
+                            "{} was not found in input training data".format(feature_name)
+                        )
+                predictions_dict[feature_name] = _filter_records(_flatten_records(feat_), mask)
 
-        ranking_scores = np.vstack(scores_list)
-        self.logger.info("Ranking Scores: ")
-        self.logger.info(pd.DataFrame(ranking_scores))
-        return ranking_scores
+            return predictions_dict
+
+        predictions_df_list = list()
+        for predictions_dict in test_dataset.map(_predict_score).take(-1):
+            predictions_df = pd.DataFrame(predictions_dict)
+            if logs_dir:
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True)
+            else:
+                predictions_df_list.append(predictions_df)
+
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            self.logger.info("Model Predictions: ")
+            predictions_df = pd.concat(predictions_df_list)
+            self.logger.info(predictions_df)
+
+        return predictions_df
 
     def evaluate(self, test_dataset):
         """

@@ -282,3 +282,14 @@ def rm_dir(dir_path: str, log=None):
     """
     if os.path.isdir(dir_path):
         shutil.rmtree(dir_path)
+
+
+def rm_file(file_path: str, log=None):
+    """
+    Deletes existing file_path
+
+    Args:
+        file_path: path to file to be removed
+    """
+    if os.path.isfile(file_path):
+        os.remove(file_path)

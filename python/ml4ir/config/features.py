@@ -11,6 +11,7 @@ Feature config format
     <feature_name> : {
         "type" : <"numeric" or "string" or "categorical" or "label" | str>,
         "trainable" : <true or false | boolean>,
+        "log" : <true or false | boolean>,
         "node_name" : <str>,
         "max_length" : <int> (used for padding if list),
         "embedding" : {
@@ -53,6 +54,10 @@ class Features:
         for feature, feature_info in self.feature_config.items():
             if feature_info["type"] == "label":
                 self.label = feature
+        self.features_to_log = {"new_score", "new_pos"}
+        for feature, feature_info in self.feature_config.items():
+            if feature_info.get("log", False):
+                self.features_to_log.add(feature)
         if len(self.record_features) == 0:
             raise Exception("No trainable features specified in the feature config")
         if not self.label:
