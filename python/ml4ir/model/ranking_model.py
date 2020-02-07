@@ -291,10 +291,10 @@ class RankingModel:
             predictions_df = pd.DataFrame(predictions_dict)
             if logs_dir:
                 if os.path.isfile(outfile):
-                    predictions_df.to_csv(outfile, mode="a", header=False)
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
                 else:
                     # If writing first time, write headers to CSV file
-                    predictions_df.to_csv(outfile, mode="w", header=True)
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
             else:
                 predictions_df_list.append(predictions_df)
 
