@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
 from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
-from tensorflow.keras import kmetrics
+from tensorflow.keras import metrics as kmetrics
 
 from ml4ir.config.features import Features
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
@@ -282,12 +282,27 @@ class RankingModel:
                         raise KeyError(
                             "{} was not found in input training data".format(feature_name)
                         )
-                predictions_dict[feature_name] = _filter_records(_flatten_records(feat_), mask)
+
+                # Collapse from one query per data point to one record per data point
+                # and remove padded dummy records
+                feat_ = _filter_records(_flatten_records(feat_), mask)
+
+                predictions_dict[feature_name] = feat_
 
             return predictions_dict
 
         predictions_df_list = list()
         for predictions_dict in test_dataset.map(_predict_score).take(-1):
+            # If feature is a string, convert back from bytes to string
+            for feature_name in features_to_log:
+                if (
+                    feature_name in self.features.feature_config
+                    and self.features.feature_config[feature_name]["type"] == FeatureTypeKey.STRING
+                ):
+                    predictions_dict[feature_name] = tf.strings.unicode_encode(
+                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
+                    )
+
             predictions_df = pd.DataFrame(predictions_dict)
             if logs_dir:
                 if os.path.isfile(outfile):

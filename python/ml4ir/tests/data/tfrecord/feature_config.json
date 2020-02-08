@@ -50,7 +50,7 @@
       "type": "string",
       "trainable": false,
       "max_length": 20,
-      "log": false,
+      "log": true,
       "tfrecord_info": {
         "type": "context",
         "dtype": "bytes",
