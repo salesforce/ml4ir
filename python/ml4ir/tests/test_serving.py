@@ -87,7 +87,7 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = model.predict(parsed_dataset_batch)
+        model_predictions = model.predict(parsed_dataset_batch)["new_score"].values
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             "ranking_scores"
         ]
@@ -95,24 +95,32 @@ class RankingModelTest(RankingTestBase):
             sequence_example_protos=sequence_example_protos
         )["ranking_scores"]
 
+        @tf.function
+        def _flatten_records(x):
+            """Collapse first two dimensions -> [batch_size, max_num_records]"""
+            return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
+
+        @tf.function
+        def _filter_records(x, mask):
+            """Filter records that were padded in each query"""
+            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
+
         # Get mask for padded values
-        mask = parsed_sequence_examples["mask"]
+        mask = _flatten_records(parsed_sequence_examples["mask"])
+
+        # Flatten scores to each record and filter out scores from padded records
+        default_signature_predictions = _filter_records(
+            _flatten_records(default_signature_predictions), mask
+        )
+        tfrecord_signature_predictions = _filter_records(
+            _flatten_records(tfrecord_signature_predictions), mask
+        )
 
         # Compare the scores from the different versions of the model
-        assert np.isclose(
-            np.where(np.equal(mask, 0), 0.0, model_predictions),
-            np.where(np.equal(mask, 0), 0.0, default_signature_predictions),
-            rtol=0.01,
-        ).all()
+        assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01,).all()
+
+        assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01,).all()
 
         assert np.isclose(
-            np.where(np.equal(mask, 0), 0.0, model_predictions),
-            np.where(np.equal(mask, 0), 0.0, tfrecord_signature_predictions),
-            rtol=0.01,
-        ).all()
-
-        assert np.isclose(
-            np.where(np.equal(mask, 0), 0.0, default_signature_predictions),
-            np.where(np.equal(mask, 0), 0.0, tfrecord_signature_predictions),
-            rtol=0.01,
+            default_signature_predictions, tfrecord_signature_predictions, rtol=0.01,
         ).all()
