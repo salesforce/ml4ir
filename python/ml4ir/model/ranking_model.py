@@ -336,7 +336,8 @@ class RankingModel:
         """
         self.logger.info("Evaluating model on test set...")
         if self.is_compiled:
-            return self.model.evaluate(test_dataset)
+            metrics = self.model.evaluate(test_dataset)
+            return dict(zip(self.model.metrics_names, metrics))
         else:
             raise NotImplementedError(
                 "The model could not be evaluated. Check if the model was compiled correctly. Training a SavedModel is not currently supported."
