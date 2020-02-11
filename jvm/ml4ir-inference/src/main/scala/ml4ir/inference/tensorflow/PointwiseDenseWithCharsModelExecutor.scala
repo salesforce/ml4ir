@@ -42,7 +42,7 @@ class PointwiseDenseWithCharsModelExecutor(session: Session) {
     ranking(0)
   }
 
-  // TODO: ensure this is in sync with training in pythons
+  // TODO: ensure this is in sync with training in python
   def textFeatureProcessor(str: String): Array[Float] =
     str.toCharArray.map(_.toFloat)
 }

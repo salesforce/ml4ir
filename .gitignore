@@ -22,6 +22,9 @@ hs_err_pid*
 # python virtual environments
 **/venv
 
+**/.pytest_cache
+**/test_output
+
 **/__pycache__
 
 # IDE
