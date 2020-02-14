@@ -163,3 +163,15 @@ class ACR(MeanRankMetric):
     def _get_matches_hook(self, y_pred_click_ranks):
         """Return click ranks for MRR"""
         return tf.cast(y_pred_click_ranks, tf.float32)
+
+
+class CategoricalAccuracy(metrics.CategoricalAccuracy):
+    """
+    Custom metric class to compute the Categorical Accuracy.
+
+    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
+    to maintain consistency of arguments to __init__
+    """
+
+    def __init__(self, name="categorical_accuracy", rerank=True, **kwargs):
+        super(CategoricalAccuracy, self).__init__(name=name)

@@ -22,7 +22,7 @@ from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Type
 
 
 # Constants
@@ -73,7 +73,7 @@ class RankingModel:
             )
 
             # Define metrics
-            metrics: List[str] = [
+            metrics: List[Type[kmetrics.Metric]] = [
                 metric_factory.get_metric(metric_key=key) for key in metrics_keys
             ]
 
@@ -92,7 +92,7 @@ class RankingModel:
         inputs: Dict[str, Input],
         optimizer: Optimizer,
         loss: RankingLossBase,
-        metrics: List[str],
+        metrics: List[Type[kmetrics.Metric]],
     ) -> Model:
         """
         Builds model by assembling the different ranking components:

@@ -95,14 +95,18 @@ class RankingModelTest(RankingTestBase):
             sequence_example_protos=sequence_example_protos
         )["ranking_scores"]
 
-        @tf.function
         def _flatten_records(x):
-            """Collapse first two dimensions -> [batch_size, max_num_records]"""
+            """Collapse first two dimensions of a tensor -> [batch_size, max_num_records]"""
             return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
 
-        @tf.function
         def _filter_records(x, mask):
-            """Filter records that were padded in each query"""
+            """
+            Filter records that were padded in each query
+
+            Input shape: [batch_size, num_features]
+
+            Output shape: [batch_size, num_features]
+            """
             return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
 
         # Get mask for padded values
