@@ -2,7 +2,12 @@ package com.salesforce.search.relevance.reranking.tensorflow
 
 import com.google.protobuf.ByteString
 import ml4ir.inference.tensorflow.utils.ModelIO
-import ml4ir.inference.tensorflow.PointwiseML4IRModelExecutor
+import ml4ir.inference.tensorflow.{
+  Document,
+  PointwiseML4IRModelExecutor,
+  PointwiseML4IRModelExecutorConfig,
+  Query
+}
 import org.junit.Assert._
 import org.junit._
 import org.tensorflow.example._
@@ -25,17 +30,24 @@ class TensorFlowInferenceTest {
     val graph = ModelIO.loadTensorflowGraph(graphInputStream)
     val tfRecordExecutor = new PointwiseML4IRModelExecutor(
       graph = graph,
-      queryNodeName = "query_str",
-      scoresNodeName = "ranking_scores/Sigmoid",
-      numDocsPerQuery = 25,
-      queryLenMax = 20
+      PointwiseML4IRModelExecutorConfig(
+        queryNodeName = "query_str",
+        scoresNodeName = "ranking_scores/Sigmoid",
+        numDocsPerQuery = 25,
+        queryLenMax = 20
+      )
     )
     val query = "magic"
     val docsToScore = Array(
       Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
       Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
     )
-    val scores = tfRecordExecutor(query, docsToScore)
+    val scores = tfRecordExecutor(
+      Query(queryString = query, queryId = "1234Id"),
+      docsToScore.zipWithIndex.map {
+        case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
+      }
+    )
     scores.foreach(
       score =>
         assertTrue("all docs should score non-negative, even masks", score > 0)

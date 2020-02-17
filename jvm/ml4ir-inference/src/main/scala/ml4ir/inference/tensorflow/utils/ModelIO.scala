@@ -6,6 +6,11 @@ import org.tensorflow.{Graph, SavedModelBundle, Session}
 
 object ModelIO {
 
+  def loadInputStream(filePath: String): InputStream = ???
+
+  def loadTensorflowGraph(filePath: String): Graph =
+    loadTensorflowGraph(loadInputStream(filePath))
+
   def loadTensorflowGraph(inputStream: InputStream): Graph = {
     try {
       val bytes = Stream
@@ -31,9 +36,11 @@ object ModelIO {
     val graph = loadTensorflowGraph(inputStream)
     new Session(graph)
   }
-
+  /*
   def loadTensorflowSavedModelBundle(path: String): SavedModelBundle = {
     val savedModelBundle = SavedModelBundle.loader(path).load()
     savedModelBundle
   }
+
+ */
 }
