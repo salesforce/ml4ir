@@ -227,6 +227,7 @@ class RankingPipeline(object):
                 model.predict(
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
+                    logs_dir=self.logs_dir,
                 )
 
             # Finish

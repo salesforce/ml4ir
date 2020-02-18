@@ -62,7 +62,6 @@ Using TFRecord
 python ml4ir/model/pipeline.py \
 --data_dir `pwd`/ml4ir/tests/data/tfrecord \
 --feature_config `pwd`/ml4ir/tests/data/tfrecord/feature_config.json \
---metrics categorical_accuracy \
 --run_id test \
 --data_format tfrecord \
 --execution_mode train_inference_evaluate
@@ -73,7 +72,6 @@ Using CSV
 python ml4ir/model/pipeline.py \
 --data_dir `pwd`/ml4ir/tests/data/csv \
 --feature_config `pwd`/ml4ir/tests/data/csv/feature_config.json \
---metrics categorical_accuracy \
 --run_id test \
 --data_format csv \
 --execution_mode train_inference_evaluate
@@ -84,7 +82,6 @@ Running in inference mode using the default serving signature
 python ml4ir/model/pipeline.py \
 --data_dir `pwd`/ml4ir/tests/data/csv \
 --feature_config `pwd`/ml4ir/tests/data/csv/feature_config.json \
---metrics categorical_accuracy \
 --run_id test \
 --data_format csv \
 --model_file `pwd`/models/test/final/default \
