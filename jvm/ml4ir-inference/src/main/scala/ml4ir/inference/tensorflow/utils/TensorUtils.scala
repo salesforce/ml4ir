@@ -1,7 +1,7 @@
 package ml4ir.inference.tensorflow.utils
 
 import com.google.protobuf.ByteString
-import ml4ir.inference.tensorflow.{Document, Query}
+import ml4ir.inference.tensorflow.{Document, QueryContext}
 import org.tensorflow.Tensor
 import org.tensorflow.example.{
   BytesList,
@@ -29,7 +29,7 @@ object TensorUtils {
   def create2Tensor(encoding: Array[Array[Float]]): Tensor[java.lang.Float] =
     Tensor.create(encoding, classOf[java.lang.Float])
 
-  def buildIRSequenceExample(query: Query,
+  def buildIRSequenceExample(query: QueryContext,
                              docs: Array[Document],
                              numDocsPerQuery: Int): SequenceExample = {
     SequenceExample

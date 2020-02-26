@@ -24,14 +24,16 @@ class TensorFlowInferenceTest {
     assertNotNull(session)
   }
 
-  def runExecutorTest(executor: ((Query, Array[Document]) => Array[Float])) = {
+  def runExecutorTest(
+    executor: ((QueryContext, Array[Document]) => Array[Float])
+  ) = {
     val query = "magic"
     val docsToScore = Array(
       Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
       Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
     )
     val scores = executor(
-      Query(queryString = query, queryId = "1234Id"),
+      QueryContext(queryString = query, queryId = "1234Id"),
       docsToScore.zipWithIndex.map {
         case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
       }
@@ -74,8 +76,7 @@ class TensorFlowInferenceTest {
 
   @Test
   def testSavedModelBundle() = {
-    val baseDir = "/Users/jmannix/src/open_src/salesforce/"
-    val bundlePath = baseDir + "ml4ir/python/models/test/final/tfrecord"
+    val bundlePath = classLoader.getResource("model_bundle").getPath
     val bundleExecutor = new SavedModelBundleExecutor(
       bundlePath,
       PointwiseML4IRModelExecutorConfig(
@@ -106,7 +107,7 @@ class TensorFlowInferenceTest {
       Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
     )
     val (query, docs) = (
-      Query(queryString = queryString, queryId = "1234Id"),
+      QueryContext(queryString = queryString, queryId = "1234Id"),
       docsToScore.zipWithIndex.map {
         case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
       }

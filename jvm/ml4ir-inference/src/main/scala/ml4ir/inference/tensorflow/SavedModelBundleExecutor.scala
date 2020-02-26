@@ -6,11 +6,12 @@ import com.google.protobuf.util.JsonFormat
 
 class SavedModelBundleExecutor(dirPath: String,
                                config: PointwiseML4IRModelExecutorConfig)
-    extends ((Query, Array[Document]) => Array[Float]) {
+    extends ((QueryContext, Array[Document]) => Array[Float]) {
   val savedModelBundle = SavedModelBundle.load(dirPath, "serve")
   val session = savedModelBundle.session()
 
-  override def apply(query: Query, documents: Array[Document]): Array[Float] = {
+  override def apply(query: QueryContext,
+                     documents: Array[Document]): Array[Float] = {
     val proto = TensorUtils.buildIRSequenceExample(
       query,
       documents,
@@ -21,8 +22,8 @@ class SavedModelBundleExecutor(dirPath: String,
       val ranking = Array.ofDim[Float](1, config.numDocsPerQuery)
       session
         .runner()
-        .feed("serving_tfrecord_sequence_example_protos", inputTensor)
-        .fetch("StatefulPartitionedCall")
+        .feed(config.queryNodeName, inputTensor)
+        .fetch(config.scoresNodeName)
         .run()
         .get(0)
         .copyTo(ranking)

@@ -27,9 +27,9 @@ object MapToCsvImplicits {
   }
 }
 
-case class Query(queryString: String,
-                 queryId: String,
-                 queryMetadata: Map[String, String] = Map.empty)
+case class QueryContext(queryString: String,
+                        queryId: String,
+                        queryMetadata: Map[String, String] = Map.empty)
     extends CSVWritable {
   override def toCsvString(separator: String): String = {
     import MapToCsvImplicits._
@@ -52,7 +52,7 @@ case class Document(numericFeatures: Map[String, Float],
   }
 }
 
-case class RankedQueryDocumentPair(query: Query,
+case class RankedQueryDocumentPair(query: QueryContext,
                                    document: Document,
                                    score: Float,
                                    rank: Int)
@@ -69,7 +69,7 @@ case class RankedQueryDocumentPair(query: Query,
 
 class PointwiseML4IRModelExecutor(graph: Graph,
                                   config: PointwiseML4IRModelExecutorConfig)
-    extends ((Query, Array[Document]) => Array[Float]) {
+    extends ((QueryContext, Array[Document]) => Array[Float]) {
   val session = new Session(graph)
   val operations: Set[String] = graph.operations().asScala.map(_.name()).toSet
 
@@ -79,7 +79,8 @@ class PointwiseML4IRModelExecutor(graph: Graph,
     * @param documents will be truncated and padded to numDocsPerQuery
     * @return scores array, of length numDocsPerQuery
     */
-  override def apply(query: Query, documents: Array[Document]): Array[Float] = {
+  override def apply(query: QueryContext,
+                     documents: Array[Document]): Array[Float] = {
     val inputTensors: Map[String, Tensor[_]] =
       buildPerDocTensors(documents) + (config.queryNodeName -> buildQueryTensor(
         query
@@ -119,7 +120,7 @@ class PointwiseML4IRModelExecutor(graph: Graph,
     * @param query
     * @return 2-tensor representation of the query, replicating numDocsPerQuery times
     */
-  def buildQueryTensor(query: Query): Tensor[_] = {
+  def buildQueryTensor(query: QueryContext): Tensor[_] = {
     if (true)
       Tensors.create("foo bar")
     else
@@ -165,7 +166,9 @@ object PointwiseML4IRModelExecutorCLI {
 
     // scored, ranked, and flattened (query, document, score, rank) tuples
     val rankedTestSet: Iterable[RankedQueryDocumentPair] = for {
-      (query: Query, docs: Array[Document]) <- loadTestSetIterable(testSetPath)
+      (query: QueryContext, docs: Array[Document]) <- loadTestSetIterable(
+        testSetPath
+      )
       ((doc, score), rank) <- docs
         .zip(modelExecutor(query, docs))
         .sortBy(-_._2)
@@ -182,5 +185,5 @@ object PointwiseML4IRModelExecutorCLI {
 
   def loadTestSetIterable(
     testSetPath: String
-  ): Iterable[(Query, Array[Document])] = ???
+  ): Iterable[(QueryContext, Array[Document])] = ???
 }
