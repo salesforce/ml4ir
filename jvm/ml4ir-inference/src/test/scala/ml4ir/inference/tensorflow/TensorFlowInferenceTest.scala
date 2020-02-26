@@ -64,7 +64,7 @@ class TensorFlowInferenceTest {
     val graph = ModelIO.loadTensorflowGraph(graphInputStream)
     val tfRecordExecutor = new PointwiseML4IRModelExecutor(
       graph = graph,
-      PointwiseML4IRModelExecutorConfig(
+      ModelExecutorConfig(
         queryNodeName = "query_str",
         scoresNodeName = "ranking_scores/Sigmoid",
         numDocsPerQuery = 25,
@@ -79,7 +79,7 @@ class TensorFlowInferenceTest {
     val bundlePath = classLoader.getResource("model_bundle").getPath
     val bundleExecutor = new SavedModelBundleExecutor(
       bundlePath,
-      PointwiseML4IRModelExecutorConfig(
+      ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_sequence_example_protos",
         scoresNodeName = "StatefulPartitionedCall",
         numDocsPerQuery = 25,

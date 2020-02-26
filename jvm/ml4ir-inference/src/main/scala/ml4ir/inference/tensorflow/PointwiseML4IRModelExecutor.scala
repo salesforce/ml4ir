@@ -9,10 +9,10 @@ import scala.collection.JavaConverters._
 import ml4ir.inference.tensorflow.utils.TensorUtils.{create2Tensor, replicate}
 import org.tensorflow.{Graph, Session, Tensor, Tensors}
 
-case class PointwiseML4IRModelExecutorConfig(queryNodeName: String,
-                                             scoresNodeName: String,
-                                             numDocsPerQuery: Int,
-                                             queryLenMax: Int)
+case class ModelExecutorConfig(queryNodeName: String,
+                               scoresNodeName: String,
+                               numDocsPerQuery: Int,
+                               queryLenMax: Int)
 
 trait CSVWritable {
   def toCsvString: String = toCsvString(", ")
@@ -67,8 +67,7 @@ case class RankedQueryDocumentPair(query: QueryContext,
     ).mkString(separator)
 }
 
-class PointwiseML4IRModelExecutor(graph: Graph,
-                                  config: PointwiseML4IRModelExecutorConfig)
+class PointwiseML4IRModelExecutor(graph: Graph, config: ModelExecutorConfig)
     extends ((QueryContext, Array[Document]) => Array[Float]) {
   val session = new Session(graph)
   val operations: Set[String] = graph.operations().asScala.map(_.name()).toSet
@@ -121,19 +120,14 @@ class PointwiseML4IRModelExecutor(graph: Graph,
     * @return 2-tensor representation of the query, replicating numDocsPerQuery times
     */
   def buildQueryTensor(query: QueryContext): Tensor[_] = {
-    if (true)
-      Tensors.create("foo bar")
-    else
-      create2Tensor(
-        replicate(tokenize(query.queryString), config.numDocsPerQuery)
-      )
+    create2Tensor(
+      replicate(tokenize(query.queryString), config.numDocsPerQuery)
+    )
   }
 
   def buildPerDocTensors(
     docs: Array[Document]
   ): Map[String, Tensor[lang.Float]] = {
-    if (true)
-      Map.empty
     case class FeatureVal(name: String, value: Float, docIdx: Int)
     docs
       .slice(0, math.min(docs.length, config.numDocsPerQuery))
@@ -155,7 +149,7 @@ class PointwiseML4IRModelExecutor(graph: Graph,
 object PointwiseML4IRModelExecutorCLI {
 
   def run(modelPath: String,
-          config: PointwiseML4IRModelExecutorConfig,
+          config: ModelExecutorConfig,
           testSetPath: String,
           outputScorePath: String) = {
     // load up a model executor
