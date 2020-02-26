@@ -1,20 +1,28 @@
 package ml4ir.inference.tensorflow
 
 import java.io.InputStream
-import java.lang
-
-import com.google.protobuf.ByteString
-import ml4ir.inference.tensorflow.utils.{ModelIO, TensorUtils}
+import ml4ir.inference.tensorflow.utils.{ModelIO, ProtobufUtils}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
-import org.tensorflow.SavedModelBundle
-
-import scala.collection.JavaConverters._
 
 @Test
 class TensorFlowInferenceTest {
   val classLoader = getClass.getClassLoader
+
+  def testQueries: (QueryContext, Array[Document]) = {
+    val query = "magic"
+    val docsToScore = Array(
+      Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
+      Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
+    )
+    (
+      QueryContext(queryString = query, queryId = "1234Id"),
+      docsToScore.zipWithIndex.map {
+        case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
+      }
+    )
+  }
 
   @Test
   def testLoadTFSession = {
@@ -24,27 +32,14 @@ class TensorFlowInferenceTest {
     assertNotNull(session)
   }
 
-  def runExecutorTest(
-    executor: ((QueryContext, Array[Document]) => Array[Float])
-  ) = {
-    val query = "magic"
-    val docsToScore = Array(
-      Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
-      Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
-    )
-    val scores = executor(
-      QueryContext(queryString = query, queryId = "1234Id"),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
-      }
-    )
+  def validateScores(scores: Array[Float], numDocs: Int) = {
     scores.foreach(
       score =>
         assertTrue("all docs should score non-negative, even masks", score > 0)
     )
     for {
-      maskedScore <- scores.drop(docsToScore.length)
-      docScore <- scores.take(docsToScore.length)
+      maskedScore <- scores.drop(numDocs)
+      docScore <- scores.take(numDocs)
     } {
       assertTrue(
         s"docScore ($docScore) should be > masked score ($maskedScore)",
@@ -71,7 +66,9 @@ class TensorFlowInferenceTest {
         queryLenMax = 20
       )
     )
-    runExecutorTest(tfRecordExecutor)
+    val (queryContext, docs) = testQueries
+    val scores = tfRecordExecutor(queryContext, docs)
+    validateScores(scores, docs.length)
   }
 
   @Test
@@ -86,7 +83,10 @@ class TensorFlowInferenceTest {
         queryLenMax = 20
       )
     )
-    runExecutorTest(bundleExecutor)
+    val (queryContext, docs) = testQueries
+    val proto = ProtobufUtils.buildIRSequenceExample(queryContext, docs, 25)
+    val scores = bundleExecutor(proto)
+    validateScores(scores, docs.length)
   }
 
   @Ignore
@@ -112,105 +112,5 @@ class TensorFlowInferenceTest {
         case (map, idx) => Document(numericFeatures = map, docId = idx.toString)
       }
     )
-
-  }
-
-  def buildContextFeatures(nodePairs: (String, String)*): Features = {
-    nodePairs
-      .foldLeft(Features.newBuilder()) {
-        case (bldr, nodePair) =>
-          bldr
-            .putFeature(
-              nodePair._1,
-              Feature
-                .newBuilder()
-                .setBytesList(
-                  BytesList
-                    .newBuilder()
-                    .addValue(
-                      ByteString.copyFrom(nodePair._2.getBytes("UTF-8"))
-                    )
-                    .build()
-                )
-                .build()
-            )
-      }
-      .build()
-  }
-
-  def buildFeatureLists(documents: Array[Document],
-                        numDocsPerQuery: Int): FeatureLists = {
-    TensorUtils
-      .transposeDocs(documents, numDocsPerQuery)
-      .foldLeft(FeatureLists.newBuilder()) {
-        case (bldr, (nodeName: String, featureValues: Array[Float])) =>
-          bldr.putFeatureList(nodeName, buildSingleFeatureList(featureValues))
-      }
-      .build()
-  }
-
-  def buildSingleFeatureList(featureValues: Array[Float]): FeatureList = {
-    FeatureList
-      .newBuilder()
-      .addFeature(
-        Feature
-          .newBuilder()
-          .setFloatList(
-            FloatList
-              .newBuilder()
-              .addAllValue(
-                featureValues.toList.map(java.lang.Float.valueOf).asJava
-              )
-              .build()
-          )
-          .build()
-      )
-      .build()
-  }
-
-  def loadTFRecord = {
-    SequenceExample
-      .newBuilder()
-      .setContext(
-        buildContextFeatures("query_text" -> "stuff", "query_key" -> "dummy")
-      )
-      .setFeatureLists(
-        FeatureLists
-          .newBuilder()
-          .putFeatureList(
-            "feat_0",
-            FeatureList
-              .newBuilder()
-              .addFeature(
-                Feature
-                  .newBuilder()
-                  .setFloatList(FloatList.newBuilder().addValue(0.1f))
-              )
-              .build()
-          )
-          .putFeatureList(
-            "feat_1",
-            FeatureList
-              .newBuilder()
-              .addFeature(
-                Feature
-                  .newBuilder()
-                  .setFloatList(FloatList.newBuilder().addValue(0.2f))
-              )
-              .build()
-          )
-          .putFeatureList(
-            "feat_2",
-            FeatureList
-              .newBuilder()
-              .addFeature(
-                Feature
-                  .newBuilder()
-                  .setFloatList(FloatList.newBuilder().addValue(0.3f))
-              )
-              .build()
-          )
-      )
-      .build()
   }
 }

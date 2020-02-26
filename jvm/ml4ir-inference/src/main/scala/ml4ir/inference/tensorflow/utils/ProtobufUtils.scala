@@ -80,7 +80,7 @@ object ProtobufUtils {
               featureValues.map(java.lang.Float.valueOf)
             )
           )
-      } // manually putting a dummy value for the position feature
+      } // manually putting a dummy value for the position feature. Should be config-driven
       .putFeatureList(
         "pos",
         buildSingleFeatureIntList(Array.fill(numDocsPerQuery)(-1L))

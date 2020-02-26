@@ -2,6 +2,7 @@ package ml4ir.inference.tensorflow
 
 import ml4ir.inference.tensorflow.utils.ProtobufUtils
 import org.tensorflow.{SavedModelBundle, Tensor, Tensors}
+import org.tensorflow.example.SequenceExample
 
 /**
   * Primary model executor for performing inference on TensorFlow's SavedModelBundle
@@ -20,14 +21,12 @@ import org.tensorflow.{SavedModelBundle, Tensor, Tensors}
   * @see <a href="https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle">SavedModelBundle</a>
   */
 class SavedModelBundleExecutor(dirPath: String, config: ModelExecutorConfig)
-    extends ((QueryContext, Array[Document]) => Array[Float]) {
+    extends (SequenceExample => Array[Float]) {
   val savedModelBundle = SavedModelBundle.load(dirPath, "serve")
   val session = savedModelBundle.session()
 
-  override def apply(context: QueryContext,
-                     documents: Array[Document]): Array[Float] = {
+  override def apply(proto: SequenceExample): Array[Float] = {
     val ModelExecutorConfig(input, output, padTo, _) = config
-    val proto = ProtobufUtils.buildIRSequenceExample(context, documents, padTo)
     val inputTensor: Tensor[String] = Tensors.create(Array(proto.toByteArray))
     try {
       val ranking = Array.ofDim[Float](1, padTo)
