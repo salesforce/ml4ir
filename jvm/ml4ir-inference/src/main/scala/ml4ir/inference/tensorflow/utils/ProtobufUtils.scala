@@ -23,6 +23,13 @@ object ProtobufUtils {
       .build()
   }
 
+  /**
+    * Effectively transforms an array of maps of features into a map of arrays of features: the "transpose" operation
+    * @param docs to have their features extracted out into one dense array per feature
+    *             (note: currently Document only has float features)
+    * @param numDocsPerQuery (must pad the output features to this number, to fit the shape of the TF model)
+    * @return map of feature-name -> padded dense vector of numeric features
+    */
   def transposeDocs(docs: Array[Document],
                     numDocsPerQuery: Int): Map[String, Array[Float]] = {
     case class FeatureVal(name: String, value: Float, docIdx: Int)
