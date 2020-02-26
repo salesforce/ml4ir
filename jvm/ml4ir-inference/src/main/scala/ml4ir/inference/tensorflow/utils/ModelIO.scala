@@ -3,6 +3,8 @@ package ml4ir.inference.tensorflow.utils
 import java.io.InputStream
 
 import org.tensorflow.{Graph, SavedModelBundle, Session}
+import org.tensorflow.example.SequenceExample
+import org.tensorflow.op.io.TfRecordReader
 
 object ModelIO {
 
@@ -43,4 +45,5 @@ object ModelIO {
   }
 
  */
+
 }

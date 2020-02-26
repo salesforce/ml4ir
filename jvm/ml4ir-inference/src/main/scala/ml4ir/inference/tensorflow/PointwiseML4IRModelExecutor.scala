@@ -7,7 +7,7 @@ import ml4ir.inference.tensorflow.utils.ModelIO
 
 import scala.collection.JavaConverters._
 import ml4ir.inference.tensorflow.utils.TensorUtils.{create2Tensor, replicate}
-import org.tensorflow.{Graph, Session, Tensor}
+import org.tensorflow.{Graph, Session, Tensor, Tensors}
 
 case class PointwiseML4IRModelExecutorConfig(queryNodeName: String,
                                              scoresNodeName: String,
@@ -68,7 +68,8 @@ case class RankedQueryDocumentPair(query: Query,
 }
 
 class PointwiseML4IRModelExecutor(graph: Graph,
-                                  config: PointwiseML4IRModelExecutorConfig) {
+                                  config: PointwiseML4IRModelExecutorConfig)
+    extends ((Query, Array[Document]) => Array[Float]) {
   val session = new Session(graph)
   val operations: Set[String] = graph.operations().asScala.map(_.name()).toSet
 
@@ -78,8 +79,8 @@ class PointwiseML4IRModelExecutor(graph: Graph,
     * @param documents will be truncated and padded to numDocsPerQuery
     * @return scores array, of length numDocsPerQuery
     */
-  def apply(query: Query, documents: Array[Document]): Array[Float] = {
-    val inputTensors: Map[String, Tensor[java.lang.Float]] =
+  override def apply(query: Query, documents: Array[Document]): Array[Float] = {
+    val inputTensors: Map[String, Tensor[_]] =
       buildPerDocTensors(documents) + (config.queryNodeName -> buildQueryTensor(
         query
       ))
@@ -118,15 +119,20 @@ class PointwiseML4IRModelExecutor(graph: Graph,
     * @param query
     * @return 2-tensor representation of the query, replicating numDocsPerQuery times
     */
-  def buildQueryTensor(query: Query): Tensor[lang.Float] = {
-    create2Tensor(
-      replicate(tokenize(query.queryString), config.numDocsPerQuery)
-    )
+  def buildQueryTensor(query: Query): Tensor[_] = {
+    if (true)
+      Tensors.create("foo bar")
+    else
+      create2Tensor(
+        replicate(tokenize(query.queryString), config.numDocsPerQuery)
+      )
   }
 
   def buildPerDocTensors(
     docs: Array[Document]
   ): Map[String, Tensor[lang.Float]] = {
+    if (true)
+      Map.empty
     case class FeatureVal(name: String, value: Float, docIdx: Int)
     docs
       .slice(0, math.min(docs.length, config.numDocsPerQuery))
