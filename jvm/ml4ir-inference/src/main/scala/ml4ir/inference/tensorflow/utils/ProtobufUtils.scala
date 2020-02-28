@@ -11,21 +11,15 @@ import scala.reflect.ClassTag
 // TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
 case class FeatureField(nodeName: String, dType: DataType)
 
-case class SequenceExampleConfig(
-  contextFeatures: List[FeatureField] = List.empty,
-  documentFeatures: List[FeatureField] = List.empty,
-  numDocsPerQuery: Option[Int] = None,
-  queryLength: Option[Int] = None
-)
+case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
+                         documentFeatures: List[FeatureField] = List.empty,
+                         numDocsPerQuery: Option[Int] = None,
+                         queryLength: Option[Int] = None)
 
 /**
-  * TODO: this should be a config-driven builder class:
-  * val protoBuilder = IRSequenceExampleBuilder(config)
-  * val proto: SequenceExample = protoBuilder.build(query, docs)
+  *
   */
-case class SequenceExample4IRBuilder(
-  config: SequenceExampleConfig = SequenceExampleConfig()
-) {
+case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
 
   def apply(query: QueryContext, docs: Array[Document]): SequenceExample = {
     SequenceExample
@@ -33,46 +27,6 @@ case class SequenceExample4IRBuilder(
       .setContext(buildStringContextFeatures("query_text" -> query.queryString))
       .setFeatureLists(buildFeatureLists(docs))
       .build()
-  }
-
-  /**
-    * Effectively transforms an array of maps of features into a map of arrays of features: the "transpose" operation
-    * @param docs to have their features extracted out into one dense array per feature
-    *             (note: currently Document only has float features)
-    * @return map of feature-name -> padded dense vector of numeric features
-    */
-  def transposeDocs(docs: Array[Document]): Map[String, Array[Float]] = {
-    case class FeatureVal(name: String, value: Float, docIdx: Int)
-    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docs.length)
-    docs
-      .slice(0, math.min(docs.length, numDocsPerQuery))
-      .zipWithIndex
-      .flatMap {
-        case (doc: Document, idx: Int) =>
-          doc.floatFeatures.map {
-            case (feature, value) => FeatureVal(feature, value, idx)
-          }
-      }
-      .groupBy(_.name)
-      .mapValues(_.sortBy(_.docIdx).map(_.value).padTo(numDocsPerQuery, 0f))
-  }
-
-  def transpose[T: ClassTag](
-    docFeatures: Array[Map[String, T]]
-  ): Map[String, Array[T]] = {
-    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
-    case class FeatureVal(name: String, value: T, docIdx: Int)
-    docFeatures
-      .slice(0, math.min(docFeatures.length, numDocsPerQuery))
-      .zipWithIndex
-      .flatMap {
-        case (doc: Map[String, T], idx: Int) =>
-          doc.map {
-            case (feature, value) => FeatureVal(feature, value, idx)
-          }
-      }
-      .groupBy(_.name)
-      .mapValues(_.sortBy(_.docIdx).map(_.value).toArray)
   }
 
   def buildStringContextFeatures(nodePairs: (String, String)*): Features = {
@@ -124,6 +78,46 @@ case class SequenceExample4IRBuilder(
             )
         }
     withFloatsAndInts.build()
+  }
+
+  /**
+    * Effectively transforms an array of maps of features into a map of arrays of features: the "transpose" operation
+    * @param docs to have their features extracted out into one dense array per feature
+    *             (note: currently Document only has float features)
+    * @return map of feature-name -> padded dense vector of numeric features
+    */
+  def transposeDocs(docs: Array[Document]): Map[String, Array[Float]] = {
+    case class FeatureVal(name: String, value: Float, docIdx: Int)
+    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docs.length)
+    docs
+      .slice(0, math.min(docs.length, numDocsPerQuery))
+      .zipWithIndex
+      .flatMap {
+        case (doc: Document, idx: Int) =>
+          doc.floatFeatures.map {
+            case (feature, value) => FeatureVal(feature, value, idx)
+          }
+      }
+      .groupBy(_.name)
+      .mapValues(_.sortBy(_.docIdx).map(_.value).padTo(numDocsPerQuery, 0f))
+  }
+
+  def transpose[T: ClassTag](
+    docFeatures: Array[Map[String, T]]
+  ): Map[String, Array[T]] = {
+    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
+    case class FeatureVal(name: String, value: T, docIdx: Int)
+    docFeatures
+      .slice(0, math.min(docFeatures.length, numDocsPerQuery))
+      .zipWithIndex
+      .flatMap {
+        case (doc: Map[String, T], idx: Int) =>
+          doc.map {
+            case (feature, value) => FeatureVal(feature, value, idx)
+          }
+      }
+      .groupBy(_.name)
+      .mapValues(_.sortBy(_.docIdx).map(_.value).toArray)
   }
 
   def toFeature(featureValues: Array[java.lang.Long]): Feature = {

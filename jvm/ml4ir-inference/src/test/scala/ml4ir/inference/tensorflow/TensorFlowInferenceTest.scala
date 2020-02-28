@@ -2,7 +2,7 @@ package ml4ir.inference.tensorflow
 
 import java.io.InputStream
 
-import ml4ir.inference.tensorflow.utils.{ModelIO, SequenceExample4IRBuilder}
+import ml4ir.inference.tensorflow.utils.{ModelIO, SequenceExampleBuilder}
 import ml4ir.inference.tensorflow.data.{QueryContext, Document}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
@@ -11,30 +11,6 @@ import org.tensorflow.example._
 @Test
 class TensorFlowInferenceTest {
   val classLoader = getClass.getClassLoader
-
-  def testQueries: (QueryContext, Array[Document]) = {
-    val query = "magic"
-    val docsToScore = Array(
-      Map(
-        "feat_0" -> 0.04f,
-        "feat_1" -> 0.08f,
-        "feat_2" -> 0.01f,
-        "fake_feat" -> 0.2f
-      ),
-      Map(
-        "feat_0" -> 0.4f,
-        "feat_1" -> 0.8f,
-        "feat_2" -> 0.1f,
-        "fake_feat" -> 0.3f
-      )
-    )
-    (
-      QueryContext(queryString = query, queryId = "1234Id"),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
-      }
-    )
-  }
 
   @Test
   def testLoadTFSession = {
@@ -97,7 +73,7 @@ class TensorFlowInferenceTest {
       )
     )
     val (queryContext, docs) = testQueries
-    val protoBuilder = new SequenceExample4IRBuilder()
+    val protoBuilder = SequenceExampleBuilder()
     val proto = protoBuilder(queryContext, docs)
     val scores = bundleExecutor(proto)
     validateScores(scores, docs.length)
@@ -122,6 +98,31 @@ class TensorFlowInferenceTest {
     )
     val (query, docs) = (
       QueryContext(queryString = queryString, queryId = "1234Id"),
+      docsToScore.zipWithIndex.map {
+        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
+      }
+    )
+  }
+
+  def testQueries: (QueryContext, Array[Document]) = {
+    val query = "magic"
+    val docsToScore = Array(
+      Map(
+        "feat_0" -> 0.04f,
+        "feat_1" -> 0.08f,
+        "feat_2" -> 0.01f,
+        "fake_feat" -> 0.2f
+      ),
+      Map(
+        "feat_0" -> 0.4f,
+        "feat_1" -> 0.8f,
+        "feat_2" -> 0.1f,
+        "fake_feat" -> 0.3f
+      ),
+      Map("feat_0" -> 0.8f, "fake_feat" -> -1f)
+    )
+    (
+      QueryContext(queryString = query, queryId = "1234Id"),
       docsToScore.zipWithIndex.map {
         case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
       }

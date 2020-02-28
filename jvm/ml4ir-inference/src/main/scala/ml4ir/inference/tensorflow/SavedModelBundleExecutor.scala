@@ -25,14 +25,14 @@ class SavedModelBundleExecutor(dirPath: String, config: ModelExecutorConfig)
   val session = savedModelBundle.session()
 
   override def apply(proto: SequenceExample): Array[Float] = {
-    val ModelExecutorConfig(input, output, padTo, _) = config
+    val ModelExecutorConfig(inputNode, outputNode, padTo, _) = config
     val inputTensor: Tensor[String] = Tensors.create(Array(proto.toByteArray))
     try {
       val ranking = Array.ofDim[Float](1, padTo)
       session
         .runner()
-        .feed(input, inputTensor)
-        .fetch(output)
+        .feed(inputNode, inputTensor)
+        .fetch(outputNode)
         .run()
         .get(0)
         .copyTo(ranking)
