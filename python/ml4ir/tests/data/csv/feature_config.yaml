@@ -78,7 +78,7 @@ features:
     node_name: query_str
     trainable: false
     dtype: bytes
-    log_at_inference: false
+    log_at_inference: true
     feature_layer_info:
       type: string
       max_length: 20
@@ -86,4 +86,4 @@ features:
     serving_info:
       name: query_str
       required: false
-    tfrecord_type: sequence
+    tfrecord_type: context

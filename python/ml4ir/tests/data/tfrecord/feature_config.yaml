@@ -86,4 +86,4 @@ features:
     serving_info:
       name: query_str
       required: false
-    tfrecord_type: sequence
+    tfrecord_type: context
