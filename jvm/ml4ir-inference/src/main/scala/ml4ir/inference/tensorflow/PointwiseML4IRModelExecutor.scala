@@ -4,68 +4,15 @@ import java.io.PrintWriter
 import java.lang
 
 import ml4ir.inference.tensorflow.utils.ModelIO
+import ml4ir.inference.tensorflow.data.{
+  QueryContext,
+  Document,
+  RankedQueryDocumentPair
+}
 
 import scala.collection.JavaConverters._
 import ml4ir.inference.tensorflow.utils.TensorUtils.{create2Tensor, replicate}
-import org.tensorflow.{Graph, Session, Tensor, Tensors}
-
-case class ModelExecutorConfig(queryNodeName: String,
-                               scoresNodeName: String,
-                               numDocsPerQuery: Int,
-                               queryLenMax: Int)
-
-trait CSVWritable {
-  def toCsvString: String = toCsvString(", ")
-  def toCsvString(separator: String): String
-}
-
-object MapToCsvImplicits {
-  implicit class MapToCsv[T](map: Map[String, T]) extends CSVWritable {
-    override def toCsvString(separator: String): String = {
-      map.keySet.toList.sorted.map(map).map(_.toString).mkString(separator)
-    }
-  }
-}
-
-case class QueryContext(queryString: String,
-                        queryId: String,
-                        queryMetadata: Map[String, String] = Map.empty)
-    extends CSVWritable {
-  override def toCsvString(separator: String): String = {
-    import MapToCsvImplicits._
-    List(queryId, queryString, queryMetadata.toCsvString(separator))
-      .mkString(separator)
-  }
-}
-
-case class Document(numericFeatures: Map[String, Float],
-                    docId: String,
-                    docMetadata: Map[String, String] = Map.empty)
-    extends CSVWritable {
-  override def toCsvString(separator: String): String = {
-    import MapToCsvImplicits._
-    List(
-      docId,
-      numericFeatures.toCsvString(separator),
-      docMetadata.toCsvString(separator)
-    ).mkString(separator)
-  }
-}
-
-case class RankedQueryDocumentPair(query: QueryContext,
-                                   document: Document,
-                                   score: Float,
-                                   rank: Int)
-    extends CSVWritable {
-  // def toJson: String = ???
-  override def toCsvString(separator: String) =
-    List(
-      query.toCsvString(separator),
-      document.toCsvString(separator),
-      String.valueOf(score),
-      String.valueOf(rank)
-    ).mkString(separator)
-}
+import org.tensorflow.{Graph, Session, Tensor}
 
 class PointwiseML4IRModelExecutor(graph: Graph, config: ModelExecutorConfig)
     extends ((QueryContext, Array[Document]) => Array[Float]) {
@@ -134,7 +81,7 @@ class PointwiseML4IRModelExecutor(graph: Graph, config: ModelExecutorConfig)
       .zipWithIndex
       .flatMap {
         case (doc: Document, idx: Int) =>
-          doc.numericFeatures.map {
+          doc.floatFeatures.map {
             case (feature, value) => FeatureVal(feature, value, idx)
           }
       }

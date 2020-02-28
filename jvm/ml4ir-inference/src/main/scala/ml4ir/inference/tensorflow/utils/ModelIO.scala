@@ -2,9 +2,7 @@ package ml4ir.inference.tensorflow.utils
 
 import java.io.InputStream
 
-import org.tensorflow.{Graph, SavedModelBundle, Session}
-import org.tensorflow.example.SequenceExample
-import org.tensorflow.op.io.TfRecordReader
+import org.tensorflow.{Graph, Session}
 
 object ModelIO {
 
@@ -38,12 +36,4 @@ object ModelIO {
     val graph = loadTensorflowGraph(inputStream)
     new Session(graph)
   }
-  /*
-  def loadTensorflowSavedModelBundle(path: String): SavedModelBundle = {
-    val savedModelBundle = SavedModelBundle.loader(path).load()
-    savedModelBundle
-  }
-
- */
-
 }

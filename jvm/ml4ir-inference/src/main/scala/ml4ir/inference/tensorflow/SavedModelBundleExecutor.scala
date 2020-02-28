@@ -1,6 +1,5 @@
 package ml4ir.inference.tensorflow
 
-import ml4ir.inference.tensorflow.utils.ProtobufUtils
 import org.tensorflow.{SavedModelBundle, Tensor, Tensors}
 import org.tensorflow.example.SequenceExample
 
