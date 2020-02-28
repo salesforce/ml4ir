@@ -5,7 +5,7 @@ from tensorflow import sparse
 from tensorflow import image
 from logging import Logger
 from ml4ir.io import file_io
-from ml4ir.config.features import Features
+from ml4ir.config.features import FeatureConfig
 from ml4ir.config.keys import TFRecordTypeKey, FeatureTypeKey
 
 from typing import Union, Optional
@@ -16,36 +16,33 @@ data in the train.SequenceExample protobuf format
 """
 
 
-def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.function:
+def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> tf.function:
     """Create a parse function using the context and sequence features spec"""
 
     context_features_spec = dict()
     sequence_features_spec = dict()
 
-    for feature, feature_info in feature_config.get_dict().items():
-        # FIXME(ashish) - without this next guard we break if there are masks.
-        if "node_name" in feature_info and feature_info["node_name"] == "mask":
-            continue
-        tfrecord_info = feature_info["tfrecord_info"]
+    for feature_info in feature_config.get_all_features():
+        feature_name = feature_info["name"]
         dtype = tf.float32
         default_value: Optional[Union[float, str]] = None
-        if tfrecord_info["dtype"] == "float":
+        if feature_info["dtype"] == "float":
             dtype = tf.float32
             default_value = 0.0
-        elif tfrecord_info["dtype"] == "int":
+        elif feature_info["dtype"] == "int":
             dtype = tf.int64
             default_value = 0
-        elif tfrecord_info["dtype"] == "bytes":
+        elif feature_info["dtype"] == "bytes":
             dtype = tf.string
             default_value = ""
         else:
-            raise Exception("Unknown dtype {} for {}".format(tfrecord_info["dtype"], feature))
-        if tfrecord_info["type"] == TFRecordTypeKey.CONTEXT:
-            context_features_spec[feature] = io.FixedLenFeature(
+            raise Exception("Unknown dtype {} for {}".format(feature_info["dtype"], feature_name))
+        if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+            context_features_spec[feature_name] = io.FixedLenFeature(
                 [], dtype, default_value=default_value
             )
-        elif tfrecord_info["type"] == TFRecordTypeKey.SEQUENCE:
-            sequence_features_spec[feature] = io.VarLenFeature(dtype=dtype)
+        elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
+            sequence_features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
 
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
@@ -59,7 +56,7 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
             features: parsed features extracted from the protobuf
             labels: parsed label extracted from the protobuf
         """
-        context, examples = io.parse_single_sequence_example(
+        context_features, sequence_features = io.parse_single_sequence_example(
             serialized=sequence_example_proto,
             context_features=context_features_spec,
             sequence_features=sequence_features_spec,
@@ -68,27 +65,37 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
         features_dict = dict()
 
         # Explode context features into all records
-        for feat, t in context.items():
-            t = tf.expand_dims(t, axis=0)
-            t = tf.tile(t, multiples=[max_num_records])
+        for feature_info in feature_config.get_context_features():
+            feature_name = feature_info["name"]
+            feature_layer_info = feature_info.get("feature_layer_info")
+
+            feature_tensor = context_features.get(feature_name)
+
+            feature_tensor = tf.expand_dims(feature_tensor, axis=0)
+            feature_tensor = tf.tile(feature_tensor, multiples=[max_num_records])
 
             # If feature is a string, then decode into numbers
-            if feature_config.get_dict()[feat]["type"] == FeatureTypeKey.STRING:
-                t = io.decode_raw(
-                    t,
+            if feature_layer_info["type"] == FeatureTypeKey.STRING:
+                feature_tensor = io.decode_raw(
+                    feature_tensor,
                     out_type=tf.uint8,
-                    fixed_length=feature_config.get_dict()[feat]["max_length"],
+                    fixed_length=feature_layer_info["max_length"],
                 )
-                t = tf.cast(t, tf.float32)
+                feature_tensor = tf.cast(feature_tensor, tf.float32)
 
-            features_dict[feat] = t
+            features_dict[feature_name] = feature_tensor
 
         # Pad sequence features to max_num_records
-        for feat, t in examples.items():
-            if isinstance(t, sparse.SparseTensor):
-                if feat == "pos":
+        for feature_info in feature_config.get_sequence_features():
+            feature_name = feature_info["name"]
+            feature_layer_info = feature_info["feature_layer_info"]
+
+            feature_tensor = sequence_features.get(feature_name)
+
+            if isinstance(feature_tensor, sparse.SparseTensor):
+                if feature_name == feature_config.get_rank(key="name"):
                     # Add mask for identifying padded records
-                    mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(t)))
+                    mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(feature_tensor)))
                     mask = tf.expand_dims(mask, axis=2)
                     mask = image.pad_to_bounding_box(
                         mask,
@@ -99,34 +106,34 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
                     )
                     features_dict["mask"] = tf.squeeze(mask)
 
-                t = sparse.reset_shape(t, new_shape=[1, max_num_records])
-                t = sparse.to_dense(t)
-                t = tf.squeeze(t)
+                feature_tensor = sparse.reset_shape(feature_tensor, new_shape=[1, max_num_records])
+                feature_tensor = sparse.to_dense(feature_tensor)
+                feature_tensor = tf.squeeze(feature_tensor)
 
                 # If feature is a string, then decode into numbers
-                if feature_config.get_dict()[feat]["type"] == FeatureTypeKey.STRING:
-                    t = io.decode_raw(
-                        t,
+                if feature_layer_info["type"] == FeatureTypeKey.STRING:
+                    feature_tensor = io.decode_raw(
+                        feature_tensor,
                         out_type=tf.uint8,
-                        fixed_length=feature_config.get_dict()[feat]["max_length"],
+                        fixed_length=feature_layer_info["max_length"],
                     )
-                    t = tf.cast(t, tf.float32)
+                    feature_tensor = tf.cast(feature_tensor, tf.float32)
             else:
                 #
                 # Handle dense tensors
                 #
                 # if len(t.shape) == 1:
-                #     t = tf.expand_dims(t, axis=0)
+                #     feature_tensor = tf.expand_dims(t, axis=0)
                 # if len(t.shape) == 2:
-                #     t = tf.pad(t, paddings=[[0, 0], [0, max_num_records]])
-                #     t = tf.squeeze(t)
+                #     feature_tensor = tf.pad(t, paddings=[[0, 0], [0, max_num_records]])
+                #     feature_tensor = tf.squeeze(t)
                 # else:
                 #     raise Exception('Invalid input : {}'.format(feat))
-                raise ValueError("Invalid input : {}".format(feat))
+                raise ValueError("Invalid input : {}".format(feature_name))
 
-            features_dict[feat] = t
+            features_dict[feature_name] = feature_tensor
 
-        labels = features_dict.pop(feature_config.label)
+        labels = features_dict.pop(feature_config.get_label(key="name"))
         return features_dict, labels
 
     return _parse_sequence_example_fn
@@ -134,7 +141,7 @@ def make_parse_fn(feature_config: Features, max_num_records: int = 25) -> tf.fun
 
 def read(
     data_dir: str,
-    features: Features,
+    feature_config: FeatureConfig,
     max_num_records: int = 25,
     batch_size: int = 128,
     parse_tfrecord: bool = True,
@@ -148,7 +155,7 @@ def read(
 
     Args:
         data_dir: Path to directory containing csv files to read
-        features: ml4ir.config.features.Features object extracted from the feature config
+        feature_config: ml4ir.config.features.Features object extracted from the feature config
         batch_size: int value specifying the size of the batch
         parse_tfrecord: whether to parse SequenceExamples into features
         logger: logging object
@@ -158,7 +165,7 @@ def read(
     """
     # Generate parsing function
     parse_sequence_example_fn = make_parse_fn(
-        feature_config=features, max_num_records=max_num_records
+        feature_config=feature_config, max_num_records=max_num_records
     )
 
     # Get all tfrecord files in directory

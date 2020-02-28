@@ -1,7 +1,7 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
-from ml4ir.config.features import parse_config, Features
+from ml4ir.config.features import parse_config, FeatureConfig
 import os
 import numpy as np
 from tensorflow.keras import models as kmodels
@@ -21,7 +21,7 @@ class RankingModelTest(RankingTestBase):
             self.root_data_dir, "tfrecord", self.feature_config_fname
         )
 
-        feature_config: Features = parse_config(feature_config_path)
+        feature_config: FeatureConfig = parse_config(feature_config_path)
 
         self.args.metrics = ["categorical_accuracy"]
 
@@ -29,7 +29,7 @@ class RankingModelTest(RankingTestBase):
             return RankingDataset(
                 data_dir=data_dir,
                 data_format="tfrecord",
-                features=feature_config,
+                feature_config=feature_config,
                 max_num_records=self.args.max_num_records,
                 loss_key=self.args.loss,
                 scoring_key=self.args.scoring,
@@ -53,7 +53,7 @@ class RankingModelTest(RankingTestBase):
             scoring_key=self.args.scoring,
             metrics_keys=self.args.metrics,
             optimizer_key=self.args.optimizer,
-            features=feature_config,
+            feature_config=feature_config,
             max_num_records=self.args.max_num_records,
             model_file=self.args.model_file,
             learning_rate=self.args.learning_rate,

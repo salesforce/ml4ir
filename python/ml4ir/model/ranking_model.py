@@ -9,7 +9,7 @@ from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 
-from ml4ir.config.features import Features
+from ml4ir.config.features import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
 from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
 from ml4ir.model.optimizer import get_optimizer
@@ -37,7 +37,7 @@ class RankingModel:
         scoring_key: str,
         metrics_keys: List[str],
         optimizer_key: str,
-        features: Features,
+        feature_config: FeatureConfig,
         max_num_records: int,
         model_file: str,
         learning_rate: float,
@@ -46,7 +46,7 @@ class RankingModel:
         logger=None,
     ):
         self.architecture_key: str = architecture_key
-        self.features: Features = features
+        self.feature_config: FeatureConfig = feature_config
         self.scoring_key: str = scoring_key
         self.logger: Logger = logger
         self.max_num_records = max_num_records
@@ -83,7 +83,7 @@ class RankingModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = features.define_inputs(max_num_records)
+            inputs: Dict[str, Input] = feature_config.define_inputs(max_num_records)
             self.model = self.build_model(inputs, optimizer, loss, metrics)
             self.is_compiled = True
 
@@ -163,10 +163,13 @@ class RankingModel:
         # Get loss and metrics
         loss_fn = loss.get_loss_fn(mask=metadata_features["mask"])
         metric_fns: List[kmetrics.Metric] = list()
+        rank_feature_name = self.feature_config.get_rank("node_name")
         for metric in metrics:
             metric_fns.extend(
                 metric_factory.get_metric_impl(
-                    metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+                    metric,
+                    rank=metadata_features[rank_feature_name],
+                    mask=metadata_features["mask"],
                 )
             )
 
@@ -233,7 +236,8 @@ class RankingModel:
             infer = self.model.signatures[inference_signature]
 
         # Get features to log
-        features_to_log = self.features.features_to_log
+        features_to_log = self.feature_config.get_features_to_log(key="name")
+        features_to_log.extend(["new_score", "new_rank"])
 
         if logs_dir:
             outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
@@ -260,7 +264,7 @@ class RankingModel:
 
             # Set scores of padded records to 0
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-            new_pos = tf.add(
+            new_rank = tf.add(
                 tf.argsort(
                     tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True
                 ),
@@ -270,12 +274,12 @@ class RankingModel:
             predictions_dict = dict()
             mask = _flatten_records(features["mask"])
             for feature_name in features_to_log:
-                if feature_name == "label":
+                if feature_name == self.feature_config.get_label(key="node_name"):
                     feat_ = label
                 elif feature_name == "new_score":
                     feat_ = scores
-                elif feature_name == "new_pos":
-                    feat_ = new_pos
+                elif feature_name == "new_rank":
+                    feat_ = new_rank
                 else:
                     if feature_name in features:
                         feat_ = features[feature_name]
@@ -295,11 +299,9 @@ class RankingModel:
         predictions_df_list = list()
         for predictions_dict in test_dataset.map(_predict_score).take(-1):
             # If feature is a string, convert back from bytes to string
-            for feature_name in features_to_log:
-                if (
-                    feature_name in self.features.feature_config
-                    and self.features.feature_config[feature_name]["type"] == FeatureTypeKey.STRING
-                ):
+            for feature_info in self.feature_config.get_features_to_log():
+                feature_name = feature_info["name"]
+                if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
                     predictions_dict[feature_name] = tf.strings.unicode_encode(
                         tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
                     )
@@ -403,7 +405,7 @@ class RankingModel:
         # using tensorflow hub KerasLayer as a wrapper
         #
         # def build_model(loaded_model):
-        #     x = self.features.define_inputs()
+        #     x = self.feature_config.define_inputs()
         #     # Wrap what's loaded to a KerasLayer
         #     keras_layer = hub.KerasLayer(loaded_model, trainable=True)(x)
         #     model = tf.keras.Model(x, keras_layer)
@@ -443,10 +445,9 @@ class RankingModel:
 
         # TFRecord Signature
         # Define a parsing function for tfrecord protos
-        inputs = self.features.get_X()
-        self.features.feature_config.pop("mask")
+        inputs = self.feature_config.get_all_features(key="name", include_label=False)
         tfrecord_parse_fn = make_parse_fn(
-            feature_config=self.features, max_num_records=self.max_num_records
+            feature_config=self.feature_config, max_num_records=self.max_num_records
         )
 
         # Define a serving signature for tfrecord
@@ -497,7 +498,7 @@ class RankingModel:
             # Mask the padded records
             for key, value in predictions.items():
                 predictions[key] = tf.where(
-                    tf.equal(features_dict["mask"], 0), tf.constant(-np.inf), predictions[key]
+                    tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
                 )
 
             return predictions
@@ -532,10 +533,6 @@ class RankingModel:
         Add feature layer by processing the inputs
         NOTE: Embeddings or any other in-graph preprocessing goes here
         """
-        # Add mask to features object
-        # TODO: if we always call this - why not always, in the Features _init_?
-        self.features.add_mask()
-
         ranking_features = list()
         metadata_features = dict()
 
@@ -550,30 +547,29 @@ class RankingModel:
             dense_feature = layers.DenseFeatures(feature_col)(inputs)
             return dense_feature
 
-        for feature, feature_info in self.features.get_dict().items():
-            feature_node_name = feature_info.get("node_name", feature)
+        for feature_info in self.feature_config.get_all_features(include_label=False):
+            feature_name = feature_info["name"]
+            feature_node_name = feature_info.get("node_name", feature_name)
+            feature_layer_info = feature_info["feature_layer_info"]
 
-            if feature_info["type"] == FeatureTypeKey.NUMERIC:
+            if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
                 dense_feature = _get_dense_feature(
                     inputs, feature_node_name, shape=(self.max_num_records, 1)
                 )
                 if feature_info["trainable"]:
                     ranking_features.append(tf.cast(dense_feature, tf.float32))
                 else:
-                    metadata_features[feature] = tf.cast(dense_feature, tf.float32)
-            elif feature_info["type"] == FeatureTypeKey.STRING:
+                    metadata_features[feature_name] = tf.cast(dense_feature, tf.float32)
+            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 # TODO: Add embedding layer here
                 pass
-            elif feature_info["type"] == FeatureTypeKey.CATEGORICAL:
+            elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 # TODO: Add embedding layer with vocabulary here
                 raise NotImplementedError
-            elif feature_info["type"] == FeatureTypeKey.LABEL:
-                # NOTE: Can implement in the future if necessary
-                pass
             else:
                 raise Exception(
                     "Unknown feature type {} for feature : {}".format(
-                        feature_info["type"], feature
+                        feature_layer_info["type"], feature_name
                     )
                 )
 

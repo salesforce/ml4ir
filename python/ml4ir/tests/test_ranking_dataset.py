@@ -1,6 +1,6 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.data.ranking_dataset import RankingDataset
-from ml4ir.config import features
+from ml4ir.config.features import FeatureConfig, parse_config
 import os
 
 
@@ -29,12 +29,12 @@ class RankingDatasetTest(RankingTestBase):
 
     def get_ranking_dataset(self, data_dir: str, data_format: str, feature_config_path: str):
 
-        feature_config = features.parse_config(feature_config_path)
+        feature_config: FeatureConfig = parse_config(feature_config_path)
 
         ranking_dataset = RankingDataset(
             data_dir=data_dir,
             data_format=data_format,
-            features=feature_config,
+            feature_config=feature_config,
             max_num_records=self.args.max_num_records,
             loss_key=self.args.loss,
             scoring_key=self.args.scoring,

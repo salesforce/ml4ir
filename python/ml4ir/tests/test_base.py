@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import random
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
 from ml4ir.io import file_io
 from ml4ir.io.logging_utils import setup_logging
@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 OUTPUT_DIR = "ml4ir/tests/test_output"
 ROOT_DATA_DIR = "ml4ir/tests/data"
-FEATURE_CONFIG_FNAME = "feature_config.json"
+FEATURE_CONFIG_FNAME = "feature_config.yaml"
 
 
 class RankingTestBase(unittest.TestCase):

@@ -3,7 +3,7 @@ from tensorflow import io
 from ml4ir.io import file_io
 from typing import List
 from logging import Logger
-from ml4ir.config.features import Features, parse_config
+from ml4ir.config.features import FeatureConfig, parse_config
 from ml4ir.config.keys import TFRecordTypeKey
 from argparse import ArgumentParser
 import glob
@@ -65,7 +65,7 @@ def _get_feature_fn(dtype):
         raise Exception("Feature dtype {} not supported".format(dtype))
 
 
-def _get_sequence_example_proto(group, features: Features):
+def _get_sequence_example_proto(group, feature_config: FeatureConfig):
     """
     Get a sequence example protobuf from a dataframe group
 
@@ -75,14 +75,18 @@ def _get_sequence_example_proto(group, features: Features):
     sequence_features_dict = dict()
     context_features_dict = dict()
 
-    for feature, feature_info in features.get_dict().items():
-        feature_fn = _get_feature_fn(feature_info["tfrecord_info"]["dtype"])
-        if feature_info["tfrecord_info"]["type"] == TFRecordTypeKey.SEQUENCE:
-            sequence_features_dict[feature] = train.FeatureList(
-                feature=[feature_fn(group[feature].tolist())]
+    for feature_info in feature_config.get_context_features():
+        feature_name = feature_info["name"]
+        feature_fn = _get_feature_fn(feature_info["dtype"])
+        context_features_dict[feature_name] = feature_fn([group[feature_name].tolist()[0]])
+
+    for feature_info in feature_config.get_sequence_features():
+        feature_name = feature_info["name"]
+        feature_fn = _get_feature_fn(feature_info["dtype"])
+        if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
+            sequence_features_dict[feature_name] = train.FeatureList(
+                feature=[feature_fn(group[feature_name].tolist())]
             )
-        elif feature_info["tfrecord_info"]["type"] == TFRecordTypeKey.CONTEXT:
-            context_features_dict[feature] = feature_fn([group[feature].tolist()[0]])
 
     sequence_example_proto = train.SequenceExample(
         context=train.Features(feature=context_features_dict),
@@ -92,7 +96,9 @@ def _get_sequence_example_proto(group, features: Features):
     return sequence_example_proto
 
 
-def write(csv_files: List[str], tfrecord_file: str, features: Features, logger: Logger = None):
+def write(
+    csv_files: List[str], tfrecord_file: str, feature_config: FeatureConfig, logger: Logger = None
+):
     """
     Converts data from CSV files into tfrecord data.
     Output data protobuf format -> train.SequenceExample
@@ -114,8 +120,9 @@ def write(csv_files: List[str], tfrecord_file: str, features: Features, logger: 
     if logger:
         logger.info("Writing SequenceExample protobufs to : {}".format(tfrecord_file))
     with io.TFRecordWriter(tfrecord_file) as tf_writer:
-        sequence_example_protos = df.groupby(features.query_key).apply(
-            lambda g: _get_sequence_example_proto(group=g, features=features)
+        context_feature_names = feature_config.get_context_features(key="name")
+        sequence_example_protos = df.groupby(context_feature_names).apply(
+            lambda g: _get_sequence_example_proto(group=g, feature_config=feature_config)
         )
         for sequence_example_proto in sequence_example_protos:
             tf_writer.write(sequence_example_proto.SerializeToString())
@@ -167,7 +174,7 @@ def main(argv):
     else:
         csv_files: List[str] = [args.csv_file]
 
-    features: Features = parse_config(args.feature_config)
+    feature_config: FeatureConfig = parse_config(args.feature_config)
 
     # Setup logging
     logger: Logger = setup_logging()
@@ -185,7 +192,10 @@ def main(argv):
                 tfrecord_file: str = args.tfrecord_file
 
             write(
-                csv_files=[csv_file], tfrecord_file=tfrecord_file, features=features, logger=logger
+                csv_files=[csv_file],
+                tfrecord_file=tfrecord_file,
+                feature_config=feature_config,
+                logger=logger,
             )
 
             file_count += 1
@@ -198,7 +208,12 @@ def main(argv):
         else:
             tfrecord_file: str = args.tfrecord_file
 
-        write(csv_files=csv_files, tfrecord_file=tfrecord_file, features=features, logger=logger)
+        write(
+            csv_files=csv_files,
+            tfrecord_file=tfrecord_file,
+            feature_config=feature_config,
+            logger=logger,
+        )
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ import gzip
 import sys
 import csv
 import glob
+import yaml
 
 from typing import Optional
 
@@ -182,6 +183,23 @@ def read_json(infile, log=None) -> dict:
         raise NotImplementedError
     else:
         dict_ = json.load(open(infile, "r"))
+    return dict_
+
+
+def read_yaml(infile, log=None) -> dict:
+    """
+    Read YAML file and return a python dictionary
+
+    Args:
+        infile: path to the json file; can be hdfs path
+
+    Returns:
+        python dictionary
+    """
+    if infile.startswith("hdfs"):
+        raise NotImplementedError
+    else:
+        dict_ = yaml.safe_load(open(infile, "r"))
     return dict_
 
 

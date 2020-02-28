@@ -27,7 +27,7 @@ def define_args() -> ArgumentParser:
         "--feature_config",
         type=str,
         default=None,
-        help="Path to JSON file pr JSON string with feature metadata for training.",
+        help="Path to YAML file or YAML string with feature metadata for training.",
     )
 
     parser.add_argument(

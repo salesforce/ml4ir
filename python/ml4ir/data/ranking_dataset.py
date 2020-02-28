@@ -7,7 +7,7 @@ import tensorflow as tf
 from ml4ir.config.keys import DataFormatKey, DataSplitKey
 from ml4ir.data import csv_reader
 from ml4ir.data import tfrecord_reader
-from ml4ir.config.features import Features
+from ml4ir.config.features import FeatureConfig
 
 
 class RankingDataset:
@@ -15,7 +15,7 @@ class RankingDataset:
         self,
         data_dir: str,
         data_format: str,
-        features: Features,
+        feature_config: FeatureConfig,
         max_num_records: int,
         loss_key: str,
         scoring_key: str,
@@ -26,9 +26,8 @@ class RankingDataset:
         parse_tfrecord: bool = True,
         logger: Logger = None,
     ):
-        self.features = features
+        self.feature_config = feature_config
         self.max_num_records = max_num_records
-        self.label: str = self.features.label
         self.data_dir: str = data_dir
         self.data_format: str = data_format
         self.loss_key: str = loss_key
@@ -44,8 +43,6 @@ class RankingDataset:
         self.validation: Optional[tf.data.TFRecordDataset] = None
         self.test: Optional[tf.data.TFRecordDataset] = None
         self.create_dataset(parse_tfrecord)
-
-        self.features.add_mask()
 
     def create_dataset(self, parse_tfrecord=True):
         """
@@ -95,7 +92,7 @@ class RankingDataset:
             """
             self.train = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
-                features=self.features,
+                feature_config=self.feature_config,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,
@@ -104,7 +101,7 @@ class RankingDataset:
             )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
-                features=self.features,
+                feature_config=self.feature_config,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,
@@ -113,7 +110,7 @@ class RankingDataset:
             )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
-                features=self.features,
+                feature_config=self.feature_config,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,

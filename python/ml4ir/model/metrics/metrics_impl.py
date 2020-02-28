@@ -55,7 +55,7 @@ class MeanMetricWrapper(metrics.Mean):
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
         self,
-        pos: Tensor,
+        rank: Tensor,
         mask: Tensor,
         name="MeanRankMetric",
         rerank: bool = True,
@@ -67,10 +67,10 @@ class MeanRankMetric(MeanMetricWrapper):
         Args:
             name: string name of the metric instance.
             dtype: (Optional) data type of the metric result.
-            pos: 2D tensor representing ranks/positions of records in a query
+            rank: 2D tensor representing ranks/rankitions of records in a query
             mask: 2D tensor representing 0/1 mask for padded records
 
-        NOTE: pos and mask should be same shape as y_pred and y_true
+        NOTE: rank and mask should be same shape as y_pred and y_true
 
         This metric creates two local variables, `total` and `count` that are used to
         compute the frequency with which `y_pred` matches `y_true`. This frequency is
@@ -82,10 +82,12 @@ class MeanRankMetric(MeanMetricWrapper):
         Use `sample_weight` of 0 to mask values.
         """
         name = "{}_{}".format("new" if rerank else "old", name)
-        super(MeanRankMetric, self).__init__(self._compute, name, dtype=dtype, pos=pos, mask=mask)
+        super(MeanRankMetric, self).__init__(
+            self._compute, name, dtype=dtype, rank=rank, mask=mask
+        )
         self.rerank = rerank
 
-    def _compute(self, y_true, y_pred, pos, mask):
+    def _compute(self, y_true, y_pred, rank, mask):
         if self.rerank:
             """Rerank using trained model"""
             # Convert y_pred for the masked records to -inf
@@ -111,7 +113,7 @@ class MeanRankMetric(MeanMetricWrapper):
             y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
 
             # Compute rank of clicked record from predictions
-            click_ranks = tf.gather_nd(pos, indices=y_true_clicks)
+            click_ranks = tf.gather_nd(rank, indices=y_true_clicks)
 
         return self._get_matches_hook(click_ranks)
 
@@ -130,7 +132,7 @@ class MRR(MeanRankMetric):
     `y_true` is [[0, 0, 1], [0, 1, 0]]
     `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     `mask` is [[1, 1, 1], [1, 1, 1]] and
-    `pos` is [[1, 3, 2], [3, 1, 2]]
+    `rank` is [[1, 3, 2], [3, 1, 2]]
     then the MRR is 0.75
     """
 
@@ -153,7 +155,7 @@ class ACR(MeanRankMetric):
     `y_true` is [[0, 0, 1], [0, 1, 0]]
     `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     `mask` is [[1, 1, 1], [1, 1, 1]] and
-    `pos` is [[1, 3, 2], [3, 1, 2]]
+    `rank` is [[1, 3, 2], [3, 1, 2]]
     then the ACR is 1.50
     """
 

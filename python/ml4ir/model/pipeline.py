@@ -11,7 +11,7 @@ import time
 from argparse import Namespace
 from logging import Logger
 from ml4ir.config.parse_args import get_args
-from ml4ir.config import features
+from ml4ir.config.features import parse_config, FeatureConfig
 from ml4ir.io import logging_utils
 from ml4ir.io import file_io
 from ml4ir.data.ranking_dataset import RankingDataset
@@ -71,7 +71,7 @@ class RankingPipeline(object):
         self.set_seeds()
 
         # Load and parse feature config
-        self.features = features.parse_config(self.args.feature_config)
+        self.feature_config: FeatureConfig = parse_config(self.args.feature_config)
         self.logger.info("Feature config parsed and loaded")
 
         # Finished initialization
@@ -163,7 +163,7 @@ class RankingPipeline(object):
             ranking_dataset = RankingDataset(
                 data_dir=self.data_dir,
                 data_format=self.data_format,
-                features=self.features,
+                feature_config=self.feature_config,
                 max_num_records=self.args.max_num_records,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
@@ -182,7 +182,7 @@ class RankingPipeline(object):
                 scoring_key=self.scoring,
                 metrics_keys=self.metrics,
                 optimizer_key=self.optimizer,
-                features=self.features,
+                feature_config=self.feature_config,
                 max_num_records=self.args.max_num_records,
                 model_file=self.args.model_file,
                 learning_rate=self.args.learning_rate,
