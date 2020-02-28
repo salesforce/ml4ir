@@ -15,6 +15,7 @@ def read(
     feature_config: FeatureConfig,
     tfrecord_dir: str,
     batch_size: int = 128,
+    use_part_files: bool = False,
     max_num_records: int = 25,
     parse_tfrecord: bool = True,
     logger=None,
@@ -36,13 +37,18 @@ def read(
         - feature_config: ml4ir.config.features.FeatureConfig object extracted from the feature config
         - tfrecord_dir: Path to directory where the serialized .tfrecord files will be stored
         - batch_size: int value specifying the size of the batch
+        - use_part_files: bool value specifying whether to look for part files
         - max_num_records: int value specifying max number of records per query
         - logger: logging object
 
     Returns:
         tensorflow TFRecordDataset
     """
-    csv_files: List[str] = glob.glob(os.path.join(data_dir, "*.csv"))
+    csv_files: List[str] = file_io.get_files_in_directory(
+        data_dir,
+        extension="" if use_part_files else ".csv",
+        prefix="part-" if use_part_files else "",
+    )
 
     # Create a directory for storing tfrecord files
     file_io.make_directory(tfrecord_dir, clear_dir=True)

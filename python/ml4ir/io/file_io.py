@@ -260,7 +260,7 @@ def copy_dir_to_hdfs(src_path: str, dest_hdfs_path: str, log=None):
     raise NotImplementedError
 
 
-def get_files_in_directory(indir: str, extension=".csv", log=None):
+def get_files_in_directory(indir: str, extension=".csv", prefix="", log=None):
     """
     Get list of csv files in a directory
 
@@ -274,7 +274,7 @@ def get_files_in_directory(indir: str, extension=".csv", log=None):
         # return sorted([f for f in hdfs.ls(indir) if f.endswith(extension)])
         raise NotImplementedError
     else:
-        return sorted(glob.glob(os.path.join(indir, "*{}".format(extension))))
+        return sorted(glob.glob(os.path.join(indir, "{}*{}".format(prefix, extension))))
 
 
 def clear_dir(dir_path: str, log=None):

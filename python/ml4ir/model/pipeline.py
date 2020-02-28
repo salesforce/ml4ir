@@ -171,6 +171,7 @@ class RankingPipeline(object):
                 train_pcent_split=self.args.train_pcent_split,
                 val_pcent_split=self.args.val_pcent_split,
                 test_pcent_split=self.args.test_pcent_split,
+                use_part_files=self.args.use_part_files,
                 logger=self.logger,
             )
             self.logger.info("Ranking Dataset created")

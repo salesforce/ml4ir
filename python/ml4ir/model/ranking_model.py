@@ -661,6 +661,11 @@ class RankingModel:
         #
         # TODO : Move to separate module
         #
-        predictions = layers.Activation("sigmoid", name="ranking_scores")(scores)
+
+        # Pointwise sigmoid loss
+        # predictions = layers.Activation("sigmoid", name="ranking_scores")(scores)
+
+        # Listwise Top 1 RankNet Loss
+        predictions = layers.Softmax(axis=-1, name="ranking_scores")(scores)
 
         return predictions

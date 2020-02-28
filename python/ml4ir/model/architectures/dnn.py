@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
-def get_architecture_op(num_nodes=512):
+def get_architecture_op(num_nodes=256):
     def architecture_op(ranking_features):
         first_dense = layers.Dense(num_nodes, activation="relu", name="first_dense")(
             ranking_features

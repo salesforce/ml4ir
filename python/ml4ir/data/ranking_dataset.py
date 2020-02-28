@@ -23,6 +23,7 @@ class RankingDataset:
         train_pcent_split: float = 0.8,
         val_pcent_split: float = -1,
         test_pcent_split: float = -1,
+        use_part_files: bool = False,
         parse_tfrecord: bool = True,
         logger: Logger = None,
     ):
@@ -38,6 +39,7 @@ class RankingDataset:
         self.train_pcent_split: float = train_pcent_split
         self.val_pcent_split: float = val_pcent_split
         self.test_pcent_split: float = test_pcent_split
+        self.use_part_files: bool = use_part_files
 
         self.train: Optional[tf.data.TFRecordDataset] = None
         self.validation: Optional[tf.data.TFRecordDataset] = None
@@ -96,6 +98,7 @@ class RankingDataset:
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,
+                use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
                 logger=self.logger,
             )
@@ -105,6 +108,7 @@ class RankingDataset:
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,
+                use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
                 logger=self.logger,
             )
@@ -114,6 +118,7 @@ class RankingDataset:
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
                 max_num_records=self.max_num_records,
                 batch_size=self.batch_size,
+                use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
                 logger=self.logger,
             )

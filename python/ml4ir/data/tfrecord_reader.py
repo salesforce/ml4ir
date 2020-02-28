@@ -97,12 +97,29 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                     # Add mask for identifying padded records
                     mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(feature_tensor)))
                     mask = tf.expand_dims(mask, axis=2)
-                    mask = image.pad_to_bounding_box(
-                        mask,
-                        offset_height=0,
-                        offset_width=0,
-                        target_height=1,
-                        target_width=max_num_records,
+
+                    def crop_fn():
+                        tf.print("\n[WARN] Number of records in query : ", tf.shape(mask))
+                        return image.crop_to_bounding_box(
+                            mask,
+                            offset_height=0,
+                            offset_width=0,
+                            target_height=1,
+                            target_width=max_num_records,
+                        )
+
+                    mask = tf.cond(
+                        tf.shape(mask)[1] < max_num_records,
+                        # Pad if there are missing records
+                        lambda: image.pad_to_bounding_box(
+                            mask,
+                            offset_height=0,
+                            offset_width=0,
+                            target_height=1,
+                            target_width=max_num_records,
+                        ),
+                        # Crop if there are extra records
+                        crop_fn,
                     )
                     features_dict["mask"] = tf.squeeze(mask)
 
@@ -145,6 +162,7 @@ def read(
     max_num_records: int = 25,
     batch_size: int = 128,
     parse_tfrecord: bool = True,
+    use_part_files: bool = False,
     logger: Logger = None,
     **kwargs
 ) -> data.TFRecordDataset:
@@ -169,13 +187,17 @@ def read(
     )
 
     # Get all tfrecord files in directory
-    tfrecord_files = file_io.get_files_in_directory(data_dir, extension=".tfrecord")
+    tfrecord_files = file_io.get_files_in_directory(
+        data_dir,
+        extension="" if use_part_files else ".tfrecord",
+        prefix="part-" if use_part_files else "",
+    )
 
     # Parse the protobuf data to create a TFRecordDataset
     dataset = data.TFRecordDataset(tfrecord_files)
     if parse_tfrecord:
-        dataset = dataset.map(parse_sequence_example_fn)
-    dataset = dataset.batch(batch_size)
+        dataset = dataset.map(parse_sequence_example_fn).apply(data.experimental.ignore_errors())
+    dataset = dataset.batch(batch_size, drop_remainder=True)
 
     if logger:
         logger.info(

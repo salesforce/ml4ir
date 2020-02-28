@@ -180,6 +180,13 @@ def define_args() -> ArgumentParser:
         help="SavedModel signature to be used for inference",
     )
 
+    parser.add_argument(
+        "--use_part_files",
+        type=bool,
+        default=False,
+        help="Whether to look for part files while loading data",
+    )
+
     return parser
 
 
