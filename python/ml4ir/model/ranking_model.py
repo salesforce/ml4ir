@@ -353,7 +353,7 @@ class RankingModel:
             metrics = self.model.evaluate(test_dataset, callbacks=callbacks_list)
             metrics_dict = dict(zip(self.model.metrics_names, metrics))
             self.logger.info("\n\nEvaluation Results")
-            self.logger.info(pd.DataFrame(metrics_dict).T)
+            self.logger.info(pd.Series(metrics_dict).T)
             return metrics_dict
         else:
             raise NotImplementedError(
@@ -566,7 +566,7 @@ class RankingModel:
                 logger.info("End of Epoch {}".format(epoch))
                 logger.info(logs)
 
-            def on_epoch_start(self, epoch, logs=None):
+            def on_epoch_begin(self, epoch, logs=None):
                 logger.info("Starting Epoch : {}".format(epoch))
                 logger.info(logs)
 
