@@ -9,6 +9,11 @@ def get_architecture_op(num_nodes=256):
         )
         # first_dropout = layers.Dropout(rate=0.3, name="first_dropout")(first_dense)
 
+        # second_dense = layers.Dense(128, activation="relu", name="second_dense")(
+        #     first_dense
+        # )
+        # second_dropout = layers.Dropout(rate=0.3, name="second_dropout")(second_dense)
+
         final_dense = layers.Dense(64, activation="relu", name="final_dense")(first_dense)
         # final_dropout = tf.keras.layers.Dropout(rate=0.1)(final_dense)
 

@@ -2,6 +2,7 @@ from ml4ir.model.losses.loss_base import PointwiseLossBase
 from tensorflow.keras import losses
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow.keras.losses import Reduction
 
 
 class SigmoidCrossEntropy(PointwiseLossBase):
@@ -11,7 +12,7 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         Additionally can pass in record positions to handle positional bias
 
         """
-        bce = losses.BinaryCrossentropy()
+        bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
         mask = kwargs.get("mask")
 
         def _loss_fn(y_true, y_pred):

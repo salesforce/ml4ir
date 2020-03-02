@@ -2,6 +2,7 @@ from ml4ir.model.losses.loss_base import ListwiseLossBase
 import tensorflow as tf
 from tensorflow.keras import losses
 from tensorflow.keras import layers
+from tensorflow.keras.losses import Reduction
 
 
 class RankOneListNet(ListwiseLossBase):
@@ -11,20 +12,23 @@ class RankOneListNet(ListwiseLossBase):
         Additionally can pass in record positions to handle positional bias
 
         """
-        cce = losses.CategoricalCrossentropy(from_logits=False)
-        # mask = kwargs.get("mask")
+        bce = losses.BinaryCrossentropy(reduction=Reduction.SUM)
+        mask = kwargs.get("mask")
+        # cce = losses.CategoricalCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
 
         def _loss_fn(y_true, y_pred):
-            # Mask the predictions to ignore padded records
-            # cce = tf.math.multiply(tf.constant(-1.),
-            #                        tf.gather_nd(tf.cast(tf.math.log(y_pred), tf.float32),
-            #                                     tf.equal(y_true, 1.0)))
-            # cce = tf.where(tf.equal(mask, tf.constant(1.0)), cce, tf.constant(0.0))
-            # cce = tf.where(tf.math.is_nan(cce), tf.constant(0.0), cce)
+            # Mask the padded records
+            y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
+            y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
 
+            # Reshape the tensors
+            y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
+            y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
+
+            y_true = tf.clip_by_value(y_true, tf.constant(1e-9), tf.constant(1.0))
+
+            return bce(y_true, y_pred)
             # return cce(y_true, y_pred)
-
-            return cce(y_true, y_pred)
 
         return _loss_fn
 
@@ -32,32 +36,18 @@ class RankOneListNet(ListwiseLossBase):
         # Without masking padded records
         softmax = layers.Softmax(axis=-1, name="ranking_scores")
 
-        def softmax_op(logits, mask):
-            return softmax(logits)
-
-        return softmax_op
-
         # Listwise Top 1 RankNet Loss
         def masked_softmax(logits, mask):
             """
             NOTE:
-            Clip the values to a small number above 0.
-            Otherwise softmax will blow up and return null values
-
-            Eg: softmax([-200., -300., 0., 0.])
+            Tried to manually compute softmax with tf operations,
+            but tf.keras.layers.Softmax() is more stable when working with
+            cross_entropy layers
             """
-            exponents = tf.clip_by_value(
-                tf.math.exp(logits), tf.constant(1e-9), tf.constant(tf.float32.max)
+            logits = tf.where(
+                tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
             )
 
-            masked_exponents = tf.math.multiply(exponents, tf.cast(mask, tf.float32))
-            sum_masked_exponents = tf.expand_dims(
-                tf.reduce_sum(masked_exponents, axis=-1), axis=-1
-            )
-            probabilities = tf.math.divide(masked_exponents, sum_masked_exponents)
-            probabilities = tf.clip_by_value(
-                probabilities, tf.constant(1e-9), tf.constant(1.0), name="ranking_scores"
-            )
-            return probabilities
+            return softmax(logits)
 
         return masked_softmax

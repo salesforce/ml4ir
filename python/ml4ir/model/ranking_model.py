@@ -195,7 +195,9 @@ class RankingModel:
             models_dir: directory to save model checkpoints
             logs_dir: directory to save model logs
         """
-        callbacks_list: list = self._build_callback_hooks(models_dir=models_dir, logs_dir=logs_dir)
+        callbacks_list: list = self._build_callback_hooks(
+            models_dir=models_dir, logs_dir=logs_dir, dataset=dataset
+        )
         # from IPython import embed; embed()
         self.logger.info("Training model...")
         if self.is_compiled:
@@ -509,7 +511,7 @@ class RankingModel:
             ServingSignatureKey.TFRECORD: _serve_tfrecord
         }
 
-    def _build_callback_hooks(self, models_dir: str, logs_dir: str):
+    def _build_callback_hooks(self, models_dir: str, logs_dir: str, dataset: data.Dataset):
         """
         Build callback hooks for the training loop
 
