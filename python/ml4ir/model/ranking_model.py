@@ -544,7 +544,7 @@ class RankingModel:
                 callbacks_list.append(cp_callback)
 
             # Early Stopping
-            early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_mrr", mode="max")
+            early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_MRR", mode="max")
             callbacks_list.append(early_stopping_callback)
 
         # TensorBoard
