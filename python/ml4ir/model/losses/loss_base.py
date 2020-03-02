@@ -29,6 +29,18 @@ class RankingLossBase(object):
 
         return _loss_fn
 
+    def get_final_activation_op(self):
+        """
+        Returns the final activation layer
+        """
+        return self._final_activation_op()
+
+    def _final_activation_op(self):
+        """
+        Define the final activation layer
+        """
+        raise NotImplementedError
+
 
 class PointwiseLossBase(RankingLossBase):
 

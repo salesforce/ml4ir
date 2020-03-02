@@ -121,7 +121,14 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                         # Crop if there are extra records
                         crop_fn,
                     )
-                    features_dict["mask"] = tf.squeeze(mask)
+                    mask = tf.squeeze(mask)
+
+                    # Check validity of mask
+                    tf.debugging.assert_greater(
+                        tf.cast(tf.reduce_sum(mask), tf.float32), tf.constant(0.0)
+                    )
+
+                    features_dict["mask"] = mask
 
                 feature_tensor = sparse.reset_shape(feature_tensor, new_shape=[1, max_num_records])
                 feature_tensor = sparse.to_dense(feature_tensor)
@@ -151,6 +158,10 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
             features_dict[feature_name] = feature_tensor
 
         labels = features_dict.pop(feature_config.get_label(key="name"))
+
+        # Check if label is one-hot and correctly masked
+        tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
+
         return features_dict, labels
 
     return _parse_sequence_example_fn

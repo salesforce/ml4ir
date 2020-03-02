@@ -155,7 +155,7 @@ class RankingModel:
 
         Same shape as scores, but with an additional activation layer
         """
-        predictions = self._add_predictions(scores)
+        predictions = self._add_predictions(scores, loss=loss, mask=metadata_features.get("mask"))
 
         # Create model with functional Keras API
         model = Model(inputs=inputs, outputs={"ranking_scores": predictions})
@@ -185,7 +185,7 @@ class RankingModel:
 
         return model
 
-    def fit(self, dataset, num_epochs, models_dir):
+    def fit(self, dataset, num_epochs, models_dir, logs_dir=None):
         """
         Trains model for defined number of epochs
 
@@ -193,9 +193,10 @@ class RankingModel:
             dataset: an instance of RankingDataset
             num_epochs: int value specifying number of epochs to train for
             models_dir: directory to save model checkpoints
+            logs_dir: directory to save model logs
         """
-        callbacks_list: list = self._build_callback_hooks(models_dir=models_dir)
-
+        callbacks_list: list = self._build_callback_hooks(models_dir=models_dir, logs_dir=logs_dir)
+        # from IPython import embed; embed()
         self.logger.info("Training model...")
         if self.is_compiled:
             self.model.fit(
@@ -508,7 +509,7 @@ class RankingModel:
             ServingSignatureKey.TFRECORD: _serve_tfrecord
         }
 
-    def _build_callback_hooks(self, models_dir: str):
+    def _build_callback_hooks(self, models_dir: str, logs_dir: str):
         """
         Build callback hooks for the training loop
 
@@ -518,11 +519,36 @@ class RankingModel:
         callbacks_list: list = list()
 
         # Model checkpoint
-        checkpoints_path = os.path.join(models_dir, "checkpoints")
-        cp_callback = callbacks.ModelCheckpoint(
-            filepath=checkpoints_path, save_weights_only=False, verbose=1
-        )
-        callbacks_list.append(cp_callback)
+        if models_dir:
+            checkpoints_path = os.path.join(models_dir, "checkpoints")
+            cp_callback = callbacks.ModelCheckpoint(
+                filepath=checkpoints_path, save_weights_only=False, verbose=1
+            )
+            callbacks_list.append(cp_callback)
+
+        # TensorBoard
+        if logs_dir:
+            tensorboard_callback = callbacks.TensorBoard(
+                log_dir=logs_dir, histogram_freq=1, update_freq=5
+            )
+            callbacks_list.append(tensorboard_callback)
+
+        # Early Stopping
+        early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_mrr", mode="max")
+        callbacks_list.append(early_stopping_callback)
+
+        # Uncomment to enable debugger
+        # logger = self.logger
+        # class DebuggingCallback(callbacks.Callback):
+        #     def on_train_batch_end(self, batch, logs=None):
+        #         logger.info(logs)
+        #         # import pdb; pdb.set_trace()
+
+        #     def on_epoch_end(self, epoch, logs=None):
+        #         logger.info(logs)
+        #         # import pdb; pdb.set_trace()
+
+        # callbacks_list.append(DebuggingCallback())
 
         # Add more here
 
@@ -602,7 +628,7 @@ class RankingModel:
                 #
                 # TODO
                 #
-                raise NotImplementedError
+                return ranking_features, metadata_features
         elif self.scoring_key == ScoringKey.PAIRWISE:
             if loss.loss_type == LossTypeKey.POINTWISE:
                 """
@@ -651,21 +677,15 @@ class RankingModel:
 
         return scores
 
-    def _add_predictions(self, scores):
+    def _add_predictions(self, logits, loss, mask):
         """
         Convert ranking scores into probabilities
 
-        NOTE: Depends on the loss being used
-        Could be moved to the loss function in the future
+        Args:
+            logits: scores from the final model layer
+            loss: RankingLoss object
+            mask: mask tensor for handling padded records
         """
-        #
-        # TODO : Move to separate module
-        #
+        activation_fn = loss.get_final_activation_op()
 
-        # Pointwise sigmoid loss
-        # predictions = layers.Activation("sigmoid", name="ranking_scores")(scores)
-
-        # Listwise Top 1 RankNet Loss
-        predictions = layers.Softmax(axis=-1, name="ranking_scores")(scores)
-
-        return predictions
+        return activation_fn(logits, mask)

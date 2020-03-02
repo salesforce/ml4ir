@@ -7,9 +7,11 @@ def get_architecture_op(num_nodes=256):
         first_dense = layers.Dense(num_nodes, activation="relu", name="first_dense")(
             ranking_features
         )
-        first_dropout = layers.Dropout(rate=0.3, name="first_dropout")(first_dense)
-        final_dense = layers.Dense(64, activation="relu", name="final_dense")(first_dropout)
-        # _ = tf.keras.layers.Dropout(rate=0.1g)(_)
+        # first_dropout = layers.Dropout(rate=0.3, name="first_dropout")(first_dense)
+
+        final_dense = layers.Dense(64, activation="relu", name="final_dense")(first_dense)
+        # final_dropout = tf.keras.layers.Dropout(rate=0.1)(final_dense)
+
         scores = layers.Dense(1, name="scores")(final_dense)
 
         # Collapse extra dimensions

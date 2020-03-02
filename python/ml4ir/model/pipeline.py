@@ -204,6 +204,7 @@ class RankingPipeline(object):
                     dataset=ranking_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
+                    logs_dir=self.logs_dir,
                 )
 
                 # Save model
