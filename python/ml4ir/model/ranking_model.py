@@ -181,7 +181,10 @@ class RankingModel:
             experimental_run_tf_function=False,
         )
 
-        self.logger.info(model.summary())
+        # Write model summary to logs
+        model_summary = list()
+        model.summary(print_fn=lambda x: model_summary.append(x))
+        self.logger.info("\n".join(model_summary))
 
         return model
 

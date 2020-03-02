@@ -25,8 +25,6 @@ class RankOneListNet(ListwiseLossBase):
             y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
             y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
 
-            y_true = tf.clip_by_value(y_true, tf.constant(1e-9), tf.constant(1.0))
-
             return bce(y_true, y_pred)
             # return cce(y_true, y_pred)
 
