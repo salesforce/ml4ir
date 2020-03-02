@@ -120,6 +120,22 @@ class FeatureConfig:
         if len(self.ranking_features) == 0:
             raise Exception("No trainable features specified in the feature config")
 
+        if logger:
+            logger.info("Feature config loaded successfully")
+            logger.info(
+                "Trainable Features : \n{}".format("\n".join(self.get_ranking_features("name")))
+            )
+            logger.info("Click label : {}".format(self.get_label("name")))
+            logger.info(
+                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
+            )
+            logger.info(
+                "Context Features : \n{}".format("\n".join(self.get_ranking_features("name")))
+            )
+            logger.info(
+                "Sequence Features : \n{}".format("\n".join(self.get_ranking_features("name")))
+            )
+
         self.mask = self.generate_mask()
         self.all_features.append(self.get_mask())
 

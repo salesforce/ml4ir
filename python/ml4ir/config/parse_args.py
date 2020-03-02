@@ -187,6 +187,13 @@ def define_args() -> ArgumentParser:
         help="Whether to look for part files while loading data",
     )
 
+    parser.add_argument(
+        "--logging_frequency",
+        type=int,
+        default=25,
+        help="How often to log results to log file. Int representing number of batches.",
+    )
+
     return parser
 
 

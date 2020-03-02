@@ -185,7 +185,7 @@ class RankingModel:
 
         return model
 
-    def fit(self, dataset, num_epochs, models_dir, logs_dir=None):
+    def fit(self, dataset, num_epochs, models_dir, logs_dir=None, logging_frequency=25):
         """
         Trains model for defined number of epochs
 
@@ -194,12 +194,14 @@ class RankingModel:
             num_epochs: int value specifying number of epochs to train for
             models_dir: directory to save model checkpoints
             logs_dir: directory to save model logs
+            logging_frequency: every #batches to log results
         """
         callbacks_list: list = self._build_callback_hooks(
-            models_dir=models_dir, logs_dir=logs_dir, dataset=dataset
+            models_dir=models_dir,
+            logs_dir=logs_dir,
+            is_training=True,
+            logging_frequency=logging_frequency,
         )
-        # from IPython import embed; embed()
-        self.logger.info("Training model...")
         if self.is_compiled:
             self.model.fit(
                 x=dataset.train,
@@ -231,7 +233,6 @@ class RankingModel:
         Returns:
             ranking scores or new ranks for each record in a query
         """
-        self.logger.info("Predicting scores on test set...")
         if self.is_compiled:
             infer = self.model
         else:
@@ -329,7 +330,7 @@ class RankingModel:
 
         return predictions_df
 
-    def evaluate(self, test_dataset):
+    def evaluate(self, test_dataset, models_dir, logs_dir, logging_frequency=25):
         """
         Predict the labels/ranks and compute metrics for the test set
 
@@ -339,10 +340,18 @@ class RankingModel:
         Returns:
             evaluated metrics specified on the dataset
         """
-        self.logger.info("Evaluating model on test set...")
         if self.is_compiled:
-            metrics = self.model.evaluate(test_dataset)
-            return dict(zip(self.model.metrics_names, metrics))
+            callbacks_list: list = self._build_callback_hooks(
+                models_dir=models_dir,
+                logs_dir=logs_dir,
+                is_training=True,
+                logging_frequency=logging_frequency,
+            )
+            metrics = self.model.evaluate(test_dataset, callbacks=callbacks_list)
+            metrics_dict = dict(zip(self.model.metrics_names, metrics))
+            self.logger.info("\n\nEvaluation Results")
+            self.logger.info(pd.DataFrame(metrics_dict).T)
+            return metrics_dict
         else:
             raise NotImplementedError(
                 "The model could not be evaluated. Check if the model was compiled correctly. Training a SavedModel is not currently supported."
@@ -511,7 +520,9 @@ class RankingModel:
             ServingSignatureKey.TFRECORD: _serve_tfrecord
         }
 
-    def _build_callback_hooks(self, models_dir: str, logs_dir: str, dataset: data.Dataset):
+    def _build_callback_hooks(
+        self, models_dir: str, logs_dir: str, is_training=True, logging_frequency=25
+    ):
         """
         Build callback hooks for the training loop
 
@@ -520,13 +531,18 @@ class RankingModel:
         """
         callbacks_list: list = list()
 
-        # Model checkpoint
-        if models_dir:
-            checkpoints_path = os.path.join(models_dir, "checkpoints")
-            cp_callback = callbacks.ModelCheckpoint(
-                filepath=checkpoints_path, save_weights_only=False, verbose=1
-            )
-            callbacks_list.append(cp_callback)
+        if is_training:
+            # Model checkpoint
+            if models_dir:
+                checkpoints_path = os.path.join(models_dir, "checkpoints")
+                cp_callback = callbacks.ModelCheckpoint(
+                    filepath=checkpoints_path, save_weights_only=False, verbose=1
+                )
+                callbacks_list.append(cp_callback)
+
+            # Early Stopping
+            early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_mrr", mode="max")
+            callbacks_list.append(early_stopping_callback)
 
         # TensorBoard
         if logs_dir:
@@ -535,22 +551,44 @@ class RankingModel:
             )
             callbacks_list.append(tensorboard_callback)
 
-        # Early Stopping
-        early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_mrr", mode="max")
-        callbacks_list.append(early_stopping_callback)
+        # Debugging/Logging
+        logger = self.logger
 
-        # Uncomment to enable debugger
-        # logger = self.logger
-        # class DebuggingCallback(callbacks.Callback):
-        #     def on_train_batch_end(self, batch, logs=None):
-        #         logger.info(logs)
-        #         # import pdb; pdb.set_trace()
+        class DebuggingCallback(callbacks.Callback):
+            def on_train_batch_end(self, batch, logs=None):
+                if batch % logging_frequency == 0:
+                    logger.info("[batch: {}] {}".format(batch, logs))
 
-        #     def on_epoch_end(self, epoch, logs=None):
-        #         logger.info(logs)
-        #         # import pdb; pdb.set_trace()
+            def on_epoch_end(self, epoch, logs=None):
+                logger.info("End of Epoch {}".format(epoch))
+                logger.info(logs)
 
-        # callbacks_list.append(DebuggingCallback())
+            def on_epoch_start(self, epoch, logs=None):
+                logger.info("Starting Epoch : {}".format(epoch))
+                logger.info(logs)
+
+            def on_train_begin(self, logs):
+                logger.info("Training Model")
+
+            def on_test_begin(self, logs):
+                logger.info("Evaluating Model")
+
+            def on_predict_begin(self, logs):
+                logger.info("Predicting scores using model")
+
+            def on_train_end(self, logs):
+                logger.info("Completed training model")
+                logger.info(logs)
+
+            def on_test_end(self, logs):
+                logger.info("Completed evaluating model")
+                logger.info(logs)
+
+            def on_predict_end(self, logs):
+                logger.info("Completed Predicting scores using model")
+                logger.info(logs)
+
+        callbacks_list.append(DebuggingCallback())
 
         # Add more here
 

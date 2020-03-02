@@ -205,6 +205,7 @@ class RankingPipeline(object):
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
                     logs_dir=self.logs_dir,
+                    logging_frequency=self.args.logging_frequency,
                 )
 
                 # Save model
@@ -217,7 +218,12 @@ class RankingPipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE,
             }:
                 # Evaluate
-                model.evaluate(test_dataset=ranking_dataset.test)
+                model.evaluate(
+                    test_dataset=ranking_dataset.test,
+                    models_dir=self.models_dir,
+                    logs_dir=self.logs_dir,
+                    logging_frequency=self.args.logging_frequency,
+                )
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
