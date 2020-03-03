@@ -99,7 +99,9 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                     mask = tf.expand_dims(mask, axis=2)
 
                     def crop_fn():
-                        tf.print("\n[WARN] Number of records in query : ", tf.shape(mask))
+                        tf.print(
+                            "\n[WARN] Bad query found. Number of records : ", tf.shape(mask)[1]
+                        )
                         return image.crop_to_bounding_box(
                             mask,
                             offset_height=0,

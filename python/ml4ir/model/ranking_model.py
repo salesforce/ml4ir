@@ -224,6 +224,7 @@ class RankingModel:
         inference_signature: str = None,
         logs_dir: Optional[str] = None,
         rerank: bool = False,
+        logging_frequency: int = 25,
     ):
         """
         Predict the labels for the trained model
@@ -236,6 +237,49 @@ class RankingModel:
         Returns:
             ranking scores or new ranks for each record in a query
         """
+        if logs_dir:
+            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            file_io.rm_file(outfile)
+
+        _predict_fn = self._get_predict_fn(inference_signature=inference_signature)
+
+        predictions_df_list = list()
+        batch_count = 0
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            # If feature is a string, convert back from bytes to string
+            for feature_info in self.feature_config.get_features_to_log():
+                feature_name = feature_info["name"]
+                if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
+                    predictions_dict[feature_name] = tf.strings.unicode_encode(
+                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
+                    )
+
+            predictions_df = pd.DataFrame(predictions_dict)
+            if logs_dir:
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+            else:
+                predictions_df_list.append(predictions_df)
+
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished predicting scores for {} batches".format(batch_count))
+
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            self.logger.info("Model Predictions: ")
+            predictions_df = pd.concat(predictions_df_list)
+            self.logger.info(predictions_df)
+
+        return predictions_df
+
+    def _get_predict_fn(self, inference_signature):
         if self.is_compiled:
             infer = self.model
         else:
@@ -245,11 +289,6 @@ class RankingModel:
         # Get features to log
         features_to_log = self.feature_config.get_features_to_log(key="name")
         features_to_log.extend(["new_score", "new_rank"])
-
-        if logs_dir:
-            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
-            # Delete file if it exists
-            file_io.rm_file(outfile)
 
         @tf.function
         def _flatten_records(x):
@@ -303,35 +342,7 @@ class RankingModel:
 
             return predictions_dict
 
-        predictions_df_list = list()
-        for predictions_dict in test_dataset.map(_predict_score).take(-1):
-            # If feature is a string, convert back from bytes to string
-            for feature_info in self.feature_config.get_features_to_log():
-                feature_name = feature_info["name"]
-                if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
-                    predictions_dict[feature_name] = tf.strings.unicode_encode(
-                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
-                    )
-
-            predictions_df = pd.DataFrame(predictions_dict)
-            if logs_dir:
-                if os.path.isfile(outfile):
-                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
-                else:
-                    # If writing first time, write headers to CSV file
-                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-            else:
-                predictions_df_list.append(predictions_df)
-
-        predictions_df = None
-        if logs_dir:
-            self.logger.info("Model predictions written to -> {}".format(outfile))
-        else:
-            self.logger.info("Model Predictions: ")
-            predictions_df = pd.concat(predictions_df_list)
-            self.logger.info(predictions_df)
-
-        return predictions_df
+        return _predict_score
 
     def evaluate(self, test_dataset, models_dir, logs_dir, logging_frequency=25):
         """

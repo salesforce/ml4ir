@@ -236,6 +236,7 @@ class RankingPipeline(object):
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logs_dir=self.logs_dir,
+                    logging_frequency=self.args.logging_frequency,
                 )
 
             # Finish
