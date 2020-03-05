@@ -16,6 +16,11 @@ case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
                          numDocsPerQuery: Option[Int] = None,
                          queryLength: Option[Int] = None)
 
+object FeatureConfig {
+  def apply(): FeatureConfig =
+    new FeatureConfig(List.empty, List.empty, None, None)
+}
+
 /**
   *
   */
