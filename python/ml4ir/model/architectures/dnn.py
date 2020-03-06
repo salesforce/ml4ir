@@ -44,14 +44,14 @@ class DNN:
 
     def get_architecture_op(self):
         def _architecture_op(ranking_features):
-            _ = ranking_features
+            layer_input = ranking_features
 
             # Pass ranking features through all the layers of the DNN
             for layer_op in self.layer_ops:
-                _ = layer_op(_)
+                layer_input = layer_op(layer_input)
 
             # Collapse extra dimensions
-            scores = tf.squeeze(_, axis=-1)
+            scores = tf.squeeze(layer_input, axis=-1)
 
             return scores
 
