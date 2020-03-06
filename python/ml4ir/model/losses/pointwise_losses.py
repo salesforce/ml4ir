@@ -24,7 +24,7 @@ class SigmoidCrossEntropy(PointwiseLossBase):
 
         return _loss_fn
 
-    def _final_activation_op(self):
+    def get_final_activation_op(self):
         # Pointwise sigmoid loss
         sigmoid = layers.Activation("sigmoid", name="ranking_scores")
 

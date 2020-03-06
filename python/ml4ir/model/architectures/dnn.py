@@ -7,6 +7,7 @@ class DNNLayer:
     DENSE = "dense"
     BATCH_NORMALIZATION = "batch_norm"
     DROPOUT = "dropout"
+    ACTIVATION = "activation"
 
 
 class DNN:
@@ -25,18 +26,24 @@ class DNN:
     def _get_dropout_layer(**kwargs):
         return layers.Dropout(**kwargs)
 
+    @staticmethod
+    def _get_activation(**kwargs):
+        return layers.Activation(**kwargs)
+
     def define_architecture(self, model_config):
         layer_ops = list()
-        for layer_info in model_config["layers"]:
-            layer_type = layer_info.pop("type")
+        for layer_args in model_config["layers"]:
+            layer_type = layer_args.pop("type")
             if layer_type == DNNLayer.DENSE:
-                layer_op = DNN._get_dense_layer(**layer_info)
+                layer_op = DNN._get_dense_layer(**layer_args)
             elif layer_type == DNNLayer.BATCH_NORMALIZATION:
-                layer_op = DNN._get_batch_norm_layer(**layer_info)
+                layer_op = DNN._get_batch_norm_layer(**layer_args)
             elif layer_type == DNNLayer.DROPOUT:
-                layer_op = DNN._get_dropout_layer(**layer_info)
+                layer_op = DNN._get_dropout_layer(**layer_args)
+            elif layer_type == DNNLayer.ACTIVATION:
+                layer_op = DNN._get_activation(**layer_args)
             else:
-                raise KeyError("Dense layer type is not supported : {}".format(layer_type))
+                raise KeyError("Layer type is not supported : {}".format(layer_type))
 
             layer_ops.append(layer_op)
 

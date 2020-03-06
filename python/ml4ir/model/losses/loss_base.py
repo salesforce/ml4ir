@@ -33,12 +33,6 @@ class RankingLossBase(object):
         """
         Returns the final activation layer
         """
-        return self._final_activation_op()
-
-    def _final_activation_op(self):
-        """
-        Define the final activation layer
-        """
         raise NotImplementedError
 
 

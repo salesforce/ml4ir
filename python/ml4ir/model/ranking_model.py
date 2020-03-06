@@ -21,12 +21,14 @@ from ml4ir.data.tfrecord_reader import make_parse_fn
 from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
+import copy
 
 from typing import Dict, Optional, List, Type
 
 
 # Constants
 MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
+CHECKPOINT_FNAME = "checkpoint.hdf5"
 
 
 class RankingModel:
@@ -213,6 +215,11 @@ class RankingModel:
                 verbose=True,
                 callbacks=callbacks_list,
             )
+
+            # Load best model from the training epochs based on Validation MRR
+            checkpoint_file = os.path.join(models_dir, CHECKPOINT_FNAME)
+            if os.path.exists(checkpoint_file):
+                self.model.load_weights(checkpoint_file)
         else:
             raise NotImplementedError(
                 "The model could not be trained. Check if the model was compiled correctly. Training loaded SavedModel is not currently supported."
@@ -552,9 +559,14 @@ class RankingModel:
         if is_training:
             # Model checkpoint
             if models_dir:
-                checkpoints_path = os.path.join(models_dir, "checkpoints")
+                checkpoints_path = os.path.join(models_dir, CHECKPOINT_FNAME)
                 cp_callback = callbacks.ModelCheckpoint(
-                    filepath=checkpoints_path, save_weights_only=False, verbose=1
+                    filepath=checkpoints_path,
+                    save_weights_only=True,
+                    verbose=1,
+                    save_best_only=True,
+                    mode="max",
+                    monitor="val_new_MRR",
                 )
                 callbacks_list.append(cp_callback)
 

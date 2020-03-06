@@ -30,7 +30,7 @@ class RankOneListNet(ListwiseLossBase):
 
         return _loss_fn
 
-    def _final_activation_op(self):
+    def get_final_activation_op(self):
         softmax_op = layers.Softmax(axis=-1, name="ranking_scores")
 
         # Listwise Top 1 RankNet Loss
