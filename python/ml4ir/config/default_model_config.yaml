@@ -8,14 +8,14 @@ layers:
     activation: relu
   - type: dropout
     name: first_dropout
-    rate: 0.3
+    rate: 0.0
   - type: dense
     name: second_dense
     hidden_units: 64
     activation: relu
   - type: dropout
     name: second_dropout
-    rate: 0.1
+    rate: 0.0
   - type: dense
     name: final_dense
     hidden_units: 1

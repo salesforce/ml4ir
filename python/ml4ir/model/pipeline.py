@@ -53,20 +53,10 @@ class RankingPipeline(object):
         self.data_dir: str = self.args.data_dir
         file_io.make_directory(self.models_dir, clear_dir=False, log=self.logger)
 
-        # Setup other arguments
-        if self.args.model_config.endswith(".yaml"):
-            self.model_config = file_io.read_yaml(self.args.model_config)
-            self.logger.info(
-                "Reading model config from YAML file : {} \n{}".format(
-                    self.args.model_config, self.model_config
-                )
-            )
-        else:
-            self.model_config = yaml.safe_load(self.args.model_config)
-            self.logger.info(
-                "Reading model config from YAML string : \n{}".format(self.model_config)
-            )
+        # Read/Parse model config YAML
+        self.model_config = self._read_model_config(self.args.model_config)
 
+        # Setup other arguments
         self.loss: str = self.args.loss
         self.scoring: str = self.args.scoring
         self.optimizer: str = self.args.optimizer
@@ -90,6 +80,19 @@ class RankingPipeline(object):
 
         # Finished initialization
         self.logger.info("Ranking Pipeline successfully initialized!")
+
+    def _read_model_config(self, model_config_str):
+        if model_config_str.endswith(".yaml"):
+            model_config = file_io.read_yaml(model_config_str)
+            self.logger.info(
+                "Reading model config from YAML file : {} \n{}".format(
+                    model_config, model_config_str
+                )
+            )
+        else:
+            model_config = yaml.safe_load(model_config_str)
+            self.logger.info("Reading model config from YAML string : \n{}".format(model_config))
+        return model_config
 
     def setup_logging(self) -> Logger:
         # Remove status file from any previous job at the start of the current job

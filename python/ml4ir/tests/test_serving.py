@@ -48,7 +48,7 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset = get_dataset(parse_tfrecord=True)
 
         model = RankingModel(
-            architecture_key=self.args.architecture,
+            model_config=self.model_config,
             loss_key=self.args.loss,
             scoring_key=self.args.scoring,
             metrics_keys=self.args.metrics,

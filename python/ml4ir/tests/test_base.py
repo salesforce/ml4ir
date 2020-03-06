@@ -44,6 +44,9 @@ class RankingTestBase(unittest.TestCase):
         self.args.models_dir = output_dir
         self.args.logs_dir = output_dir
 
+        # Load model_config
+        self.model_config = file_io.read_yaml(self.args.model_config)
+
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
 
