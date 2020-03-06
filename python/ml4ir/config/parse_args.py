@@ -87,12 +87,17 @@ def define_args() -> ArgumentParser:
         "--batch_size", type=int, default=128, help="Number of data samples to use per batch."
     )
 
+    parser.add_argument("--learning_rate", type=float, default=0.01, help="Step size (e.g.: 0.01)")
+
     parser.add_argument(
-        "--learning_rate", type=float, default=0.001, help="Step size (e.g.: 0.001)"
+        "--learning_rate_decay", type=float, default=0.90, help="decay rate for the learning rate"
     )
 
     parser.add_argument(
-        "--learning_rate_decay", type=float, default=0.96, help="decay rate for the learning rate"
+        "--learning_rate_decay_steps",
+        type=int,
+        default=1000,
+        help="decay rate for the learning rate",
     )
 
     parser.add_argument(

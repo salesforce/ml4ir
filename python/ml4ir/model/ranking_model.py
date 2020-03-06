@@ -21,7 +21,6 @@ from ml4ir.data.tfrecord_reader import make_parse_fn
 from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
-import copy
 
 from typing import Dict, Optional, List, Type
 
@@ -44,6 +43,7 @@ class RankingModel:
         model_file: str,
         learning_rate: float,
         learning_rate_decay: float,
+        learning_rate_decay_steps: int,
         compute_intermediate_stats: bool,
         logger=None,
     ):
@@ -67,6 +67,7 @@ class RankingModel:
                 optimizer_key=optimizer_key,
                 learning_rate=learning_rate,
                 learning_rate_decay=learning_rate_decay,
+                learning_rate_decay_steps=learning_rate_decay_steps,
             )
 
             # Define loss function
@@ -215,11 +216,6 @@ class RankingModel:
                 verbose=True,
                 callbacks=callbacks_list,
             )
-
-            # Load best model from the training epochs based on Validation MRR
-            checkpoint_file = os.path.join(models_dir, CHECKPOINT_FNAME)
-            if os.path.exists(checkpoint_file):
-                self.model.load_weights(checkpoint_file)
         else:
             raise NotImplementedError(
                 "The model could not be trained. Check if the model was compiled correctly. Training loaded SavedModel is not currently supported."
@@ -571,7 +567,9 @@ class RankingModel:
                 callbacks_list.append(cp_callback)
 
             # Early Stopping
-            early_stopping_callback = callbacks.EarlyStopping(monitor="val_new_MRR", mode="max")
+            early_stopping_callback = callbacks.EarlyStopping(
+                monitor="val_new_MRR", mode="max", patience=2, verbose=1, restore_best_weights=True
+            )
             callbacks_list.append(early_stopping_callback)
 
         # TensorBoard

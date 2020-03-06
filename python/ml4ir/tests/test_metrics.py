@@ -48,6 +48,7 @@ class RankingModelTest(RankingTestBase):
             model_file=self.args.model_file,
             learning_rate=self.args.learning_rate,
             learning_rate_decay=self.args.learning_rate_decay,
+            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
             compute_intermediate_stats=self.args.compute_intermediate_stats,
             logger=self.logger,
         )
