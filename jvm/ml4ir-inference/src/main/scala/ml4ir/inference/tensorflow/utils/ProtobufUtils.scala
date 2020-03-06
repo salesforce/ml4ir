@@ -6,6 +6,7 @@ import org.tensorflow.example._
 import org.tensorflow.DataType
 
 import scala.collection.JavaConverters._
+import java.lang.{Float => JFloat, Long => JLong}
 import scala.reflect.ClassTag
 
 // TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
@@ -17,15 +18,22 @@ case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
                          queryLength: Option[Int] = None)
 
 object FeatureConfig {
+  // zero-arg constructor to be nice to Java
   def apply(): FeatureConfig =
     new FeatureConfig(List.empty, List.empty, None, None)
 }
 
 /**
-  *
+  * Builder class for more easily instantiating SequenceExample protobufs from raw(-ish) features
   */
 case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
 
+  /**
+    * Functional API allowing the builder to act like a function to transform query/documents into a scorable protobuf
+    * @param query struct primarily containing the query text
+    * @param docs array of document-feature structs
+    * @return TensorFlow's protobuf structure containing the raw features in one SequenceExample packet
+    */
   def apply(query: QueryContext, docs: Array[Document]): SequenceExample = {
     SequenceExample
       .newBuilder()
@@ -34,6 +42,11 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
+  /**
+    *
+    * @param nodePairs
+    * @return
+    */
   def buildStringContextFeatures(nodePairs: (String, String)*): Features = {
     nodePairs
       .foldLeft(Features.newBuilder()) {
@@ -57,15 +70,18 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
+  /**
+    *
+    * @param documents
+    * @return
+    */
   def buildFeatureLists(documents: Array[Document]): FeatureLists = {
     val withFloats = transpose(documents.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
         case (bldr, (nodeName: String, featureValues: Array[Float])) =>
           bldr.putFeatureList(
             nodeName,
-            buildSingleFeatureFloatList(
-              featureValues.map(java.lang.Float.valueOf)
-            )
+            floatList(featureValues.map(JFloat.valueOf))
           )
       }
     // hard code positions for now, but perhaps they should be dummy values at inference time?
@@ -77,9 +93,7 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
           case (bldr, (nodeName: String, featureValues: Array[Long])) =>
             bldr.putFeatureList(
               nodeName,
-              buildSingleFeatureIntList(
-                featureValues.map(java.lang.Long.valueOf)
-              )
+              longList(featureValues.map(JLong.valueOf))
             )
         }
     withFloatsAndInts.build()
@@ -87,26 +101,9 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
 
   /**
     * Effectively transforms an array of maps of features into a map of arrays of features: the "transpose" operation
-    * @param docs to have their features extracted out into one dense array per feature
-    *             (note: currently Document only has float features)
+    * @param docFeatures to have their features extracted out into one dense array per feature
     * @return map of feature-name -> padded dense vector of numeric features
     */
-  def transposeDocs(docs: Array[Document]): Map[String, Array[Float]] = {
-    case class FeatureVal(name: String, value: Float, docIdx: Int)
-    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docs.length)
-    docs
-      .slice(0, math.min(docs.length, numDocsPerQuery))
-      .zipWithIndex
-      .flatMap {
-        case (doc: Document, idx: Int) =>
-          doc.floatFeatures.map {
-            case (feature, value) => FeatureVal(feature, value, idx)
-          }
-      }
-      .groupBy(_.name)
-      .mapValues(_.sortBy(_.docIdx).map(_.value).padTo(numDocsPerQuery, 0f))
-  }
-
   def transpose[T: ClassTag](
     docFeatures: Array[Map[String, T]]
   ): Map[String, Array[T]] = {
@@ -125,7 +122,12 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .mapValues(_.sortBy(_.docIdx).map(_.value).toArray)
   }
 
-  def toFeature(featureValues: Array[java.lang.Long]): Feature = {
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def toFeature(featureValues: Array[JLong]): Feature = {
     Feature
       .newBuilder()
       .setInt64List(
@@ -134,7 +136,12 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
-  def toFeature(featureValues: Array[java.lang.Float]): Feature = {
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def toFeature(featureValues: Array[JFloat]): Feature = {
     Feature
       .newBuilder()
       .setFloatList(
@@ -143,18 +150,24 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
-  def buildSingleFeatureIntList(
-    featureValues: Array[java.lang.Long]
-  ): FeatureList = {
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def longList(featureValues: Array[JLong]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
       .build()
   }
 
-  def buildSingleFeatureFloatList(
-    featureValues: Array[java.lang.Float]
-  ): FeatureList = {
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def floatList(featureValues: Array[JFloat]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
