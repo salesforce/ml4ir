@@ -14,9 +14,10 @@ class RankOneListNet(ListwiseLossBase):
         """
         bce = losses.BinaryCrossentropy(reduction=Reduction.SUM)
         mask = kwargs.get("mask")
-        # cce = losses.CategoricalCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
 
         def _loss_fn(y_true, y_pred):
+            batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
+
             # Mask the padded records
             y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
             y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
@@ -25,14 +26,12 @@ class RankOneListNet(ListwiseLossBase):
             y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
             y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
 
-            return bce(y_true, y_pred)
-            # return cce(y_true, y_pred)
+            return tf.math.divide(bce(y_true, y_pred), batch_size)
 
         return _loss_fn
 
     def _final_activation_op(self):
-        # Without masking padded records
-        softmax = layers.Softmax(axis=-1, name="ranking_scores")
+        softmax_op = layers.Softmax(axis=-1, name="ranking_scores")
 
         # Listwise Top 1 RankNet Loss
         def masked_softmax(logits, mask):
@@ -46,6 +45,6 @@ class RankOneListNet(ListwiseLossBase):
                 tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
             )
 
-            return softmax(logits)
+            return softmax_op(logits)
 
         return masked_softmax

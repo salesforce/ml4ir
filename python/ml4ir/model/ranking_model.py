@@ -32,7 +32,7 @@ MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
 class RankingModel:
     def __init__(
         self,
-        architecture_key: str,
+        model_config: dict,
         loss_key: str,
         scoring_key: str,
         metrics_keys: List[str],
@@ -45,7 +45,7 @@ class RankingModel:
         compute_intermediate_stats: bool,
         logger=None,
     ):
-        self.architecture_key: str = architecture_key
+        self.model_config: dict = model_config
         self.feature_config: FeatureConfig = feature_config
         self.scoring_key: str = scoring_key
         self.logger: Logger = logger
@@ -249,10 +249,14 @@ class RankingModel:
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             # If feature is a string, convert back from bytes to string
             for feature_info in self.feature_config.get_features_to_log():
-                feature_name = feature_info["name"]
+                feature_node_name = feature_info.get("node_name", feature_info["name"])
                 if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
-                    predictions_dict[feature_name] = tf.strings.unicode_encode(
-                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
+                    str_feature = tf.strings.unicode_encode(
+                        tf.cast(predictions_dict[feature_node_name], tf.int32),
+                        output_encoding="UTF-8",
+                    )
+                    predictions_dict[feature_node_name] = tf.strings.regex_replace(
+                        str_feature, "\x00", ""
                     )
 
             predictions_df = pd.DataFrame(predictions_dict)
@@ -287,7 +291,7 @@ class RankingModel:
             infer = self.model.signatures[inference_signature]
 
         # Get features to log
-        features_to_log = self.feature_config.get_features_to_log(key="name")
+        features_to_log = self.feature_config.get_features_to_log(key="node_name")
         features_to_log.extend(["new_score", "new_rank"])
 
         @tf.function
@@ -471,7 +475,7 @@ class RankingModel:
 
         # TFRecord Signature
         # Define a parsing function for tfrecord protos
-        inputs = self.feature_config.get_all_features(key="name", include_label=False)
+        inputs = self.feature_config.get_all_features(key="node_name", include_label=False)
         tfrecord_parse_fn = make_parse_fn(
             feature_config=self.feature_config, max_num_records=self.max_num_records
         )
@@ -569,16 +573,22 @@ class RankingModel:
         logger = self.logger
 
         class DebuggingCallback(callbacks.Callback):
+            def __init__(self, patience=0):
+                super(DebuggingCallback, self).__init__()
+
+                self.epoch = 0
+
             def on_train_batch_end(self, batch, logs=None):
                 if batch % logging_frequency == 0:
-                    logger.info("[batch: {}] {}".format(batch, logs))
+                    logger.info("[epoch: {} | batch: {}] {}".format(self.epoch, batch, logs))
 
             def on_epoch_end(self, epoch, logs=None):
-                logger.info("End of Epoch {}".format(epoch))
+                logger.info("End of Epoch {}".format(self.epoch))
                 logger.info(logs)
 
             def on_epoch_begin(self, epoch, logs=None):
-                logger.info("Starting Epoch : {}".format(epoch))
+                self.epoch = epoch + 1
+                logger.info("Starting Epoch : {}".format(self.epoch))
                 logger.info(logs)
 
             def on_train_begin(self, logs):
@@ -639,7 +649,7 @@ class RankingModel:
                 if feature_info["trainable"]:
                     ranking_features.append(tf.cast(dense_feature, tf.float32))
                 else:
-                    metadata_features[feature_name] = tf.cast(dense_feature, tf.float32)
+                    metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 # TODO: Add embedding layer here
                 pass
@@ -722,9 +732,7 @@ class RankingModel:
         Define the model architecture based on the type of scoring function selected
         """
         scoring_fn = scoring_factory.get_scoring_fn(
-            scoring_key=self.scoring_key,
-            architecture_key=self.architecture_key,
-            loss_type=loss.loss_type,
+            scoring_key=self.scoring_key, model_config=self.model_config, loss_type=loss.loss_type,
         )
 
         scores = scoring_fn(ranking_features)

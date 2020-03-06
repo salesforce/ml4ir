@@ -18,9 +18,8 @@ class Key:
 class ArchitectureKey(Key):
     """Model architecture keys"""
 
-    SIMPLE_DNN = DNN_512 = "simple_dnn"
-    DNN_128 = "dnn_128"
-    LSTM = "lstm"
+    DNN = "dnn"
+    RNN = "rnn"
 
 
 class LossKey(Key):

@@ -24,6 +24,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
     for feature_info in feature_config.get_all_features():
         feature_name = feature_info["name"]
+        feature_node_name = feature_info.get("node_name", feature_name)
         dtype = tf.float32
         default_value: Optional[Union[float, str]] = None
         if feature_info["dtype"] == "float":
@@ -38,11 +39,11 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         else:
             raise Exception("Unknown dtype {} for {}".format(feature_info["dtype"], feature_name))
         if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
-            context_features_spec[feature_name] = io.FixedLenFeature(
+            context_features_spec[feature_node_name] = io.FixedLenFeature(
                 [], dtype, default_value=default_value
             )
         elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-            sequence_features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
+            sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
 
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
@@ -66,10 +67,10 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
         # Explode context features into all records
         for feature_info in feature_config.get_context_features():
-            feature_name = feature_info["name"]
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info.get("feature_layer_info")
 
-            feature_tensor = context_features.get(feature_name)
+            feature_tensor = context_features.get(feature_node_name)
 
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
             feature_tensor = tf.tile(feature_tensor, multiples=[max_num_records])
@@ -83,17 +84,17 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                 )
                 feature_tensor = tf.cast(feature_tensor, tf.float32)
 
-            features_dict[feature_name] = feature_tensor
+            features_dict[feature_node_name] = feature_tensor
 
         # Pad sequence features to max_num_records
         for feature_info in feature_config.get_sequence_features():
-            feature_name = feature_info["name"]
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info["feature_layer_info"]
 
-            feature_tensor = sequence_features.get(feature_name)
+            feature_tensor = sequence_features.get(feature_node_name)
 
             if isinstance(feature_tensor, sparse.SparseTensor):
-                if feature_name == feature_config.get_rank(key="name"):
+                if feature_node_name == feature_config.get_rank(key="node_name"):
                     # Add mask for identifying padded records
                     mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(feature_tensor)))
                     mask = tf.expand_dims(mask, axis=2)
@@ -145,19 +146,9 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                     )
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
             else:
-                #
-                # Handle dense tensors
-                #
-                # if len(t.shape) == 1:
-                #     feature_tensor = tf.expand_dims(t, axis=0)
-                # if len(t.shape) == 2:
-                #     feature_tensor = tf.pad(t, paddings=[[0, 0], [0, max_num_records]])
-                #     feature_tensor = tf.squeeze(t)
-                # else:
-                #     raise Exception('Invalid input : {}'.format(feat))
                 raise ValueError("Invalid input : {}".format(feature_name))
 
-            features_dict[feature_name] = feature_tensor
+            features_dict[feature_node_name] = feature_tensor
 
         labels = features_dict.pop(feature_config.get_label(key="name"))
 

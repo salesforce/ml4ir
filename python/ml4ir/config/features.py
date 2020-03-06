@@ -120,6 +120,11 @@ class FeatureConfig:
         if len(self.ranking_features) == 0:
             raise Exception("No trainable features specified in the feature config")
 
+        self.log_initialization(logger)
+        self.mask = self.generate_mask()
+        self.all_features.append(self.get_mask())
+
+    def log_initialization(self, logger):
         if logger:
             logger.info("Feature config loaded successfully")
             logger.info(
@@ -136,10 +141,7 @@ class FeatureConfig:
                 "Sequence Features : \n{}".format("\n".join(self.get_ranking_features("name")))
             )
 
-        self.mask = self.generate_mask()
-        self.all_features.append(self.get_mask())
-
-    def _process_dict(self, dict_, key: str = None):
+    def _get_key_or_dict(self, dict_, key: str = None):
         """Helper method to return dictionary or fetch a value"""
         if key:
             if key == "node_name":
@@ -149,10 +151,10 @@ class FeatureConfig:
         else:
             return dict_
 
-    def _process_list_of_dicts(self, list_of_dicts, key: str = None):
+    def _get_list_of_keys_or_dicts(self, list_of_dicts, key: str = None):
         """Helper method to get respective dictionaries from list"""
         if key:
-            return [self._process_dict(f, key) for f in list_of_dicts]
+            return [self._get_key_or_dict(f, key) for f in list_of_dicts]
         else:
             return list_of_dicts
 
@@ -161,35 +163,35 @@ class FeatureConfig:
         Getter method for query_key in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_dict(self.query_key, key=key)
+        return self._get_key_or_dict(self.query_key, key=key)
 
     def get_label(self, key: str = None):
         """
         Getter method for label in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_dict(self.label, key=key)
+        return self._get_key_or_dict(self.label, key=key)
 
     def get_rank(self, key: str = None):
         """
         Getter method for rank in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_dict(self.rank, key=key)
+        return self._get_key_or_dict(self.rank, key=key)
 
     def get_mask(self, key: str = None):
         """
         Getter method for mask in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_dict(self.mask, key=key)
+        return self._get_key_or_dict(self.mask, key=key)
 
     def get_all_features(self, key: str = None, include_label: bool = True):
         """
         Getter method for all_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        all_features = self._process_list_of_dicts(self.all_features, key=key)
+        all_features = self._get_list_of_keys_or_dicts(self.all_features, key=key)
         if include_label:
             return all_features
         else:
@@ -203,35 +205,35 @@ class FeatureConfig:
         Getter method for ranking_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_list_of_dicts(self.ranking_features, key=key)
+        return self._get_list_of_keys_or_dicts(self.ranking_features, key=key)
 
     def get_metadata_features(self, key: str = None):
         """
         Getter method for metadata_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_list_of_dicts(self.metadata_features, key=key)
+        return self._get_list_of_keys_or_dicts(self.metadata_features, key=key)
 
     def get_context_features(self, key: str = None):
         """
         Getter method for context_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_list_of_dicts(self.context_features, key=key)
+        return self._get_list_of_keys_or_dicts(self.context_features, key=key)
 
     def get_sequence_features(self, key: str = None):
         """
         Getter method for sequence_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_list_of_dicts(self.sequence_features, key=key)
+        return self._get_list_of_keys_or_dicts(self.sequence_features, key=key)
 
     def get_features_to_log(self, key: str = None):
         """
         Getter method for features_to_log in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._process_list_of_dicts(self.features_to_log, key=key)
+        return self._get_list_of_keys_or_dicts(self.features_to_log, key=key)
 
     def define_inputs(self, max_num_records: int) -> Dict[str, Input]:
         """
@@ -260,7 +262,7 @@ class FeatureConfig:
             """
             node_name = feature_info.get("node_name", feature_info["name"])
             shape = get_shape(feature_info["feature_layer_info"])
-            inputs[feature_info["name"]] = Input(shape=shape, name=node_name)
+            inputs[node_name] = Input(shape=shape, name=node_name)
 
         return inputs
 

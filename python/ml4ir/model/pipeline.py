@@ -8,6 +8,7 @@ import traceback
 import os
 import sys
 import time
+import yaml
 from argparse import Namespace
 from logging import Logger
 from ml4ir.config.parse_args import get_args
@@ -17,7 +18,6 @@ from ml4ir.io import file_io
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
 
-from ml4ir.config.keys import ArchitectureKey
 from ml4ir.config.keys import LossKey
 from ml4ir.config.keys import ScoringKey
 from ml4ir.config.keys import MetricKey
@@ -54,7 +54,19 @@ class RankingPipeline(object):
         file_io.make_directory(self.models_dir, clear_dir=False, log=self.logger)
 
         # Setup other arguments
-        self.architecture: str = self.args.architecture
+        if self.args.model_config.endswith(".yaml"):
+            self.model_config = file_io.read_yaml(self.args.model_config)
+            self.logger.info(
+                "Reading model config from YAML file : {} \n{}".format(
+                    self.args.model_config, self.model_config
+                )
+            )
+        else:
+            self.model_config = yaml.safe_load(self.args.model_config)
+            self.logger.info(
+                "Reading model config from YAML string : \n{}".format(self.model_config)
+            )
+
         self.loss: str = self.args.loss
         self.scoring: str = self.args.scoring
         self.optimizer: str = self.args.optimizer
@@ -71,7 +83,9 @@ class RankingPipeline(object):
         self.set_seeds()
 
         # Load and parse feature config
-        self.feature_config: FeatureConfig = parse_config(self.args.feature_config)
+        self.feature_config: FeatureConfig = parse_config(
+            self.args.feature_config, logger=self.logger
+        )
         self.logger.info("Feature config parsed and loaded")
 
         # Finished initialization
@@ -105,12 +119,6 @@ class RankingPipeline(object):
                 )
             )
 
-        if self.architecture not in ArchitectureKey.get_all_keys():
-            raise Exception(
-                "Architecture specified [{}] is not one of : {}".format(
-                    self.architecture, ArchitectureKey.get_all_keys()
-                )
-            )
         if self.loss not in LossKey.get_all_keys():
             raise Exception(
                 "Loss specified [{}] is not one of : {}".format(self.loss, LossKey.get_all_keys())
@@ -178,7 +186,7 @@ class RankingPipeline(object):
 
             # Build model
             model = RankingModel(
-                architecture_key=self.architecture,
+                model_config=self.model_config,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
                 metrics_keys=self.metrics,

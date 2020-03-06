@@ -1,27 +1,61 @@
 import tensorflow as tf
 from tensorflow.keras import layers
+from typing import List
 
 
-def get_architecture_op(num_nodes=256):
-    def architecture_op(ranking_features):
-        first_dense = layers.Dense(num_nodes, activation="relu", name="first_dense")(
-            ranking_features
-        )
-        first_dropout = layers.Dropout(rate=0.3, name="first_dropout")(first_dense)
+class DNNLayer:
+    DENSE = "dense"
+    BATCH_NORMALIZATION = "batch_norm"
+    DROPOUT = "dropout"
 
-        # second_dense = layers.Dense(128, activation="relu", name="second_dense")(
-        #     first_dense
-        # )
-        # second_dropout = layers.Dropout(rate=0.3, name="second_dropout")(second_dense)
 
-        final_dense = layers.Dense(64, activation="relu", name="final_dense")(first_dropout)
-        final_dropout = tf.keras.layers.Dropout(rate=0.1)(final_dense)
+class DNN:
+    def __init__(self, model_config):
+        self.layer_ops: List = self.define_architecture(model_config)
 
-        scores = layers.Dense(1, name="scores")(final_dropout)
+    @staticmethod
+    def _get_dense_layer(name, hidden_units, activation):
+        return layers.Dense(int(hidden_units), activation=activation, name=name)
 
-        # Collapse extra dimensions
-        scores = tf.squeeze(scores, axis=-1)
+    @staticmethod
+    def _get_batch_norm_layer(name):
+        return layers.BatchNormalization(name=name)
 
-        return scores
+    @staticmethod
+    def _get_dropout_layer(name, rate):
+        return layers.Dropout(rate=float(rate), name=name)
 
-    return architecture_op
+    def define_architecture(self, model_config):
+        layer_ops = list()
+        for layer in model_config["layers"]:
+            if layer["type"] == DNNLayer.DENSE:
+                layer_op = DNN._get_dense_layer(
+                    name=layer["name"],
+                    hidden_units=layer["hidden_units"],
+                    activation=layer["activation"],
+                )
+            elif layer["type"] == DNNLayer.BATCH_NORMALIZATION:
+                layer_op = DNN._get_batch_norm_layer(name=layer["name"])
+            elif layer["type"] == DNNLayer.DROPOUT:
+                layer_op = DNN._get_dropout_layer(name=layer["name"], rate=layer["rate"])
+            else:
+                raise KeyError("Dense layer type is not supported : {}".format(layer["type"]))
+
+            layer_ops.append(layer_op)
+
+        return layer_ops
+
+    def get_architecture_op(self):
+        def _architecture_op(ranking_features):
+            _ = ranking_features
+
+            # Pass ranking features through all the layers of the DNN
+            for layer_op in self.layer_ops:
+                _ = layer_op(_)
+
+            # Collapse extra dimensions
+            scores = tf.squeeze(_, axis=-1)
+
+            return scores
+
+        return _architecture_op

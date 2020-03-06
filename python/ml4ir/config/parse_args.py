@@ -39,11 +39,10 @@ def define_args() -> ArgumentParser:
     )
 
     parser.add_argument(
-        "--architecture",
+        "--model_config",
         type=str,
-        default="simple_dnn",
-        help="Model to use for training. Has to be one of the keys in ArchitectureKey under "
-        "ml4ir/config/keys.py",
+        default="ml4ir/config/default_model_config.yaml",
+        help="Path to the Model config YAML used to build the model architecture.",
     )
 
     parser.add_argument(
@@ -88,7 +87,9 @@ def define_args() -> ArgumentParser:
         "--batch_size", type=int, default=128, help="Number of data samples to use per batch."
     )
 
-    parser.add_argument("--learning_rate", type=float, default=0.01, help="Step size (e.g.: 0.01)")
+    parser.add_argument(
+        "--learning_rate", type=float, default=0.001, help="Step size (e.g.: 0.001)"
+    )
 
     parser.add_argument(
         "--learning_rate_decay", type=float, default=0.96, help="decay rate for the learning rate"
