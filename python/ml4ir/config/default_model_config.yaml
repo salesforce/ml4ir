@@ -4,19 +4,19 @@ layers:
     name: input_batch_norm
   - type: dense
     name: first_dense
-    hidden_units: 256
+    units: 256
     activation: relu
   - type: dropout
     name: first_dropout
     rate: 0.0
   - type: dense
     name: second_dense
-    hidden_units: 64
+    units: 64
     activation: relu
   - type: dropout
     name: second_dropout
     rate: 0.0
   - type: dense
     name: final_dense
-    hidden_units: 1
+    units: 1
     activation: null

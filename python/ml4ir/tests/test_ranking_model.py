@@ -4,6 +4,7 @@ from ml4ir.model.ranking_model import RankingModel
 from ml4ir.config.features import parse_config, FeatureConfig
 import os
 import numpy as np
+import copy
 
 
 class RankingModelTest(RankingTestBase):
@@ -27,7 +28,7 @@ class RankingModelTest(RankingTestBase):
             logger=self.logger,
         )
         ranking_model = RankingModel(
-            model_config=self.model_config,
+            model_config=copy.deepcopy(self.model_config),
             loss_key=self.args.loss,
             scoring_key=self.args.scoring,
             metrics_keys=self.args.metrics,

@@ -14,32 +14,29 @@ class DNN:
         self.layer_ops: List = self.define_architecture(model_config)
 
     @staticmethod
-    def _get_dense_layer(name, hidden_units, activation):
-        return layers.Dense(int(hidden_units), activation=activation, name=name)
+    def _get_dense_layer(**kwargs):
+        return layers.Dense(**kwargs)
 
     @staticmethod
-    def _get_batch_norm_layer(name):
-        return layers.BatchNormalization(name=name)
+    def _get_batch_norm_layer(**kwargs):
+        return layers.BatchNormalization(**kwargs)
 
     @staticmethod
-    def _get_dropout_layer(name, rate):
-        return layers.Dropout(rate=float(rate), name=name)
+    def _get_dropout_layer(**kwargs):
+        return layers.Dropout(**kwargs)
 
     def define_architecture(self, model_config):
         layer_ops = list()
-        for layer in model_config["layers"]:
-            if layer["type"] == DNNLayer.DENSE:
-                layer_op = DNN._get_dense_layer(
-                    name=layer["name"],
-                    hidden_units=layer["hidden_units"],
-                    activation=layer["activation"],
-                )
-            elif layer["type"] == DNNLayer.BATCH_NORMALIZATION:
-                layer_op = DNN._get_batch_norm_layer(name=layer["name"])
-            elif layer["type"] == DNNLayer.DROPOUT:
-                layer_op = DNN._get_dropout_layer(name=layer["name"], rate=layer["rate"])
+        for layer_info in model_config["layers"]:
+            layer_type = layer_info.pop("type")
+            if layer_type == DNNLayer.DENSE:
+                layer_op = DNN._get_dense_layer(**layer_info)
+            elif layer_type == DNNLayer.BATCH_NORMALIZATION:
+                layer_op = DNN._get_batch_norm_layer(**layer_info)
+            elif layer_type == DNNLayer.DROPOUT:
+                layer_op = DNN._get_dropout_layer(**layer_info)
             else:
-                raise KeyError("Dense layer type is not supported : {}".format(layer["type"]))
+                raise KeyError("Dense layer type is not supported : {}".format(layer_type))
 
             layer_ops.append(layer_op)
 
