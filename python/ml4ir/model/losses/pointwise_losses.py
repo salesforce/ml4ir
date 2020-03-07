@@ -6,7 +6,7 @@ from tensorflow.keras.losses import Reduction
 
 
 class SigmoidCrossEntropy(PointwiseLossBase):
-    def _make_loss_fn(self, **kwargs):
+    def get_loss_fn(self, **kwargs):
         """
         Define a sigmoid cross entropy loss
         Additionally can pass in record positions to handle positional bias
@@ -26,9 +26,4 @@ class SigmoidCrossEntropy(PointwiseLossBase):
 
     def get_final_activation_op(self):
         # Pointwise sigmoid loss
-        sigmoid = layers.Activation("sigmoid", name="ranking_scores")
-
-        def sigmoid_op(logits, mask):
-            return sigmoid(logits)
-
-        return sigmoid_op
+        return lambda logits, mask: layers.Activation("sigmoid", name="ranking_scores")(logits)

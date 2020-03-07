@@ -6,7 +6,7 @@ from tensorflow.keras.losses import Reduction
 
 
 class RankOneListNet(ListwiseLossBase):
-    def _make_loss_fn(self, **kwargs):
+    def get_loss_fn(self, **kwargs):
         """
         Define a rank 1 ListNet loss
         Additionally can pass in record positions to handle positional bias
