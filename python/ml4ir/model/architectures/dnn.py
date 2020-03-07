@@ -15,23 +15,21 @@ class DNN:
         self.layer_ops: List = self.define_architecture(model_config)
 
     def define_architecture(self, model_config):
-        layer_ops = list()
-        for layer_args in model_config["layers"]:
-            layer_type = layer_args.pop("type")
+        def get_op(layer_type, layer_args):
             if layer_type == DNNLayer.DENSE:
-                layer_op = layers.Dense(**layer_args)
+                return layers.Dense(**layer_args)
             elif layer_type == DNNLayer.BATCH_NORMALIZATION:
-                layer_op = layers.BatchNormalization(**layer_args)
+                return layers.BatchNormalization(**layer_args)
             elif layer_type == DNNLayer.DROPOUT:
-                layer_op = layers.Dropout(**layer_args)
+                return layers.Dropout(**layer_args)
             elif layer_type == DNNLayer.ACTIVATION:
-                layer_op = layers.Activation(**layer_args)
+                return layers.Activation(**layer_args)
             else:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
 
-            layer_ops.append(layer_op)
-
-        return layer_ops
+        return [
+            get_op(layer_args.pop("type"), layer_args) for layer_args in model_config["layers"]
+        ]
 
     def get_architecture_op(self):
         def _architecture_op(ranking_features):

@@ -182,8 +182,7 @@ def read_json(infile, log=None) -> dict:
         # f.close()
         raise NotImplementedError
     else:
-        dict_ = json.load(open(infile, "r"))
-    return dict_
+        return json.load(open(infile, "r"))
 
 
 def read_yaml(infile, log=None) -> dict:
@@ -199,8 +198,7 @@ def read_yaml(infile, log=None) -> dict:
     if infile.startswith("hdfs"):
         raise NotImplementedError
     else:
-        dict_ = yaml.safe_load(open(infile, "r"))
-    return dict_
+        return yaml.safe_load(open(infile, "r"))
 
 
 def write_json(json_dict: dict, outfile: str, log=None):
