@@ -45,11 +45,17 @@ class RankingModelTest(RankingTestBase):
 
         ranking_model.fit(dataset=ranking_dataset, num_epochs=1, models_dir=self.output_dir)
 
-        metrics = ranking_model.evaluate(
-            ranking_dataset.test, models_dir=self.args.models_dir, logs_dir=self.args.logs_dir
-        )
+        loss = dict(
+            zip(
+                ranking_model.model.metrics_names,
+                ranking_model.model.evaluate(ranking_dataset.test),
+            )
+        )["loss"]
+        new_MRR = ranking_model.evaluate(
+            test_dataset=ranking_dataset.test, logs_dir=self.args.logs_dir,
+        )[0]["new_MRR"]
 
-        return metrics["loss"], metrics["new_MRR"]
+        return loss, new_MRR
 
     def test_csv_and_tfrecord(self):
         """

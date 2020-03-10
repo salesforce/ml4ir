@@ -61,7 +61,7 @@ def summarize_grouped_stats(df_grouped):
             "old_ACR": old_acr,
             "new_ACR": new_acr,
             "old_MRR": old_mrr,
-            "new_mrr": new_mrr,
+            "new_MRR": new_mrr,
             "perc_improv_ACR": perc_improv_acr,
             "perc_improv_MRR": perc_improv_mrr,
             "query_count": query_count,

@@ -47,11 +47,8 @@ class RankingModelTest(RankingTestBase):
             logger=self.logger,
         )
 
-        metrics = ranking_model.evaluate(
-            ranking_dataset.test, models_dir=self.args.models_dir, logs_dir=self.args.logs_dir
-        )
-
-        return metrics["loss"]
+        metrics = ranking_model.model.evaluate(ranking_dataset.test)
+        return dict(zip(ranking_model.model.metrics_names, metrics))["loss"]
 
     def test_sigmoid_cross_entropy(self):
         """

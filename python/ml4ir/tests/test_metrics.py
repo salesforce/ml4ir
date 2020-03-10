@@ -8,8 +8,6 @@ import numpy as np
 
 # Constants
 GOLD_METRICS = {
-    "loss": 0.6870506351644342,
-    "categorical_accuracy": 0.0042613638,
     "old_MRR": 0.7806604,
     "new_MRR": 0.54550856,
     "old_ACR": 1.6669034,
@@ -53,11 +51,11 @@ class RankingModelTest(RankingTestBase):
             logger=self.logger,
         )
 
-        metrics = ranking_model.evaluate(
-            ranking_dataset.test, models_dir=self.args.models_dir, logs_dir=self.args.logs_dir
+        overall_metrics, _ = ranking_model.evaluate(
+            test_dataset=ranking_dataset.test, logs_dir=self.args.logs_dir,
         )
 
-        return metrics
+        return overall_metrics.to_dict()
 
     def test_model_training(self):
         """
