@@ -2,7 +2,7 @@ package ml4ir.inference.tensorflow
 
 import java.io.InputStream
 
-import ml4ir.inference.tensorflow.utils.{ModelIO, SequenceExampleBuilder}
+import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder
 import ml4ir.inference.tensorflow.data.{QueryContext, Document}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
@@ -11,14 +11,6 @@ import org.tensorflow.example._
 @Test
 class TensorFlowInferenceTest {
   val classLoader = getClass.getClassLoader
-
-  @Test
-  def testLoadTFSession = {
-    val graphInputStream =
-      classLoader.getResourceAsStream("pointwiseModelPointwiseLoss")
-    val session = ModelIO.loadTensorflowSession(graphInputStream)
-    assertNotNull(session)
-  }
 
   def validateScores(scores: Array[Float], numDocs: Int) = {
     val docScores = scores.take(numDocs)
@@ -40,24 +32,6 @@ class TensorFlowInferenceTest {
       scores(1) > scores(0)
     )
     println(scores.mkString(", "))
-  }
-
-  @Test
-  def testPointwiseML4IRModelExecutorScoring = {
-    val graphInputStream = classLoader.getResourceAsStream("frozen.pb")
-    val graph = ModelIO.loadTensorflowGraph(graphInputStream)
-    val tfRecordExecutor = new PointwiseML4IRModelExecutor(
-      graph = graph,
-      ModelExecutorConfig(
-        queryNodeName = "query_str",
-        scoresNodeName = "ranking_scores/Sigmoid",
-        numDocsPerQuery = 25,
-        queryLenMax = 20
-      )
-    )
-    val (queryContext, docs) = testQueries
-    val scores = tfRecordExecutor(queryContext, docs)
-    validateScores(scores, docs.length)
   }
 
   @Test
