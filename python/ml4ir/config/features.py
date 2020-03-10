@@ -15,6 +15,7 @@ query_key:  # Unique query ID field
     trainable: <bool> # if the feature is a trainable tf element
     dtype: <float or int or bytes | str>
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
+    is_group_metric_key: <boolean | default: false> # if feature should be used a groupby key to compute metrics
     feature_layer_info:
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
@@ -96,6 +97,8 @@ class FeatureConfig:
         self.sequence_features = list()
         # Features to log at inference time
         self.features_to_log = list()
+        # Features to be used as keys for computing group metrics
+        self.group_metrics_keys = list()
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
                 self.ranking_features.append(feature_info)
@@ -116,6 +119,9 @@ class FeatureConfig:
 
             if feature_info.get("log_at_inference", False):
                 self.features_to_log.append(feature_info)
+
+            if feature_info.get("is_group_metric_key", False):
+                self.group_metrics_keys.append(feature_info)
 
         if len(self.ranking_features) == 0:
             raise Exception("No trainable features specified in the feature config")
@@ -234,6 +240,13 @@ class FeatureConfig:
         Can additionally be used to only fetch a particular value from the dict
         """
         return self._get_list_of_keys_or_dicts(self.features_to_log, key=key)
+
+    def get_group_metrics_keys(self, key: str = None):
+        """
+        Getter method for group_metrics_keys in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
     def define_inputs(self, max_num_records: int) -> Dict[str, Input]:
         """
