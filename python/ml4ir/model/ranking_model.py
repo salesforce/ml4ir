@@ -558,7 +558,7 @@ class RankingModel:
                 checkpoints_path = os.path.join(models_dir, CHECKPOINT_FNAME)
                 cp_callback = callbacks.ModelCheckpoint(
                     filepath=checkpoints_path,
-                    save_weights_only=True,
+                    save_weights_only=False,
                     verbose=1,
                     save_best_only=True,
                     mode="max",
