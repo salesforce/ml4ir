@@ -201,7 +201,6 @@ class RankingModel:
                 epochs=num_epochs,
                 verbose=True,
                 callbacks=callbacks_list,
-                validation_steps=10,
             )
         else:
             raise NotImplementedError(

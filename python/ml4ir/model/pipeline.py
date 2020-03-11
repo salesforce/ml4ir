@@ -13,7 +13,7 @@ from logging import Logger
 from ml4ir.config.parse_args import get_args
 from ml4ir.config import features
 from ml4ir.io import logging_utils
-from ml4ir.io import file_io, model_io
+from ml4ir.io import file_io
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
 
@@ -67,13 +67,8 @@ class RankingPipeline(object):
         # Validate args
         self.validate_args()
 
-        # remove later
-        tf.compat.v1.disable_eager_execution()
-
         # Set random seeds
         self.set_seeds()
-        self.session = tf.compat.v1.Session()
-        tf.compat.v1.keras.backend.set_session(self.session)
 
         # Load and parse feature config
         self.features = features.parse_config(self.args.feature_config)
@@ -212,9 +207,6 @@ class RankingPipeline(object):
 
                 # Save model
                 model.save(models_dir=self.models_dir)
-                model_io.freeze_and_save_model(
-                    self.session, model.model, self.models_dir, "frozen"
-                )
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
