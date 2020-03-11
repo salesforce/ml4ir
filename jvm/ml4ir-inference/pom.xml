@@ -20,103 +20,134 @@
           <version>3.7.1</version>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/main/java</source>
+              </sources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
       </plugin>
       <!-- mixed scala/java compile -->
       <plugin>
-	<groupId>net.alchim31.maven</groupId>
-	<artifactId>scala-maven-plugin</artifactId>
+    <groupId>net.alchim31.maven</groupId>
+    <artifactId>scala-maven-plugin</artifactId>
         <version>4.3.1</version>
-	<executions>
-	  <execution>
-	    <id>compile</id>
-	    <goals>
-	      <goal>compile</goal>
-	    </goals>
-	    <phase>compile</phase>
-	  </execution>
-	  <execution>
-	    <id>test-compile</id>
-	    <goals>
-	      <goal>testCompile</goal>
-	    </goals>
-	    <phase>test-compile</phase>
-	  </execution>
-	  <execution>
-	    <phase>process-resources</phase>
-	    <goals>
-	      <goal>compile</goal>
-	    </goals>
-	  </execution>
-	</executions>
+    <executions>
+      <execution>
+        <id>compile</id>
+        <goals>
+          <goal>compile</goal>
+        </goals>
+        <phase>compile</phase>
+      </execution>
+      <execution>
+        <id>test-compile</id>
+        <goals>
+          <goal>testCompile</goal>
+        </goals>
+        <phase>test-compile</phase>
+      </execution>
+      <execution>
+        <phase>process-resources</phase>
+        <goals>
+          <goal>compile</goal>
+        </goals>
+      </execution>
+    </executions>
       </plugin>
       <plugin>
-	<artifactId>maven-compiler-plugin</artifactId>
-	<configuration>
-	  <source>${java.version}</source>
-	  <target>${java.version}</target>
-	</configuration>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+      <source>${java.version}</source>
+      <target>${java.version}</target>
+    </configuration>
       </plugin>
       <plugin>
-	<groupId>org.apache.maven.plugins</groupId>
-	<artifactId>maven-jar-plugin</artifactId>
-	<configuration>
-	  <archive>
-	    <manifest>
-	    </manifest>
-	  </archive>
-	</configuration>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-jar-plugin</artifactId>
+    <configuration>
+      <archive>
+        <manifest>
+        </manifest>
+      </archive>
+    </configuration>
       </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
-	<!--This plugin's configuration is used to store Eclipse m2e settings 
-	    only. It has no influence on the Maven build itself. -->
-	<plugin>
-	  <groupId>org.eclipse.m2e</groupId>
-	  <artifactId>lifecycle-mapping</artifactId>
-	  <version>1.0.0</version>
-	  <configuration>
-	    <lifecycleMappingMetadata>
-	      <pluginExecutions>
-		<pluginExecution>
-		  <pluginExecutionFilter>
-		    <groupId>net.alchim31.maven</groupId>
-		    <artifactId>scala-maven-plugin</artifactId>
-		    <versionRange>[3.3.1,)</versionRange>
-		    <goals>
-		      <goal>compile</goal>
-		      <goal>testCompile</goal>
-		    </goals>
-		  </pluginExecutionFilter>
-		  <action>
-		    <execute />
-		  </action>
-		</pluginExecution>
-	      </pluginExecutions>
-	    </lifecycleMappingMetadata>
-	  </configuration>
-	</plugin>
+    <!--This plugin's configuration is used to store Eclipse m2e settings
+        only. It has no influence on the Maven build itself. -->
+    <plugin>
+      <groupId>org.eclipse.m2e</groupId>
+      <artifactId>lifecycle-mapping</artifactId>
+      <version>1.0.0</version>
+      <configuration>
+        <lifecycleMappingMetadata>
+          <pluginExecutions>
+        <pluginExecution>
+          <pluginExecutionFilter>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <versionRange>[3.3.1,)</versionRange>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </pluginExecutionFilter>
+          <action>
+            <execute />
+          </action>
+        </pluginExecution>
+          </pluginExecutions>
+        </lifecycleMappingMetadata>
+      </configuration>
+    </plugin>
       </plugins>
     </pluginManagement>
   </build>
 
   <dependencies>
     <dependency>
-    	<groupId>org.tensorflow</groupId>
-    	<artifactId>tensorflow</artifactId>
+        <groupId>org.tensorflow</groupId>
+        <artifactId>tensorflow</artifactId>
     </dependency>
     <dependency>
-	    <groupId>org.tensorflow</groupId>
-	    <artifactId>proto</artifactId>
+        <groupId>org.tensorflow</groupId>
+        <artifactId>proto</artifactId>
     </dependency>
-	<dependency>
-	  <groupId>com.google.protobuf</groupId>
-	  <artifactId>protobuf-java-util</artifactId>
-	  <version>3.11.4</version>
-	</dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java-util</artifactId>
+      <version>3.11.4</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -125,6 +156,11 @@
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.artifact.suffix}</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>2.11.8</version>
     </dependency>
 
   </dependencies>
