@@ -367,8 +367,10 @@ class RankingModel:
             infer = self.model.signatures[inference_signature]
 
         # Get features to log
-        features_to_log = [f.get("node_name", f["name"]) for f in features_to_return]
-        features_to_log.extend(["new_score", "new_rank"])
+        features_to_log = [f.get("node_name", f["name"]) for f in features_to_return] + [
+            "new_score",
+            "new_rank",
+        ]
 
         @tf.function
         def _flatten_records(x):
@@ -433,6 +435,7 @@ class RankingModel:
                     tf.cast(predictions_dict[feature_node_name], tf.int32),
                     output_encoding="UTF-8",
                 )
+                # TODO: Make this character parameterized
                 predictions_dict[feature_node_name] = tf.strings.regex_replace(
                     str_feature, "\x00", ""
                 )
