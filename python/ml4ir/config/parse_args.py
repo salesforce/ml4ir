@@ -57,7 +57,7 @@ def define_args() -> ArgumentParser:
     parser.add_argument(
         "--metrics",
         type=str,
-        default="MRR",
+        default="['MRR', 'ACR']",
         help="Metric to compute. Can be a list. Has to be one of the metrics in MetricKey under "
         "ml4ir/config/keys.py",
     )

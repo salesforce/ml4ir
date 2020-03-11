@@ -29,6 +29,7 @@
     "label": {
       "type": "label",
       "trainable": false,
+      "log": true,
       "tfrecord_info": {
         "type": "sequence",
         "dtype": "int",
@@ -38,6 +39,7 @@
     "query_key": {
       "type": "numeric",
       "trainable": false,
+      "log": true,
       "tfrecord_info": {
         "type": "context",
         "dtype": "int",
@@ -48,6 +50,7 @@
       "type": "string",
       "trainable": false,
       "max_length": 20,
+      "log": true,
       "tfrecord_info": {
         "type": "context",
         "dtype": "bytes",
@@ -57,6 +60,7 @@
     "pos": {
       "type": "numeric",
       "trainable": false,
+      "log": true,
       "tfrecord_info": {
         "type": "sequence",
         "dtype": "int",

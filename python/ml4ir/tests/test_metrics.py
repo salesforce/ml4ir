@@ -6,12 +6,23 @@ import os
 import numpy as np
 
 
+# Constants
+GOLD_METRICS = {
+    "loss": 1.196070373058319,
+    "categorical_accuracy": 0.50333333,
+    "old_MRR": 0.7831354,
+    "new_MRR": 0.7018889,
+    "old_ACR": 1.6566666,
+    "new_ACR": 1.946,
+}
+
+
 class RankingModelTest(RankingTestBase):
     def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str):
         """Train a model with the default set of args"""
         feature_config = features.parse_config(feature_config_path)
 
-        self.args.metrics = ["categorical_accuracy"]
+        self.args.metrics = ["categorical_accuracy", "MRR", "ACR"]
 
         ranking_dataset = RankingDataset(
             data_dir=data_dir,
@@ -41,28 +52,14 @@ class RankingModelTest(RankingTestBase):
             logger=self.logger,
         )
 
-        ranking_model.fit(dataset=ranking_dataset, num_epochs=1, models_dir=self.output_dir)
-
         metrics = ranking_model.evaluate(ranking_dataset.test)
 
-        return metrics["loss"], metrics["categorical_accuracy"]
+        return metrics
 
     def test_model_training(self):
         """
         Test model training and evaluate the performance metrics
         """
-
-        # Test model training on CSV data
-        data_dir = os.path.join(self.root_data_dir, "csv")
-        feature_config_path = os.path.join(self.root_data_dir, "csv", self.feature_config_fname)
-
-        csv_loss, csv_accuracy = self.run_default_pipeline(
-            data_dir=data_dir, data_format="csv", feature_config_path=feature_config_path
-        )
-
-        # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(csv_loss, 1.0754, rtol=0.05)
-        assert np.isclose(csv_accuracy, 0.5053, rtol=0.05)
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
@@ -70,14 +67,11 @@ class RankingModelTest(RankingTestBase):
             self.root_data_dir, "tfrecord", self.feature_config_fname
         )
 
-        tfrecord_loss, tfrecord_accuracy = self.run_default_pipeline(
+        metrics = self.run_default_pipeline(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
         )
 
-        # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(tfrecord_loss, 1.0754, rtol=0.05)
-        assert np.isclose(tfrecord_accuracy, 0.5053, rtol=0.05)
-
-        # Compare CSV and TFRecord loss and accuracies
-        assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)
-        assert np.isclose(tfrecord_accuracy, csv_accuracy, rtol=0.01)
+        # Compare the metrics to gold metrics
+        for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
+            assert gold_metric_name in metrics
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, rtol=0.01)

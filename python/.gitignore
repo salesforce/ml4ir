@@ -43,6 +43,10 @@ nosetests.xml
 coverage.xml
 *.cover
 
+# More test-related
+**/.pytest_cache
+**/test_output
+
 # Translations
 *.mo
 *.pot
@@ -86,6 +90,7 @@ target/
 
 # Mac OS-specific storage files
 .DS_Store
+*/.DS_Store
 
 # vim
 *.swp

@@ -1,6 +1,5 @@
 import os
 from logging import Logger
-from typing import List
 import tensorflow as tf
 from tensorflow import feature_column
 from tensorflow.keras import callbacks, layers, Input, Model
@@ -8,6 +7,7 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
 from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
+from tensorflow.keras import metrics as kmetrics
 
 from ml4ir.config.features import Features
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
@@ -18,10 +18,15 @@ from ml4ir.model.losses import loss_factory
 from ml4ir.model.metrics import metric_factory
 from ml4ir.model.scoring import scoring_factory
 from ml4ir.data.tfrecord_reader import make_parse_fn
+from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
 
-from typing import Dict
+from typing import Dict, Optional, List, Type
+
+
+# Constants
+MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
 
 
 class RankingModel:
@@ -46,28 +51,38 @@ class RankingModel:
         self.logger: Logger = logger
         self.max_num_records = max_num_records
 
-        # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            optimizer_key=optimizer_key,
-            learning_rate=learning_rate,
-            learning_rate_decay=learning_rate_decay,
-        )
-
-        # Define loss function
-        loss: RankingLossBase = loss_factory.get_loss(loss_key=loss_key, scoring_key=scoring_key)
-
-        # Define metrics
-        metrics: List[str] = [metric_factory.get_metric(metric_key=key) for key in metrics_keys]
-
         # Load/Build Model
         if model_file:
             """
             NOTE: Retraining not supported. Currently loading SavedModel
                   as a low level AutoTrackable object for inference
             """
-            self.model: Model = self.load_model(model_file, optimizer, loss, metrics)
+            self.model: Model = self.load_model(model_file)
             self.is_compiled = False
         else:
+            # Define optimizer
+            optimizer: Optimizer = get_optimizer(
+                optimizer_key=optimizer_key,
+                learning_rate=learning_rate,
+                learning_rate_decay=learning_rate_decay,
+            )
+
+            # Define loss function
+            loss: RankingLossBase = loss_factory.get_loss(
+                loss_key=loss_key, scoring_key=scoring_key
+            )
+
+            # Define metrics
+            metrics: List[Type[kmetrics.Metric]] = [
+                metric_factory.get_metric(metric_key=key) for key in metrics_keys
+            ]
+
+            """
+            Specify inputs to the model
+
+            Individual input nodes are defined for each feature
+            Each data point represents features for all records in a single query
+            """
             inputs: Dict[str, Input] = features.define_inputs(max_num_records)
             self.model = self.build_model(inputs, optimizer, loss, metrics)
             self.is_compiled = True
@@ -77,7 +92,7 @@ class RankingModel:
         inputs: Dict[str, Input],
         optimizer: Optimizer,
         loss: RankingLossBase,
-        metrics: List[str],
+        metrics: List[Type[kmetrics.Metric]],
     ) -> Model:
         """
         Builds model by assembling the different ranking components:
@@ -89,13 +104,6 @@ class RankingModel:
 
         Returns:
             compiled tf keras model
-        """
-
-        """
-        Specify inputs to the model
-
-        Define the individual input nodes are defined for each feature
-        Each data sample represents features for a single record
         """
 
         """
@@ -120,11 +128,11 @@ class RankingModel:
         being used
 
         - pointwise loss + pointwise scoring
-            [batch_size, record_features_size]
+            [batch_size, max_num_records, record_features_size]
         - listwise loss + pointwise scoring
             [batch_size, max_num_records, record_features_size]
         - pointwise loss + groupwise scoring
-            [batch_size, group_size, record_features_size]
+            [batch_size, num_groups, group_size, record_features_size]
         """
         ranking_features, metadata_features = self._transform_features(
             ranking_features, metadata_features, loss
@@ -152,11 +160,21 @@ class RankingModel:
         # Create model with functional Keras API
         model = Model(inputs=inputs, outputs={"ranking_scores": predictions})
 
+        # Get loss and metrics
+        loss_fn = loss.get_loss_fn(mask=metadata_features["mask"])
+        metric_fns: List[kmetrics.Metric] = list()
+        for metric in metrics:
+            metric_fns.extend(
+                metric_factory.get_metric_impl(
+                    metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+                )
+            )
+
         # Compile model
         model.compile(
             optimizer=optimizer,
-            loss=loss.get_loss_fn(mask=metadata_features["mask"]),
-            metrics=metrics,
+            loss=loss_fn,
+            metrics=metric_fns,
             experimental_run_tf_function=False,
         )
 
@@ -194,6 +212,7 @@ class RankingModel:
         self,
         test_dataset: data.TFRecordDataset,
         inference_signature: str = None,
+        logs_dir: Optional[str] = None,
         rerank: bool = False,
     ):
         """
@@ -214,6 +233,24 @@ class RankingModel:
             # If SavedModel was loaded without compilation
             infer = self.model.signatures[inference_signature]
 
+        # Get features to log
+        features_to_log = self.features.features_to_log
+
+        if logs_dir:
+            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            file_io.rm_file(outfile)
+
+        @tf.function
+        def _flatten_records(x):
+            """Collapse first two dimensions -> [batch_size, max_num_records]"""
+            return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
+
+        @tf.function
+        def _filter_records(x, mask):
+            """Filter records that were padded in each query"""
+            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
+
         @tf.function
         def _predict_score(features, label):
             features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
@@ -224,16 +261,69 @@ class RankingModel:
 
             # Set scores of padded records to 0
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-            return scores
+            new_pos = tf.add(
+                tf.argsort(
+                    tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True
+                ),
+                tf.constant(1),
+            )
 
-        scores_list = list()
-        for scores in test_dataset.map(_predict_score).take(-1):
-            scores_list.append(scores.numpy())
+            predictions_dict = dict()
+            mask = _flatten_records(features["mask"])
+            for feature_name in features_to_log:
+                if feature_name == "label":
+                    feat_ = label
+                elif feature_name == "new_score":
+                    feat_ = scores
+                elif feature_name == "new_pos":
+                    feat_ = new_pos
+                else:
+                    if feature_name in features:
+                        feat_ = features[feature_name]
+                    else:
+                        raise KeyError(
+                            "{} was not found in input training data".format(feature_name)
+                        )
 
-        ranking_scores = np.vstack(scores_list)
-        self.logger.info("Ranking Scores: ")
-        self.logger.info(pd.DataFrame(ranking_scores))
-        return ranking_scores
+                # Collapse from one query per data point to one record per data point
+                # and remove padded dummy records
+                feat_ = _filter_records(_flatten_records(feat_), mask)
+
+                predictions_dict[feature_name] = feat_
+
+            return predictions_dict
+
+        predictions_df_list = list()
+        for predictions_dict in test_dataset.map(_predict_score).take(-1):
+            # If feature is a string, convert back from bytes to string
+            for feature_name in features_to_log:
+                if (
+                    feature_name in self.features.feature_config
+                    and self.features.feature_config[feature_name]["type"] == FeatureTypeKey.STRING
+                ):
+                    predictions_dict[feature_name] = tf.strings.unicode_encode(
+                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
+                    )
+
+            predictions_df = pd.DataFrame(predictions_dict)
+            if logs_dir:
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+            else:
+                predictions_df_list.append(predictions_df)
+
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            self.logger.info("Model Predictions: ")
+            predictions_df = pd.concat(predictions_df_list)
+            self.logger.info(predictions_df)
+
+        return predictions_df
 
     def evaluate(self, test_dataset):
         """
@@ -247,7 +337,8 @@ class RankingModel:
         """
         self.logger.info("Evaluating model on test set...")
         if self.is_compiled:
-            return self.model.evaluate(test_dataset)
+            metrics = self.model.evaluate(test_dataset)
+            return dict(zip(self.model.metrics_names, metrics))
         else:
             raise NotImplementedError(
                 "The model could not be evaluated. Check if the model was compiled correctly. Training a SavedModel is not currently supported."
@@ -279,9 +370,7 @@ class RankingModel:
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
-    def load_model(
-        self, model_file: str, optimizer: Optimizer, loss: RankingLossBase, metrics: List[str]
-    ) -> Model:
+    def load_model(self, model_file: str) -> Model:
         """
         Loads model from the SavedModel file specified
 
