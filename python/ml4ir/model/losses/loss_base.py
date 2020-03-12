@@ -14,12 +14,6 @@ class RankingLossBase(object):
     def get_loss_fn(self, **kwargs):
         """
         Returns the loss function _loss_fn()
-        """
-        return self._make_loss_fn(**kwargs)
-
-    def _make_loss_fn(self, **kwargs):
-        """
-        Define a ranking loss function with necessary custom methods
 
         NOTE: Should consider different types of scoring functions
         """
@@ -28,6 +22,12 @@ class RankingLossBase(object):
             pass
 
         return _loss_fn
+
+    def get_final_activation_op(self):
+        """
+        Returns the final activation layer
+        """
+        raise NotImplementedError
 
 
 class PointwiseLossBase(RankingLossBase):

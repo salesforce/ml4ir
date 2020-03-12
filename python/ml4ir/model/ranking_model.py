@@ -9,13 +9,13 @@ from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 
-from ml4ir.config.features import Features
+from ml4ir.config.features import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
 from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
-from ml4ir.model.metrics import metric_factory
+from ml4ir.model.metrics import metric_factory, metrics_helper
 from ml4ir.model.scoring import scoring_factory
 from ml4ir.data.tfrecord_reader import make_parse_fn
 from ml4ir.io import file_io
@@ -27,26 +27,31 @@ from typing import Dict, Optional, List, Type
 
 # Constants
 MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
+GROUP_METRICS_CSV_FILE = "group_metrics.csv"
+CHECKPOINT_FNAME = "checkpoint.hdf5"
+NEW_RANK_FIELD = "new_rank"
+NEW_SCORE_FIELD = "new_score"
 
 
 class RankingModel:
     def __init__(
         self,
-        architecture_key: str,
+        model_config: dict,
         loss_key: str,
         scoring_key: str,
         metrics_keys: List[str],
         optimizer_key: str,
-        features: Features,
+        feature_config: FeatureConfig,
         max_num_records: int,
         model_file: str,
         learning_rate: float,
         learning_rate_decay: float,
+        learning_rate_decay_steps: int,
         compute_intermediate_stats: bool,
         logger=None,
     ):
-        self.architecture_key: str = architecture_key
-        self.features: Features = features
+        self.model_config: dict = model_config
+        self.feature_config: FeatureConfig = feature_config
         self.scoring_key: str = scoring_key
         self.logger: Logger = logger
         self.max_num_records = max_num_records
@@ -65,6 +70,7 @@ class RankingModel:
                 optimizer_key=optimizer_key,
                 learning_rate=learning_rate,
                 learning_rate_decay=learning_rate_decay,
+                learning_rate_decay_steps=learning_rate_decay_steps,
             )
 
             # Define loss function
@@ -83,7 +89,7 @@ class RankingModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = features.define_inputs(max_num_records)
+            inputs: Dict[str, Input] = feature_config.define_inputs(max_num_records)
             self.model = self.build_model(inputs, optimizer, loss, metrics)
             self.is_compiled = True
 
@@ -155,7 +161,7 @@ class RankingModel:
 
         Same shape as scores, but with an additional activation layer
         """
-        predictions = self._add_predictions(scores)
+        predictions = self._add_predictions(scores, loss=loss, mask=metadata_features.get("mask"))
 
         # Create model with functional Keras API
         model = Model(inputs=inputs, outputs={"ranking_scores": predictions})
@@ -163,10 +169,13 @@ class RankingModel:
         # Get loss and metrics
         loss_fn = loss.get_loss_fn(mask=metadata_features["mask"])
         metric_fns: List[kmetrics.Metric] = list()
+        rank_feature_name = self.feature_config.get_rank("node_name")
         for metric in metrics:
             metric_fns.extend(
                 metric_factory.get_metric_impl(
-                    metric, pos=metadata_features["pos"], mask=metadata_features["mask"]
+                    metric,
+                    rank=metadata_features[rank_feature_name],
+                    mask=metadata_features["mask"],
                 )
             )
 
@@ -178,11 +187,14 @@ class RankingModel:
             experimental_run_tf_function=False,
         )
 
-        self.logger.info(model.summary())
+        # Write model summary to logs
+        model_summary = list()
+        model.summary(print_fn=lambda x: model_summary.append(x))
+        self.logger.info("\n".join(model_summary))
 
         return model
 
-    def fit(self, dataset, num_epochs, models_dir):
+    def fit(self, dataset, num_epochs, models_dir, logs_dir=None, logging_frequency=25):
         """
         Trains model for defined number of epochs
 
@@ -190,10 +202,15 @@ class RankingModel:
             dataset: an instance of RankingDataset
             num_epochs: int value specifying number of epochs to train for
             models_dir: directory to save model checkpoints
+            logs_dir: directory to save model logs
+            logging_frequency: every #batches to log results
         """
-        callbacks_list: list = self._build_callback_hooks(models_dir=models_dir)
-
-        self.logger.info("Training model...")
+        callbacks_list: list = self._build_callback_hooks(
+            models_dir=models_dir,
+            logs_dir=logs_dir,
+            is_training=True,
+            logging_frequency=logging_frequency,
+        )
         if self.is_compiled:
             self.model.fit(
                 x=dataset.train,
@@ -212,7 +229,7 @@ class RankingModel:
         test_dataset: data.TFRecordDataset,
         inference_signature: str = None,
         logs_dir: Optional[str] = None,
-        rerank: bool = False,
+        logging_frequency: int = 25,
     ):
         """
         Predict the labels for the trained model
@@ -220,12 +237,129 @@ class RankingModel:
         Args:
             test_dataset: an instance of tf.data.dataset
             inference_signature: If using a SavedModel for prediction, specify the inference signature
-            rerank: boolean specifying if new ranks should be returned
+            logging_frequency: integer representing how often(in batches) to log status
 
         Returns:
             ranking scores or new ranks for each record in a query
         """
-        self.logger.info("Predicting scores on test set...")
+        if logs_dir:
+            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            file_io.rm_file(outfile)
+
+        _predict_fn = self._get_predict_fn(
+            inference_signature=inference_signature,
+            features_to_return=self.feature_config.get_features_to_log(),
+        )
+
+        predictions_df_list = list()
+        batch_count = 0
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            predictions_df = self._convert_predictions_to_df(
+                predictions_dict, self.feature_config.get_features_to_log()
+            )
+            if logs_dir:
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+            else:
+                predictions_df_list.append(predictions_df)
+
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished predicting scores for {} batches".format(batch_count))
+
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            self.logger.info("Model Predictions: ")
+            predictions_df = pd.concat(predictions_df_list)
+            self.logger.info(predictions_df)
+
+        return predictions_df
+
+    def evaluate(
+        self,
+        test_dataset: data.TFRecordDataset,
+        inference_signature: str = None,
+        logging_frequency: int = 25,
+        group_metrics_min_queries: int = 50,
+        logs_dir: Optional[str] = None,
+    ):
+        """
+        Evaluate the ranking model
+
+        Args:
+            test_dataset: an instance of tf.data.dataset
+            inference_signature: If using a SavedModel for prediction, specify the inference signature
+            logging_frequency: integer representing how often(in batches) to log status
+            metric_group_keys: list of fields to compute group based metrics on
+            save_to_file: set to True to save predictions to file like self.predict()
+
+        Returns:
+            metrics and groupwise metrics as pandas DataFrames
+        """
+        group_metrics_keys = self.feature_config.get_group_metrics_keys()
+        evaluation_features = group_metrics_keys + [
+            self.feature_config.get_query_key(),
+            self.feature_config.get_label(),
+            self.feature_config.get_rank(),
+        ]
+
+        _predict_fn = self._get_predict_fn(
+            inference_signature=inference_signature, features_to_return=evaluation_features
+        )
+
+        batch_count = 0
+        df_grouped_stats = pd.DataFrame()
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            predictions_df = self._convert_predictions_to_df(predictions_dict, evaluation_features)
+
+            df_batch_grouped_stats = metrics_helper.get_grouped_stats(
+                df=predictions_df,
+                query_key_col=self.feature_config.get_query_key("node_name"),
+                label_col=self.feature_config.get_label("node_name"),
+                old_rank_col=self.feature_config.get_rank("node_name"),
+                new_rank_col=NEW_RANK_FIELD,
+                group_keys=self.feature_config.get_group_metrics_keys("node_name"),
+            )
+            df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
+
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished evaluating {} batches".format(batch_count))
+
+        # Compute overall metrics
+        df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
+        self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
+
+        df_group_metrics = None
+        df_group_metrics_summary = None
+        if group_metrics_keys:
+            # Filter groups by min_query_count
+            df_grouped_stats = df_grouped_stats[
+                df_grouped_stats["query_count"] >= group_metrics_min_queries
+            ]
+
+            # Compute group metrics
+            df_group_metrics = df_grouped_stats.apply(
+                metrics_helper.summarize_grouped_stats, axis=1
+            )
+            if logs_dir:
+                file_io.write_df(
+                    df_group_metrics, outfile=os.path.join(logs_dir, GROUP_METRICS_CSV_FILE)
+                )
+
+            # Compute group metrics summary
+            df_group_metrics_summary = df_group_metrics.describe()
+            self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
+
+        return df_overall_metrics, df_group_metrics
+
+    def _get_predict_fn(self, inference_signature, features_to_return):
         if self.is_compiled:
             infer = self.model
         else:
@@ -233,12 +367,10 @@ class RankingModel:
             infer = self.model.signatures[inference_signature]
 
         # Get features to log
-        features_to_log = self.features.features_to_log
-
-        if logs_dir:
-            outfile = os.path.join(logs_dir, MODEL_PREDICTIONS_CSV_FILE)
-            # Delete file if it exists
-            file_io.rm_file(outfile)
+        features_to_log = [f.get("node_name", f["name"]) for f in features_to_return] + [
+            "new_score",
+            "new_rank",
+        ]
 
         @tf.function
         def _flatten_records(x):
@@ -260,7 +392,7 @@ class RankingModel:
 
             # Set scores of padded records to 0
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-            new_pos = tf.add(
+            new_rank = tf.add(
                 tf.argsort(
                     tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True
                 ),
@@ -270,12 +402,12 @@ class RankingModel:
             predictions_dict = dict()
             mask = _flatten_records(features["mask"])
             for feature_name in features_to_log:
-                if feature_name == "label":
+                if feature_name == self.feature_config.get_label(key="node_name"):
                     feat_ = label
-                elif feature_name == "new_score":
+                elif feature_name == NEW_SCORE_FIELD:
                     feat_ = scores
-                elif feature_name == "new_pos":
-                    feat_ = new_pos
+                elif feature_name == NEW_RANK_FIELD:
+                    feat_ = new_rank
                 else:
                     if feature_name in features:
                         feat_ = features[feature_name]
@@ -292,56 +424,23 @@ class RankingModel:
 
             return predictions_dict
 
-        predictions_df_list = list()
-        for predictions_dict in test_dataset.map(_predict_score).take(-1):
-            # If feature is a string, convert back from bytes to string
-            for feature_name in features_to_log:
-                if (
-                    feature_name in self.features.feature_config
-                    and self.features.feature_config[feature_name]["type"] == FeatureTypeKey.STRING
-                ):
-                    predictions_dict[feature_name] = tf.strings.unicode_encode(
-                        tf.cast(predictions_dict[feature_name], tf.int32), output_encoding="UTF-8",
-                    )
+        return _predict_score
 
-            predictions_df = pd.DataFrame(predictions_dict)
-            if logs_dir:
-                if os.path.isfile(outfile):
-                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
-                else:
-                    # If writing first time, write headers to CSV file
-                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-            else:
-                predictions_df_list.append(predictions_df)
+    def _convert_predictions_to_df(self, predictions_dict, features):
+        # If feature is a string, convert back from bytes to string
+        for feature_info in features:
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
+            if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
+                str_feature = tf.strings.unicode_encode(
+                    tf.cast(predictions_dict[feature_node_name], tf.int32),
+                    output_encoding="UTF-8",
+                )
+                # TODO: Make this character parameterized
+                predictions_dict[feature_node_name] = tf.strings.regex_replace(
+                    str_feature, "\x00", ""
+                )
 
-        predictions_df = None
-        if logs_dir:
-            self.logger.info("Model predictions written to -> {}".format(outfile))
-        else:
-            self.logger.info("Model Predictions: ")
-            predictions_df = pd.concat(predictions_df_list)
-            self.logger.info(predictions_df)
-
-        return predictions_df
-
-    def evaluate(self, test_dataset):
-        """
-        Predict the labels/ranks and compute metrics for the test set
-
-        Args:
-            test_dataset: an instance of tf.data.dataset
-
-        Returns:
-            evaluated metrics specified on the dataset
-        """
-        self.logger.info("Evaluating model on test set...")
-        if self.is_compiled:
-            metrics = self.model.evaluate(test_dataset)
-            return dict(zip(self.model.metrics_names, metrics))
-        else:
-            raise NotImplementedError(
-                "The model could not be evaluated. Check if the model was compiled correctly. Training a SavedModel is not currently supported."
-            )
+        return pd.DataFrame(predictions_dict)
 
     def save(self, models_dir: str):
         """
@@ -403,7 +502,7 @@ class RankingModel:
         # using tensorflow hub KerasLayer as a wrapper
         #
         # def build_model(loaded_model):
-        #     x = self.features.define_inputs()
+        #     x = self.feature_config.define_inputs()
         #     # Wrap what's loaded to a KerasLayer
         #     keras_layer = hub.KerasLayer(loaded_model, trainable=True)(x)
         #     model = tf.keras.Model(x, keras_layer)
@@ -443,10 +542,9 @@ class RankingModel:
 
         # TFRecord Signature
         # Define a parsing function for tfrecord protos
-        inputs = self.features.get_X()
-        self.features.feature_config.pop("mask")
+        inputs = self.feature_config.get_all_features(key="node_name", include_label=False)
         tfrecord_parse_fn = make_parse_fn(
-            feature_config=self.features, max_num_records=self.max_num_records
+            feature_config=self.feature_config, max_num_records=self.max_num_records
         )
 
         # Define a serving signature for tfrecord
@@ -497,7 +595,7 @@ class RankingModel:
             # Mask the padded records
             for key, value in predictions.items():
                 predictions[key] = tf.where(
-                    tf.equal(features_dict["mask"], 0), tf.constant(-np.inf), predictions[key]
+                    tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
                 )
 
             return predictions
@@ -507,7 +605,9 @@ class RankingModel:
             ServingSignatureKey.TFRECORD: _serve_tfrecord
         }
 
-    def _build_callback_hooks(self, models_dir: str):
+    def _build_callback_hooks(
+        self, models_dir: str, logs_dir: str, is_training=True, logging_frequency=25
+    ):
         """
         Build callback hooks for the training loop
 
@@ -516,12 +616,77 @@ class RankingModel:
         """
         callbacks_list: list = list()
 
-        # Model checkpoint
-        checkpoints_path = os.path.join(models_dir, "checkpoints")
-        cp_callback = callbacks.ModelCheckpoint(
-            filepath=checkpoints_path, save_weights_only=False, verbose=1
-        )
-        callbacks_list.append(cp_callback)
+        if is_training:
+            # Model checkpoint
+            if models_dir:
+                checkpoints_path = os.path.join(models_dir, CHECKPOINT_FNAME)
+                cp_callback = callbacks.ModelCheckpoint(
+                    filepath=checkpoints_path,
+                    save_weights_only=False,
+                    verbose=1,
+                    save_best_only=True,
+                    mode="max",
+                    monitor="val_new_MRR",
+                )
+                callbacks_list.append(cp_callback)
+
+            # Early Stopping
+            early_stopping_callback = callbacks.EarlyStopping(
+                monitor="val_new_MRR", mode="max", patience=2, verbose=1, restore_best_weights=True
+            )
+            callbacks_list.append(early_stopping_callback)
+
+        # TensorBoard
+        if logs_dir:
+            tensorboard_callback = callbacks.TensorBoard(
+                log_dir=logs_dir, histogram_freq=1, update_freq=5
+            )
+            callbacks_list.append(tensorboard_callback)
+
+        # Debugging/Logging
+        logger = self.logger
+
+        class DebuggingCallback(callbacks.Callback):
+            def __init__(self, patience=0):
+                super(DebuggingCallback, self).__init__()
+
+                self.epoch = 0
+
+            def on_train_batch_end(self, batch, logs=None):
+                if batch % logging_frequency == 0:
+                    logger.info("[epoch: {} | batch: {}] {}".format(self.epoch, batch, logs))
+
+            def on_epoch_end(self, epoch, logs=None):
+                logger.info("End of Epoch {}".format(self.epoch))
+                logger.info(logs)
+
+            def on_epoch_begin(self, epoch, logs=None):
+                self.epoch = epoch + 1
+                logger.info("Starting Epoch : {}".format(self.epoch))
+                logger.info(logs)
+
+            def on_train_begin(self, logs):
+                logger.info("Training Model")
+
+            def on_test_begin(self, logs):
+                logger.info("Evaluating Model")
+
+            def on_predict_begin(self, logs):
+                logger.info("Predicting scores using model")
+
+            def on_train_end(self, logs):
+                logger.info("Completed training model")
+                logger.info(logs)
+
+            def on_test_end(self, logs):
+                logger.info("Completed evaluating model")
+                logger.info(logs)
+
+            def on_predict_end(self, logs):
+                logger.info("Completed Predicting scores using model")
+                logger.info(logs)
+
+        callbacks_list.append(DebuggingCallback())
 
         # Add more here
 
@@ -532,10 +697,6 @@ class RankingModel:
         Add feature layer by processing the inputs
         NOTE: Embeddings or any other in-graph preprocessing goes here
         """
-        # Add mask to features object
-        # TODO: if we always call this - why not always, in the Features _init_?
-        self.features.add_mask()
-
         ranking_features = list()
         metadata_features = dict()
 
@@ -550,30 +711,29 @@ class RankingModel:
             dense_feature = layers.DenseFeatures(feature_col)(inputs)
             return dense_feature
 
-        for feature, feature_info in self.features.get_dict().items():
-            feature_node_name = feature_info.get("node_name", feature)
+        for feature_info in self.feature_config.get_all_features(include_label=False):
+            feature_name = feature_info["name"]
+            feature_node_name = feature_info.get("node_name", feature_name)
+            feature_layer_info = feature_info["feature_layer_info"]
 
-            if feature_info["type"] == FeatureTypeKey.NUMERIC:
+            if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
                 dense_feature = _get_dense_feature(
                     inputs, feature_node_name, shape=(self.max_num_records, 1)
                 )
                 if feature_info["trainable"]:
                     ranking_features.append(tf.cast(dense_feature, tf.float32))
                 else:
-                    metadata_features[feature] = tf.cast(dense_feature, tf.float32)
-            elif feature_info["type"] == FeatureTypeKey.STRING:
+                    metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
+            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 # TODO: Add embedding layer here
                 pass
-            elif feature_info["type"] == FeatureTypeKey.CATEGORICAL:
+            elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 # TODO: Add embedding layer with vocabulary here
                 raise NotImplementedError
-            elif feature_info["type"] == FeatureTypeKey.LABEL:
-                # NOTE: Can implement in the future if necessary
-                pass
             else:
                 raise Exception(
                     "Unknown feature type {} for feature : {}".format(
-                        feature_info["type"], feature
+                        feature_layer_info["type"], feature_name
                     )
                 )
 
@@ -606,7 +766,7 @@ class RankingModel:
                 #
                 # TODO
                 #
-                raise NotImplementedError
+                return ranking_features, metadata_features
         elif self.scoring_key == ScoringKey.PAIRWISE:
             if loss.loss_type == LossTypeKey.POINTWISE:
                 """
@@ -646,25 +806,22 @@ class RankingModel:
         Define the model architecture based on the type of scoring function selected
         """
         scoring_fn = scoring_factory.get_scoring_fn(
-            scoring_key=self.scoring_key,
-            architecture_key=self.architecture_key,
-            loss_type=loss.loss_type,
+            scoring_key=self.scoring_key, model_config=self.model_config, loss_type=loss.loss_type,
         )
 
         scores = scoring_fn(ranking_features)
 
         return scores
 
-    def _add_predictions(self, scores):
+    def _add_predictions(self, logits, loss, mask):
         """
         Convert ranking scores into probabilities
 
-        NOTE: Depends on the loss being used
-        Could be moved to the loss function in the future
+        Args:
+            logits: scores from the final model layer
+            loss: RankingLoss object
+            mask: mask tensor for handling padded records
         """
-        #
-        # TODO : Move to separate module
-        #
-        predictions = layers.Activation("sigmoid", name="ranking_scores")(scores)
+        activation_fn = loss.get_final_activation_op()
 
-        return predictions
+        return activation_fn(logits, mask)

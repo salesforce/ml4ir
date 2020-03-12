@@ -2,7 +2,7 @@ import glob
 from ml4ir.io import file_io
 import os
 import tensorflow as tf
-from ml4ir.config.features import Features
+from ml4ir.config.features import FeatureConfig
 from ml4ir.data import tfrecord_reader, tfrecord_writer
 from typing import List
 
@@ -12,9 +12,10 @@ TFRECORD_FILE = "file_0.tfrecord"
 
 def read(
     data_dir: str,
-    features: Features,
+    feature_config: FeatureConfig,
     tfrecord_dir: str,
     batch_size: int = 128,
+    use_part_files: bool = False,
     max_num_records: int = 25,
     parse_tfrecord: bool = True,
     logger=None,
@@ -33,16 +34,21 @@ def read(
 
     Args:
         - data_dir: Path to directory containing csv files to read
-        - features: ml4ir.config.features.Features object extracted from the feature config
+        - feature_config: ml4ir.config.features.FeatureConfig object extracted from the feature config
         - tfrecord_dir: Path to directory where the serialized .tfrecord files will be stored
         - batch_size: int value specifying the size of the batch
+        - use_part_files: bool value specifying whether to look for part files
         - max_num_records: int value specifying max number of records per query
         - logger: logging object
 
     Returns:
         tensorflow TFRecordDataset
     """
-    csv_files: List[str] = glob.glob(os.path.join(data_dir, "*.csv"))
+    csv_files: List[str] = file_io.get_files_in_directory(
+        data_dir,
+        extension="" if use_part_files else ".csv",
+        prefix="part-" if use_part_files else "",
+    )
 
     # Create a directory for storing tfrecord files
     file_io.make_directory(tfrecord_dir, clear_dir=True)
@@ -51,13 +57,13 @@ def read(
     tfrecord_writer.write(
         csv_files=csv_files,
         tfrecord_file=os.path.join(tfrecord_dir, TFRECORD_FILE),
-        features=features,
+        feature_config=feature_config,
         logger=logger,
     )
 
     dataset = tfrecord_reader.read(
         data_dir=tfrecord_dir,
-        features=features,
+        feature_config=feature_config,
         max_num_records=max_num_records,
         batch_size=batch_size,
         parse_tfrecord=parse_tfrecord,

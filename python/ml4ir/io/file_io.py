@@ -6,6 +6,7 @@ import gzip
 import sys
 import csv
 import glob
+import yaml
 
 from typing import Optional
 
@@ -181,8 +182,23 @@ def read_json(infile, log=None) -> dict:
         # f.close()
         raise NotImplementedError
     else:
-        dict_ = json.load(open(infile, "r"))
-    return dict_
+        return json.load(open(infile, "r"))
+
+
+def read_yaml(infile, log=None) -> dict:
+    """
+    Read YAML file and return a python dictionary
+
+    Args:
+        infile: path to the json file; can be hdfs path
+
+    Returns:
+        python dictionary
+    """
+    if infile.startswith("hdfs"):
+        raise NotImplementedError
+    else:
+        return yaml.safe_load(open(infile, "r"))
 
 
 def write_json(json_dict: dict, outfile: str, log=None):
@@ -242,7 +258,7 @@ def copy_dir_to_hdfs(src_path: str, dest_hdfs_path: str, log=None):
     raise NotImplementedError
 
 
-def get_files_in_directory(indir: str, extension=".csv", log=None):
+def get_files_in_directory(indir: str, extension=".csv", prefix="", log=None):
     """
     Get list of csv files in a directory
 
@@ -256,7 +272,7 @@ def get_files_in_directory(indir: str, extension=".csv", log=None):
         # return sorted([f for f in hdfs.ls(indir) if f.endswith(extension)])
         raise NotImplementedError
     else:
-        return sorted(glob.glob(os.path.join(indir, "*{}".format(extension))))
+        return sorted(glob.glob(os.path.join(indir, "{}*{}".format(prefix, extension))))
 
 
 def clear_dir(dir_path: str, log=None):

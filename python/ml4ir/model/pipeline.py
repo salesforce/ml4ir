@@ -8,16 +8,16 @@ import traceback
 import os
 import sys
 import time
+import yaml
 from argparse import Namespace
 from logging import Logger
 from ml4ir.config.parse_args import get_args
-from ml4ir.config import features
+from ml4ir.config.features import parse_config, FeatureConfig
 from ml4ir.io import logging_utils
 from ml4ir.io import file_io
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
 
-from ml4ir.config.keys import ArchitectureKey
 from ml4ir.config.keys import LossKey
 from ml4ir.config.keys import ScoringKey
 from ml4ir.config.keys import MetricKey
@@ -53,8 +53,10 @@ class RankingPipeline(object):
         self.data_dir: str = self.args.data_dir
         file_io.make_directory(self.models_dir, clear_dir=False, log=self.logger)
 
+        # Read/Parse model config YAML
+        self.model_config = self._read_model_config(self.args.model_config)
+
         # Setup other arguments
-        self.architecture: str = self.args.architecture
         self.loss: str = self.args.loss
         self.scoring: str = self.args.scoring
         self.optimizer: str = self.args.optimizer
@@ -71,11 +73,26 @@ class RankingPipeline(object):
         self.set_seeds()
 
         # Load and parse feature config
-        self.features = features.parse_config(self.args.feature_config)
+        self.feature_config: FeatureConfig = parse_config(
+            self.args.feature_config, logger=self.logger
+        )
         self.logger.info("Feature config parsed and loaded")
 
         # Finished initialization
         self.logger.info("Ranking Pipeline successfully initialized!")
+
+    def _read_model_config(self, model_config_str):
+        if model_config_str.endswith(".yaml"):
+            model_config = file_io.read_yaml(model_config_str)
+            self.logger.info(
+                "Reading model config from YAML file : {} \n{}".format(
+                    model_config, model_config_str
+                )
+            )
+        else:
+            model_config = yaml.safe_load(model_config_str)
+            self.logger.info("Reading model config from YAML string : \n{}".format(model_config))
+        return model_config
 
     def setup_logging(self) -> Logger:
         # Remove status file from any previous job at the start of the current job
@@ -105,12 +122,6 @@ class RankingPipeline(object):
                 )
             )
 
-        if self.architecture not in ArchitectureKey.get_all_keys():
-            raise Exception(
-                "Architecture specified [{}] is not one of : {}".format(
-                    self.architecture, ArchitectureKey.get_all_keys()
-                )
-            )
         if self.loss not in LossKey.get_all_keys():
             raise Exception(
                 "Loss specified [{}] is not one of : {}".format(self.loss, LossKey.get_all_keys())
@@ -163,7 +174,7 @@ class RankingPipeline(object):
             ranking_dataset = RankingDataset(
                 data_dir=self.data_dir,
                 data_format=self.data_format,
-                features=self.features,
+                feature_config=self.feature_config,
                 max_num_records=self.args.max_num_records,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
@@ -171,22 +182,24 @@ class RankingPipeline(object):
                 train_pcent_split=self.args.train_pcent_split,
                 val_pcent_split=self.args.val_pcent_split,
                 test_pcent_split=self.args.test_pcent_split,
+                use_part_files=self.args.use_part_files,
                 logger=self.logger,
             )
             self.logger.info("Ranking Dataset created")
 
             # Build model
             model = RankingModel(
-                architecture_key=self.architecture,
+                model_config=self.model_config,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
                 metrics_keys=self.metrics,
                 optimizer_key=self.optimizer,
-                features=self.features,
+                feature_config=self.feature_config,
                 max_num_records=self.args.max_num_records,
                 model_file=self.args.model_file,
                 learning_rate=self.args.learning_rate,
                 learning_rate_decay=self.args.learning_rate_decay,
+                learning_rate_decay_steps=self.args.learning_rate_decay_steps,
                 compute_intermediate_stats=self.args.compute_intermediate_stats,
                 logger=self.logger,
             )
@@ -203,6 +216,8 @@ class RankingPipeline(object):
                     dataset=ranking_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
+                    logs_dir=self.logs_dir,
+                    logging_frequency=self.args.logging_frequency,
                 )
 
                 # Save model
@@ -215,7 +230,13 @@ class RankingPipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE,
             }:
                 # Evaluate
-                model.evaluate(test_dataset=ranking_dataset.test)
+                model.evaluate(
+                    test_dataset=ranking_dataset.test,
+                    inference_signature=self.args.inference_signature,
+                    logging_frequency=self.args.logging_frequency,
+                    group_metrics_min_queries=self.args.group_metrics_min_queries,
+                    logs_dir=self.logs_dir,
+                )
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
@@ -228,6 +249,7 @@ class RankingPipeline(object):
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logs_dir=self.logs_dir,
+                    logging_frequency=self.args.logging_frequency,
                 )
 
             # Finish

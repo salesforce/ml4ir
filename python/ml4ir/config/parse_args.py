@@ -27,7 +27,7 @@ def define_args() -> ArgumentParser:
         "--feature_config",
         type=str,
         default=None,
-        help="Path to JSON file pr JSON string with feature metadata for training.",
+        help="Path to YAML file or YAML string with feature metadata for training.",
     )
 
     parser.add_argument(
@@ -39,11 +39,10 @@ def define_args() -> ArgumentParser:
     )
 
     parser.add_argument(
-        "--architecture",
+        "--model_config",
         type=str,
-        default="simple_dnn",
-        help="Model to use for training. Has to be one of the keys in ArchitectureKey under "
-        "ml4ir/config/keys.py",
+        default="ml4ir/config/default_model_config.yaml",
+        help="Path to the Model config YAML used to build the model architecture.",
     )
 
     parser.add_argument(
@@ -91,7 +90,14 @@ def define_args() -> ArgumentParser:
     parser.add_argument("--learning_rate", type=float, default=0.01, help="Step size (e.g.: 0.01)")
 
     parser.add_argument(
-        "--learning_rate_decay", type=float, default=0.96, help="decay rate for the learning rate"
+        "--learning_rate_decay", type=float, default=0.90, help="decay rate for the learning rate"
+    )
+
+    parser.add_argument(
+        "--learning_rate_decay_steps",
+        type=int,
+        default=1000,
+        help="decay rate for the learning rate",
     )
 
     parser.add_argument(
@@ -104,7 +110,7 @@ def define_args() -> ArgumentParser:
     parser.add_argument(
         "--execution_mode",
         type=str,
-        default="train_evaluate",
+        default="train_inference",
         help="Execution mode for the pipeline. Should be one of ExecutionModeKey",
     )
 
@@ -178,6 +184,27 @@ def define_args() -> ArgumentParser:
         type=str,
         default="serving_default",
         help="SavedModel signature to be used for inference",
+    )
+
+    parser.add_argument(
+        "--use_part_files",
+        type=bool,
+        default=False,
+        help="Whether to look for part files while loading data",
+    )
+
+    parser.add_argument(
+        "--logging_frequency",
+        type=int,
+        default=25,
+        help="How often to log results to log file. Int representing number of batches.",
+    )
+
+    parser.add_argument(
+        "--group_metrics_min_queries",
+        type=int,
+        default=50,
+        help="Minimum number of queries per group to be used to computed groupwise metrics.",
     )
 
     return parser

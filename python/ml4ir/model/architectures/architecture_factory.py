@@ -1,19 +1,16 @@
 from ml4ir.config.keys import ArchitectureKey
-from ml4ir.model.architectures import dnn
+from ml4ir.model.architectures.dnn import DNN
 
 
-def get_architecture(architecture_key: str):
+def get_architecture(model_config):
     """
-    Return the architecture operation based on the key specified
+    Return the architecture operation based on the model_config YAML specified
     """
+    architecture_key = model_config.get("architecture_key")
+    if architecture_key == ArchitectureKey.DNN:
+        return DNN(model_config).get_architecture_op()
 
-    if architecture_key == ArchitectureKey.SIMPLE_DNN:
-        return dnn.get_architecture_op()
-
-    elif architecture_key == ArchitectureKey.DNN_128:
-        return dnn.get_architecture_op(128)
-
-    elif architecture_key == ArchitectureKey.LSTM:
+    elif architecture_key == ArchitectureKey.RNN:
         raise NotImplementedError
 
     else:
