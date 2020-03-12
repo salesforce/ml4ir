@@ -87,3 +87,16 @@ features:
       name: query_str
       required: false
     tfrecord_type: context
+  - name: group
+    node_name: group
+    trainable: false
+    dtype: int
+    log_at_inference: false
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: group
+      required: true
+    tfrecord_type: context

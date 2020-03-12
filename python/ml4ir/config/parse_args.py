@@ -110,7 +110,7 @@ def define_args() -> ArgumentParser:
     parser.add_argument(
         "--execution_mode",
         type=str,
-        default="train_evaluate",
+        default="train_inference",
         help="Execution mode for the pipeline. Should be one of ExecutionModeKey",
     )
 
@@ -198,6 +198,13 @@ def define_args() -> ArgumentParser:
         type=int,
         default=25,
         help="How often to log results to log file. Int representing number of batches.",
+    )
+
+    parser.add_argument(
+        "--group_metrics_min_queries",
+        type=int,
+        default=50,
+        help="Minimum number of queries per group to be used to computed groupwise metrics.",
     )
 
     return parser

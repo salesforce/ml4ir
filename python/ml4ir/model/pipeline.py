@@ -232,9 +232,10 @@ class RankingPipeline(object):
                 # Evaluate
                 model.evaluate(
                     test_dataset=ranking_dataset.test,
-                    models_dir=self.models_dir,
-                    logs_dir=self.logs_dir,
+                    inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
+                    group_metrics_min_queries=self.args.group_metrics_min_queries,
+                    logs_dir=self.logs_dir,
                 )
 
             if self.args.execution_mode in {

@@ -15,7 +15,7 @@ from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
-from ml4ir.model.metrics import metric_factory
+from ml4ir.model.metrics import metric_factory, metrics_helper
 from ml4ir.model.scoring import scoring_factory
 from ml4ir.data.tfrecord_reader import make_parse_fn
 from ml4ir.io import file_io
@@ -27,7 +27,10 @@ from typing import Dict, Optional, List, Type
 
 # Constants
 MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
+GROUP_METRICS_CSV_FILE = "group_metrics.csv"
 CHECKPOINT_FNAME = "checkpoint.hdf5"
+NEW_RANK_FIELD = "new_rank"
+NEW_SCORE_FIELD = "new_score"
 
 
 class RankingModel:
@@ -226,7 +229,6 @@ class RankingModel:
         test_dataset: data.TFRecordDataset,
         inference_signature: str = None,
         logs_dir: Optional[str] = None,
-        rerank: bool = False,
         logging_frequency: int = 25,
     ):
         """
@@ -235,7 +237,7 @@ class RankingModel:
         Args:
             test_dataset: an instance of tf.data.dataset
             inference_signature: If using a SavedModel for prediction, specify the inference signature
-            rerank: boolean specifying if new ranks should be returned
+            logging_frequency: integer representing how often(in batches) to log status
 
         Returns:
             ranking scores or new ranks for each record in a query
@@ -245,24 +247,17 @@ class RankingModel:
             # Delete file if it exists
             file_io.rm_file(outfile)
 
-        _predict_fn = self._get_predict_fn(inference_signature=inference_signature)
+        _predict_fn = self._get_predict_fn(
+            inference_signature=inference_signature,
+            features_to_return=self.feature_config.get_features_to_log(),
+        )
 
         predictions_df_list = list()
         batch_count = 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
-            # If feature is a string, convert back from bytes to string
-            for feature_info in self.feature_config.get_features_to_log():
-                feature_node_name = feature_info.get("node_name", feature_info["name"])
-                if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
-                    str_feature = tf.strings.unicode_encode(
-                        tf.cast(predictions_dict[feature_node_name], tf.int32),
-                        output_encoding="UTF-8",
-                    )
-                    predictions_dict[feature_node_name] = tf.strings.regex_replace(
-                        str_feature, "\x00", ""
-                    )
-
-            predictions_df = pd.DataFrame(predictions_dict)
+            predictions_df = self._convert_predictions_to_df(
+                predictions_dict, self.feature_config.get_features_to_log()
+            )
             if logs_dir:
                 if os.path.isfile(outfile):
                     predictions_df.to_csv(outfile, mode="a", header=False, index=False)
@@ -286,7 +281,85 @@ class RankingModel:
 
         return predictions_df
 
-    def _get_predict_fn(self, inference_signature):
+    def evaluate(
+        self,
+        test_dataset: data.TFRecordDataset,
+        inference_signature: str = None,
+        logging_frequency: int = 25,
+        group_metrics_min_queries: int = 50,
+        logs_dir: Optional[str] = None,
+    ):
+        """
+        Evaluate the ranking model
+
+        Args:
+            test_dataset: an instance of tf.data.dataset
+            inference_signature: If using a SavedModel for prediction, specify the inference signature
+            logging_frequency: integer representing how often(in batches) to log status
+            metric_group_keys: list of fields to compute group based metrics on
+            save_to_file: set to True to save predictions to file like self.predict()
+
+        Returns:
+            metrics and groupwise metrics as pandas DataFrames
+        """
+        group_metrics_keys = self.feature_config.get_group_metrics_keys()
+        evaluation_features = group_metrics_keys + [
+            self.feature_config.get_query_key(),
+            self.feature_config.get_label(),
+            self.feature_config.get_rank(),
+        ]
+
+        _predict_fn = self._get_predict_fn(
+            inference_signature=inference_signature, features_to_return=evaluation_features
+        )
+
+        batch_count = 0
+        df_grouped_stats = pd.DataFrame()
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            predictions_df = self._convert_predictions_to_df(predictions_dict, evaluation_features)
+
+            df_batch_grouped_stats = metrics_helper.get_grouped_stats(
+                df=predictions_df,
+                query_key_col=self.feature_config.get_query_key("node_name"),
+                label_col=self.feature_config.get_label("node_name"),
+                old_rank_col=self.feature_config.get_rank("node_name"),
+                new_rank_col=NEW_RANK_FIELD,
+                group_keys=self.feature_config.get_group_metrics_keys("node_name"),
+            )
+            df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
+
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished evaluating {} batches".format(batch_count))
+
+        # Compute overall metrics
+        df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
+        self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
+
+        df_group_metrics = None
+        df_group_metrics_summary = None
+        if group_metrics_keys:
+            # Filter groups by min_query_count
+            df_grouped_stats = df_grouped_stats[
+                df_grouped_stats["query_count"] >= group_metrics_min_queries
+            ]
+
+            # Compute group metrics
+            df_group_metrics = df_grouped_stats.apply(
+                metrics_helper.summarize_grouped_stats, axis=1
+            )
+            if logs_dir:
+                file_io.write_df(
+                    df_group_metrics, outfile=os.path.join(logs_dir, GROUP_METRICS_CSV_FILE)
+                )
+
+            # Compute group metrics summary
+            df_group_metrics_summary = df_group_metrics.describe()
+            self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
+
+        return df_overall_metrics, df_group_metrics
+
+    def _get_predict_fn(self, inference_signature, features_to_return):
         if self.is_compiled:
             infer = self.model
         else:
@@ -294,8 +367,10 @@ class RankingModel:
             infer = self.model.signatures[inference_signature]
 
         # Get features to log
-        features_to_log = self.feature_config.get_features_to_log(key="node_name")
-        features_to_log.extend(["new_score", "new_rank"])
+        features_to_log = [f.get("node_name", f["name"]) for f in features_to_return] + [
+            "new_score",
+            "new_rank",
+        ]
 
         @tf.function
         def _flatten_records(x):
@@ -329,9 +404,9 @@ class RankingModel:
             for feature_name in features_to_log:
                 if feature_name == self.feature_config.get_label(key="node_name"):
                     feat_ = label
-                elif feature_name == "new_score":
+                elif feature_name == NEW_SCORE_FIELD:
                     feat_ = scores
-                elif feature_name == "new_rank":
+                elif feature_name == NEW_RANK_FIELD:
                     feat_ = new_rank
                 else:
                     if feature_name in features:
@@ -351,32 +426,21 @@ class RankingModel:
 
         return _predict_score
 
-    def evaluate(self, test_dataset, models_dir, logs_dir, logging_frequency=25):
-        """
-        Predict the labels/ranks and compute metrics for the test set
+    def _convert_predictions_to_df(self, predictions_dict, features):
+        # If feature is a string, convert back from bytes to string
+        for feature_info in features:
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
+            if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
+                str_feature = tf.strings.unicode_encode(
+                    tf.cast(predictions_dict[feature_node_name], tf.int32),
+                    output_encoding="UTF-8",
+                )
+                # TODO: Make this character parameterized
+                predictions_dict[feature_node_name] = tf.strings.regex_replace(
+                    str_feature, "\x00", ""
+                )
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-
-        Returns:
-            evaluated metrics specified on the dataset
-        """
-        if self.is_compiled:
-            callbacks_list: list = self._build_callback_hooks(
-                models_dir=models_dir,
-                logs_dir=logs_dir,
-                is_training=True,
-                logging_frequency=logging_frequency,
-            )
-            metrics = self.model.evaluate(test_dataset, callbacks=callbacks_list)
-            metrics_dict = dict(zip(self.model.metrics_names, metrics))
-            self.logger.info("\n\nEvaluation Results")
-            self.logger.info(pd.Series(metrics_dict).T)
-            return metrics_dict
-        else:
-            raise NotImplementedError(
-                "The model could not be evaluated. Check if the model was compiled correctly. Training a SavedModel is not currently supported."
-            )
+        return pd.DataFrame(predictions_dict)
 
     def save(self, models_dir: str):
         """
