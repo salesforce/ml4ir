@@ -73,7 +73,6 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
             feature_tensor = context_features.get(feature_node_name)
 
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
-            feature_tensor = tf.tile(feature_tensor, multiples=[max_num_records])
 
             # If feature is a string, then decode into numbers
             if feature_layer_info["type"] == FeatureTypeKey.STRING:

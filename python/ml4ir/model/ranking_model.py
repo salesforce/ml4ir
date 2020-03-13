@@ -8,10 +8,12 @@ from tensorflow import saved_model
 from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
+from tensorflow.keras import backend as kbackend
 
 from ml4ir.config.features import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
 from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
+from ml4ir.config.keys import EmbeddingTypeKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
@@ -327,7 +329,6 @@ class RankingModel:
                 group_keys=self.feature_config.get_group_metrics_keys("node_name"),
             )
             df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
-
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info("Finished evaluating {} batches".format(batch_count))
@@ -380,7 +381,7 @@ class RankingModel:
         @tf.function
         def _filter_records(x, mask):
             """Filter records that were padded in each query"""
-            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
+            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, tf.constant(0.0)))))
 
         @tf.function
         def _predict_score(features, label):
@@ -415,6 +416,16 @@ class RankingModel:
                         raise KeyError(
                             "{} was not found in input training data".format(feature_name)
                         )
+
+                # Explode context features to each record for logging
+                # NOTE: This assumes that the record dimension is on axis 1, like previously
+                feat_ = tf.cond(
+                    tf.equal(tf.shape(feat_)[1], tf.constant(1)),
+                    true_fn=lambda: kbackend.repeat_elements(
+                        feat_, rep=self.max_num_records, axis=1
+                    ),
+                    false_fn=lambda: feat_,
+                )
 
                 # Collapse from one query per data point to one record per data point
                 # and remove padded dummy records
@@ -725,7 +736,19 @@ class RankingModel:
                 else:
                     metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                # TODO: Add embedding layer here
+                # if feature_info["trainable"] and feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
+                #     """
+                #     NOTE: The input shape MUST be
+                #     [batch_size, time_steps, feature]
+                #     """
+                #     dense_feature = layers.Bidirectional(
+                #             layers.LSTM(
+                #                 int(feature_layer_info["embedding_size"] / 2),
+                #                 return_sequences=False),
+                #             merge_mode='concat')(inputs[feature_node_name])
+                #     ranking_features.append(dense_feature)
+                # else:
+                #     raise NotImplementedError
                 pass
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 # TODO: Add embedding layer with vocabulary here

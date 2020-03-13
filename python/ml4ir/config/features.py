@@ -259,11 +259,16 @@ class FeatureConfig:
             Dictionary of tensorflow graph input nodes
         """
 
-        def get_shape(feature_layer_info: dict):
+        def get_shape(feature_info: dict):
+            feature_layer_info = feature_info["feature_layer_info"]
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                num_records = 1
+            else:
+                num_records = max_num_records
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (max_num_records,)
+                return (num_records,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (max_num_records, feature_layer_info["max_length"])
+                return (num_records, feature_layer_info["max_length"])
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 raise NotImplementedError
 
@@ -274,7 +279,7 @@ class FeatureConfig:
                 We could do this in the future, to help define more complex loss functions
             """
             node_name = feature_info.get("node_name", feature_info["name"])
-            shape = get_shape(feature_info["feature_layer_info"])
+            shape = get_shape(feature_info)
             inputs[node_name] = Input(shape=shape, name=node_name)
 
         return inputs

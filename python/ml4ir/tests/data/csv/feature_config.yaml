@@ -83,6 +83,8 @@ features:
       type: string
       max_length: 20
       shape: null
+      embedding_type: bilstm
+      embedding_size: 128
     serving_info:
       name: query_str
       required: false
