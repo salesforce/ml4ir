@@ -3,6 +3,10 @@ from ml4ir.config.keys import OptimizerKey
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 
+# Constants
+CLIP_VALUE = 5.0
+
+
 def get_optimizer(
     optimizer_key: str,
     learning_rate: float,
@@ -18,14 +22,14 @@ def get_optimizer(
     )
 
     if optimizer_key == OptimizerKey.ADAM:
-        return tf_optimizers.Adam(learning_rate=learning_rate_schedule)
+        return tf_optimizers.Adam(learning_rate=learning_rate_schedule, clipvalue=CLIP_VALUE)
     elif optimizer_key == OptimizerKey.NADAM:
-        return tf_optimizers.Nadam(learning_rate=learning_rate_schedule)
+        return tf_optimizers.Nadam(learning_rate=learning_rate_schedule, clipvalue=CLIP_VALUE)
     elif optimizer_key == OptimizerKey.ADAGRAD:
-        return tf_optimizers.Adagrad(learning_rate=learning_rate_schedule)
+        return tf_optimizers.Adagrad(learning_rate=learning_rate_schedule, clipvalue=CLIP_VALUE)
     elif optimizer_key == OptimizerKey.SGD:
-        return tf_optimizers.SGD(learning_rate=learning_rate_schedule)
+        return tf_optimizers.SGD(learning_rate=learning_rate_schedule, clipvalue=CLIP_VALUE)
     elif optimizer_key == OptimizerKey.RMS_PROP:
-        return tf_optimizers.RMSprop(learning_rate=learning_rate_schedule)
+        return tf_optimizers.RMSprop(learning_rate=learning_rate_schedule, clipvalue=CLIP_VALUE)
     else:
         raise ValueError("illegal Optimizer key: " + optimizer_key)
