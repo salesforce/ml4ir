@@ -76,7 +76,7 @@ features:
     tfrecord_type: sequence
   - name: query_str
     node_name: query_str
-    trainable: false
+    trainable: true
     dtype: bytes
     log_at_inference: true
     feature_layer_info:

@@ -11,7 +11,7 @@ from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras import backend as kbackend
 
 from ml4ir.config.features import FeatureConfig
-from ml4ir.config.keys import FeatureTypeKey, ScoringKey
+from ml4ir.config.keys import FeatureTypeKey, ScoringKey, TFRecordTypeKey
 from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
 from ml4ir.config.keys import EmbeddingTypeKey
 from ml4ir.model.optimizer import get_optimizer
@@ -732,24 +732,47 @@ class RankingModel:
                     inputs, feature_node_name, shape=(self.max_num_records, 1)
                 )
                 if feature_info["trainable"]:
-                    ranking_features.append(tf.cast(dense_feature, tf.float32))
+                    dense_feature = tf.expand_dims(tf.cast(dense_feature, tf.float32), axis=-1)
+                    ranking_features.append(dense_feature)
                 else:
                     metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                # if feature_info["trainable"] and feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
-                #     """
-                #     NOTE: The input shape MUST be
-                #     [batch_size, time_steps, feature]
-                #     """
-                #     dense_feature = layers.Bidirectional(
-                #             layers.LSTM(
-                #                 int(feature_layer_info["embedding_size"] / 2),
-                #                 return_sequences=False),
-                #             merge_mode='concat')(inputs[feature_node_name])
-                #     ranking_features.append(dense_feature)
-                # else:
-                #     raise NotImplementedError
-                pass
+                if feature_info["trainable"]:
+                    if feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
+                        """
+                        NOTE: The input shape MUST be
+                        [batch_size, time_steps, feature]
+                        """
+                        input_feature = tf.cast(inputs[feature_node_name], tf.uint8)
+                        input_feature = tf.reshape(
+                            input_feature, [-1, feature_layer_info["max_length"]]
+                        )
+                        input_feature = tf.one_hot(input_feature, depth=256)
+
+                        dense_feature = layers.Bidirectional(
+                            layers.LSTM(
+                                int(feature_layer_info["embedding_size"] / 2),
+                                return_sequences=False,
+                            ),
+                            merge_mode="concat",
+                        )(input_feature)
+                        if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                            # If feature is a context feature then tile it for all records
+                            dense_feature = tf.expand_dims(dense_feature, axis=1)
+                            dense_feature = kbackend.repeat_elements(
+                                dense_feature, rep=self.max_num_records, axis=1
+                            )
+
+                        else:
+                            # If sequence feature, then reshape back to original shape
+                            dense_feature = tf.reshape(
+                                dense_feature,
+                                [-1, self.max_num_records, feature_layer_info["embedding_size"]],
+                            )
+
+                        ranking_features.append(dense_feature)
+                    else:
+                        raise NotImplementedError
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 # TODO: Add embedding layer with vocabulary here
                 raise NotImplementedError
@@ -764,8 +787,7 @@ class RankingModel:
         Reshape ranking features to create features of shape
         [batch, max_num_records, num_features]
         """
-        ranking_features = tf.stack(ranking_features, axis=1)
-        ranking_features = tf.transpose(ranking_features, perm=[0, 2, 1])
+        ranking_features = tf.concat(ranking_features, axis=-1)
 
         return ranking_features, metadata_features
 
