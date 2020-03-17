@@ -51,14 +51,14 @@ class TensorFlowInferenceTest {
         queryLenMax = 20
       )
     )
-    val (queryContext, docs) = testQueries
+    val (queryContext: Example, docs: Array[Example]) = testQueries
     val protoBuilder = SequenceExampleBuilder(
       FeatureConfig(
         contextFeatures = List(FeatureField("query_text", DataType.STRING)),
         documentFeatures = List(
-          FeatureField("f1", DataType.FLOAT),
-          FeatureField("f2", DataType.FLOAT),
-          FeatureField("f3", DataType.FLOAT)
+          FeatureField("feat_0", DataType.FLOAT),
+          FeatureField("feat_1", DataType.FLOAT),
+          FeatureField("feat_2", DataType.FLOAT)
         )
       )
     )
@@ -125,7 +125,8 @@ class TensorFlowInferenceTest {
       docsToScore.zipWithIndex.map {
         case (map, idx) =>
           Example(
-            features = MultiFeatures(floatFeatures = map),
+            features =
+              MultiFeatures(floatFeatures = map.updated("pos", idx.toFloat)),
             id = idx.toString
           )
       }
