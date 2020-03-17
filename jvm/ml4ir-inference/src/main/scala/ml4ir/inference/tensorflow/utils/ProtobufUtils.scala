@@ -1,12 +1,16 @@
 package ml4ir.inference.tensorflow.utils
 
 import com.google.protobuf.ByteString
-import ml4ir.inference.tensorflow.data.{Document, QueryContext}
+import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, QueryContext}
 import org.tensorflow.example._
 import org.tensorflow.DataType
 
 import scala.collection.JavaConverters._
 import java.lang.{Float => JFloat, Long => JLong}
+import java.nio.charset.Charset
+
+import com.google.common.base.Charsets
+
 import scala.reflect.ClassTag
 
 // TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
@@ -30,73 +34,58 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
 
   /**
     * Functional API allowing the builder to act like a function to transform query/documents into a scorable protobuf
-    * @param query struct primarily containing the query text
+    * @param context struct primarily containing the query text
     * @param docs array of document-feature structs
     * @return TensorFlow's protobuf structure containing the raw features in one SequenceExample packet
     */
-  def apply(query: QueryContext, docs: Array[Document]): SequenceExample = {
+  def apply(context: Example, docs: Array[Example]): SequenceExample = {
+    val contextFeatures: Features = buildMultiFeatures(context.features)
+    val docFeatures = buildMultiFeatureLists(docs.map(_.features))
     SequenceExample
       .newBuilder()
-      .setContext(buildStringContextFeatures("query_text" -> query.queryString))
-      .setFeatureLists(buildFeatureLists(docs))
+      .setContext(contextFeatures)
+      .setFeatureLists(docFeatures)
       .build()
   }
 
-  /**
-    *
-    * @param nodePairs
-    * @return
-    */
-  def buildStringContextFeatures(nodePairs: (String, String)*): Features = {
-    nodePairs
+  def buildMultiFeatures(features: MultiFeatures): Features = {
+    val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
-        case (bldr, nodePair) =>
-          bldr
-            .putFeature(
-              nodePair._1,
-              Feature
-                .newBuilder()
-                .setBytesList(
-                  BytesList
-                    .newBuilder()
-                    .addValue(
-                      ByteString.copyFrom(nodePair._2.getBytes("UTF-8"))
-                    )
-                    .build()
-                )
-                .build()
-            )
+        case (bldr, (nodeName: String, stringFeature: String)) =>
+          bldr.putFeature(nodeName, toFeature(stringFeature))
       }
-      .build()
+    val withStringAndFloatFeatures = features.floatFeatures
+      .foldLeft(withStringFeatures) {
+        case (bldr, (nodeName: String, floatFeature: Float)) =>
+          bldr.putFeature(nodeName, toFeature(floatFeature))
+      }
+    val withFloatsAndIntsAndStrings = features.int64Features
+      .foldLeft(withStringAndFloatFeatures) {
+        case (bldr, (nodeName: String, longFeature: Long)) =>
+          bldr.putFeature(nodeName, toFeature(longFeature))
+      }
+    withFloatsAndIntsAndStrings.build()
   }
 
-  /**
-    *
-    * @param documents
-    * @return
-    */
-  def buildFeatureLists(documents: Array[Document]): FeatureLists = {
-    val withFloats = transpose(documents.map(_.floatFeatures))
+  def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
+    val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
-        case (bldr, (nodeName: String, featureValues: Array[Float])) =>
-          bldr.putFeatureList(
-            nodeName,
-            floatList(featureValues.map(JFloat.valueOf))
-          )
+        case (bldr, (name: String, featureValues: Array[Float])) =>
+          bldr.putFeatureList(name, floats(featureValues.map(JFloat.valueOf)))
       }
-    // hard code positions for now, but perhaps they should be dummy values at inference time?
-    val positions: Array[Map[String, Long]] =
-      documents.indices.map(i => Map("pos" -> i.toLong)).toArray
     val withFloatsAndInts =
-      transpose(documents.map(_.int64Features) ++ positions)
+      transpose(features.map(_.int64Features))
         .foldLeft(withFloats) {
-          case (bldr, (nodeName: String, featureValues: Array[Long])) =>
-            bldr.putFeatureList(
-              nodeName,
-              longList(featureValues.map(JLong.valueOf))
-            )
+          case (bldr, (name: String, featureValues: Array[Long])) =>
+            bldr.putFeatureList(name, longs(featureValues.map(JLong.valueOf)))
         }
-    withFloatsAndInts.build()
+    val withFloatsAndIntsAndStrings =
+      transpose(features.map(_.stringFeatures))
+        .foldLeft(withFloatsAndInts) {
+          case (bldr, (name: String, featureValues: Array[String])) =>
+            bldr.putFeatureList(name, strings(featureValues))
+        }
+    withFloatsAndIntsAndStrings.build()
   }
 
   /**
@@ -155,7 +144,28 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     * @param featureValues
     * @return
     */
-  def longList(featureValues: Array[JLong]): FeatureList = {
+  def toFeature(featureValues: Array[String]): Feature = {
+    Feature
+      .newBuilder()
+      .setBytesList(
+        BytesList
+          .newBuilder()
+          .addAllValue(
+            featureValues.toList
+              .map(a => ByteString.copyFrom(a.getBytes))
+              .asJava
+          )
+          .build()
+      )
+      .build()
+  }
+
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def longs(featureValues: Array[JLong]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
@@ -167,11 +177,68 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     * @param featureValues
     * @return
     */
-  def floatList(featureValues: Array[JFloat]): FeatureList = {
+  def floats(featureValues: Array[JFloat]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
       .build()
   }
 
+  /**
+    *
+    * @param featureValues
+    * @return
+    */
+  def strings(featureValues: Array[String]): FeatureList = {
+    FeatureList
+      .newBuilder()
+      .addFeature(toFeature(featureValues))
+      .build()
+  }
+
+  def toFeature(stringFeature: String): Feature = {
+    Feature
+      .newBuilder()
+      .setBytesList(
+        BytesList
+          .newBuilder()
+          .addValue(ByteString.copyFrom(stringFeature.getBytes(Charsets.UTF_8)))
+          .build()
+      )
+      .build()
+  }
+
+  /**
+    *
+    * @param floatFeature
+    * @return
+    */
+  def toFeature(floatFeature: Float): Feature = {
+    Feature
+      .newBuilder()
+      .setFloatList(
+        FloatList
+          .newBuilder()
+          .addValue(floatFeature)
+          .build()
+      )
+      .build()
+  }
+
+  /**
+    *
+    * @param longFeature
+    * @return
+    */
+  def toFeature(longFeature: Long): Feature = {
+    Feature
+      .newBuilder()
+      .setInt64List(
+        Int64List
+          .newBuilder()
+          .addValue(longFeature)
+          .build()
+      )
+      .build()
+  }
 }

@@ -3,7 +3,7 @@ package ml4ir.inference.tensorflow
 import java.io.InputStream
 
 import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder
-import ml4ir.inference.tensorflow.data.{QueryContext, Document}
+import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, QueryContext}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
@@ -71,14 +71,22 @@ class TensorFlowInferenceTest {
       Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
     )
     val (query, docs) = (
-      QueryContext(queryString = queryString, queryId = "1234Id"),
+      Example(
+        id = "",
+        features =
+          MultiFeatures(stringFeatures = Map("query_text" -> queryString))
+      ),
       docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
+        case (map, idx) =>
+          Example(
+            features = MultiFeatures(floatFeatures = map),
+            id = idx.toString
+          )
       }
     )
   }
 
-  def testQueries: (QueryContext, Array[Document]) = {
+  def testQueries: (Example, Array[Example]) = {
     val query = "magic"
     val docsToScore = Array(
       Map(
@@ -96,9 +104,16 @@ class TensorFlowInferenceTest {
       Map("feat_0" -> 0.8f, "fake_feat" -> -1f)
     )
     (
-      QueryContext(queryString = query, queryId = "1234Id"),
+      Example(
+        id = "",
+        features = MultiFeatures(stringFeatures = Map("query_text" -> query))
+      ),
       docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
+        case (map, idx) =>
+          Example(
+            features = MultiFeatures(floatFeatures = map),
+            id = idx.toString
+          )
       }
     )
   }

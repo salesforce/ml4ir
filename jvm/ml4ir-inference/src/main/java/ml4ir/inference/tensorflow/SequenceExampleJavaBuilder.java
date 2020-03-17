@@ -1,7 +1,8 @@
 package ml4ir.inference.tensorflow;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import ml4ir.inference.tensorflow.data.Document;
+import ml4ir.inference.tensorflow.data.Example;
 import ml4ir.inference.tensorflow.data.QueryContext;
 import ml4ir.inference.tensorflow.utils.FeatureConfig;
 import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder;
@@ -15,36 +16,25 @@ import java.util.Map;
  * Helper class to build SequenceExample protobufs from base primitives and java collections
  */
 public class SequenceExampleJavaBuilder {
-    private final String queryString;
-    private final List<Document> docs = new ArrayList<>();
+    private final SequenceExampleBuilder sequenceExampleBuilder;
+    private final Example context;
+    private final List<Example> docs = Lists.newArrayList();
 
-    public SequenceExampleJavaBuilder(String queryString) {
-        this.queryString = queryString;
+    public SequenceExampleJavaBuilder(FeatureConfig featureConfig,
+                                      String ctxId,
+                                      Map<String, Float> ctxFloats,
+                                      Map<String, Long> ctxLongs,
+                                      Map<String, String> ctxStrings) {
+        sequenceExampleBuilder = new SequenceExampleBuilder(featureConfig);
+        context = Example.apply(ctxId, ctxFloats, ctxLongs, ctxStrings);
     }
 
     public SequenceExampleJavaBuilder addDoc(String docId,
                                              Map<String, Float> floatFeatures,
                                              Map<String, Long> longFeatures,
                                              Map<String, String> stringFeatures) {
-        docs.add(Document.apply(docId, floatFeatures, longFeatures, stringFeatures));
+        docs.add(Example.apply(docId, floatFeatures, longFeatures, stringFeatures));
         return this;
-    }
-
-    public SequenceExampleJavaBuilder addFloatFeaturesDoc(String docId,
-                                                          Map<String, Float> floatFeatures) {
-        return addDoc(docId, floatFeatures, Maps.newHashMap(), Maps.newHashMap());
-    }
-
-
-    public SequenceExampleJavaBuilder addLongFeaturesDoc(String docId,
-                                                         Map<String, Long> longFeatures) {
-        return addDoc(docId, Maps.newHashMap(), longFeatures, Maps.newHashMap());
-    }
-
-
-    public SequenceExampleJavaBuilder addStringFeaturesDoc(String docId,
-                                                          Map<String, String> stringFeatures) {
-        return addDoc(docId, Maps.newHashMap(), Maps.newHashMap(), stringFeatures);
     }
 
     /**
@@ -52,7 +42,6 @@ public class SequenceExampleJavaBuilder {
      * @return the protobuf instantiation of the query and docs-to-be-scored
      */
     public SequenceExample build() {
-        return new SequenceExampleBuilder(FeatureConfig.apply())
-                .apply(QueryContext.apply(queryString), docs.toArray(new Document[0]));
+        return sequenceExampleBuilder.apply(context, docs.toArray(new Example[0]));
     }
 }

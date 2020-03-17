@@ -3,6 +3,7 @@ package ml4ir.inference.tensorflow;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
+import ml4ir.inference.tensorflow.utils.FeatureConfig;
 import org.junit.Test;
 
 import org.tensorflow.example.FeatureList;
@@ -19,10 +20,17 @@ public class SequenceExampleJavaBuilderTest {
     @Test
     public void testSimpleSequenceExample() {
         String query = "a query string";
-        SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(query);
+        SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(
+                FeatureConfig.apply(), "", null, null, ImmutableMap.of("query_text", query));
         SequenceExample sequenceExample = helper
-                .addFloatFeaturesDoc("doc1", ImmutableMap.of("f1", 1f, "f2", 0.5f))
-                .addFloatFeaturesDoc("doc2", ImmutableMap.of("f1", 0.9f, "f2", 0.2f))
+                .addDoc("doc1",
+                        ImmutableMap.of("f1", 1f, "f2", 0.5f),
+                        ImmutableMap.of(),
+                        ImmutableMap.of())
+                .addDoc("doc2",
+                        ImmutableMap.of("f1", 0.9f, "f2", 0.2f),
+                        ImmutableMap.of(),
+                        ImmutableMap.of())
                 .build();
         ByteString queryTextByteString =
                 sequenceExample.getContext().getFeatureMap().get("query_text").getBytesList().getValue(0);
