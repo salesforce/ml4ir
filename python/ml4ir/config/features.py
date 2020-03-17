@@ -13,7 +13,7 @@ query_key:  # Unique query ID field
     name: <str> # name of the feature in the input data
     node_name: <str> # tf graph node name
     trainable: <bool> # if the feature is a trainable tf element
-    dtype: <float or int or bytes | str>
+    dtype: <Supported tensorflow data type | str>
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
     is_group_metric_key: <boolean | default: false> # if feature should be used a groupby key to compute metrics
     feature_layer_info:

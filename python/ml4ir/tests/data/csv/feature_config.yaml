@@ -2,7 +2,7 @@ query_key:
   name: query_key
   node_name: query_key
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -15,7 +15,7 @@ rank:
   name: pos
   node_name: pos
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -28,7 +28,7 @@ label:
   name: label
   node_name: label
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -41,7 +41,7 @@ features:
   - name: feat_0
     node_name: feat_0
     trainable: true
-    dtype: float
+    dtype: float32
     log_at_inference: false
     feature_layer_info:
       type: numeric
@@ -53,7 +53,7 @@ features:
   - name: feat_1
     node_name: feat_1
     trainable: true
-    dtype: float
+    dtype: float32
     log_at_inference: false
     feature_layer_info:
       type: numeric
@@ -65,7 +65,7 @@ features:
   - name: feat_2
     node_name: feat_2
     trainable: true
-    dtype: float
+    dtype: float32
     log_at_inference: false
     feature_layer_info:
       type: numeric
@@ -77,7 +77,7 @@ features:
   - name: query_str
     node_name: query_str
     trainable: true
-    dtype: bytes
+    dtype: string
     log_at_inference: true
     feature_layer_info:
       type: string
@@ -92,7 +92,7 @@ features:
   - name: group
     node_name: group
     trainable: false
-    dtype: int
+    dtype: int64
     log_at_inference: false
     is_group_metric_key: true
     feature_layer_info:

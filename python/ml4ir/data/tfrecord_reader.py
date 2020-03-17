@@ -27,13 +27,13 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         feature_node_name = feature_info.get("node_name", feature_name)
         dtype = tf.float32
         default_value: Optional[Union[float, str]] = None
-        if feature_info["dtype"] == "float":
+        if feature_info["dtype"] == tf.float32:
             dtype = tf.float32
             default_value = 0.0
-        elif feature_info["dtype"] == "int":
+        elif feature_info["dtype"] == tf.int64:
             dtype = tf.int64
             default_value = 0
-        elif feature_info["dtype"] == "bytes":
+        elif feature_info["dtype"] == tf.string:
             dtype = tf.string
             default_value = ""
         else:

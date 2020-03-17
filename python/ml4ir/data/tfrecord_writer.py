@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow import train
 from tensorflow import io
 from ml4ir.io import file_io
@@ -55,11 +56,11 @@ def _int64_feature(values):
 
 def _get_feature_fn(dtype):
     """Returns appropriate feature function based on datatype"""
-    if dtype == "bytes":
+    if dtype == tf.string:
         return _bytes_feature
-    elif dtype == "float":
+    elif dtype == tf.float32:
         return _float_feature
-    elif dtype == "int":
+    elif dtype == tf.int64:
         return _int64_feature
     else:
         raise Exception("Feature dtype {} not supported".format(dtype))
