@@ -2,11 +2,16 @@ package ml4ir.inference.tensorflow
 
 import java.io.InputStream
 
-import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder
+import ml4ir.inference.tensorflow.utils.{
+  FeatureConfig,
+  FeatureField,
+  SequenceExampleBuilder
+}
 import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, QueryContext}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
+import org.tensorflow.DataType
 
 @Test
 class TensorFlowInferenceTest {
@@ -47,7 +52,16 @@ class TensorFlowInferenceTest {
       )
     )
     val (queryContext, docs) = testQueries
-    val protoBuilder = SequenceExampleBuilder()
+    val protoBuilder = SequenceExampleBuilder(
+      FeatureConfig(
+        contextFeatures = List(FeatureField("query_text", DataType.STRING)),
+        documentFeatures = List(
+          FeatureField("f1", DataType.FLOAT),
+          FeatureField("f2", DataType.FLOAT),
+          FeatureField("f3", DataType.FLOAT)
+        )
+      )
+    )
     val proto = protoBuilder(queryContext, docs)
     val scores = bundleExecutor(proto)
     validateScores(scores, docs.length)

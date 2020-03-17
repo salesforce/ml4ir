@@ -25,6 +25,15 @@ object FeatureConfig {
   // zero-arg constructor to be nice to Java
   def apply(): FeatureConfig =
     new FeatureConfig(List.empty, List.empty, None, None)
+  def apply(contextFeatures: java.util.List[FeatureField],
+            documentFeatures: java.util.List[FeatureField]) = {
+    new FeatureConfig(
+      contextFeatures.asScala.toList,
+      documentFeatures.asScala.toList,
+      None,
+      None
+    )
+  }
 }
 
 /**
@@ -48,7 +57,9 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
-  def buildMultiFeatures(features: MultiFeatures): Features = {
+  def buildMultiFeatures(raw: MultiFeatures): Features = {
+    val featureFilter = config.contextFeatures.map(_.nodeName).toSet
+    val features = raw.clean(featureFilter)
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
         case (bldr, (nodeName: String, stringFeature: String)) =>
@@ -67,7 +78,9 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     withFloatsAndIntsAndStrings.build()
   }
 
-  def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
+  def buildMultiFeatureLists(raw: Array[MultiFeatures]): FeatureLists = {
+    val featureFilter = config.documentFeatures.map(_.nodeName).toSet
+    val features = raw.map(_.clean(featureFilter))
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
         case (bldr, (name: String, featureValues: Array[Float])) =>
@@ -98,14 +111,16 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
   ): Map[String, Array[T]] = {
     val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
     case class FeatureVal(name: String, value: T, docIdx: Int)
+    val featureSet: Set[String] = docFeatures.map(_.keySet).reduce(_ union _)
     docFeatures
       .slice(0, math.min(docFeatures.length, numDocsPerQuery))
       .zipWithIndex
       .flatMap {
         case (doc: Map[String, T], idx: Int) =>
-          doc.map {
+          featureSet.map(name => FeatureVal(name, doc(name), idx))
+        /*doc.map {
             case (feature, value) => FeatureVal(feature, value, idx)
-          }
+          }*/
       }
       .groupBy(_.name)
       .mapValues(_.sortBy(_.docIdx).map(_.value).toArray)

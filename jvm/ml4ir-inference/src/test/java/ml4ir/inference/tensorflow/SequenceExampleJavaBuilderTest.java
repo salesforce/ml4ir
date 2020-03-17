@@ -2,12 +2,16 @@ package ml4ir.inference.tensorflow;
 
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import ml4ir.inference.tensorflow.utils.FeatureConfig;
+import ml4ir.inference.tensorflow.utils.FeatureField;
 import org.junit.Test;
 
+import org.tensorflow.DataType;
 import org.tensorflow.example.FeatureList;
 import org.tensorflow.example.SequenceExample;
+import scala.Option;
 
 import java.util.List;
 import java.util.Map;
@@ -21,8 +25,14 @@ public class SequenceExampleJavaBuilderTest {
         String query = "a query string";
 
         // TODO: this should encode that f1, f2, and f3 are in the model and have default values, but fake_feat is not
-        FeatureConfig featureConfig = FeatureConfig.apply();
 
+        FeatureConfig featureConfig = FeatureConfig.apply(
+                Lists.newArrayList(FeatureField.apply("query_text", DataType.STRING)),
+                Lists.newArrayList(
+                    FeatureField.apply("f1", DataType.FLOAT),
+                    FeatureField.apply("f2", DataType.FLOAT),
+                    FeatureField.apply("f3", DataType.FLOAT)
+                ));
         SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(
                 featureConfig,
                 "ignored",
@@ -66,7 +76,7 @@ public class SequenceExampleJavaBuilderTest {
         List<Float> floatFeature3 =
                 featureListMap.get("f3").getFeatureList().get(0).getFloatList().getValueList();
         assertArrayEquals("feature f3 should match",
-                floatFeature3.toArray(new Float[0]), new Float[] { 0.01f, 0.02f, 0.03f, 0f, 0.5f });
+                floatFeature3.toArray(new Float[0]), new Float[] { 0.01f, 0.02f, 0.03f, 0f, 0.05f });
         assertNull(featureListMap.get("fake_feat"));
     }
 }

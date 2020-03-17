@@ -35,7 +35,10 @@ object Example {
           .asScala
           .mapValues(_.longValue())
           .toMap,
-        Option(stringFeatures).getOrElse(Maps.newHashMap()).asScala.toMap
+        Option(stringFeatures)
+          .getOrElse(Maps.newHashMap())
+          .asScala
+          .toMap
       )
     )
   }
