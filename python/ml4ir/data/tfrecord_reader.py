@@ -50,6 +50,22 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
     punctuation_regex = "|".join([re.escape(c) for c in list(string.punctuation)])
 
     @tf.function
+    def _preprocess_text(feature_tensor, preprocessing_info):
+        # TODO: Move this to a separate function
+        # Preprocess text
+        if preprocessing_info.get("remove_punctuation", False):
+            feature_tensor = tf.strings.regex_replace(feature_tensor, punctuation_regex, "")
+        if preprocessing_info.get("to_lower", False):
+            feature_tensor = tf.strings.lower(feature_tensor)
+
+        # Convert string to bytes
+        feature_tensor = io.decode_raw(
+            feature_tensor, out_type=tf.uint8, fixed_length=preprocessing_info["max_length"],
+        )
+
+        return tf.cast(feature_tensor, tf.float32)
+
+    @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
         """
         Parse the input `tf.Example` proto using the features_spec
@@ -81,12 +97,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
             # If feature is a string, then decode into numbers
             if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                feature_tensor = io.decode_raw(
-                    feature_tensor,
-                    out_type=tf.uint8,
-                    fixed_length=preprocessing_info["max_length"],
-                )
-                feature_tensor = tf.cast(feature_tensor, tf.float32)
+                feature_tensor = _preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor
 
@@ -144,22 +155,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
                 # If feature is a string, then decode into numbers
                 if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                    # TODO: Move this to a separate function
-                    # Preprocess text
-                    if preprocessing_info.get("remove_punctuation", False):
-                        feature_tensor = tf.strings.regex_replace(
-                            feature_tensor, punctuation_regex, ""
-                        )
-                    if preprocessing_info.get("to_lower", False):
-                        feature_tensor = tf.strings.lower(feature_tensor)
-
-                    # Convert string to bytes
-                    feature_tensor = io.decode_raw(
-                        feature_tensor,
-                        out_type=tf.uint8,
-                        fixed_length=preprocessing_info["max_length"],
-                    )
-                    feature_tensor = tf.cast(feature_tensor, tf.float32)
+                    feature_tensor = _preprocess_text(feature_tensor, preprocessing_info)
             else:
                 raise ValueError("Invalid input : {}".format(feature_name))
 
