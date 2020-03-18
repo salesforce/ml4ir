@@ -5,6 +5,8 @@ from tensorflow import sparse
 from tensorflow import image
 from logging import Logger
 from ml4ir.io import file_io
+import re
+import string
 from ml4ir.config.features import FeatureConfig
 from ml4ir.config.keys import TFRecordTypeKey, FeatureTypeKey
 
@@ -45,6 +47,8 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
             sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
 
+    punctuation_regex = "|".join([re.escape(c) for c in list(string.punctuation)])
+
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
         """
@@ -69,6 +73,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         for feature_info in feature_config.get_context_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info.get("feature_layer_info")
+            preprocessing_info = feature_info.get("preprocessing_info", {})
 
             feature_tensor = context_features.get(feature_node_name)
 
@@ -79,7 +84,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                 feature_tensor = io.decode_raw(
                     feature_tensor,
                     out_type=tf.uint8,
-                    fixed_length=feature_layer_info["max_length"],
+                    fixed_length=preprocessing_info["max_length"],
                 )
                 feature_tensor = tf.cast(feature_tensor, tf.float32)
 
@@ -89,6 +94,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         for feature_info in feature_config.get_sequence_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
 
             feature_tensor = sequence_features.get(feature_node_name)
 
@@ -138,10 +144,20 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
                 # If feature is a string, then decode into numbers
                 if feature_layer_info["type"] == FeatureTypeKey.STRING:
+                    # TODO: Move this to a separate function
+                    # Preprocess text
+                    if preprocessing_info.get("remove_punctuation", False):
+                        feature_tensor = tf.strings.regex_replace(
+                            feature_tensor, punctuation_regex, ""
+                        )
+                    if preprocessing_info.get("to_lower", False):
+                        feature_tensor = tf.strings.lower(feature_tensor)
+
+                    # Convert string to bytes
                     feature_tensor = io.decode_raw(
                         feature_tensor,
                         out_type=tf.uint8,
-                        fixed_length=feature_layer_info["max_length"],
+                        fixed_length=preprocessing_info["max_length"],
                     )
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
             else:

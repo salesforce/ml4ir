@@ -19,11 +19,14 @@ query_key:  # Unique query ID field
     feature_layer_info:
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
-        max_length: <int> # Max length of string features
         # following keys are not supported yet
         embedding_size: <int> # Embedding size for categorical/string features
         embedding_type: <categorical or char or string | str>
         ...
+    preprocessing_info:
+        max_length: <int> # Max length of string features
+        to_lower: <bool> # Whether to convert string to lower case
+        remove_punctuation: <bool> # Whether to remove punctuations from string
     serving_info:
         name: <str> # name of input feature at serving time
         preprocessing_type: <str> # Any predefined feature preprocessing step to apply
@@ -261,6 +264,7 @@ class FeatureConfig:
 
         def get_shape(feature_info: dict):
             feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
             if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
                 num_records = 1
             else:
@@ -268,7 +272,7 @@ class FeatureConfig:
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
                 return (num_records,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (num_records, feature_layer_info["max_length"])
+                return (num_records, preprocessing_info["max_length"])
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 raise NotImplementedError
 

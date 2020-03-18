@@ -41,7 +41,7 @@ features:
   - name: feat_0
     node_name: feat_0
     trainable: true
-    dtype: float32
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric
@@ -53,7 +53,7 @@ features:
   - name: feat_1
     node_name: feat_1
     trainable: true
-    dtype: float32
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric
@@ -65,7 +65,7 @@ features:
   - name: feat_2
     node_name: feat_2
     trainable: true
-    dtype: float32
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric

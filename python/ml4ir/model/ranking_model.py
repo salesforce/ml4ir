@@ -726,6 +726,7 @@ class RankingModel:
             feature_name = feature_info["name"]
             feature_node_name = feature_info.get("node_name", feature_name)
             feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
 
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
                 dense_feature = _get_dense_feature(
@@ -745,7 +746,7 @@ class RankingModel:
                         """
                         input_feature = tf.cast(inputs[feature_node_name], tf.uint8)
                         input_feature = tf.reshape(
-                            input_feature, [-1, feature_layer_info["max_length"]]
+                            input_feature, [-1, preprocessing_info["max_length"]]
                         )
                         input_feature = tf.one_hot(input_feature, depth=256)
 
