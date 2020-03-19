@@ -58,7 +58,8 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
   }
 
   def buildMultiFeatures(raw: MultiFeatures): Features = {
-    val featureFilter = config.contextFeatures.map(_.nodeName).toSet
+    val featureFilter: Map[DataType, String => Boolean] =
+      config.contextFeatures.groupBy(_.dType).mapValues(_.map(_.nodeName).toSet)
     val features = raw.clean(featureFilter)
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
@@ -79,7 +80,10 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
   }
 
   def buildMultiFeatureLists(raw: Array[MultiFeatures]): FeatureLists = {
-    val featureFilter = config.documentFeatures.map(_.nodeName).toSet
+    val featureFilter: Map[DataType, String => Boolean] =
+      config.documentFeatures
+        .groupBy(_.dType)
+        .mapValues(_.map(_.nodeName).toSet)
     val features = raw.map(_.clean(featureFilter))
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
