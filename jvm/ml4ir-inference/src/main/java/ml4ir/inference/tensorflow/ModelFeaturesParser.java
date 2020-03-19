@@ -2,11 +2,11 @@ package ml4ir.inference.tensorflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.common.collect.ImmutableMap;
 import ml4ir.inference.tensorflow.utils.ModelFeatures;
 import org.tensorflow.DataType;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,6 +32,10 @@ public class ModelFeaturesParser {
         this.modelFeatures = mapper.readValue(new File(this.path), ModelFeatures.class);
     }
 
+    ModelFeatures getModelFeatures() {
+        return this.modelFeatures;
+    }
+
     public Map<String, String> getContextDataTypes() {
         return modelFeatures.getDataTypesForFeatures().get(CONTEXT);
     }
@@ -42,19 +46,22 @@ public class ModelFeaturesParser {
 
     /**
      * This will return a map of <feature_name, default_value> for a given data type
-     * for tfRecord type Context
+     * for tfRecord type Context. The caller of the function has to convert the String value
+     * to the corresponding primitive/tf datatype.
      */
-    public <T> Map<String, T> getContextFeaturesForDataType(DataType dtype) {
+    public Map<String, String> getContextFeaturesForDataType(DataType dtype) {
         return defaultValueExtractor(modelFeatures.getDataTypesForFeatures().get(CONTEXT),
                 modelFeatures.getDefaultValuesForFeatures().get(CONTEXT),
                 dtype);
+
     }
 
     /**
      * This will return a map of <feature_name, default_value> for a given data type
-     * for tfRecord type Sequence
+     * for tfRecord type Sequence.  The caller of the function has to convert the String value
+     *      * to the corresponding primitive/tf datatype. 
      */
-    public <T> Map<String, T> getSequenceFeaturesForDataType(DataType dtype) {
+    public Map<String, String> getSequenceFeaturesForDataType(DataType dtype) {
         return defaultValueExtractor(modelFeatures.getDataTypesForFeatures().get(SEQUENCE),
                 modelFeatures.getDefaultValuesForFeatures().get(SEQUENCE),
                 dtype);
@@ -76,11 +83,11 @@ public class ModelFeaturesParser {
         return modelFeatures.getServingNameMappingForFeatures().get(SEQUENCE);
     }
 
-    private <T> Map<String, T>  defaultValueExtractor(Map<String, String> featureDataTypes, Map<String, String> defaultValues, DataType dtype) {
+    private Map<String, String>  defaultValueExtractor(Map<String, String> featureDataTypes, Map<String, String> defaultValues, DataType dtype) {
         return featureDataTypes
                 .entrySet()
                 .stream()
                 .filter(e -> dtype.equals(DataType.valueOf(e.getValue().toUpperCase())))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> (T) defaultValues.get(e.getKey())));
+                .collect(Collectors.toMap(e -> e.getKey(), e -> defaultValues.get(e.getKey())));
     }
 }

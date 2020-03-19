@@ -1,21 +1,35 @@
 package ml4ir.inference.tensorflow.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ModelFeatures {
-    private QueryKey query_key;
+
+    @JsonIgnore
+    private Map<String, Map<String, String>> dataHolder = new HashMap<>();
+
+    @JsonProperty("query_key")
+    private QueryKey queryKey;
+
+    @JsonProperty("rank")
     private Rank rank;
+
+    @JsonProperty("label")
     private Label label;
+
+    @JsonProperty("features")
     private List<InputFeatures> features;
 
     public ModelFeatures() {}
 
-    public QueryKey getQuery_key() {
-        return query_key;
+    public QueryKey getQueryKey() {
+        return queryKey;
     }
 
     public Rank getRank() {
@@ -31,121 +45,122 @@ public class ModelFeatures {
     }
 
     public Map<String, Map<String, String>> getDataTypesForFeatures() {
-        Map<String, Map<String, String>> data = new HashMap<>();
-        data.put(this.getLabel().getTfrecord_type(),
-                ImmutableMap.of(this.getLabel().getName(), this.getLabel().getDtype()));
-        data.put(this.getRank().getTfrecord_type(),
-                ImmutableMap.of(this.getRank().getName(), this.getRank().getDtype()));
-        data.put(this.getQuery_key().getTfrecord_type(),
-                ImmutableMap.of(this.getQuery_key().getName(), this.getLabel().getDtype()));
-        features.forEach(f -> data.put(f.getTfrecord_type(),
-                ImmutableMap.of(f.getName(), f.getDtype())));
-        return data;
+        dataHolder.clear();
+        buildMapHelper(dataHolder, this.getLabel().getTfRecordType(),
+                this.getLabel().getName(), this.getLabel().getDtype());
+        buildMapHelper(dataHolder, this.getRank().getTfRecordType(),
+                this.getRank().getName(), this.getRank().getDtype());
+        buildMapHelper(dataHolder, this.getQueryKey().getTfRecordType(),
+                this.getQueryKey().getName(), this.getQueryKey().getDtype());
+        features.forEach(f -> buildMapHelper(dataHolder, f.getTfRecordType(),
+                f.getName(), f.getDtype()));
+        return dataHolder;
     }
 
     public  Map<String, Map<String, String>> getDefaultValuesForFeatures() {
-        Map<String, Map<String, String>> data = new HashMap<>();
-        data.put(this.getLabel().getTfrecord_type(),
-                ImmutableMap.of(this.getLabel().getName(), this.getLabel().getDefault_value()));
-        data.put(this.getRank().getTfrecord_type(),
-                ImmutableMap.of(this.getRank().getName(), this.getRank().getDefault_value()));
-        data.put(this.getQuery_key().getTfrecord_type(),
-                ImmutableMap.of(this.getQuery_key().getName(), this.getQuery_key().getDefault_value()));
-        features.forEach(f -> data.put(f.getTfrecord_type(),
-                ImmutableMap.of(f.getName(), f.getDefault_value())));
-        return data;
+        dataHolder.clear();
+        buildMapHelper(dataHolder, this.getLabel().getTfRecordType(),
+                this.getLabel().getName(), this.getLabel().getDefaultValue());
+        buildMapHelper(dataHolder, this.getRank().getTfRecordType(),
+                this.getRank().getName(), this.getRank().getDefaultValue());
+        buildMapHelper(dataHolder, this.getQueryKey().getTfRecordType(),
+                this.getQueryKey().getName(), this.getQueryKey().getDefaultValue());
+        features.forEach(f -> buildMapHelper(dataHolder, f.getTfRecordType(),
+                f.getName(), f.getDefaultValue()));
+        return dataHolder;
     }
 
     public Map<String, Map<String, String>> getServingNameMappingForFeatures() {
-        Map<String, Map<String, String>> data = new HashMap<>();
-        data.put(this.getLabel().getTfrecord_type(),
-                ImmutableMap.of(this.getLabel().getName(), this.getLabel().getServing_info().getName()));
-        data.put(this.getRank().getTfrecord_type(),
-                ImmutableMap.of(this.getRank().getName(), this.getRank().getServing_info().getName()));
-        data.put(this.getQuery_key().getTfrecord_type(),
-                ImmutableMap.of(this.getQuery_key().getName(), this.getQuery_key().getServing_info().getName()));
-        features.forEach(f -> data.put(f.getTfrecord_type(),
-                ImmutableMap.of(f.getName(), f.getServing_info().getName())));
-        return data;
+        dataHolder.clear();
+        buildMapHelper(dataHolder, this.getLabel().getTfRecordType(),
+                this.getLabel().getName(), this.getLabel().getServingInfo().getName());
+        buildMapHelper(dataHolder, this.getRank().getTfRecordType(),
+                this.getRank().getName(), this.getRank().getServingInfo().getName());
+        buildMapHelper(dataHolder, this.getQueryKey().getTfRecordType(),
+                this.getQueryKey().getName(), this.getQueryKey().getServingInfo().getName());
+        features.forEach(f -> buildMapHelper(dataHolder, f.getTfRecordType(),
+                f.getName(), f.getServingInfo().getName()));
+        return dataHolder;
+    }
+
+    public void buildMapHelper(Map<String, Map<String, String>> data,
+                               String s1, String s2, String s3) {
+        Map<String, String> innerMap = data.getOrDefault(s1, new HashMap<>());
+        innerMap.put(s2, s3);
+        data.put(s1, innerMap);
     }
 }
 
+
 class BaseFeatures {
+    @JsonProperty("name")
     private String name;
-    private String node_name;
-    private boolean trainable;
+
+    @JsonProperty("node_name")
+    private String nodeName;
+
+    @JsonProperty("trainable")
+    private boolean isTrainable;
+
+    @JsonProperty("dtype")
     private String dtype;
-    private boolean log_at_inference;
-    private FeatureLayerInfo feature_layer_info;
-    private ServingInfo serving_info;
-    private String tfrecord_type;
-    private String default_value;
+
+    @JsonProperty("log_at_inference")
+    private boolean logAtInference;
+
+    @JsonProperty("feature_layer_info")
+    private FeatureLayerInfo featureLayerInfo;
+
+    @JsonProperty("serving_info")
+    private ServingInfo servingInfo;
+
+    @JsonProperty("tfrecord_type")
+    private String tfRecordType;
+
+    @JsonProperty("default_value")
+    private String defaultValue;
 
     public String getName() {
         return name;
-    }
-
-    public String getNode_name() {
-        return node_name;
-    }
-
-    public boolean isTrainable() {
-        return trainable;
     }
 
     public String getDtype() {
         return dtype;
     }
 
-    public boolean isLog_at_inference() {
-        return log_at_inference;
+    public ServingInfo getServingInfo() {
+        return servingInfo;
     }
 
-    public FeatureLayerInfo getFeature_layer_info() {
-        return feature_layer_info;
+    public String getTfRecordType() {
+        return tfRecordType;
     }
 
-    public ServingInfo getServing_info() {
-        return serving_info;
-    }
-
-    public String getTfrecord_type() {
-        return tfrecord_type;
-    }
-
-    public String getDefault_value() {
-        return default_value;
+    public String getDefaultValue() {
+        return defaultValue;
     }
 }
 
 class FeatureLayerInfo {
+    @JsonProperty("type")
     private String type;
+
+    @JsonProperty("shape")
     private String shape;
-    private int max_length;
 
-    public String getType() {
-        return type;
-    }
-
-    public String getShape() {
-        return shape;
-    }
-
-    public int getMax_length() {
-        return max_length;
-    }
+    @JsonProperty("max_length")
+    private int maxLength;
 }
 
 class ServingInfo {
+    @JsonProperty("name")
     private String name;
-    private boolean required;
+
+    @JsonProperty("required")
+    private boolean isRequired;
 
     public String getName() {
         return name;
-    }
-
-    public boolean isRequired() {
-        return required;
     }
 }
 

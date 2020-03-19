@@ -1,0 +1,212 @@
+query_key:
+  name: query_key
+  node_name: query_key
+  trainable: false
+  dtype: string
+  log_at_inference: true
+  feature_layer_info:
+    type: string
+    shape: null
+    max_length: 20
+  serving_info:
+    name: query_key_serve
+    required: false
+  tfrecord_type: context
+  default_value: ""
+rank:
+  name: rank
+  node_name: rank
+  trainable: false
+  dtype: float
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: rank_serve
+    required: false
+  tfrecord_type: sequence
+  default_value: 0
+label:
+  name: label
+  node_name: label
+  trainable: false
+  dtype: float
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: label
+    required: false
+  tfrecord_type: sequence
+  default_value: 0
+features:
+  - name: context_string_1
+    node_name: context_string_1
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      max_length: 20
+      shape: null
+    serving_info:
+      name: context_string_1
+      required: false
+    tfrecord_type: context
+    default_value: ""
+  - name: context_string_2
+    node_name: context_string_2
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      max_length: 20
+      shape: null
+    serving_info:
+      name: context_string_2
+      required: false
+    tfrecord_type: context
+    default_value: "context_string_2"
+  - name: context_float_1
+    node_name: context_float_1
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: context_float_1
+      required: false
+    tfrecord_type: context
+    default_value: 0
+  - name: context_float_2
+    node_name: context_float_2
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: context_float_2
+      required: false
+    tfrecord_type: context
+    default_value: 1.5
+  - name: context_long_1
+    node_name: context_long_1
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: context_long_1
+      required: false
+    tfrecord_type: context
+    default_value: 0
+  - name: context_long_2
+    node_name: context_long_2
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: context_long_2
+      required: false
+    tfrecord_type: context
+    default_value: 2147483649
+  - name: sequence_string_1
+    node_name: sequence_string_1
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      max_length: 20
+      shape: null
+    serving_info:
+      name: sequence_string_1
+      required: false
+    tfrecord_type: sequence
+    default_value: ""
+  - name: sequence_string_2
+    node_name: sequence_string_2
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      max_length: 20
+      shape: null
+    serving_info:
+      name: sequence_string_2
+      required: false
+    tfrecord_type: sequence
+    default_value: "sequence_string_2"
+  - name: sequence_float_1
+    node_name: sequence_float_1
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: sequence_float_1
+      required: false
+    tfrecord_type: sequence
+    default_value: 0
+  - name: sequence_float_2
+    node_name: sequence_float_2
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: sequence_float_2
+      required: false
+    tfrecord_type: sequence
+    default_value: 1.5
+  - name: sequence_long_1
+    node_name: sequence_long_1
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: sequence_long_1
+      required: false
+    tfrecord_type: sequence
+    default_value: 0
+  - name: sequence_long_2
+    node_name: sequence_long_2
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      max_length: 5
+      shape: null
+    serving_info:
+      name: sequence_long_2
+      required: false
+    tfrecord_type: sequence
+    default_value: 2147483649
