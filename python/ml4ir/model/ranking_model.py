@@ -359,6 +359,11 @@ class RankingModel:
 
             # Compute group metrics summary
             df_group_metrics_summary = df_group_metrics.describe()
+            self.logger.info(
+                "Computing group metrics using keys: {}".format(
+                    self.feature_config.get_group_metrics_keys("node_name")
+                )
+            )
             self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
 
         return df_overall_metrics, df_group_metrics

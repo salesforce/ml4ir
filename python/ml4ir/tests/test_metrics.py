@@ -1,17 +1,20 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
-from ml4ir.config.features import FeatureConfig, parse_config
+from ml4ir.features.feature_config import FeatureConfig, parse_config
 import os
 import numpy as np
 
 
 # Constants
 GOLD_METRICS = {
-    "old_MRR": 0.7806604,
-    "new_MRR": 0.54550856,
     "old_ACR": 1.6669034,
-    "new_ACR": 2.549716,
+    "new_ACR": 2.8231534,
+    "old_MRR": 0.7806604,
+    "new_MRR": 0.5101033,
+    "perc_improv_ACR": -69.3651469,
+    "perc_improv_MRR": -34.6574625,
+    "query_count": 1408.0,
 }
 
 
@@ -47,6 +50,7 @@ class RankingModelTest(RankingTestBase):
             learning_rate=self.args.learning_rate,
             learning_rate_decay=self.args.learning_rate_decay,
             learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            gradient_clip_value=self.args.gradient_clip_value,
             compute_intermediate_stats=self.args.compute_intermediate_stats,
             logger=self.logger,
         )
