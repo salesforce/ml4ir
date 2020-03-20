@@ -7,7 +7,7 @@ from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, EmbeddingTypeKey, TFRecordTypeKey
 
 
-def _get_dense_feature(inputs, feature, shape=(1,)):
+def get_dense_feature(inputs, feature, shape=(1,)):
     """
     Convert an input into a dense numeric feature
 
@@ -20,7 +20,7 @@ def _get_dense_feature(inputs, feature, shape=(1,)):
     return dense_feature
 
 
-def _get_sequence_embedding(input, feature_info, max_num_records):
+def get_sequence_embedding(input, feature_info, max_num_records):
     feature_layer_info = feature_info["feature_layer_info"]
     preprocessing_info = feature_info.get("preprocessing_info", {})
 
@@ -60,7 +60,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
             feature_layer_info = feature_info["feature_layer_info"]
 
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                dense_feature = _get_dense_feature(
+                dense_feature = get_dense_feature(
                     inputs, feature_node_name, shape=(max_num_records, 1)
                 )
                 if feature_info["trainable"]:
@@ -71,7 +71,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 if feature_info["trainable"]:
                     if feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
-                        embedding = _get_sequence_embedding(
+                        embedding = get_sequence_embedding(
                             inputs[feature_node_name], feature_info, max_num_records
                         )
 

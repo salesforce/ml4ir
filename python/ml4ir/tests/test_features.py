@@ -1,6 +1,6 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.features import preprocessing
-from ml4ir.features.feature_layer import _get_sequence_embedding
+from ml4ir.features.feature_layer import get_sequence_embedding
 import tensorflow as tf
 import string
 import numpy as np
@@ -64,7 +64,7 @@ class RankingModelTest(RankingTestBase):
         """
         sequence_tensor = np.random.randint(256, size=(batch_size, 1, max_length))
 
-        sequence_embedding = _get_sequence_embedding(
+        sequence_embedding = get_sequence_embedding(
             sequence_tensor, feature_info, self.args.max_num_records
         )
 
