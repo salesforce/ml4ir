@@ -4,7 +4,7 @@ from tensorflow.keras import layers
 from tensorflow.keras import backend as K
 
 from ml4ir.features.feature_config import FeatureConfig
-from ml4ir.config.keys import FeatureTypeKey, EmbeddingTypeKey, TFRecordTypeKey
+from ml4ir.config.keys import FeatureTypeKey, EncodingTypeKey, TFRecordTypeKey
 
 
 def get_dense_feature(inputs, feature, shape=(1,)):
@@ -78,7 +78,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
                     metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 if feature_info["trainable"]:
-                    if feature_layer_info["encoding_type"] == EmbeddingTypeKey.BILSTM:
+                    if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
                         embedding = get_sequence_embedding(
                             inputs[feature_node_name], feature_info, max_num_records
                         )

@@ -115,7 +115,7 @@ class ServingSignatureKey(Key):
     TFRECORD = "serving_tfrecord"
 
 
-class EmbeddingTypeKey(Key):
+class EncodingTypeKey(Key):
     """Types of embeddings"""
 
     BILSTM = "bilstm"
