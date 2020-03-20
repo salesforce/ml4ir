@@ -3,6 +3,8 @@ from ml4ir.features import preprocessing
 from ml4ir.features.feature_layer import _get_sequence_embedding
 import tensorflow as tf
 import string
+import numpy as np
+from ml4ir.config.keys import TFRecordTypeKey
 
 
 class RankingModelTest(RankingTestBase):
@@ -41,6 +43,31 @@ class RankingModelTest(RankingTestBase):
         """
         Unit test sequence embedding
 
-        TODO
         """
-        pass
+        batch_size = 50
+        max_length = 20
+        embedding_size = 128
+        feature_info = {
+            "feature_layer_info": {"embedding_size": embedding_size, "embedding_type": "bilstm"},
+            "preprocessing_info": {"max_length": max_length},
+            "tfrecord_type": TFRecordTypeKey.CONTEXT,
+        }
+
+        """
+        Input sequence tensor should be of type integer
+        If float, it will be cast to uint8 as we use this to
+        create one-hot representation of each time step
+
+        If sequence tensor is a context feature, the shape can be either
+        [batch_size, max_length] or [batch_size, 1, max_length]
+        sand the method will tile the output embedding for all records.
+        """
+        sequence_tensor = np.random.randint(256, size=(batch_size, 1, max_length))
+
+        sequence_embedding = _get_sequence_embedding(
+            sequence_tensor, feature_info, self.args.max_num_records
+        )
+
+        assert sequence_embedding.shape[0] == batch_size
+        assert sequence_embedding.shape[1] == self.args.max_num_records
+        assert sequence_embedding.shape[2] == embedding_size
