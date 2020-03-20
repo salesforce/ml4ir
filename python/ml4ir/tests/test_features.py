@@ -38,6 +38,7 @@ class RankingModelTest(RankingTestBase):
         assert processed_text.replace("\x00", "") == input_text.lower().translate(
             str.maketrans("", "", string.punctuation)
         )
+        assert processed_text.replace("\x00", "") == "abcabc123"
 
     def test_sequence_embedding(self):
         """
