@@ -1,8 +1,7 @@
-import glob
 from ml4ir.io import file_io
 import os
 import tensorflow as tf
-from ml4ir.config.features import FeatureConfig
+from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.data import tfrecord_reader, tfrecord_writer
 from typing import List
 

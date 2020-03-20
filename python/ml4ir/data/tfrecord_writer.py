@@ -4,7 +4,7 @@ from tensorflow import io
 from ml4ir.io import file_io
 from typing import List
 from logging import Logger
-from ml4ir.config.features import FeatureConfig, parse_config
+from ml4ir.features.feature_config import FeatureConfig, parse_config
 from ml4ir.config.keys import TFRecordTypeKey
 from argparse import ArgumentParser
 import glob

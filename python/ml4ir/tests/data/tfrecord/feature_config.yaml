@@ -81,10 +81,11 @@ features:
     log_at_inference: true
     feature_layer_info:
       type: string
-      max_length: 20
       shape: null
       embedding_type: bilstm
       embedding_size: 128
+    preprocessing_info:
+      max_length: 20
     serving_info:
       name: query_str
       required: false

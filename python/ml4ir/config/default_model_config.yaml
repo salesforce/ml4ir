@@ -1,7 +1,5 @@
 architecture_key: dnn
 layers:
-  - type: batch_norm
-    name: input_batch_norm
   - type: dense
     name: first_dense
     units: 256

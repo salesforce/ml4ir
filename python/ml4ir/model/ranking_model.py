@@ -1,19 +1,18 @@
 import os
 from logging import Logger
 import tensorflow as tf
-from tensorflow import feature_column
-from tensorflow.keras import callbacks, layers, Input, Model
+from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
 from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
-from tensorflow.keras import backend as kbackend
+from tensorflow.keras import backend as K
 
-from ml4ir.config.features import FeatureConfig
-from ml4ir.config.keys import FeatureTypeKey, ScoringKey, TFRecordTypeKey
+from ml4ir.features.feature_config import FeatureConfig
+from ml4ir.features.feature_layer import define_feature_layer
+from ml4ir.config.keys import FeatureTypeKey, ScoringKey
 from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
-from ml4ir.config.keys import EmbeddingTypeKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
@@ -49,6 +48,7 @@ class RankingModel:
         learning_rate: float,
         learning_rate_decay: float,
         learning_rate_decay_steps: int,
+        gradient_clip_value: float,
         compute_intermediate_stats: bool,
         logger=None,
     ):
@@ -73,6 +73,7 @@ class RankingModel:
                 learning_rate=learning_rate,
                 learning_rate_decay=learning_rate_decay,
                 learning_rate_decay_steps=learning_rate_decay_steps,
+                gradient_clip_value=gradient_clip_value,
             )
 
             # Define loss function
@@ -127,7 +128,9 @@ class RankingModel:
         an individual dense layer.
         Shape(of single metadata_feature) - [batch_size, metadata_feature_size]
         """
-        ranking_features, metadata_features = self._add_feature_layer(inputs)
+        ranking_features, metadata_features = define_feature_layer(
+            feature_config=self.feature_config, max_num_records=self.max_num_records
+        )(inputs)
 
         """
         Transform data appropriately for the specified scoring and loss
@@ -421,9 +424,7 @@ class RankingModel:
                 # NOTE: This assumes that the record dimension is on axis 1, like previously
                 feat_ = tf.cond(
                     tf.equal(tf.shape(feat_)[1], tf.constant(1)),
-                    true_fn=lambda: kbackend.repeat_elements(
-                        feat_, rep=self.max_num_records, axis=1
-                    ),
+                    true_fn=lambda: K.repeat_elements(feat_, rep=self.max_num_records, axis=1),
                     false_fn=lambda: feat_,
                 )
 
@@ -702,95 +703,6 @@ class RankingModel:
         # Add more here
 
         return callbacks_list
-
-    def _add_feature_layer(self, inputs):
-        """
-        Add feature layer by processing the inputs
-        NOTE: Embeddings or any other in-graph preprocessing goes here
-        """
-        ranking_features = list()
-        metadata_features = dict()
-
-        def _get_dense_feature(inputs, feature, shape=(1,)):
-            """
-            Convert an input into a dense numeric feature
-
-            NOTE: Can remove this in the future and
-                  pass inputs[feature] directly
-            """
-            feature_col = feature_column.numeric_column(feature, shape=shape)
-            dense_feature = layers.DenseFeatures(feature_col)(inputs)
-            return dense_feature
-
-        for feature_info in self.feature_config.get_all_features(include_label=False):
-            feature_name = feature_info["name"]
-            feature_node_name = feature_info.get("node_name", feature_name)
-            feature_layer_info = feature_info["feature_layer_info"]
-            preprocessing_info = feature_info.get("preprocessing_info", {})
-
-            if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                dense_feature = _get_dense_feature(
-                    inputs, feature_node_name, shape=(self.max_num_records, 1)
-                )
-                if feature_info["trainable"]:
-                    dense_feature = tf.expand_dims(tf.cast(dense_feature, tf.float32), axis=-1)
-                    ranking_features.append(dense_feature)
-                else:
-                    metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
-            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                if feature_info["trainable"]:
-                    if feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
-                        """
-                        NOTE: The input shape MUST be
-                        [batch_size, time_steps, feature]
-                        """
-                        input_feature = tf.cast(inputs[feature_node_name], tf.uint8)
-                        input_feature = tf.reshape(
-                            input_feature, [-1, preprocessing_info["max_length"]]
-                        )
-                        input_feature = tf.one_hot(input_feature, depth=256)
-
-                        dense_feature = layers.Bidirectional(
-                            layers.LSTM(
-                                int(feature_layer_info["embedding_size"] / 2),
-                                return_sequences=False,
-                            ),
-                            merge_mode="concat",
-                        )(input_feature)
-                        if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
-                            # If feature is a context feature then tile it for all records
-                            dense_feature = tf.expand_dims(dense_feature, axis=1)
-                            dense_feature = kbackend.repeat_elements(
-                                dense_feature, rep=self.max_num_records, axis=1
-                            )
-
-                        else:
-                            # If sequence feature, then reshape back to original shape
-                            dense_feature = tf.reshape(
-                                dense_feature,
-                                [-1, self.max_num_records, feature_layer_info["embedding_size"]],
-                            )
-
-                        ranking_features.append(dense_feature)
-                    else:
-                        raise NotImplementedError
-            elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
-                # TODO: Add embedding layer with vocabulary here
-                raise NotImplementedError
-            else:
-                raise Exception(
-                    "Unknown feature type {} for feature : {}".format(
-                        feature_layer_info["type"], feature_name
-                    )
-                )
-
-        """
-        Reshape ranking features to create features of shape
-        [batch, max_num_records, num_features]
-        """
-        ranking_features = tf.concat(ranking_features, axis=-1)
-
-        return ranking_features, metadata_features
 
     def _transform_features(self, ranking_features, metadata_features, loss: RankingLossBase):
         """

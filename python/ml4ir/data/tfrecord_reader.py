@@ -5,9 +5,8 @@ from tensorflow import sparse
 from tensorflow import image
 from logging import Logger
 from ml4ir.io import file_io
-import re
-import string
-from ml4ir.config.features import FeatureConfig
+from ml4ir.features import preprocessing
+from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import TFRecordTypeKey, FeatureTypeKey
 
 from typing import Union, Optional
@@ -27,16 +26,13 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
     for feature_info in feature_config.get_all_features():
         feature_name = feature_info["name"]
         feature_node_name = feature_info.get("node_name", feature_name)
-        dtype = tf.float32
+        dtype = feature_info["dtype"]
         default_value: Optional[Union[float, str]] = None
         if feature_info["dtype"] == tf.float32:
-            dtype = tf.float32
             default_value = 0.0
         elif feature_info["dtype"] == tf.int64:
-            dtype = tf.int64
             default_value = 0
         elif feature_info["dtype"] == tf.string:
-            dtype = tf.string
             default_value = ""
         else:
             raise Exception("Unknown dtype {} for {}".format(feature_info["dtype"], feature_name))
@@ -46,24 +42,6 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
             )
         elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
             sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
-
-    punctuation_regex = "|".join([re.escape(c) for c in list(string.punctuation)])
-
-    @tf.function
-    def _preprocess_text(feature_tensor, preprocessing_info):
-        # TODO: Move this to a separate function
-        # Preprocess text
-        if preprocessing_info.get("remove_punctuation", False):
-            feature_tensor = tf.strings.regex_replace(feature_tensor, punctuation_regex, "")
-        if preprocessing_info.get("to_lower", False):
-            feature_tensor = tf.strings.lower(feature_tensor)
-
-        # Convert string to bytes
-        feature_tensor = io.decode_raw(
-            feature_tensor, out_type=tf.uint8, fixed_length=preprocessing_info["max_length"],
-        )
-
-        return tf.cast(feature_tensor, tf.float32)
 
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
@@ -97,7 +75,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
             # If feature is a string, then decode into numbers
             if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                feature_tensor = _preprocess_text(feature_tensor, preprocessing_info)
+                feature_tensor = preprocessing.preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor
 
@@ -155,7 +133,9 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
                 # If feature is a string, then decode into numbers
                 if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                    feature_tensor = _preprocess_text(feature_tensor, preprocessing_info)
+                    feature_tensor = preprocessing.preprocess_text(
+                        feature_tensor, preprocessing_info
+                    )
             else:
                 raise ValueError("Invalid input : {}".format(feature_name))
 
