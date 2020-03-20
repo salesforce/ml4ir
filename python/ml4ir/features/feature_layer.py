@@ -26,22 +26,30 @@ def get_sequence_embedding(input, feature_info, max_num_records):
 
     input_feature = tf.cast(input, tf.uint8)
     input_feature = tf.reshape(input_feature, [-1, preprocessing_info["max_length"]])
-    input_feature = tf.one_hot(input_feature, depth=256)
+    if feature_layer_info["embedding_size"]:
+        char_embedding = layers.Embedding(
+            input_dim=256,
+            output_dim=feature_layer_info["embedding_size"],
+            mask_zero=True,
+            input_length=preprocessing_info["max_length"],
+        )(input_feature)
+    else:
+        char_embedding = tf.one_hot(input_feature, depth=256)
 
-    embedding = layers.Bidirectional(
-        layers.LSTM(int(feature_layer_info["embedding_size"] / 2), return_sequences=False,),
+    encoding = layers.Bidirectional(
+        layers.LSTM(int(feature_layer_info["encoding_size"] / 2), return_sequences=False,),
         merge_mode="concat",
-    )(input_feature)
+    )(char_embedding)
     if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
         # If feature is a context feature then tile it for all records
-        embedding = tf.expand_dims(embedding, axis=1)
-        embedding = K.repeat_elements(embedding, rep=max_num_records, axis=1)
+        encoding = tf.expand_dims(encoding, axis=1)
+        encoding = K.repeat_elements(encoding, rep=max_num_records, axis=1)
 
     else:
         # If sequence feature, then reshape back to original shape
-        embedding = tf.reshape(embedding, [-1, embedding, feature_layer_info["embedding_size"]],)
+        encoding = tf.reshape(encoding, [-1, encoding, feature_layer_info["embedding_size"]],)
 
-    return embedding
+    return encoding
 
 
 def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
@@ -70,7 +78,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
                     metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 if feature_info["trainable"]:
-                    if feature_layer_info["embedding_type"] == EmbeddingTypeKey.BILSTM:
+                    if feature_layer_info["encoding_type"] == EmbeddingTypeKey.BILSTM:
                         embedding = get_sequence_embedding(
                             inputs[feature_node_name], feature_info, max_num_records
                         )

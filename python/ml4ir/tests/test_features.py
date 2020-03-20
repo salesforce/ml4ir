@@ -48,8 +48,13 @@ class RankingModelTest(RankingTestBase):
         batch_size = 50
         max_length = 20
         embedding_size = 128
+        encoding_size = 512
         feature_info = {
-            "feature_layer_info": {"embedding_size": embedding_size, "embedding_type": "bilstm"},
+            "feature_layer_info": {
+                "embedding_size": embedding_size,
+                "encoding_type": "bilstm",
+                "encoding_size": encoding_size,
+            },
             "preprocessing_info": {"max_length": max_length},
             "tfrecord_type": TFRecordTypeKey.CONTEXT,
         }
@@ -71,4 +76,4 @@ class RankingModelTest(RankingTestBase):
 
         assert sequence_embedding.shape[0] == batch_size
         assert sequence_embedding.shape[1] == self.args.max_num_records
-        assert sequence_embedding.shape[2] == embedding_size
+        assert sequence_embedding.shape[2] == encoding_size

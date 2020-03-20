@@ -20,8 +20,9 @@ query_key:  # Unique query ID field
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
         # following keys are not supported yet
-        embedding_size: <int> # Embedding size for categorical/string features
-        embedding_type: <categorical or char or string | str>
+        embedding_size: <int> # Embedding size for categorical/bytes features
+        encoding_size: <int> # Sequence encoding size
+        encoding_type: <str> # Type of encoding - LSTM, CNN, etc.
         ...
     preprocessing_info:
         max_length: <int> # Max length of string features
