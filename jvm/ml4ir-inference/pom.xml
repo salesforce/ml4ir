@@ -5,7 +5,7 @@
   <parent>
     <groupId>ml4ir</groupId>
     <artifactId>ml4ir-parent</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>ml4ir-inference</artifactId>
   <packaging>jar</packaging>
@@ -178,5 +178,6 @@
       <artifactId>jackson-core</artifactId>
       <version>2.10.0</version>
     </dependency>
+
   </dependencies>
 </project>
