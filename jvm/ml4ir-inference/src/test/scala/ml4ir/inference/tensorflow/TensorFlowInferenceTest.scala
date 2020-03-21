@@ -58,7 +58,8 @@ class TensorFlowInferenceTest {
         documentFeatures = List(
           FeatureField("feat_0", DataType.FLOAT),
           FeatureField("feat_1", DataType.FLOAT),
-          FeatureField("feat_2", DataType.FLOAT)
+          FeatureField("feat_2", DataType.FLOAT),
+          FeatureField("pos", DataType.INT64)
         )
       )
     )
@@ -125,8 +126,10 @@ class TensorFlowInferenceTest {
       docsToScore.zipWithIndex.map {
         case (map, idx) =>
           Example(
-            features =
-              MultiFeatures(floatFeatures = map.updated("pos", idx.toFloat)),
+            features = MultiFeatures(
+              floatFeatures = map,
+              int64Features = Map("pos" -> idx.toLong)
+            ),
             id = idx.toString
           )
       }

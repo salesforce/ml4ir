@@ -79,4 +79,8 @@ public class SequenceExampleJavaBuilderTest {
                 floatFeature3.toArray(new Float[0]), new Float[] { 0.01f, 0.02f, 0.03f, 0f, 0.05f });
         assertNull(featureListMap.get("fake_feat"));
     }
+
+    private static final void foo(Map<String, Map<String, String>> myMap) {
+
+    }
 }

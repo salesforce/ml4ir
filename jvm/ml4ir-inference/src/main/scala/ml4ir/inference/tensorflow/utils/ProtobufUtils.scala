@@ -14,7 +14,10 @@ import com.google.common.base.Charsets
 import scala.reflect.ClassTag
 
 // TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
-case class FeatureField(nodeName: String, dType: DataType)
+case class FeatureField(servingName: String,
+                        nodeName: String,
+                        dType: DataType,
+                        defaultValue: String)
 
 case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
                          documentFeatures: List[FeatureField] = List.empty,
@@ -57,9 +60,18 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
+  def extractRaw[T, U](rawContext: Map[String, T],
+                       ctxFloatPreprocessor: T => Float,
+                       ctxLongPreprocessor: T => Long,
+                       ctxStringPreprocessor: T => String,
+                       rawExamples: List[Map[String, U]]) = {}
+
   def buildMultiFeatures(raw: MultiFeatures): Features = {
     val featureFilter: Map[DataType, String => Boolean] =
-      config.contextFeatures.groupBy(_.dType).mapValues(_.map(_.nodeName).toSet)
+      config.contextFeatures
+        .groupBy(_.dType)
+        .mapValues(_.map(_.nodeName).toSet)
+        .withDefaultValue(Set.empty)
     val features = raw.clean(featureFilter)
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
@@ -84,6 +96,7 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       config.documentFeatures
         .groupBy(_.dType)
         .mapValues(_.map(_.nodeName).toSet)
+        .withDefaultValue(Set.empty)
     val features = raw.map(_.clean(featureFilter))
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
