@@ -27,11 +27,12 @@ public class SequenceExampleJavaBuilderTest {
         // TODO: this should encode that f1, f2, and f3 are in the model and have default values, but fake_feat is not
 
         FeatureConfig featureConfig = FeatureConfig.apply(
-                Lists.newArrayList(FeatureField.apply("query_text", DataType.STRING)),
                 Lists.newArrayList(
-                    FeatureField.apply("f1", DataType.FLOAT),
-                    FeatureField.apply("f2", DataType.FLOAT),
-                    FeatureField.apply("f3", DataType.FLOAT)
+                    FeatureField.apply("query_text", "query_text", DataType.STRING, "")),
+                Lists.newArrayList(
+                    FeatureField.apply("f1","f1", DataType.FLOAT, "0"),
+                    FeatureField.apply("f2","f2", DataType.FLOAT, "0"),
+                    FeatureField.apply("f3", "f3", DataType.FLOAT, "0")
                 ));
         SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(
                 featureConfig,

@@ -54,12 +54,13 @@ class TensorFlowInferenceTest {
     val (queryContext: Example, docs: Array[Example]) = testQueries
     val protoBuilder = SequenceExampleBuilder(
       FeatureConfig(
-        contextFeatures = List(FeatureField("query_text", DataType.STRING)),
+        contextFeatures =
+          List(FeatureField("query_text", "query_text", DataType.STRING, "")),
         documentFeatures = List(
-          FeatureField("feat_0", DataType.FLOAT),
-          FeatureField("feat_1", DataType.FLOAT),
-          FeatureField("feat_2", DataType.FLOAT),
-          FeatureField("pos", DataType.INT64)
+          FeatureField("feat_0", "feat_0", DataType.FLOAT, "0"),
+          FeatureField("feat_1", "feat_1", DataType.FLOAT, "0"),
+          FeatureField("feat_2", "feat_2", DataType.FLOAT, "0"),
+          FeatureField("pos", "pos", DataType.INT64, "0")
         )
       )
     )
