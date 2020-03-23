@@ -7,17 +7,13 @@ import org.tensorflow.DataType
 
 import scala.collection.JavaConverters._
 import java.lang.{Float => JFloat, Long => JLong}
-import java.nio.charset.Charset
 
 import com.google.common.base.Charsets
 
 import scala.reflect.ClassTag
 
 // TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
-case class FeatureField(servingName: String,
-                        nodeName: String,
-                        dType: DataType,
-                        defaultValue: String)
+case class FeatureField(servingName: String, nodeName: String, dType: DataType, defaultValue: String)
 
 case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
                          documentFeatures: List[FeatureField] = List.empty,
@@ -28,8 +24,7 @@ object FeatureConfig {
   // zero-arg constructor to be nice to Java
   def apply(): FeatureConfig =
     new FeatureConfig(List.empty, List.empty, None, None)
-  def apply(contextFeatures: java.util.List[FeatureField],
-            documentFeatures: java.util.List[FeatureField]) = {
+  def apply(contextFeatures: java.util.List[FeatureField], documentFeatures: java.util.List[FeatureField]) = {
     new FeatureConfig(
       contextFeatures.asScala.toList,
       documentFeatures.asScala.toList,
@@ -52,19 +47,13 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     */
   def apply(context: Example, docs: Array[Example]): SequenceExample = {
     val contextFeatures: Features = buildMultiFeatures(context.features)
-    val docFeatures = buildMultiFeatureLists(docs.map(_.features))
+    val docFeatures               = buildMultiFeatureLists(docs.map(_.features))
     SequenceExample
       .newBuilder()
       .setContext(contextFeatures)
       .setFeatureLists(docFeatures)
       .build()
   }
-
-  def extractRaw[T, U](rawContext: Map[String, T],
-                       ctxFloatPreprocessor: T => Float,
-                       ctxLongPreprocessor: T => Long,
-                       ctxStringPreprocessor: T => String,
-                       rawExamples: List[Map[String, U]]) = {}
 
   def buildMultiFeatures(raw: MultiFeatures): Features = {
     val featureFilter: Map[DataType, String => Boolean] =
@@ -124,7 +113,7 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     * @return map of feature-name -> padded dense vector of numeric features
     */
   def transpose[T: ClassTag](
-    docFeatures: Array[Map[String, T]]
+      docFeatures: Array[Map[String, T]]
   ): Map[String, Array[T]] = {
     val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
     case class FeatureVal(name: String, value: T, docIdx: Int)

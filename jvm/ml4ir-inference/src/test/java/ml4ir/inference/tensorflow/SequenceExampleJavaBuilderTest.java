@@ -1,6 +1,7 @@
 package ml4ir.inference.tensorflow;
 
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
@@ -11,6 +12,7 @@ import org.junit.Test;
 import org.tensorflow.DataType;
 import org.tensorflow.example.FeatureList;
 import org.tensorflow.example.SequenceExample;
+import scala.Immutable;
 import scala.Option;
 
 import java.util.List;
@@ -81,7 +83,18 @@ public class SequenceExampleJavaBuilderTest {
         assertNull(featureListMap.get("fake_feat"));
     }
 
-    private static final void foo(Map<String, Map<String, String>> myMap) {
+    @Test
+    public static void buildProtoFromStringMaps() {
+        Map<String, String> contextMap = ImmutableMap.of(
+                "query_text", "a query string",
+                "query_id", "query1234",
+                "user_id", "john.smith@example.com");
+        List<Map<String, String>> documents = ImmutableList.of(
+                ImmutableMap.of("ff1", "0.1", "ff2", "1.1", "lf1", "11L", "sf1", "a"),
+                ImmutableMap.of("ff1", "0.2", "ff2", "2.2", "lf1",  "22L", "sf1", "b"),
+                ImmutableMap.of("fake", "blah", "ff2", "0.3"),
+                ImmutableMap.of()
+        );
 
     }
 }

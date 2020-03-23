@@ -8,11 +8,8 @@ import ml4ir.inference.tensorflow.utils.FeatureConfig;
 import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder;
 import org.tensorflow.example.SequenceExample;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Helper class to build SequenceExample protobufs from base primitives and java collections
@@ -30,17 +27,6 @@ public class SequenceExampleJavaBuilder {
         sequenceExampleBuilder = new SequenceExampleBuilder(featureConfig);
         context = Example.apply(ctxId, ctxFloats, ctxLongs, ctxStrings);
         docs = Lists.newArrayList();
-    }
-
-    public SequenceExampleJavaBuilder(Example context, List<Example> sequence) {
-        sequenceExampleBuilder = new SequenceExampleBuilder(FeatureConfig.apply());
-        this.context = context;
-        docs = sequence;
-    }
-
-    public static <T> SequenceExample build(Example context, List<T> sequence, Function<T, Example> exampleBuilder) {
-        List<Example> examples = sequence.stream().map(exampleBuilder).collect(Collectors.toList());
-        return new SequenceExampleJavaBuilder(context, examples).build();
     }
 
     public SequenceExampleJavaBuilder addDoc(String docId,
