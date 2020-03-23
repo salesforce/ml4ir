@@ -1,7 +1,7 @@
 package ml4ir.inference.tensorflow.utils
 
 import com.google.protobuf.ByteString
-import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, QueryContext}
+import ml4ir.inference.tensorflow.data.{Example, MultiFeatures}
 import org.tensorflow.example._
 import org.tensorflow.DataType
 
@@ -12,32 +12,32 @@ import com.google.common.base.Charsets
 
 import scala.reflect.ClassTag
 
-// TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
-case class FeatureField(servingName: String, nodeName: String, dType: DataType, defaultValue: String)
-
-case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
-                         documentFeatures: List[FeatureField] = List.empty,
-                         numDocsPerQuery: Option[Int] = None,
-                         queryLength: Option[Int] = None)
-
-object FeatureConfig {
-  // zero-arg constructor to be nice to Java
-  def apply(): FeatureConfig =
-    new FeatureConfig(List.empty, List.empty, None, None)
-  def apply(contextFeatures: java.util.List[FeatureField], documentFeatures: java.util.List[FeatureField]) = {
-    new FeatureConfig(
-      contextFeatures.asScala.toList,
-      documentFeatures.asScala.toList,
-      None,
-      None
-    )
-  }
-}
+//// TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
+//case class FeatureField(servingName: String, nodeName: String, dType: DataType, defaultValue: String)
+//
+//case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
+//                         documentFeatures: List[FeatureField] = List.empty,
+//                         numDocsPerQuery: Option[Int] = None,
+//                         queryLength: Option[Int] = None)
+//
+//object FeatureConfig {
+//  // zero-arg constructor to be nice to Java
+//  def apply(): FeatureConfig =
+//    new FeatureConfig(List.empty, List.empty, None, None)
+//  def apply(contextFeatures: java.util.List[FeatureField], documentFeatures: java.util.List[FeatureField]) = {
+//    new FeatureConfig(
+//      contextFeatures.asScala.toList,
+//      documentFeatures.asScala.toList,
+//      None,
+//      None
+//    )
+//  }
+//}
 
 /**
   * Builder class for more easily instantiating SequenceExample protobufs from raw(-ish) features
   */
-case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
+case class SequenceExampleBuilder() {
 
   /**
     * Functional API allowing the builder to act like a function to transform query/documents into a scorable protobuf
@@ -55,13 +55,7 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
       .build()
   }
 
-  def buildMultiFeatures(raw: MultiFeatures): Features = {
-    val featureFilter: Map[DataType, String => Boolean] =
-      config.contextFeatures
-        .groupBy(_.dType)
-        .mapValues(_.map(_.nodeName).toSet)
-        .withDefaultValue(Set.empty)
-    val features = raw.clean(featureFilter)
+  def buildMultiFeatures(features: MultiFeatures): Features = {
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
         case (bldr, (nodeName: String, stringFeature: String)) =>
@@ -80,13 +74,7 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
     withFloatsAndIntsAndStrings.build()
   }
 
-  def buildMultiFeatureLists(raw: Array[MultiFeatures]): FeatureLists = {
-    val featureFilter: Map[DataType, String => Boolean] =
-      config.documentFeatures
-        .groupBy(_.dType)
-        .mapValues(_.map(_.nodeName).toSet)
-        .withDefaultValue(Set.empty)
-    val features = raw.map(_.clean(featureFilter))
+  def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
         case (bldr, (name: String, featureValues: Array[Float])) =>
@@ -115,11 +103,11 @@ case class SequenceExampleBuilder(config: FeatureConfig = FeatureConfig()) {
   def transpose[T: ClassTag](
       docFeatures: Array[Map[String, T]]
   ): Map[String, Array[T]] = {
-    val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
+    // val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
     case class FeatureVal(name: String, value: T, docIdx: Int)
     val featureSet: Set[String] = docFeatures.map(_.keySet).reduce(_ union _)
     docFeatures
-      .slice(0, math.min(docFeatures.length, numDocsPerQuery))
+      .slice(0, docFeatures.length) // math.min(docFeatures.length, numDocsPerQuery))
       .zipWithIndex
       .flatMap {
         case (doc: Map[String, T], idx: Int) =>

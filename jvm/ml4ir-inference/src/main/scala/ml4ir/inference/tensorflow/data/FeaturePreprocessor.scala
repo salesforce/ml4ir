@@ -27,7 +27,8 @@ abstract class FeaturePreprocessor[T](
           feature => feature.getServingInfo.getName -> NodeWithDefault(feature.getNodeName, feature.getDefaultValue)
         ).toMap
       )
-  def apply(t: T): Example = Example()
+  def apply(t: T): Example =
+    Example.apply(MultiFeatures.apply(extractFloatFeatures(t), extractLongFeatures(t), extractStringFeatures(t)))
 
   def extractFloatFeatures(t: T): Map[String, Float] =
     featureNamesByType(DataType.FLOAT)
@@ -51,10 +52,13 @@ abstract class FeaturePreprocessor[T](
 }
 
 class StringMapFeatureProcessor(modelFeatures: ModelFeatures, tfRecordType: String)
-    extends FeaturePreprocessor[Map[String, String]](
+    extends FeaturePreprocessor[java.util.Map[String, String]](
       modelFeatures,
       tfRecordType,
-      floatExtractor = (rawFeatures: Map[String, String], servingName) => rawFeatures.get(servingName).map(_.toFloat),
-      longExtractor = (rawFeatures: Map[String, String], servingName) => rawFeatures.get(servingName).map(_.toLong),
-      stringExtractor = (rawFeatures: Map[String, String], servingName) => rawFeatures.get(servingName)
+      floatExtractor = (rawFeatures: java.util.Map[String, String], servingName) =>
+        rawFeatures.asScala.get(servingName).map(_.toFloat),
+      longExtractor =
+        (rawFeatures: java.util.Map[String, String], servingName) => rawFeatures.asScala.get(servingName).map(_.toLong),
+      stringExtractor =
+        (rawFeatures: java.util.Map[String, String], servingName) => rawFeatures.asScala.get(servingName)
     )

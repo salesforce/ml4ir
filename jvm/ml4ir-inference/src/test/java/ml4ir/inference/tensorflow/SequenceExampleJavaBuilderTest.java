@@ -5,8 +5,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import ml4ir.inference.tensorflow.utils.FeatureConfig;
-import ml4ir.inference.tensorflow.utils.FeatureField;
+import ml4ir.inference.tensorflow.data.Example;
+import ml4ir.inference.tensorflow.data.FeaturePreprocessor;
+import ml4ir.inference.tensorflow.data.StringMapFeatureProcessor;
+import ml4ir.inference.tensorflow.utils.ModelFeatures;
+import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder;
 import org.junit.Test;
 
 import org.tensorflow.DataType;
@@ -17,6 +20,7 @@ import scala.Option;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -27,7 +31,7 @@ public class SequenceExampleJavaBuilderTest {
         String query = "a query string";
 
         // TODO: this should encode that f1, f2, and f3 are in the model and have default values, but fake_feat is not
-
+/*
         FeatureConfig featureConfig = FeatureConfig.apply(
                 Lists.newArrayList(
                     FeatureField.apply("query_text", "query_text", DataType.STRING, "")),
@@ -36,30 +40,31 @@ public class SequenceExampleJavaBuilderTest {
                     FeatureField.apply("f2","f2", DataType.FLOAT, "0"),
                     FeatureField.apply("f3", "f3", DataType.FLOAT, "0")
                 ));
+
+ */
         SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(
-                featureConfig,
-                "ignored",
+             //   featureConfig,
                 ImmutableMap.of(),
                 ImmutableMap.of(),
                 ImmutableMap.of("query_text", query));
         SequenceExample sequenceExample = helper
-                .addDoc("doc1",
+                .addDoc(
                         ImmutableMap.of("f1", 1f, "f2", 0.1f, "f3", 0.01f),
                         ImmutableMap.of(),
                         ImmutableMap.of())
-                .addDoc("doc2",
+                .addDoc(
                         ImmutableMap.of("f1", 2f, "f2", 0.2f, "f3", 0.02f),
                         ImmutableMap.of(),
                         ImmutableMap.of())
-                .addDoc("doc3",
+                .addDoc(
                         ImmutableMap.of(/* no f1 -> anything */"f2", 0.3f, "f3", 0.03f),
                         ImmutableMap.of(),
                         ImmutableMap.of())
-                .addDoc("doc4",
+                .addDoc(
                         ImmutableMap.of("f1", 4f, "fake_feat", -1f /* no f2 or f3 */),
                         ImmutableMap.of(),
                         ImmutableMap.of())
-                .addDoc("doc5",
+                .addDoc(
                         ImmutableMap.of("f1", 5f, "f2", 0.5f, "f3", 0.05f),
                         ImmutableMap.of(),
                         ImmutableMap.of())
@@ -84,7 +89,7 @@ public class SequenceExampleJavaBuilderTest {
     }
 
     @Test
-    public static void buildProtoFromStringMaps() {
+    public void buildProtoFromStringMaps() throws Exception {
         Map<String, String> contextMap = ImmutableMap.of(
                 "query_text", "a query string",
                 "query_id", "query1234",
@@ -95,6 +100,21 @@ public class SequenceExampleJavaBuilderTest {
                 ImmutableMap.of("fake", "blah", "ff2", "0.3"),
                 ImmutableMap.of()
         );
+        ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
+                getClass().getClassLoader().getResource("model_features.yaml").getPath());
+
+        StringMapFeatureProcessor contextPreprocessor =
+                new StringMapFeatureProcessor(modelFeatures, "context");
+        Example contextExample = contextPreprocessor.apply(contextMap);
+
+        StringMapFeatureProcessor examplePreprocessor =
+                new StringMapFeatureProcessor(modelFeatures, "sequence");
+        Example[] sequenceExamples = documents.stream().map(examplePreprocessor::apply).toArray(Example[]::new);
+
+        SequenceExample sequenceExample =
+                new SequenceExampleBuilder().apply(contextExample, sequenceExamples);
+
+        assertNotNull(sequenceExample);
 
     }
 }
