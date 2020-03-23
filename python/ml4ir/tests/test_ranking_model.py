@@ -5,6 +5,8 @@ from ml4ir.features.feature_config import parse_config, FeatureConfig
 import os
 import numpy as np
 import copy
+import random
+import tensorflow as tf
 
 
 class RankingModelTest(RankingTestBase):
@@ -13,6 +15,12 @@ class RankingModelTest(RankingTestBase):
         feature_config: FeatureConfig = parse_config(feature_config_path)
 
         self.args.metrics = ["MRR"]
+
+        # Fix random seed values for repeatability
+        tf.keras.backend.clear_session()
+        np.random.seed(123)
+        tf.random.set_seed(123)
+        random.seed(123)
 
         ranking_dataset = RankingDataset(
             data_dir=data_dir,
@@ -72,8 +80,8 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(csv_loss, 0.55835, rtol=0.05)
-        assert np.isclose(csv_mrr, 0.69739, rtol=0.05)
+        assert np.isclose(csv_loss, 0.59263, rtol=0.01)
+        assert np.isclose(csv_mrr, 0.64791, rtol=0.01)
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
@@ -86,9 +94,9 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(tfrecord_loss, 0.55004, rtol=0.05)
-        assert np.isclose(tfrecord_mrr, 0.70067, rtol=0.05)
+        assert np.isclose(tfrecord_loss, 0.59263, rtol=0.01)
+        assert np.isclose(tfrecord_mrr, 0.64791, rtol=0.01)
 
         # Compare CSV and TFRecord loss and accuracies
-        assert np.isclose(tfrecord_loss, csv_loss, rtol=0.05)
-        assert np.isclose(tfrecord_mrr, csv_mrr, rtol=0.05)
+        assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)
+        assert np.isclose(tfrecord_mrr, csv_mrr, rtol=0.01)

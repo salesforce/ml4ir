@@ -9,11 +9,11 @@ import numpy as np
 # Constants
 GOLD_METRICS = {
     "old_ACR": 1.6669034,
-    "new_ACR": 2.8231534,
+    "new_ACR": 2.3998579,
     "old_MRR": 0.7806604,
-    "new_MRR": 0.5101033,
-    "perc_improv_ACR": -69.3651469,
-    "perc_improv_MRR": -34.6574625,
+    "new_MRR": 0.6045914,
+    "perc_improv_ACR": -43.9710,
+    "perc_improv_MRR": -22.5538,
     "query_count": 1408.0,
 }
 
