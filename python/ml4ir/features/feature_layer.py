@@ -20,7 +20,7 @@ def get_dense_feature(inputs, feature, shape=(1,)):
     return dense_feature
 
 
-def get_sequence_embedding(input, feature_info, max_num_records):
+def get_sequence_encoding(input, feature_info, max_num_records):
     feature_layer_info = feature_info["feature_layer_info"]
     preprocessing_info = feature_info.get("preprocessing_info", {})
 
@@ -79,7 +79,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 if feature_info["trainable"]:
                     if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
-                        embedding = get_sequence_embedding(
+                        embedding = get_sequence_encoding(
                             inputs[feature_node_name], feature_info, max_num_records
                         )
 

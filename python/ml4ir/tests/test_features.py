@@ -1,6 +1,6 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.features import preprocessing
-from ml4ir.features.feature_layer import get_sequence_embedding
+from ml4ir.features.feature_layer import get_sequence_encoding
 import tensorflow as tf
 import string
 import numpy as np
@@ -40,7 +40,7 @@ class RankingModelTest(RankingTestBase):
         )
         assert processed_text.replace("\x00", "") == "abcabc123"
 
-    def test_sequence_embedding(self):
+    def test_sequence_encoding(self):
         """
         Unit test sequence embedding
 
@@ -70,7 +70,7 @@ class RankingModelTest(RankingTestBase):
         """
         sequence_tensor = np.random.randint(256, size=(batch_size, 1, max_length))
 
-        sequence_embedding = get_sequence_embedding(
+        sequence_embedding = get_sequence_encoding(
             sequence_tensor, feature_info, self.args.max_num_records
         )
 
