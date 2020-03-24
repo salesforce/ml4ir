@@ -13,6 +13,7 @@
     <scala.version>2.11.8</scala.version>
     <scala.artifact.suffix>2.11</scala.artifact.suffix>
     <tensorflow.version>1.15.0</tensorflow.version>
+    <jackson.version>2.7.5</jackson.version>
   </properties>
 
   <modules>
@@ -48,6 +49,31 @@
       <artifactId>proto</artifactId>
       <version>${tensorflow.version}</version>
     </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.dataformat</groupId>
+          <artifactId>jackson-dataformat-yaml</artifactId>
+          <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-annotations</artifactId>
+          <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_${scala.artifact.suffix}</artifactId>
+          <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+          <version>${jackson.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-core</artifactId>
+          <version>${jackson.version}</version>
+      </dependency>
   </dependencies>
   </dependencyManagement>
 </project>
