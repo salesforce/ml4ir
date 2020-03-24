@@ -1,19 +1,13 @@
 package ml4ir.inference.tensorflow.utils;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class used for parsing the model config yaml file
  */
 public class ModelFeatures {
-
-    @JsonIgnore
-    private Map<String, Map<String, String>> dataHolder = new HashMap<>();
 
     @JsonProperty("query_key")
     private QueryKey queryKey;

@@ -47,7 +47,7 @@ case class SequenceExampleBuilder() {
     */
   def apply(context: Example, docs: Array[Example]): SequenceExample = {
     val contextFeatures: Features = buildMultiFeatures(context.features)
-    val docFeatures               = buildMultiFeatureLists(docs.map(_.features))
+    val docFeatures = buildMultiFeatureLists(docs.map(_.features))
     SequenceExample
       .newBuilder()
       .setContext(contextFeatures)
