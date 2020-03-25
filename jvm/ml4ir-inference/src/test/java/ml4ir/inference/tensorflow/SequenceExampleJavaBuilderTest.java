@@ -48,6 +48,8 @@ public class SequenceExampleJavaBuilderTest {
 
         assertNotNull(sequenceExample);
 
+        // FIXME: this is currently failing, because it's not checking the right things.  Need to reconcile the
+        // FIXME: fake data with the yaml config and the output expectations
         ByteString queryTextByteString =
                 sequenceExample.getContext().getFeatureMap().get("query_text").getBytesList().getValue(0);
         assertEquals(ByteString.copyFrom(query.getBytes()), queryTextByteString);
