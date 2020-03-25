@@ -214,6 +214,13 @@ def define_args() -> ArgumentParser:
         help="Gradient clipping value/threshold for the optimizer.",
     )
 
+    parser.add_argument(
+        "--compile_keras_model",
+        type=bool,
+        default=False,
+        help="Whether to compile a loaded SavedModel into a Keras model. NOTE: This requires ",
+    )
+
     return parser
 
 

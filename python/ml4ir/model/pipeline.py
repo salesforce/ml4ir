@@ -202,6 +202,7 @@ class RankingPipeline(object):
                 learning_rate_decay_steps=self.args.learning_rate_decay_steps,
                 gradient_clip_value=self.args.gradient_clip_value,
                 compute_intermediate_stats=self.args.compute_intermediate_stats,
+                compile_keras_model=self.args.compile_keras_model,
                 logger=self.logger,
             )
             self.logger.info("Ranking Model created")
@@ -221,14 +222,13 @@ class RankingPipeline(object):
                     logging_frequency=self.args.logging_frequency,
                 )
 
-                # Save model
-                model.save(models_dir=self.models_dir)
-
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
                 ExecutionModeKey.TRAIN_EVALUATE,
                 ExecutionModeKey.EVALUATE_ONLY,
                 ExecutionModeKey.INFERENCE_EVALUATE,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
                 model.evaluate(
@@ -244,6 +244,8 @@ class RankingPipeline(object):
                 ExecutionModeKey.TRAIN_INFERENCE,
                 ExecutionModeKey.INFERENCE_EVALUATE,
                 ExecutionModeKey.INFERENCE_ONLY,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.INFERENCE_RESAVE,
             }:
                 # Predict ranking scores
                 model.predict(
@@ -252,6 +254,21 @@ class RankingPipeline(object):
                     logs_dir=self.logs_dir,
                     logging_frequency=self.args.logging_frequency,
                 )
+
+            # Save model
+            # NOTE: Model will be saved with the latest serving signatures
+            if self.args.execution_mode in {
+                ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
+                ExecutionModeKey.TRAIN_EVALUATE,
+                ExecutionModeKey.TRAIN_INFERENCE,
+                ExecutionModeKey.TRAIN_ONLY,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.EVALUATE_RESAVE,
+                ExecutionModeKey.INFERENCE_RESAVE,
+                ExecutionModeKey.RESAVE_ONLY,
+            }:
+                # Save model
+                model.save(models_dir=self.models_dir)
 
             # Finish
             self.finish()

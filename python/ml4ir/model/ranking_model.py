@@ -50,6 +50,7 @@ class RankingModel:
         learning_rate_decay_steps: int,
         gradient_clip_value: float,
         compute_intermediate_stats: bool,
+        compile_keras_model: bool,
         logger=None,
     ):
         self.model_config: dict = model_config
@@ -59,10 +60,13 @@ class RankingModel:
         self.max_num_records = max_num_records
 
         # Load/Build Model
-        if model_file:
+        if model_file and not compile_keras_model:
             """
-            NOTE: Retraining not supported. Currently loading SavedModel
-                  as a low level AutoTrackable object for inference
+            If a model file is specified, load it without compiling into a keras model
+
+            NOTE:
+            This will allow the model to be only used for inference and
+            cannot be used for retraining.
             """
             self.model: Model = self.load_model(model_file)
             self.is_compiled = False
@@ -94,6 +98,17 @@ class RankingModel:
             """
             inputs: Dict[str, Input] = feature_config.define_inputs(max_num_records)
             self.model = self.build_model(inputs, optimizer, loss, metrics)
+
+            if model_file:
+                """
+                If model file is specified, load the weights from the SavedModel
+
+                NOTE:
+                The architecture, loss and metrics of self.model need to
+                be the same as the loaded SavedModel
+                """
+                self.load_weights(model_file)
+
             self.is_compiled = True
 
     def build_model(
@@ -534,6 +549,13 @@ class RankingModel:
         self.logger.warning("Retraining is not supported. Model is loaded with compile=False")
 
         return model
+
+    def load_weights(self, model_file: str):
+        # Load saved model with compile=False
+        loaded_model = self.load_model(model_file)
+
+        # Set weights of Keras model from the loaded model weights
+        self.model.set_weights(loaded_model.get_weights())
 
     def _build_saved_model_signatures(self):
         """
