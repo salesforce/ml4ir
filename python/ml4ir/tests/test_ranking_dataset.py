@@ -1,6 +1,6 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.data.ranking_dataset import RankingDataset
-from ml4ir.config.features import FeatureConfig, parse_config
+from ml4ir.features.feature_config import FeatureConfig, parse_config
 import os
 
 

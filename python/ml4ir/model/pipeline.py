@@ -12,7 +12,7 @@ import yaml
 from argparse import Namespace
 from logging import Logger
 from ml4ir.config.parse_args import get_args
-from ml4ir.config.features import parse_config, FeatureConfig
+from ml4ir.features.feature_config import parse_config, FeatureConfig
 from ml4ir.io import logging_utils
 from ml4ir.io import file_io
 from ml4ir.data.ranking_dataset import RankingDataset
@@ -200,6 +200,7 @@ class RankingPipeline(object):
                 learning_rate=self.args.learning_rate,
                 learning_rate_decay=self.args.learning_rate_decay,
                 learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+                gradient_clip_value=self.args.gradient_clip_value,
                 compute_intermediate_stats=self.args.compute_intermediate_stats,
                 logger=self.logger,
             )

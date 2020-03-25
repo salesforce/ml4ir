@@ -5,7 +5,8 @@ from tensorflow import sparse
 from tensorflow import image
 from logging import Logger
 from ml4ir.io import file_io
-from ml4ir.config.features import FeatureConfig
+from ml4ir.features import preprocessing
+from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import TFRecordTypeKey, FeatureTypeKey
 
 from typing import Union, Optional
@@ -25,16 +26,13 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
     for feature_info in feature_config.get_all_features():
         feature_name = feature_info["name"]
         feature_node_name = feature_info.get("node_name", feature_name)
-        dtype = tf.float32
+        dtype = feature_info["dtype"]
         default_value: Optional[Union[float, str]] = None
-        if feature_info["dtype"] == "float":
-            dtype = tf.float32
+        if feature_info["dtype"] == tf.float32:
             default_value = 0.0
-        elif feature_info["dtype"] == "int":
-            dtype = tf.int64
+        elif feature_info["dtype"] == tf.int64:
             default_value = 0
-        elif feature_info["dtype"] == "bytes":
-            dtype = tf.string
+        elif feature_info["dtype"] == tf.string:
             default_value = ""
         else:
             raise Exception("Unknown dtype {} for {}".format(feature_info["dtype"], feature_name))
@@ -69,20 +67,15 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         for feature_info in feature_config.get_context_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info.get("feature_layer_info")
+            preprocessing_info = feature_info.get("preprocessing_info", {})
 
             feature_tensor = context_features.get(feature_node_name)
 
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
-            feature_tensor = tf.tile(feature_tensor, multiples=[max_num_records])
 
             # If feature is a string, then decode into numbers
             if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                feature_tensor = io.decode_raw(
-                    feature_tensor,
-                    out_type=tf.uint8,
-                    fixed_length=feature_layer_info["max_length"],
-                )
-                feature_tensor = tf.cast(feature_tensor, tf.float32)
+                feature_tensor = preprocessing.preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor
 
@@ -90,6 +83,7 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
         for feature_info in feature_config.get_sequence_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
 
             feature_tensor = sequence_features.get(feature_node_name)
 
@@ -139,12 +133,9 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
 
                 # If feature is a string, then decode into numbers
                 if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                    feature_tensor = io.decode_raw(
-                        feature_tensor,
-                        out_type=tf.uint8,
-                        fixed_length=feature_layer_info["max_length"],
+                    feature_tensor = preprocessing.preprocess_text(
+                        feature_tensor, preprocessing_info
                     )
-                    feature_tensor = tf.cast(feature_tensor, tf.float32)
             else:
                 raise ValueError("Invalid input : {}".format(feature_name))
 

@@ -13,17 +13,21 @@ query_key:  # Unique query ID field
     name: <str> # name of the feature in the input data
     node_name: <str> # tf graph node name
     trainable: <bool> # if the feature is a trainable tf element
-    dtype: <float or int or bytes | str>
+    dtype: <Supported tensorflow data type | str>
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
     is_group_metric_key: <boolean | default: false> # if feature should be used a groupby key to compute metrics
     feature_layer_info:
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
-        max_length: <int> # Max length of string features
         # following keys are not supported yet
-        embedding_size: <int> # Embedding size for categorical/string features
-        embedding_type: <categorical or char or string | str>
+        embedding_size: <int> # Embedding size for categorical/bytes features
+        encoding_size: <int> # Sequence encoding size
+        encoding_type: <str> # Type of encoding - LSTM, CNN, etc.
         ...
+    preprocessing_info:
+        max_length: <int> # Max length of string features
+        to_lower: <bool> # Whether to convert string to lower case
+        remove_punctuation: <bool> # Whether to remove punctuations from string
     serving_info:
         name: <str> # name of input feature at serving time
         preprocessing_type: <str> # Any predefined feature preprocessing step to apply
@@ -259,11 +263,17 @@ class FeatureConfig:
             Dictionary of tensorflow graph input nodes
         """
 
-        def get_shape(feature_layer_info: dict):
+        def get_shape(feature_info: dict):
+            feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                num_records = 1
+            else:
+                num_records = max_num_records
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (max_num_records,)
+                return (num_records,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (max_num_records, feature_layer_info["max_length"])
+                return (num_records, preprocessing_info["max_length"])
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 raise NotImplementedError
 
@@ -274,7 +284,7 @@ class FeatureConfig:
                 We could do this in the future, to help define more complex loss functions
             """
             node_name = feature_info.get("node_name", feature_info["name"])
-            shape = get_shape(feature_info["feature_layer_info"])
+            shape = get_shape(feature_info)
             inputs[node_name] = Input(shape=shape, name=node_name)
 
         return inputs

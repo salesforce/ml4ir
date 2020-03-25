@@ -113,3 +113,10 @@ class ServingSignatureKey(Key):
 
     DEFAULT = saved_model.DEFAULT_SERVING_SIGNATURE_DEF_KEY
     TFRECORD = "serving_tfrecord"
+
+
+class EncodingTypeKey(Key):
+    """Types of embeddings"""
+
+    BILSTM = "bilstm"
+    CNN = "cnn"

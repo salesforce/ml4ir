@@ -2,7 +2,7 @@ query_key:
   name: query_key
   node_name: query_key
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -15,7 +15,7 @@ rank:
   name: pos
   node_name: pos
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -28,7 +28,7 @@ label:
   name: label
   node_name: label
   trainable: false
-  dtype: int
+  dtype: int64
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -76,13 +76,17 @@ features:
     tfrecord_type: sequence
   - name: query_str
     node_name: query_str
-    trainable: false
-    dtype: bytes
+    trainable: true
+    dtype: string
     log_at_inference: true
     feature_layer_info:
       type: string
-      max_length: 20
       shape: null
+      encoding_type: bilstm
+      encoding_size: 128
+      embedding_size: 128
+    preprocessing_info:
+      max_length: 20
     serving_info:
       name: query_str
       required: false
@@ -90,7 +94,7 @@ features:
   - name: group
     node_name: group
     trainable: false
-    dtype: int
+    dtype: int64
     log_at_inference: false
     is_group_metric_key: true
     feature_layer_info:

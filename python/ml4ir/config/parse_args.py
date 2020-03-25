@@ -203,8 +203,15 @@ def define_args() -> ArgumentParser:
     parser.add_argument(
         "--group_metrics_min_queries",
         type=int,
-        default=50,
+        default=25,
         help="Minimum number of queries per group to be used to computed groupwise metrics.",
+    )
+
+    parser.add_argument(
+        "--gradient_clip_value",
+        type=float,
+        default=5.0,
+        help="Gradient clipping value/threshold for the optimizer.",
     )
 
     return parser
