@@ -98,34 +98,35 @@ features:
       required: false
     tfrecord_type: context
     default_value: 1.5
-  - name: context_long_1
-    node_name: context_long_1
-    trainable: true
-    dtype: int64
-    log_at_inference: false
-    feature_layer_info:
-      type: numeric
-      max_length: 5
-      shape: null
-    serving_info:
-      name: context_long_1
-      required: false
-    tfrecord_type: context
-    default_value: 0
-  - name: context_long_2
-    node_name: context_long_2
-    trainable: true
-    dtype: int64
-    log_at_inference: false
-    feature_layer_info:
-      type: numeric
-      max_length: 5
-      shape: null
-    serving_info:
-      name: context_long_2
-      required: false
-    tfrecord_type: context
-    default_value: 2147483649
+# NOTE: no context longs, so we verify the parser doesn't blow up when not all types are specified
+#  - name: context_long_1
+#    node_name: context_long_1
+#    trainable: true
+#    dtype: int64
+#    log_at_infesrence: false
+#    feature_layer_info:
+#      type: numeric
+#      max_length: 5
+#      shape: null
+#    serving_info:
+#      name: context_long_1
+#      required: false
+#    tfrecord_type: context
+#    default_value: 0
+#  - name: context_long_2
+#    node_name: context_long_2
+#    trainable: true
+#    dtype: int64
+#    log_at_inference: false
+#    feature_layer_info:
+#      type: numeric
+#      max_length: 5
+#      shape: null
+#    serving_info:
+#      name: context_long_2
+#      required: false
+#    tfrecord_type: context
+#    default_value: 2147483649
   - name: sequence_string_1
     node_name: sequence_string_1
     trainable: false

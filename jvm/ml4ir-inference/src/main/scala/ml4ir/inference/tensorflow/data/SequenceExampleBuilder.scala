@@ -1,38 +1,10 @@
-package ml4ir.inference.tensorflow.utils
-
-import com.google.protobuf.ByteString
-import ml4ir.inference.tensorflow.data.{Example, MultiFeatures}
-import org.tensorflow.example._
-import org.tensorflow.DataType
-
-import scala.collection.JavaConverters._
-import java.lang.{Float => JFloat, Long => JLong}
+package ml4ir.inference.tensorflow.data
 
 import com.google.common.base.Charsets
+import com.google.protobuf.ByteString
+import org.tensorflow.example._
 
 import scala.reflect.ClassTag
-
-//// TODO: these may not be necessary? Probably necessary to *construct* the QueryContext / Array[Document] actually
-//case class FeatureField(servingName: String, nodeName: String, dType: DataType, defaultValue: String)
-//
-//case class FeatureConfig(contextFeatures: List[FeatureField] = List.empty,
-//                         documentFeatures: List[FeatureField] = List.empty,
-//                         numDocsPerQuery: Option[Int] = None,
-//                         queryLength: Option[Int] = None)
-//
-//object FeatureConfig {
-//  // zero-arg constructor to be nice to Java
-//  def apply(): FeatureConfig =
-//    new FeatureConfig(List.empty, List.empty, None, None)
-//  def apply(contextFeatures: java.util.List[FeatureField], documentFeatures: java.util.List[FeatureField]) = {
-//    new FeatureConfig(
-//      contextFeatures.asScala.toList,
-//      documentFeatures.asScala.toList,
-//      None,
-//      None
-//    )
-//  }
-//}
 
 /**
   * Builder class for more easily instantiating SequenceExample protobufs from raw(-ish) features
@@ -55,7 +27,7 @@ case class SequenceExampleBuilder() {
       .build()
   }
 
-  def buildMultiFeatures(features: MultiFeatures): Features = {
+  private def buildMultiFeatures(features: MultiFeatures): Features = {
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
         case (bldr, (nodeName: String, stringFeature: String)) =>
@@ -74,7 +46,7 @@ case class SequenceExampleBuilder() {
     withFloatsAndIntsAndStrings.build()
   }
 
-  def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
+  private def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
         case (bldr, (name: String, featureValues: Array[Float])) =>
@@ -100,21 +72,19 @@ case class SequenceExampleBuilder() {
     * @param docFeatures to have their features extracted out into one dense array per feature
     * @return map of feature-name -> padded dense vector of numeric features
     */
-  def transpose[T: ClassTag](
+  private def transpose[T: ClassTag](
       docFeatures: Array[Map[String, T]]
   ): Map[String, Array[T]] = {
+    // TODO: check that we don't need to pad anymore
     // val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
     case class FeatureVal(name: String, value: T, docIdx: Int)
     val featureSet: Set[String] = docFeatures.map(_.keySet).reduce(_ union _)
     docFeatures
-      .slice(0, docFeatures.length) // math.min(docFeatures.length, numDocsPerQuery))
+      .slice(0, docFeatures.length) // math.min(docFeatures.length, numDocsPerQuery)) // this was for padding
       .zipWithIndex
       .flatMap {
         case (doc: Map[String, T], idx: Int) =>
           featureSet.map(name => FeatureVal(name, doc(name), idx))
-        /*doc.map {
-            case (feature, value) => FeatureVal(feature, value, idx)
-          }*/
       }
       .groupBy(_.name)
       .mapValues(_.sortBy(_.docIdx).map(_.value).toArray)
@@ -125,7 +95,7 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def toFeature(featureValues: Array[JLong]): Feature = {
+  private def toFeature(featureValues: Array[JLong]): Feature = {
     Feature
       .newBuilder()
       .setInt64List(
@@ -139,7 +109,7 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def toFeature(featureValues: Array[JFloat]): Feature = {
+  private def toFeature(featureValues: Array[JFloat]): Feature = {
     Feature
       .newBuilder()
       .setFloatList(
@@ -153,7 +123,7 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def toFeature(featureValues: Array[String]): Feature = {
+  private def toFeature(featureValues: Array[String]): Feature = {
     Feature
       .newBuilder()
       .setBytesList(
@@ -174,7 +144,7 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def longs(featureValues: Array[JLong]): FeatureList = {
+  private def longs(featureValues: Array[JLong]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
@@ -186,7 +156,7 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def floats(featureValues: Array[JFloat]): FeatureList = {
+  private def floats(featureValues: Array[JFloat]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
@@ -198,14 +168,14 @@ case class SequenceExampleBuilder() {
     * @param featureValues
     * @return
     */
-  def strings(featureValues: Array[String]): FeatureList = {
+  private def strings(featureValues: Array[String]): FeatureList = {
     FeatureList
       .newBuilder()
       .addFeature(toFeature(featureValues))
       .build()
   }
 
-  def toFeature(stringFeature: String): Feature = {
+  private def toFeature(stringFeature: String): Feature = {
     Feature
       .newBuilder()
       .setBytesList(
@@ -222,7 +192,7 @@ case class SequenceExampleBuilder() {
     * @param floatFeature
     * @return
     */
-  def toFeature(floatFeature: Float): Feature = {
+  private def toFeature(floatFeature: Float): Feature = {
     Feature
       .newBuilder()
       .setFloatList(
@@ -239,7 +209,7 @@ case class SequenceExampleBuilder() {
     * @param longFeature
     * @return
     */
-  def toFeature(longFeature: Long): Feature = {
+  private def toFeature(longFeature: Long): Feature = {
     Feature
       .newBuilder()
       .setInt64List(

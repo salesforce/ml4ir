@@ -1,8 +1,6 @@
 package ml4ir.inference.tensorflow
 
 import java.io.InputStream
-
-import ml4ir.inference.tensorflow.utils.{SequenceExampleBuilder}
 import ml4ir.inference.tensorflow.data.{Example, MultiFeatures}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
@@ -14,14 +12,14 @@ class TensorFlowInferenceTest {
   val classLoader = getClass.getClassLoader
 
   def validateScores(scores: Array[Float], numDocs: Int) = {
-    val docScores    = scores.take(numDocs)
+    val docScores = scores.take(numDocs)
     val maskedScores = scores.drop(numDocs)
     docScores.foreach(
       score => assertTrue("all docs should score non-negative", score > 0)
     )
     for {
       maskedScore <- maskedScores
-      docScore    <- docScores
+      docScore <- docScores
     } {
       assertTrue(
         s"docScore ($docScore) should be > masked score ($maskedScore)",
@@ -81,7 +79,7 @@ class TensorFlowInferenceTest {
     val queryString = "magic"
     val docsToScore = Array(
       Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
-      Map("feat_0" -> 0.4f, "feat_1"  -> 0.8f, "feat_2"  -> 0.1f)
+      Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
     )
     val (query, docs) = (
       Example(
@@ -100,15 +98,15 @@ class TensorFlowInferenceTest {
     val query = "magic"
     val docsToScore = Array(
       Map(
-        "feat_0"    -> 0.04f,
-        "feat_1"    -> 0.08f,
-        "feat_2"    -> 0.01f,
+        "feat_0" -> 0.04f,
+        "feat_1" -> 0.08f,
+        "feat_2" -> 0.01f,
         "fake_feat" -> 0.2f
       ),
       Map(
-        "feat_0"    -> 0.4f,
-        "feat_1"    -> 0.8f,
-        "feat_2"    -> 0.1f,
+        "feat_0" -> 0.4f,
+        "feat_1" -> 0.8f,
+        "feat_2" -> 0.1f,
         "fake_feat" -> 0.3f
       ),
       Map("feat_0" -> 0.8f, "fake_feat" -> -1f)

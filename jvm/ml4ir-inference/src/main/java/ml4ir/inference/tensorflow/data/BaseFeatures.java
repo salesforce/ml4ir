@@ -1,4 +1,4 @@
-package ml4ir.inference.tensorflow.utils;
+package ml4ir.inference.tensorflow.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
