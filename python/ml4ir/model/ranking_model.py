@@ -4,7 +4,6 @@ import tensorflow as tf
 from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
-from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras import backend as K
@@ -12,13 +11,13 @@ from tensorflow.keras import backend as K
 from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.features.feature_layer import define_feature_layer
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
-from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
+from ml4ir.config.keys import LossTypeKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
 from ml4ir.model.metrics import metric_factory, metrics_helper
 from ml4ir.model.scoring import scoring_factory
-from ml4ir.data.tfrecord_reader import make_parse_fn
+from ml4ir.model.serving import define_serving_signatures
 from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
@@ -496,7 +495,7 @@ class RankingModel:
         saved_model.save(
             self.model,
             export_dir=os.path.join(model_file, "tfrecord"),
-            signatures=self._build_saved_model_signatures(),
+            signatures=define_serving_signatures(self.model, self.feature_config),
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -556,93 +555,6 @@ class RankingModel:
 
         # Set weights of Keras model from the loaded model weights
         self.model.set_weights(loaded_model.get_weights())
-
-    def _build_saved_model_signatures(self):
-        """
-        Add signatures to the tf keras savedmodel
-        """
-
-        # Default signature
-        # TODO: Define input_signature
-        # @tf.function(input_signature=[])
-        # def _serve_default(**features):
-        #     features_dict = {k: tf.cast(v, tf.float32) for k, v in features.items()}
-        #     # Run the model to get predictions
-        #     predictions = self.model(inputs=features_dict)
-
-        #     # Mask the padded records
-        #     for key, value in predictions.items():
-        #         predictions[key] = tf.where(
-        #             tf.equal(features_dict['mask'], 0),
-        #             tf.constant(-np.inf),
-        #             predictions[key])
-
-        #     return predictions
-
-        # TFRecord Signature
-        # Define a parsing function for tfrecord protos
-        inputs = self.feature_config.get_all_features(key="node_name", include_label=False)
-        tfrecord_parse_fn = make_parse_fn(
-            feature_config=self.feature_config, max_num_records=self.max_num_records
-        )
-
-        # Define a serving signature for tfrecord
-        @tf.function(input_signature=[TensorSpec(shape=[None], dtype=tf.string)])
-        def _serve_tfrecord(sequence_example_protos):
-            input_size = tf.shape(sequence_example_protos)[0]
-            features_dict = {
-                feature: TensorArray(dtype=tf.float32, size=input_size) for feature in inputs
-            }
-
-            # Define loop index
-            i = tf.constant(0)
-
-            # Define loop condition
-            def loop_condition(i, sequence_example_protos, features_dict):
-                return tf.less(i, input_size)
-
-            # Define loop body
-            def loop_body(i, sequence_example_protos, features_dict):
-                """
-                TODO: Modify parse_fn from
-                parse_single_sequence_example -> parse_sequence_example
-                to handle a batch of TFRecord proto
-                """
-                features, labels = tfrecord_parse_fn(sequence_example_protos[i])
-                for feature, feature_val in features.items():
-                    features_dict[feature] = features_dict[feature].write(
-                        i, tf.cast(feature_val, tf.float32)
-                    )
-
-                i += 1
-
-                return i, sequence_example_protos, features_dict
-
-            # Parse all SequenceExample protos to get features
-            _, _, features_dict = tf.while_loop(
-                cond=loop_condition,
-                body=loop_body,
-                loop_vars=[i, sequence_example_protos, features_dict],
-            )
-
-            # Convert TensorArray to tensor
-            features_dict = {k: v.stack() for k, v in features_dict.items()}
-
-            # Run the model to get predictions
-            predictions = self.model(inputs=features_dict)
-
-            # Mask the padded records
-            for key, value in predictions.items():
-                predictions[key] = tf.where(
-                    tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
-                )
-
-            return predictions
-
-        return {
-            # ServingSignatureKey.DEFAULT: _serve_default,
-            ServingSignatureKey.TFRECORD: _serve_tfrecord
-        }
 
     def _build_callback_hooks(
         self, models_dir: str, logs_dir: str, is_training=True, logging_frequency=25

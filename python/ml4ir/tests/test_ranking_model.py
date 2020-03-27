@@ -49,6 +49,7 @@ class RankingModelTest(RankingTestBase):
             learning_rate_decay_steps=self.args.learning_rate_decay_steps,
             gradient_clip_value=self.args.gradient_clip_value,
             compute_intermediate_stats=self.args.compute_intermediate_stats,
+            compile_keras_model=self.args.compile_keras_model,
             logger=self.logger,
         )
 

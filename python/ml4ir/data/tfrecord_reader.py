@@ -9,7 +9,7 @@ from ml4ir.features import preprocessing
 from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import TFRecordTypeKey, FeatureTypeKey
 
-from typing import Union, Optional
+from typing import Optional
 
 """
 This module contains helper methods for reading and writing
@@ -17,31 +17,48 @@ data in the train.SequenceExample protobuf format
 """
 
 
-def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> tf.function:
-    """Create a parse function using the context and sequence features spec"""
+def _get_default_value(dtype, serving_info):
+    if dtype == tf.float32:
+        return serving_info.get("default_value", 0.0)
+    elif dtype == tf.int64:
+        return serving_info.get("default_value", 0)
+    elif dtype == tf.string:
+        return serving_info.get("default_value", "")
+    else:
+        raise Exception("Unknown dtype {}".format(dtype))
+
+
+def make_parse_fn(
+    feature_config: FeatureConfig,
+    max_num_records: Optional[int] = None,
+    required_only: bool = False,
+) -> tf.function:
+    """
+    Create a parse function using the context and sequence features spec
+
+    Args:
+        feature_config: FeatureConfig object defining context and sequence features
+        max_num_records: Maximum number of records per query. Used for padding.
+                         If set to None, does NOT pad records.
+        required_only: Whether to only use required fields from the feature_config
+    """
 
     context_features_spec = dict()
     sequence_features_spec = dict()
 
     for feature_info in feature_config.get_all_features():
-        feature_name = feature_info["name"]
-        feature_node_name = feature_info.get("node_name", feature_name)
-        dtype = feature_info["dtype"]
-        default_value: Optional[Union[float, str]] = None
-        if feature_info["dtype"] == tf.float32:
-            default_value = 0.0
-        elif feature_info["dtype"] == tf.int64:
-            default_value = 0
-        elif feature_info["dtype"] == tf.string:
-            default_value = ""
-        else:
-            raise Exception("Unknown dtype {} for {}".format(feature_info["dtype"], feature_name))
-        if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
-            context_features_spec[feature_node_name] = io.FixedLenFeature(
-                [], dtype, default_value=default_value
-            )
-        elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-            sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
+        serving_info = feature_info["serving_info"]
+        if not required_only or serving_info.get("required", feature_info["trainable"]):
+            feature_name = feature_info["name"]
+            feature_node_name = feature_info.get("node_name", feature_name)
+            dtype = feature_info["dtype"]
+            default_value = _get_default_value(dtype, serving_info)
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                context_features_spec[feature_node_name] = io.FixedLenFeature(
+                    [], dtype, default_value=default_value
+                )
+            elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
+                sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
 
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
@@ -69,7 +86,11 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
             feature_layer_info = feature_info.get("feature_layer_info")
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
-            feature_tensor = context_features.get(feature_node_name)
+            default_tensor = tf.constant(
+                value=_get_default_value(feature_info["dtype"], feature_info.get("serving_info")),
+                dtype=feature_info["dtype"],
+            )
+            feature_tensor = context_features.get(feature_node_name, default_tensor)
 
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
 
@@ -85,7 +106,12 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
             feature_layer_info = feature_info["feature_layer_info"]
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
-            feature_tensor = sequence_features.get(feature_node_name)
+            default_tensor = tf.constant(
+                value=_get_default_value(feature_info["dtype"], feature_info.get("serving_info")),
+                dtype=feature_info["dtype"],
+                shape=[max_num_records],
+            )
+            feature_tensor = sequence_features.get(feature_node_name, default_tensor)
 
             if isinstance(feature_tensor, sparse.SparseTensor):
                 if feature_node_name == feature_config.get_rank(key="node_name"):
@@ -136,15 +162,33 @@ def make_parse_fn(feature_config: FeatureConfig, max_num_records: int = 25) -> t
                     feature_tensor = preprocessing.preprocess_text(
                         feature_tensor, preprocessing_info
                     )
-            else:
-                raise ValueError("Invalid input : {}".format(feature_name))
 
             features_dict[feature_node_name] = feature_tensor
 
+        """
+        Define dummy mask if the rank field is not a required field for serving
+
+        NOTE:
+        This masks all max_num_records as 1 as there is no real way to know
+        the number of records in the query. There is no predefined required field,
+        and hence we would need to do a full pass of all features to find the record shape.
+        This approach might be unstable if different features have different shapes.
+
+        Hence we just mask all records
+
+        TODO: Might be beneficial to define one mandatory required sequence feature,
+        such as record_key and use that to define the mask. Alternatively, we could
+        make rank a mandatory required feature, but a dummy value would have to be
+        passed to rank at inference time.
+        """
+        if required_only and not feature_config.get_rank("serving_info")["required"]:
+            features_dict["mask"] = tf.constant(value=1, shape=[max_num_records], dtype=tf.int64)
+
         labels = features_dict.pop(feature_config.get_label(key="name"))
 
-        # Check if label is one-hot and correctly masked
-        tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
+        if not required_only:
+            # Check if label is one-hot and correctly masked
+            tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
 
         return features_dict, labels
 
