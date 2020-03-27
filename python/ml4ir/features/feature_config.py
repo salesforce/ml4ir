@@ -266,10 +266,12 @@ class FeatureConfig:
         def get_shape(feature_info: dict):
             feature_layer_info = feature_info["feature_layer_info"]
             preprocessing_info = feature_info.get("preprocessing_info", {})
+
+            # Setting size to None for sequence features as the num_records is variable
+            num_records = None
             if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
                 num_records = 1
-            else:
-                num_records = max_num_records
+
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
                 return (num_records,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
@@ -286,6 +288,9 @@ class FeatureConfig:
             node_name = feature_info.get("node_name", feature_info["name"])
             shape = get_shape(feature_info)
             inputs[node_name] = Input(shape=shape, name=node_name)
+
+        # Define input node that stores number of records in a query
+        inputs["num_records"] = Input(shape=(1,), name="num_records")
 
         return inputs
 

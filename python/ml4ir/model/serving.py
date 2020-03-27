@@ -36,7 +36,9 @@ def define_tfrecord_signature(model, feature_config):
 
     # TFRecord Signature
     # Define a parsing function for tfrecord protos
-    inputs = feature_config.get_all_features(key="node_name", include_label=False)
+    inputs = feature_config.get_all_features(key="node_name", include_label=False) + [
+        "num_records"
+    ]
     tfrecord_parse_fn = make_parse_fn(
         feature_config=feature_config, max_num_records=25, required_only=True
     )
