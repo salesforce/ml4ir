@@ -5,6 +5,7 @@ from ml4ir.config.keys import FeatureTypeKey, TFRecordTypeKey
 from tensorflow.keras import Input
 from typing import List, Dict, Optional
 from logging import Logger
+import tensorflow as tf
 
 """
 Feature config YAML format
@@ -252,12 +253,15 @@ class FeatureConfig:
         """
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
-    def define_inputs(self, max_num_records: int) -> Dict[str, Input]:
+    def get_dtype(self, feature_info: dict):
+        if feature_info["dtype"] == "string":
+            return tf.float32
+        else:
+            return feature_info["dtype"]
+
+    def define_inputs(self) -> Dict[str, Input]:
         """
         Define the input layer for the tensorflow model
-
-        Args:
-            - max_num_records: Maximum number of records per query in the training data
 
         Returns:
             Dictionary of tensorflow graph input nodes
@@ -286,11 +290,12 @@ class FeatureConfig:
                 We could do this in the future, to help define more complex loss functions
             """
             node_name = feature_info.get("node_name", feature_info["name"])
-            shape = get_shape(feature_info)
-            inputs[node_name] = Input(shape=shape, name=node_name)
+            inputs[node_name] = Input(
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
+            )
 
-        # Define input node that stores number of records in a query
-        inputs["num_records"] = Input(shape=(1,), name="num_records")
+        # # Define input node that stores number of records in a query
+        # inputs["num_records"] = Input(shape=(1,), name="num_records", dtype=tf.int32)
 
         return inputs
 
@@ -299,7 +304,7 @@ class FeatureConfig:
         return {
             "name": "mask",
             "trainable": False,
-            "dtype": "float",
+            "dtype": "int64",
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": TFRecordTypeKey.SEQUENCE,

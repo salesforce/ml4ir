@@ -36,19 +36,21 @@ def define_tfrecord_signature(model, feature_config):
 
     # TFRecord Signature
     # Define a parsing function for tfrecord protos
-    inputs = feature_config.get_all_features(key="node_name", include_label=False) + [
-        "num_records"
-    ]
+    inputs = feature_config.get_all_features(key="node_name", include_label=False)
     tfrecord_parse_fn = make_parse_fn(
-        feature_config=feature_config, max_num_records=25, required_only=True
+        feature_config=feature_config, max_num_records=25, required_only=True, pad_records=False
     )
+    dtype_map = dict()
+    for feature_info in feature_config.get_all_features(include_label=False):
+        feature_node_name = feature_info.get("node_name", feature_info["name"])
+        dtype_map[feature_node_name] = feature_config.get_dtype(feature_info)
 
     # Define a serving signature for tfrecord
     @tf.function(input_signature=[TensorSpec(shape=[None], dtype=tf.string)])
     def _serve_tfrecord(sequence_example_protos):
         input_size = tf.shape(sequence_example_protos)[0]
         features_dict = {
-            feature: TensorArray(dtype=tf.float32, size=input_size) for feature in inputs
+            feature: TensorArray(dtype=dtype_map[feature], size=input_size) for feature in inputs
         }
 
         # Define loop index
@@ -62,9 +64,7 @@ def define_tfrecord_signature(model, feature_config):
         def loop_body(i, sequence_example_protos, features_dict):
             features, labels = tfrecord_parse_fn(sequence_example_protos[i])
             for feature, feature_val in features.items():
-                features_dict[feature] = features_dict[feature].write(
-                    i, tf.cast(feature_val, tf.float32)
-                )
+                features_dict[feature] = features_dict[feature].write(i, feature_val)
 
             i += 1
 
@@ -81,7 +81,7 @@ def define_tfrecord_signature(model, feature_config):
         features_dict = {k: v.stack() for k, v in features_dict.items()}
 
         # Run the model to get predictions
-        predictions = model(inputs=features_dict)
+        predictions = model(inputs=features_dict, training=None)
 
         # Mask the padded records
         for key, value in predictions.items():

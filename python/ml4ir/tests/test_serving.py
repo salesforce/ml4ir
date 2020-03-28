@@ -94,6 +94,9 @@ class RankingModelTest(RankingTestBase):
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             "ranking_scores"
         ]
+        import pdb
+
+        pdb.set_trace()
         tfrecord_signature_predictions = tfrecord_signature(
             sequence_example_protos=sequence_example_protos
         )["ranking_scores"]

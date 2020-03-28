@@ -23,7 +23,7 @@ rank:
     shape: null
   serving_info:
     name: pos
-    required: false
+    required: true
     default_value: 0
   tfrecord_type: sequence
 label:

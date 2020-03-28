@@ -1,26 +1,11 @@
 import tensorflow as tf
-from tensorflow import feature_column
 from tensorflow.keras import layers
-from tensorflow.keras import backend as K
 
 from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, EncodingTypeKey, TFRecordTypeKey
 
 
-def get_dense_feature(inputs, feature, shape=(1,)):
-    """
-    Convert an input into a dense numeric feature
-
-    NOTE: Can remove this in the future and
-          pass inputs[feature] directly
-    """
-    feature_col = feature_column.numeric_column(feature, shape=shape)
-    dense_feature = layers.DenseFeatures(feature_col)(inputs)
-
-    return dense_feature
-
-
-def get_sequence_encoding(input, feature_info, max_num_records):
+def get_sequence_encoding(input, feature_info):
     feature_layer_info = feature_info["feature_layer_info"]
     preprocessing_info = feature_info.get("preprocessing_info", {})
 
@@ -43,11 +28,12 @@ def get_sequence_encoding(input, feature_info, max_num_records):
     if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
         # If feature is a context feature then tile it for all records
         encoding = tf.expand_dims(encoding, axis=1)
-        encoding = K.repeat_elements(encoding, rep=max_num_records, axis=1)
-
+        # encoding = tf.tile(encoding,
+        #                    tf.concat([tf.constant([1]), num_records, tf.constant([1])], axis=0))
     else:
         # If sequence feature, then reshape back to original shape
-        encoding = tf.reshape(encoding, [-1, encoding, feature_layer_info["embedding_size"]],)
+        # FIXME
+        encoding = tf.reshape(encoding, [-1, encoding, feature_layer_info["encoding_size"]],)
 
     return encoding
 
@@ -62,15 +48,19 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
         ranking_features = list()
         metadata_features = dict()
 
+        numeric_tile_shape = tf.shape(tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0))
+
         for feature_info in feature_config.get_all_features(include_label=False):
             feature_name = feature_info["name"]
             feature_node_name = feature_info.get("node_name", feature_name)
             feature_layer_info = feature_info["feature_layer_info"]
 
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                dense_feature = get_dense_feature(
-                    inputs, feature_node_name, shape=(max_num_records, 1)
-                )
+                dense_feature = inputs[feature_node_name]
+
+                if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                    dense_feature = tf.tile(dense_feature, numeric_tile_shape)
+
                 if feature_info["trainable"]:
                     dense_feature = tf.expand_dims(tf.cast(dense_feature, tf.float32), axis=-1)
                     ranking_features.append(dense_feature)
@@ -79,13 +69,25 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 if feature_info["trainable"]:
                     if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
-                        embedding = get_sequence_encoding(
-                            inputs[feature_node_name], feature_info, max_num_records
-                        )
+                        encoding = get_sequence_encoding(inputs[feature_node_name], feature_info)
+                        """
+                        Creating a tensor [1, num_records, 1] dynamically
 
-                        ranking_features.append(embedding)
+                        NOTE:
+                        Tried multiple methods using `convert_to_tensor`, `concat`, with no results
+                        """
+                        tile_dims = tf.shape(
+                            tf.expand_dims(
+                                tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0),
+                                axis=-1,
+                            )
+                        )
+                        encoding = tf.tile(encoding, tile_dims)
+
+                        ranking_features.append(encoding)
                     else:
                         raise NotImplementedError
+                # pass
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 # TODO: Add embedding layer with vocabulary here
                 raise NotImplementedError
@@ -100,7 +102,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
         Reshape ranking features to create features of shape
         [batch, max_num_records, num_features]
         """
-        ranking_features = tf.concat(ranking_features, axis=-1)
+        ranking_features = tf.concat(ranking_features, axis=-1, name="ranking_features")
 
         return ranking_features, metadata_features
 

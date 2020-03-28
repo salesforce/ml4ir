@@ -95,7 +95,7 @@ class RankingModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = feature_config.define_inputs(max_num_records)
+            inputs: Dict[str, Input] = feature_config.define_inputs()
             self.model = self.build_model(inputs, optimizer, loss, metrics)
 
             if model_file:
@@ -403,11 +403,13 @@ class RankingModel:
         @tf.function
         def _filter_records(x, mask):
             """Filter records that were padded in each query"""
-            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, tf.constant(0.0)))))
+            return tf.squeeze(
+                tf.gather_nd(x, tf.where(tf.not_equal(mask, tf.constant(0, dtype="int64"))))
+            )
 
         @tf.function
         def _predict_score(features, label):
-            features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
+            # features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
             if self.is_compiled:
                 scores = infer(features)["ranking_scores"]
             else:
