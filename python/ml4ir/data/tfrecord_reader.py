@@ -31,7 +31,7 @@ def make_parse_fn(
     feature_config: FeatureConfig,
     max_num_records: int = 25,
     required_only: bool = False,
-    pad_records: bool = False,
+    pad_records: bool = True,
 ) -> tf.function:
     """
     Create a parse function using the context and sequence features spec

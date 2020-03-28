@@ -37,6 +37,19 @@ def define_tfrecord_signature(model, feature_config):
     # TFRecord Signature
     # Define a parsing function for tfrecord protos
     inputs = feature_config.get_all_features(key="node_name", include_label=False)
+
+    """
+    NOTE:
+    Setting pad_records=False for tfrecord signature as it is used at inference time
+    and we do NOT want to score on padded records for performance reasons
+
+    Limitation: This limits the serving signature to only run inference on a single query
+    at a time given the current implementation. This is a tricky issue to fix because
+    there is no real way to generate a dense tensor of ranking scores from different queries,
+    as they might have varying number of records in each of them.
+
+    Workaround: To infer on multiple queries, run predict() on each of the queries separately.
+    """
     tfrecord_parse_fn = make_parse_fn(
         feature_config=feature_config, max_num_records=25, required_only=True, pad_records=False
     )
@@ -81,7 +94,7 @@ def define_tfrecord_signature(model, feature_config):
         features_dict = {k: v.stack() for k, v in features_dict.items()}
 
         # Run the model to get predictions
-        predictions = model(inputs=features_dict, training=None)
+        predictions = model(inputs=features_dict)
 
         # Mask the padded records
         for key, value in predictions.items():
