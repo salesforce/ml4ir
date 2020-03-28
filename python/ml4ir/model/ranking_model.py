@@ -475,7 +475,7 @@ class RankingModel:
 
         return pd.DataFrame(predictions_dict)
 
-    def save(self, models_dir: str):
+    def save(self, models_dir: str, pad_records: bool):
         """
         Save tf.keras model to models_dir
 
@@ -497,7 +497,7 @@ class RankingModel:
         saved_model.save(
             self.model,
             export_dir=os.path.join(model_file, "tfrecord"),
-            signatures=define_serving_signatures(self.model, self.feature_config),
+            signatures=define_serving_signatures(self.model, self.feature_config, pad_records),
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 

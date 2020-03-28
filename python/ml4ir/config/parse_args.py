@@ -223,6 +223,13 @@ def define_args() -> ArgumentParser:
         "If that is not the case, then you can still use a SavedModel from a model_file for inference/evaluation only",
     )
 
+    parser.add_argument(
+        "--pad_records_at_inference",
+        type=bool,
+        default=False,
+        help="Whether to pad records at inference time. Used to define the TFRecord serving signature in the SavedModel",
+    )
+
     return parser
 
 

@@ -67,7 +67,7 @@ class RankingModelTest(RankingTestBase):
 
         model.fit(dataset=parsed_dataset, num_epochs=1, models_dir=self.output_dir)
 
-        model.save(models_dir=self.args.models_dir)
+        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
 
         # Load SavedModel and get the right serving signature
         default_model = kmodels.load_model(
@@ -84,9 +84,7 @@ class RankingModelTest(RankingTestBase):
 
         # Fetch a single batch for testing
         sequence_example_protos = next(iter(raw_dataset.test))
-        parsed_sequence_examples = {
-            k: tf.cast(v, tf.float32) for k, v in next(iter(parsed_dataset.test))[0].items()
-        }
+        parsed_sequence_examples = next(iter(parsed_dataset.test))[0]
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
@@ -94,12 +92,15 @@ class RankingModelTest(RankingTestBase):
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             "ranking_scores"
         ]
-        import pdb
 
-        pdb.set_trace()
-        tfrecord_signature_predictions = tfrecord_signature(
-            sequence_example_protos=sequence_example_protos
-        )["ranking_scores"]
+        # Since we do not pad dummy records in tfrecord serving signature,
+        # we can only predict on a single record at a time
+        tfrecord_signature_predictions = [
+            tfrecord_signature(sequence_example_protos=tf.gather(sequence_example_protos, [i]))[
+                "ranking_scores"
+            ]
+            for i in range(self.args.batch_size)
+        ]
 
         def _flatten_records(x):
             """Collapse first two dimensions of a tensor -> [batch_size, max_num_records]"""
@@ -122,8 +123,8 @@ class RankingModelTest(RankingTestBase):
         default_signature_predictions = _filter_records(
             _flatten_records(default_signature_predictions), mask
         )
-        tfrecord_signature_predictions = _filter_records(
-            _flatten_records(tfrecord_signature_predictions), mask
+        tfrecord_signature_predictions = tf.squeeze(
+            tf.concat(tfrecord_signature_predictions, axis=1)
         )
 
         # Compare the scores from the different versions of the model

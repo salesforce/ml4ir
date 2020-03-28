@@ -26,7 +26,7 @@ def define_default_signature(model, feature_config):
     return
 
 
-def define_tfrecord_signature(model, feature_config):
+def define_tfrecord_signature(model, feature_config, pad_records):
     """
     Add signatures to the tf keras savedmodel
 
@@ -51,7 +51,10 @@ def define_tfrecord_signature(model, feature_config):
     Workaround: To infer on multiple queries, run predict() on each of the queries separately.
     """
     tfrecord_parse_fn = make_parse_fn(
-        feature_config=feature_config, max_num_records=25, required_only=True, pad_records=False
+        feature_config=feature_config,
+        max_num_records=25,
+        required_only=True,
+        pad_records=pad_records,
     )
     dtype_map = dict()
     for feature_info in feature_config.get_all_features(include_label=False):
@@ -107,10 +110,10 @@ def define_tfrecord_signature(model, feature_config):
     return _serve_tfrecord
 
 
-def define_serving_signatures(model, feature_config):
+def define_serving_signatures(model, feature_config, pad_records):
     """Defines all serving signatures for the SavedModel"""
     return {
         # ServingSignatureKey.DEFAULT: define_default_signature(
         #     model, feature_config),
-        ServingSignatureKey.TFRECORD: define_tfrecord_signature(model, feature_config)
+        ServingSignatureKey.TFRECORD: define_tfrecord_signature(model, feature_config, pad_records)
     }

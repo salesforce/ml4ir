@@ -268,7 +268,9 @@ class RankingPipeline(object):
                 ExecutionModeKey.RESAVE_ONLY,
             }:
                 # Save model
-                model.save(models_dir=self.models_dir)
+                model.save(
+                    models_dir=self.models_dir, pad_records=self.args.pad_records_at_inference
+                )
 
             # Finish
             self.finish()
