@@ -188,7 +188,7 @@ class RankingPipeline(object):
             self.logger.info("Ranking Dataset created")
 
             # Build model
-            model = RankingModel(
+            ranking_model = RankingModel(
                 model_config=self.model_config,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
@@ -214,7 +214,7 @@ class RankingPipeline(object):
                 ExecutionModeKey.TRAIN_ONLY,
             }:
                 # Train
-                model.fit(
+                ranking_model.fit(
                     dataset=ranking_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
@@ -231,7 +231,7 @@ class RankingPipeline(object):
                 ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
-                model.evaluate(
+                ranking_model.evaluate(
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
@@ -248,7 +248,7 @@ class RankingPipeline(object):
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
                 # Predict ranking scores
-                model.predict(
+                ranking_model.predict(
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logs_dir=self.logs_dir,
@@ -268,7 +268,7 @@ class RankingPipeline(object):
                 ExecutionModeKey.RESAVE_ONLY,
             }:
                 # Save model
-                model.save(
+                ranking_model.save(
                     models_dir=self.models_dir, pad_records=self.args.pad_records_at_inference
                 )
 

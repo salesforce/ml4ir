@@ -547,7 +547,7 @@ class RankingModel:
         model = tf.keras.models.load_model(model_file, compile=False)
 
         self.logger.info("Successfully loaded SavedModel from {}".format(model_file))
-        self.logger.warning("Retraining is not supported. Model is loaded with compile=False")
+        self.logger.warning("Retraining is not yet supported. Model is loaded with compile=False")
 
         return model
 
@@ -557,6 +557,7 @@ class RankingModel:
 
         # Set weights of Keras model from the loaded model weights
         self.model.set_weights(loaded_model.get_weights())
+        self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
         self, models_dir: str, logs_dir: str, is_training=True, logging_frequency=25

@@ -304,7 +304,7 @@ class FeatureConfig:
         return {
             "name": "mask",
             "trainable": False,
-            "dtype": "int64",
+            "dtype": self.get_rank("dtype"),
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": TFRecordTypeKey.SEQUENCE,

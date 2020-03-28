@@ -113,7 +113,9 @@ def make_parse_fn(
 
             Hence we just mask all records
             """
-            features_dict["mask"] = tf.constant(value=1, shape=[max_num_records], dtype=tf.int64)
+            features_dict["mask"] = tf.constant(
+                value=1, shape=[max_num_records], dtype=feature_config.get_rank("dtype")
+            )
             num_records = tf.constant(max_num_records, dtype=tf.int64)
         else:
             # Typically used at training time, to pad/clip to a fixed number of records per query
@@ -182,11 +184,9 @@ def make_parse_fn(
                 feature_tensor = sparse.to_dense(feature_tensor)
                 feature_tensor = tf.squeeze(feature_tensor)
 
-                # If feature is a string, then decode into numbers
-                if feature_layer_info["type"] == FeatureTypeKey.STRING:
-                    feature_tensor = preprocessing.preprocess_text(
-                        feature_tensor, preprocessing_info
-                    )
+            # If feature is a string, then decode into numbers
+            if feature_layer_info["type"] == FeatureTypeKey.STRING:
+                feature_tensor = preprocessing.preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor
 
