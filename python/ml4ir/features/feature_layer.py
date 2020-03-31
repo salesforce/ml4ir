@@ -11,7 +11,7 @@ def get_sequence_encoding(input, feature_info):
 
     input_feature = tf.cast(input, tf.uint8)
     input_feature = tf.reshape(input_feature, [-1, preprocessing_info["max_length"]])
-    if feature_layer_info["embedding_size"]:
+    if "embedding_size" in feature_layer_info:
         char_embedding = layers.Embedding(
             input_dim=256,
             output_dim=feature_layer_info["embedding_size"],

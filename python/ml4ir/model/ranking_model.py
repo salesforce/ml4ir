@@ -404,7 +404,10 @@ class RankingModel:
         def _filter_records(x, mask):
             """Filter records that were padded in each query"""
             return tf.squeeze(
-                tf.gather_nd(x, tf.where(tf.not_equal(mask, tf.constant(0, dtype="int64"))))
+                tf.gather_nd(
+                    x,
+                    tf.where(tf.not_equal(tf.cast(mask, tf.int64), tf.constant(0, dtype="int64"))),
+                )
             )
 
         @tf.function
