@@ -21,8 +21,7 @@ public class ModelFeatures {
     @JsonProperty("features")
     private List<InputFeatures> features;
 
-    public ModelFeatures() {
-    }
+    public ModelFeatures() { }
 
     public QueryKey getQueryKey() {
         return queryKey;

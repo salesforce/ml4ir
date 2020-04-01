@@ -1,14 +1,13 @@
 package ml4ir.inference.tensorflow
 
 import java.io.InputStream
-import ml4ir.inference.tensorflow.data.{Example, MultiFeatures}
+
+import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, TestData}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
-import org.tensorflow.DataType
-
 @Test
-class TensorFlowInferenceTest {
+class TensorFlowInferenceTest extends TestData {
   val classLoader = getClass.getClassLoader
 
   def validateScores(scores: Array[Float], numDocs: Int) = {
@@ -126,4 +125,5 @@ class TensorFlowInferenceTest {
       }
     )
   }
+
 }

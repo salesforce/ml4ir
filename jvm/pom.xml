@@ -33,6 +33,12 @@
         <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.scalacheck</groupId>
+      <artifactId>scalacheck_${scala.artifact.suffix}</artifactId>
+      <version>1.14.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
