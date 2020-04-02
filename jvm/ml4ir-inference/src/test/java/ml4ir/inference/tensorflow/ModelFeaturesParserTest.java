@@ -1,6 +1,6 @@
 package ml4ir.inference.tensorflow;
 
-import ml4ir.inference.tensorflow.utils.ModelFeatures;
+import ml4ir.inference.tensorflow.data.ModelFeatures;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -26,7 +26,7 @@ public class ModelFeaturesParserTest {
         assertNotNull(modelFeatures.getFeatures());
 
         // We have defined 12 features
-        assertEquals("Unexpected number of features", 12 , modelFeatures.getFeatures().size());
+        assertEquals("Unexpected number of features", 10 , modelFeatures.getFeatures().size());
 
     }
 }

@@ -2,7 +2,7 @@ package ml4ir.inference.tensorflow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import ml4ir.inference.tensorflow.utils.ModelFeatures;
+import ml4ir.inference.tensorflow.data.ModelFeatures;
 
 import java.io.File;
 import java.io.IOException;

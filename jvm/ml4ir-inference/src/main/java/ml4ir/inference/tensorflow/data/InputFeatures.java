@@ -1,3 +1,3 @@
-package ml4ir.inference.tensorflow.utils;
+package ml4ir.inference.tensorflow.data;
 
 public class InputFeatures extends BaseFeatures {}

@@ -1,120 +1,114 @@
 package ml4ir.inference.tensorflow;
 
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import ml4ir.inference.tensorflow.data.Example;
-import ml4ir.inference.tensorflow.data.FeaturePreprocessor;
-import ml4ir.inference.tensorflow.data.StringMapFeatureProcessor;
-import ml4ir.inference.tensorflow.utils.ModelFeatures;
-import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder;
+import ml4ir.inference.tensorflow.data.*;
 import org.junit.Test;
 
-import org.tensorflow.DataType;
 import org.tensorflow.example.FeatureList;
 import org.tensorflow.example.SequenceExample;
-import scala.Immutable;
-import scala.Option;
+import scala.Function1;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
 public class SequenceExampleJavaBuilderTest {
 
     @Test
-    public void testSimpleSequenceExample() {
+    public void buildProtoFromStringMaps() throws Exception {
         String query = "a query string";
+        Map<String, String> contextMap = ImmutableMap.of(
+                "q", query,
+                "query_key", "query1234",
+                "userId", "john.smith@example.com");
+        List<Map<String, String>> documents = ImmutableList.of(
+                ImmutableMap.of(
+                        "sequence_float_1", "0.1",
+                        "docPopularity", "1.1",
+                        "docTitle", "The title",
+                        "docAgeHours", "1200",
+                        "sequence_string_2", "a"),
+                ImmutableMap.of(
+                        "sequence_float_1", "0.2",
+                        "docPopularity", "2.2",
+                        "docTitle", "<html><head><title>A webpage title</title><head><title>",
+                        "docAgeHours", "240"),
+                ImmutableMap.of("fake", "blah", "ff2", "0.3"),
+                ImmutableMap.of()
+        );
 
-        // TODO: this should encode that f1, f2, and f3 are in the model and have default values, but fake_feat is not
-/*
-        FeatureConfig featureConfig = FeatureConfig.apply(
-                Lists.newArrayList(
-                    FeatureField.apply("query_text", "query_text", DataType.STRING, "")),
-                Lists.newArrayList(
-                    FeatureField.apply("f1","f1", DataType.FLOAT, "0"),
-                    FeatureField.apply("f2","f2", DataType.FLOAT, "0"),
-                    FeatureField.apply("f3", "f3", DataType.FLOAT, "0")
-                ));
+        ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
+                getClass().getClassLoader().getResource("model_features.yaml").getPath());
 
- */
-        SequenceExampleJavaBuilder helper = new SequenceExampleJavaBuilder(
-             //   featureConfig,
-                ImmutableMap.of(),
-                ImmutableMap.of(),
-                ImmutableMap.of("query_text", query));
-        SequenceExample sequenceExample = helper
-                .addDoc(
-                        ImmutableMap.of("f1", 1f, "f2", 0.1f, "f3", 0.01f),
-                        ImmutableMap.of(),
-                        ImmutableMap.of())
-                .addDoc(
-                        ImmutableMap.of("f1", 2f, "f2", 0.2f, "f3", 0.02f),
-                        ImmutableMap.of(),
-                        ImmutableMap.of())
-                .addDoc(
-                        ImmutableMap.of(/* no f1 -> anything */"f2", 0.3f, "f3", 0.03f),
-                        ImmutableMap.of(),
-                        ImmutableMap.of())
-                .addDoc(
-                        ImmutableMap.of("f1", 4f, "fake_feat", -1f /* no f2 or f3 */),
-                        ImmutableMap.of(),
-                        ImmutableMap.of())
-                .addDoc(
-                        ImmutableMap.of("f1", 5f, "f2", 0.5f, "f3", 0.05f),
-                        ImmutableMap.of(),
-                        ImmutableMap.of())
-                .build();
+        Function<Float, Float> fn = (Float count) -> (float)Math.log(1.0 + count);
+        SequenceExampleBuilderBase<Map<String, String>, Map<String, String>> sequenceExampleBuilder =
+                StringMapSequenceExampleBuilder.withFeatureProcessors(
+                        modelFeatures,
+                        ImmutableMap.of(
+                                "docAgeHours", (Float secs) -> secs / 3600,
+                                "docPopularity", (Float count) -> (float)Math.log(1.0 + count)
+                        ),
+                        ImmutableMap.of(), // no Long processing for any field
+                        ImmutableMap.of("docTitle", String::toLowerCase)
+                );
+
+
+        SequenceExample sequenceExample = sequenceExampleBuilder.build(contextMap, documents);
+
+        assertNotNull(sequenceExample);
+
         ByteString queryTextByteString =
                 sequenceExample.getContext().getFeatureMap().get("query_text").getBytesList().getValue(0);
         assertEquals(ByteString.copyFrom(query.getBytes()), queryTextByteString);
         Map<String, FeatureList> featureListMap = sequenceExample.getFeatureLists().getFeatureListMap();
         List<Float> floatFeature1 =
-                featureListMap.get("f1").getFeatureList().get(0).getFloatList().getValueList();
-        assertArrayEquals("feature f1 should match",
-                floatFeature1.toArray(new Float[0]), new Float[] { 1f, 2f, 0f, 4f, 5f });
+                featureListMap.get("doc_popularity").getFeatureList().get(0).getFloatList().getValueList();
+        assertArrayEquals("feature doc_popularity should match",
+                floatFeature1.toArray(new Float[0]), new Float[] { fn.apply(1.1f), fn.apply(2.2f), fn.apply(0f), fn.apply(0f) });
         List<Float> floatFeature2 =
-                featureListMap.get("f2").getFeatureList().get(0).getFloatList().getValueList();
-        assertArrayEquals("feature f2 should match",
-                floatFeature2.toArray(new Float[0]), new Float[] { 0.1f, 0.2f, 0.3f, 0f, 0.5f });
-        List<Float> floatFeature3 =
-                featureListMap.get("f3").getFeatureList().get(0).getFloatList().getValueList();
+                featureListMap.get("doc_age_in_hours").getFeatureList().get(0).getFloatList().getValueList();
+        assertArrayEquals("feature doc_age_in_hours should match",
+                floatFeature2.toArray(new Float[0]), new Float[] { 1200f / 3600, 240f / 3600, 2400f / 3600, 2400f / 3600 });
+        List<ByteString> floatFeature3 =
+                featureListMap.get("doc_title").getFeatureList().get(0).getBytesList().getValueList();
         assertArrayEquals("feature f3 should match",
-                floatFeature3.toArray(new Float[0]), new Float[] { 0.01f, 0.02f, 0.03f, 0f, 0.05f });
+                floatFeature3.toArray(new ByteString[0]), new ByteString[] {
+                        ByteString.copyFromUtf8("the title"),
+                        ByteString.copyFromUtf8("<html><head><title>a webpage title</title><head><title>"),
+                        ByteString.copyFromUtf8(""),
+                        ByteString.copyFromUtf8("")
+        });
         assertNull(featureListMap.get("fake_feat"));
     }
 
     @Test
-    public void buildProtoFromStringMaps() throws Exception {
-        Map<String, String> contextMap = ImmutableMap.of(
-                "query_text", "a query string",
-                "query_id", "query1234",
-                "user_id", "john.smith@example.com");
-        List<Map<String, String>> documents = ImmutableList.of(
-                ImmutableMap.of("ff1", "0.1", "ff2", "1.1", "lf1", "11L", "sf1", "a"),
-                ImmutableMap.of("ff1", "0.2", "ff2", "2.2", "lf1",  "22L", "sf1", "b"),
-                ImmutableMap.of("fake", "blah", "ff2", "0.3"),
-                ImmutableMap.of()
-        );
+    public void testStringMapFeaturePreprocessing() throws Exception {
         ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
                 getClass().getClassLoader().getResource("model_features.yaml").getPath());
-
-        StringMapFeatureProcessor contextPreprocessor =
-                new StringMapFeatureProcessor(modelFeatures, "context");
-        Example contextExample = contextPreprocessor.apply(contextMap);
-
-        StringMapFeatureProcessor examplePreprocessor =
-                new StringMapFeatureProcessor(modelFeatures, "sequence");
-        Example[] sequenceExamples = documents.stream().map(examplePreprocessor::apply).toArray(Example[]::new);
-
-        SequenceExample sequenceExample =
-                new SequenceExampleBuilder().apply(contextExample, sequenceExamples);
-
-        assertNotNull(sequenceExample);
-
+        FeaturePreprocessor<Map<String, String>> processor = FeatureProcessors.forStringMaps(
+                modelFeatures,
+                "sequence",
+                ImmutableMap.of(
+                        "docAgeHours", (Float secs) -> secs / 3600,
+                        "docPopularity", (Float count) -> (float) Math.log(count)
+                ),
+                ImmutableMap.of(), // no Long processing for any field
+                ImmutableMap.of("docTitle", String::toLowerCase));
+        Example example = processor.apply(ImmutableMap.of(
+                "sequence_float_1", "0.1",
+                "sequence_float_2", "1.1",
+                "docTitle", "The title",
+                "docAgeHours", "1200",
+                "sequence_string_2", "A string!"));
+        Object docAgeHours = example.features().floatFeatures().get("doc_age_in_hours").get();
+        assertEquals( 1200.0 / 3600 , (float) docAgeHours, 0.001f);
+        Object sequenceLong2 = example.features().int64Features().get("sequence_long_2").get();
+        assertEquals(2147483649L, (long) sequenceLong2);
+        String docTitle = example.features().stringFeatures().get("doc_title").get();
+        assertEquals("the title", docTitle);
     }
 }

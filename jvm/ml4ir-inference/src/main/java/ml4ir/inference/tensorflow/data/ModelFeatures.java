@@ -1,4 +1,4 @@
-package ml4ir.inference.tensorflow.utils;
+package ml4ir.inference.tensorflow.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -21,8 +21,7 @@ public class ModelFeatures {
     @JsonProperty("features")
     private List<InputFeatures> features;
 
-    public ModelFeatures() {
-    }
+    public ModelFeatures() { }
 
     public QueryKey getQueryKey() {
         return queryKey;
