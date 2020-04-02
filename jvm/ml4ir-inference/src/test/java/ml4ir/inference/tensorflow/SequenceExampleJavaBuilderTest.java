@@ -27,15 +27,16 @@ public class SequenceExampleJavaBuilderTest {
                 "userId", "john.smith@example.com");
         List<Map<String, String>> documents = ImmutableList.of(
                 ImmutableMap.of(
-                        "context_float_1", "0.1",
-                        "context_float_2", "1.1",
+                        "sequence_float_1", "0.1",
+                        "docPopularity", "1.1",
                         "docTitle", "The title",
+                        "docAgeHours", "1200",
                         "sequence_string_2", "a"),
                 ImmutableMap.of(
-                        "context_float_1", "0.2",
+                        "sequence_float_1", "0.2",
                         "docPopularity", "2.2",
                         "docTitle", "<html><head><title>A webpage title</title><head><title>",
-                        "doc_age_in_hours", "240"),
+                        "docAgeHours", "240"),
                 ImmutableMap.of("fake", "blah", "ff2", "0.3"),
                 ImmutableMap.of()
         );
@@ -43,44 +44,16 @@ public class SequenceExampleJavaBuilderTest {
         ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
                 getClass().getClassLoader().getResource("model_features.yaml").getPath());
 
-        Function<? super Float, ? extends Float> s = (Float secs) -> secs / 3600;
-        Function<? super Float, ? extends Float> l = (Float count) -> (float)Math.log(count);
-        Function<? super String, ? extends String> lc = String::toLowerCase;
-        Map<String, Function<Float, Float>> floatFns = ImmutableMap.of(
-                "docAgeHours", ((Float secs) -> secs / 3600),
-                "docPopularity", ((Float count) -> (float)Math.log(count))
-        );
-        FeaturePreprocessor<Map<String, String>> ctxPre =
-                new StringMapFeatureProcessor(modelFeatures,
-                        "context");
-        FeaturePreprocessor<Map<String, String>> seqPre =
-                new StringMapFeatureProcessor(modelFeatures, "sequence", new PrimitiveProcessor() {
-                    @Override
-                    public float processFloat(String servingName, float f) {
-                        return floatFns.getOrDefault(servingName, Function.identity()).apply(f);
-                    }
-                });
-        PrimitiveProcessor pp = PrimitiveProcessors.fromJavaFloatFunction()
-
-        StringMapSequenceExampleBuilder sequenceExampleBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(
-                        modelFeatures, new PrimitiveProcessor() {
-                            @Override
-                            public String processString(String servingName, String s) {
-                                return s.toLowerCase();
-                            }
-                            @Override
-                            public float processFloat(String servingName, float f) {
-                                return floatFns.getOrDefault(servingName, Function.identity()).apply(f);
-                            }
-                        }
-                        /*ImmutableMap.of(
-                                "docAgeHours", func((Float secs) -> secs / 3600),
-                                "docPopularity", func((Float count) -> (float)Math.log(count))
+        Function<Float, Float> fn = (Float count) -> (float)Math.log(1.0 + count);
+        SequenceExampleBuilderBase<Map<String, String>, Map<String, String>> sequenceExampleBuilder =
+                StringMapSequenceExampleBuilder.withFeatureProcessors(
+                        modelFeatures,
+                        ImmutableMap.of(
+                                "docAgeHours", (Float secs) -> secs / 3600,
+                                "docPopularity", (Float count) -> (float)Math.log(1.0 + count)
                         ),
                         ImmutableMap.of(), // no Long processing for any field
-                        ImmutableMap.of(
-                                "docTitle", func((String str) -> str.toLowerCase())
-                        )*/
+                        ImmutableMap.of("docTitle", String::toLowerCase)
                 );
 
 
@@ -88,24 +61,54 @@ public class SequenceExampleJavaBuilderTest {
 
         assertNotNull(sequenceExample);
 
-        // FIXME: this is currently failing, because it's not checking the right things.  Need to reconcile the
-        // FIXME: fake data with the yaml config and the output expectations
         ByteString queryTextByteString =
                 sequenceExample.getContext().getFeatureMap().get("query_text").getBytesList().getValue(0);
         assertEquals(ByteString.copyFrom(query.getBytes()), queryTextByteString);
         Map<String, FeatureList> featureListMap = sequenceExample.getFeatureLists().getFeatureListMap();
         List<Float> floatFeature1 =
-                featureListMap.get("context_float_1").getFeatureList().get(0).getFloatList().getValueList();
-        assertArrayEquals("feature context_float_1 should match",
-                floatFeature1.toArray(new Float[0]), new Float[] { 0.1f, 0.2f, 0f, 0f });
+                featureListMap.get("doc_popularity").getFeatureList().get(0).getFloatList().getValueList();
+        assertArrayEquals("feature doc_popularity should match",
+                floatFeature1.toArray(new Float[0]), new Float[] { fn.apply(1.1f), fn.apply(2.2f), fn.apply(0f), fn.apply(0f) });
         List<Float> floatFeature2 =
                 featureListMap.get("doc_age_in_hours").getFeatureList().get(0).getFloatList().getValueList();
         assertArrayEquals("feature doc_age_in_hours should match",
-                floatFeature2.toArray(new Float[0]), new Float[] { 0.1f, 0.2f, 0.3f, 0f, 0.5f });
-        List<Float> floatFeature3 =
-                featureListMap.get("f3").getFeatureList().get(0).getFloatList().getValueList();
+                floatFeature2.toArray(new Float[0]), new Float[] { 1200f / 3600, 240f / 3600, 2400f / 3600, 2400f / 3600 });
+        List<ByteString> floatFeature3 =
+                featureListMap.get("doc_title").getFeatureList().get(0).getBytesList().getValueList();
         assertArrayEquals("feature f3 should match",
-                floatFeature3.toArray(new Float[0]), new Float[] { 0.01f, 0.02f, 0.03f, 0f, 0.05f });
+                floatFeature3.toArray(new ByteString[0]), new ByteString[] {
+                        ByteString.copyFromUtf8("the title"),
+                        ByteString.copyFromUtf8("<html><head><title>a webpage title</title><head><title>"),
+                        ByteString.copyFromUtf8(""),
+                        ByteString.copyFromUtf8("")
+        });
         assertNull(featureListMap.get("fake_feat"));
+    }
+
+    @Test
+    public void testStringMapFeaturePreprocessing() throws Exception {
+        ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
+                getClass().getClassLoader().getResource("model_features.yaml").getPath());
+        FeaturePreprocessor<Map<String, String>> processor = FeatureProcessors.forStringMaps(
+                modelFeatures,
+                "sequence",
+                ImmutableMap.of(
+                        "docAgeHours", (Float secs) -> secs / 3600,
+                        "docPopularity", (Float count) -> (float) Math.log(count)
+                ),
+                ImmutableMap.of(), // no Long processing for any field
+                ImmutableMap.of("docTitle", String::toLowerCase));
+        Example example = processor.apply(ImmutableMap.of(
+                "sequence_float_1", "0.1",
+                "sequence_float_2", "1.1",
+                "docTitle", "The title",
+                "docAgeHours", "1200",
+                "sequence_string_2", "A string!"));
+        Object docAgeHours = example.features().floatFeatures().get("doc_age_in_hours").get();
+        assertEquals( 1200.0 / 3600 , (float) docAgeHours, 0.001f);
+        Object sequenceLong2 = example.features().int64Features().get("sequence_long_2").get();
+        assertEquals(2147483649L, (long) sequenceLong2);
+        String docTitle = example.features().stringFeatures().get("doc_title").get();
+        assertEquals("the title", docTitle);
     }
 }

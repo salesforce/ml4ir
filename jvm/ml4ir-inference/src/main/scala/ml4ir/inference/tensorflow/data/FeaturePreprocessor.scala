@@ -14,13 +14,16 @@ import org.tensorflow.DataType
   *
   * @tparam T for example: Map[String, String]
   */
-abstract class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
-                                      floatExtractor: (T, String) => Option[Float],
-                                      longExtractor: (T, String) => Option[Long],
-                                      stringExtractor: (T, String) => Option[String],
-                                      primitiveProcessors: Map[String, PrimitiveProcessor] =
-                                        Map.empty.withDefaultValue(PrimitiveProcessor()))
+class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
+                             floatExtractor: String => (T => Option[Float]),
+                             longExtractor: String => (T => Option[Long]),
+                             stringExtractor: String => (T => Option[String]),
+                             primitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] =
+                               Map.empty.withDefaultValue(Map.empty.withDefaultValue(PrimitiveProcessor())))
     extends (T => Example) {
+  val processors: Map[DataType, Map[String, PrimitiveProcessor]] = primitiveProcessors
+    .mapValues(_.withDefaultValue(PrimitiveProcessor()))
+    .withDefaultValue(Map.empty.withDefaultValue(PrimitiveProcessor()))
 
   /**
     *
@@ -34,23 +37,23 @@ abstract class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
     featuresConfig(DataType.FLOAT)
       .map {
         case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
-          nodeName -> primitiveProcessors(servingName).processFloat(
-            floatExtractor(t, servingName).getOrElse(defaultValue.toFloat))
+          nodeName -> processors(DataType.FLOAT)(servingName)
+            .processFloat(floatExtractor(servingName)(t).getOrElse(defaultValue.toFloat))
       }
 
   private[this] def extractLongFeatures(t: T): Map[String, Long] =
     featuresConfig(DataType.INT64)
       .map {
         case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
-          nodeName -> primitiveProcessors(servingName).processLong(
-            longExtractor(t, servingName).getOrElse(defaultValue.toLong))
+          nodeName -> processors(DataType.INT64)(servingName)
+            .processLong(longExtractor(servingName)(t).getOrElse(defaultValue.toLong))
       }
   private[this] def extractStringFeatures(t: T): Map[String, String] =
     featuresConfig(DataType.STRING)
       .map {
         case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
-          nodeName -> primitiveProcessors(servingName).processString(
-            stringExtractor(t, servingName).getOrElse(defaultValue))
+          nodeName -> processors(DataType.STRING)(servingName)
+            .processString(stringExtractor(servingName)(t).getOrElse(defaultValue))
       }
 }
 

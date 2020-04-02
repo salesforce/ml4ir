@@ -5,52 +5,17 @@ import com.google.protobuf.ByteString
 import org.tensorflow.example._
 import java.lang.{Float => JFloat, Long => JLong}
 import java.util.{Map => JMap}
-import java.util.function.{Function => JFunction}
-
-import com.google.common.collect.Maps
+import java.util
 
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
-abstract class SequenceExampleBuilderBase[C, S](contextFeaturesPreprocessor: FeaturePreprocessor[C],
-                                                sequenceFeaturesPreprocessor: FeaturePreprocessor[S]) {
-  type FnMap[T] = JMap[String, JFunction[_ >: T, _ <: T]]
-  val sequenceExampleBuilder = SequenceExampleBuilder()
-
+class SequenceExampleBuilderBase[C, S](contextFeaturesPreprocessor: FeaturePreprocessor[C],
+                                       sequenceFeaturesPreprocessor: FeaturePreprocessor[S]) {
   def apply(context: C, sequence: List[S]): SequenceExample =
-    sequenceExampleBuilder(contextFeaturesPreprocessor(context), sequence.map(sequenceFeaturesPreprocessor).toArray)
+    fromExamples(contextFeaturesPreprocessor(context), sequence.map(sequenceFeaturesPreprocessor).toArray)
 
   def build(context: C, sequence: java.util.List[S]): SequenceExample = apply(context, sequence.asScala.toList)
-}
-
-case class StringMapSequenceExampleBuilder(modelFeatures: ModelFeatures,
-                                           primitiveProcessors: Map[String, PrimitiveProcessor] =
-                                             Map.empty.withDefaultValue(PrimitiveProcessor())
-                                           /*,
-                                           floatProcessors: FnMap[Float] = Maps.newHashMap(),
-                                           longProcessors: FnMap[Long] = Maps.newHashMap(),
-                                           stringProcessors: FnMap[String] = Maps.newHashMap()*/ )
-    extends SequenceExampleBuilderBase[JMap[String, String], JMap[String, String]](
-      StringMapFeatureProcessor(modelFeatures, "context", primitiveProcessors /*, floatProcessors*/ ),
-      StringMapFeatureProcessor(modelFeatures, "sequence", primitiveProcessors /*, floatProcessors*/ )
-    )
-
-object StringMapSequenceExampleBuilder {
-  def simple(modelFeatures: ModelFeatures) = StringMapSequenceExampleBuilder(modelFeatures)
-
-  def withFeatureProcessors(modelFeatures: ModelFeatures,
-                            primitiveProcessors: Map[String, PrimitiveProcessor]
-                            /*floatProcessors: FnMap[Float],
-                            longProcessors: FnMap[Long],
-                            stringProcessors: FnMap[String]*/ ) =
-    StringMapSequenceExampleBuilder(modelFeatures,
-                                    primitiveProcessors /*floatProcessors, longProcessors, stringProcessors*/ )
-}
-
-/**
-  * Builder class for more easily instantiating SequenceExample protobufs from raw(-ish) features
-  */
-case class SequenceExampleBuilder() {
 
   /**
     * Functional API allowing the builder to act like a function to transform query/documents into a scorable protobuf
@@ -58,9 +23,9 @@ case class SequenceExampleBuilder() {
     * @param docs array of document-feature structs
     * @return TensorFlow's protobuf structure containing the raw features in one SequenceExample packet
     */
-  def apply(context: Example, docs: Array[Example]): SequenceExample = {
+  def fromExamples(context: Example, docs: Array[Example]): SequenceExample = {
     val contextFeatures: Features = buildMultiFeatures(context.features)
-    val docFeatures = buildMultiFeatureLists(docs.map(_.features))
+    val docFeatures: FeatureLists = buildMultiFeatureLists(docs.map(_.features))
     SequenceExample
       .newBuilder()
       .setContext(contextFeatures)
@@ -261,4 +226,29 @@ case class SequenceExampleBuilder() {
       )
       .build()
   }
+}
+
+case class StringMapSequenceExampleBuilder(
+    modelFeatures: ModelFeatures,
+    floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],
+    longFns: util.Map[String, util.function.Function[java.lang.Long, java.lang.Long]],
+    strFns: util.Map[String, util.function.Function[java.lang.String, java.lang.String]])
+    extends SequenceExampleBuilderBase[JMap[String, String], JMap[String, String]](
+      FeatureProcessors.forStringMaps(modelFeatures, "context", floatFns, longFns, strFns),
+      FeatureProcessors.forStringMaps(modelFeatures, "sequence", floatFns, longFns, strFns)
+    )
+
+object StringMapSequenceExampleBuilder {
+//  def simple(modelFeatures: ModelFeatures) = StringMapSequenceExampleBuilder(modelFeatures)
+
+  def withFeatureProcessors(modelFeatures: ModelFeatures,
+                            floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],
+                            longFns: util.Map[String, util.function.Function[java.lang.Long, java.lang.Long]],
+                            strFns: util.Map[String, util.function.Function[java.lang.String, java.lang.String]]) =
+    StringMapSequenceExampleBuilder(
+      modelFeatures,
+      floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],
+      longFns: util.Map[String, util.function.Function[java.lang.Long, java.lang.Long]],
+      strFns: util.Map[String, util.function.Function[java.lang.String, java.lang.String]]
+    )
 }
