@@ -57,6 +57,9 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
       }
 }
 
+/**
+  * Simple wrapper class for overriding Float=>Float, Long=Long, and String=>String processing. Default is NOOP.
+  */
 case class PrimitiveProcessor() {
   def processFloat(f: Float): Float = f
   def processLong(l: Long): Long = l

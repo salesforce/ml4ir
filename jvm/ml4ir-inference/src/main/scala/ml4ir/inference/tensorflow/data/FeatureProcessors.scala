@@ -1,33 +1,31 @@
 package ml4ir.inference.tensorflow.data
 
-import java.util
+import java.util.{Map => JMap}
 
 import scala.collection.JavaConverters._
 import java.util.function.{Function => JFunction}
 
-import com.google.common.collect.Maps
 import ml4ir.inference.tensorflow.data.FeaturesConfigHelper._
 import org.tensorflow.DataType
 
 object FeatureProcessors {
-  val simpleFloatExtractor: String => (util.Map[String, String] => Option[Float]) =
-    (servingName: String) => (raw: java.util.Map[String, String]) => raw.asScala.get(servingName).map(_.toFloat)
-  val simpleLongExtractor: String => (util.Map[String, String] => Option[Long]) =
-    (servingName: String) => (raw: java.util.Map[String, String]) => raw.asScala.get(servingName).map(_.toLong)
-  val simpleStringExtractor: String => (util.Map[String, String] => Option[String]) =
-    (servingName: String) => (raw: java.util.Map[String, String]) => raw.asScala.get(servingName)
+  val simpleFloatExtractor: String => (JMap[String, String] => Option[Float]) =
+    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName).map(_.toFloat)
+  val simpleLongExtractor: String => (JMap[String, String] => Option[Long]) =
+    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName).map(_.toLong)
+  val simpleStringExtractor: String => (JMap[String, String] => Option[String]) =
+    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName)
 
   def forStringMaps(modelFeatures: ModelFeatures,
                     tfRecordType: String,
-                    floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],
-                    longFns: util.Map[String, util.function.Function[java.lang.Long, java.lang.Long]],
-                    strFns: util.Map[String, util.function.Function[java.lang.String, java.lang.String]])
-    : StringMapFeatureProcessor = {
+                    floatFns: JMap[String, JFunction[java.lang.Float, java.lang.Float]],
+                    longFns: JMap[String, JFunction[java.lang.Long, java.lang.Long]],
+                    strFns: JMap[String, JFunction[java.lang.String, java.lang.String]]): StringMapFeatureProcessor = {
     val featuresConfig = modelFeatures.toFeaturesConfig(tfRecordType)
-    val ffns = floatFns.asScala.toMap.withDefaultValue(util.function.Function.identity())
-    val lfns = longFns.asScala.toMap.withDefaultValue(util.function.Function.identity())
-    val strfns = strFns.asScala.toMap.withDefaultValue(util.function.Function.identity())
-    val z: Map[DataType, Map[String, PrimitiveProcessor]] = featuresConfig
+    val ffns = floatFns.asScala.toMap.withDefaultValue(JFunction.identity())
+    val lfns = longFns.asScala.toMap.withDefaultValue(JFunction.identity())
+    val strfns = strFns.asScala.toMap.withDefaultValue(JFunction.identity())
+    val perFieldPrimitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] = featuresConfig
       .mapValues(mapping => mapping.withDefaultValue(PrimitiveProcessor()))
       .map {
         case (DataType.FLOAT, nodeMap) =>
@@ -52,13 +50,13 @@ object FeatureProcessors {
               })
           }
       }
-    StringMapFeatureProcessor(featuresConfig, z)
+    StringMapFeatureProcessor(featuresConfig, perFieldPrimitiveProcessors)
   }
 }
 
 case class StringMapFeatureProcessor(featuresConfig: FeaturesConfig,
                                      primitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]])
-    extends FeaturePreprocessor[java.util.Map[String, String]](
+    extends FeaturePreprocessor[JMap[String, String]](
       featuresConfig,
       FeatureProcessors.simpleFloatExtractor,
       FeatureProcessors.simpleLongExtractor,
