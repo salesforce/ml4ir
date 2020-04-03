@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import org.tensorflow.example.FeatureList;
 import org.tensorflow.example.SequenceExample;
-import scala.Function1;
 
 import java.util.List;
 import java.util.Map;
@@ -40,12 +39,11 @@ public class SequenceExampleJavaBuilderTest {
                 ImmutableMap.of("fake", "blah", "ff2", "0.3"),
                 ImmutableMap.of()
         );
-
-        ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
-                getClass().getClassLoader().getResource("model_features.yaml").getPath());
+        String configPath = getClass().getClassLoader().getResource("model_features.yaml").getPath();
+        ModelFeaturesConfig modelFeatures = ModelFeaturesConfig.load(configPath);
 
         Function<Float, Float> fn = (Float count) -> (float)Math.log(1.0 + count);
-        SequenceExampleBuilderBase<Map<String, String>, Map<String, String>> sequenceExampleBuilder =
+        SequenceExampleBuilder<Map<String, String>, Map<String, String>> sequenceExampleBuilder =
                 StringMapSequenceExampleBuilder.withFeatureProcessors(
                         modelFeatures,
                         ImmutableMap.of(
@@ -87,8 +85,7 @@ public class SequenceExampleJavaBuilderTest {
 
     @Test
     public void testStringMapFeaturePreprocessing() throws Exception {
-        ModelFeatures modelFeatures = ModelFeaturesParser.parseModelFeaturesConfig(
-                getClass().getClassLoader().getResource("model_features.yaml").getPath());
+        ModelFeaturesConfig modelFeatures = ModelFeaturesConfig.load(getClass().getClassLoader().getResource("model_features.yaml").getPath());
         FeaturePreprocessor<Map<String, String>> processor = FeatureProcessors.forStringMaps(
                 modelFeatures,
                 "sequence",

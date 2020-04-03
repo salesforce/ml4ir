@@ -51,6 +51,7 @@ features:
       type: string
       max_length: 20
       shape: null
+      foo: bar
     serving_info:
       name: q
       required: true

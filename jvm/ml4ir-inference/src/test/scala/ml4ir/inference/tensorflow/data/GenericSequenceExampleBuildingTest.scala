@@ -1,6 +1,5 @@
 package ml4ir.inference.tensorflow.data
 
-import ml4ir.inference.tensorflow.ModelFeaturesParser
 import ml4ir.inference.tensorflow.data.FeaturesConfigHelper._
 import org.junit.Test
 import org.junit.Assert._
@@ -18,8 +17,7 @@ class GenericSequenceExampleBuildingTest {
 
   @Test
   def testCaseClassSeqExampleBuilding() = {
-    val modelFeatures = ModelFeaturesParser
-      .parseModelFeaturesConfig(getClass.getClassLoader.getResource("model_features.yaml").getPath)
+    val modelFeatures = ModelFeaturesConfig.load(getClass.getClassLoader.getResource("model_features.yaml").getPath)
 
     val ctxProcessor = new FeaturePreprocessor[SimpleQueryContext](
       modelFeatures.toFeaturesConfig("context"),
@@ -38,7 +36,7 @@ class GenericSequenceExampleBuildingTest {
       }))
     )
 
-    val fp = new SequenceExampleBuilderBase[SimpleQueryContext, SimpleDocument](ctxProcessor, seqProcessor)
+    val fp = new SequenceExampleBuilder[SimpleQueryContext, SimpleDocument](ctxProcessor, seqProcessor)
 
     val sequenceExample: SequenceExample = fp(
       SimpleQueryContext("a query", 123f),

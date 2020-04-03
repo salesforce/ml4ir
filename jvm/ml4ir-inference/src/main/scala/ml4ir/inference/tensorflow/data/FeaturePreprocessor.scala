@@ -65,3 +65,32 @@ case class PrimitiveProcessor() {
   def processLong(l: Long): Long = l
   def processString(s: String): String = s
 }
+
+object PrimitiveProcessors {
+
+  def fromFunctionMaps(featuresConfig: FeaturesConfig,
+                       tfRecordType: String,
+                       fFuncs: Map[String, Float => Float],
+                       lFuncs: Map[String, Long => Long],
+                       sFuncs: Map[String, String => String]): Map[DataType, Map[String, PrimitiveProcessor]] = {
+    featuresConfig
+      .mapValues(mapping => mapping.withDefaultValue(PrimitiveProcessor()))
+      .map {
+        case (DataType.FLOAT, nodeMap) =>
+          DataType.FLOAT -> nodeMap.map {
+            case (feature, _) =>
+              feature -> new PrimitiveProcessor() { override def processFloat(f: Float): Float = fFuncs(feature)(f) }
+          }
+        case (DataType.INT64, nodeMap) =>
+          DataType.INT64 -> nodeMap.map {
+            case (feature, _) =>
+              feature -> new PrimitiveProcessor() { override def processLong(l: Long): Long = lFuncs(feature)(l) }
+          }
+        case (DataType.STRING, nodeMap) =>
+          DataType.STRING -> nodeMap.map {
+            case (feature, _) =>
+              feature -> new PrimitiveProcessor() { override def processString(s: String): String = sFuncs(feature)(s) }
+          }
+      }
+  }
+}

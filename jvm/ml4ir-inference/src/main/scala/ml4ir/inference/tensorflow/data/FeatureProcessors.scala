@@ -1,5 +1,6 @@
 package ml4ir.inference.tensorflow.data
 
+import java.lang.{Float => JFloat, Long => JLong, String => JString}
 import java.util.{Map => JMap}
 
 import scala.collection.JavaConverters._
@@ -16,42 +17,42 @@ object FeatureProcessors {
   val simpleStringExtractor: String => (JMap[String, String] => Option[String]) =
     (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName)
 
-  def forStringMaps(modelFeatures: ModelFeatures,
-                    tfRecordType: String,
-                    floatFns: JMap[String, JFunction[java.lang.Float, java.lang.Float]],
-                    longFns: JMap[String, JFunction[java.lang.Long, java.lang.Long]],
-                    strFns: JMap[String, JFunction[java.lang.String, java.lang.String]]): StringMapFeatureProcessor = {
-    val featuresConfig = modelFeatures.toFeaturesConfig(tfRecordType)
-    val ffns = floatFns.asScala.toMap.withDefaultValue(JFunction.identity())
-    val lfns = longFns.asScala.toMap.withDefaultValue(JFunction.identity())
-    val strfns = strFns.asScala.toMap.withDefaultValue(JFunction.identity())
-    val perFieldPrimitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] = featuresConfig
-      .mapValues(mapping => mapping.withDefaultValue(PrimitiveProcessor()))
-      .map {
-        case (DataType.FLOAT, nodeMap) =>
-          DataType.FLOAT -> nodeMap.map {
-            case (servingName, _) =>
-              (servingName, new PrimitiveProcessor() {
-                override def processFloat(f: Float): Float = ffns(servingName)(f)
-              })
-          }
-        case (DataType.INT64, nodeMap) =>
-          DataType.INT64 -> nodeMap.map {
-            case (servingName, _) =>
-              (servingName, new PrimitiveProcessor() {
-                override def processLong(l: Long): Long = lfns(servingName)(l)
-              })
-          }
-        case (DataType.STRING, nodeMap) =>
-          DataType.STRING -> nodeMap.map {
-            case (servingName, _) =>
-              (servingName, new PrimitiveProcessor() {
-                override def processString(s: String): String = strfns(servingName)(s)
-              })
-          }
-      }
-    StringMapFeatureProcessor(featuresConfig, perFieldPrimitiveProcessors)
+  def toScalaFns(floatFns: JMap[String, JFunction[JFloat, JFloat]],
+                 longFns: JMap[String, JFunction[JLong, JLong]],
+                 strFns: JMap[String, JFunction[JString, JString]])
+    : (Map[String, Float => Float], Map[String, Long => Long], Map[String, String => String]) = {
+    val perFeatureFloatFunctions: Map[String, Float => Float] =
+      floatFns.asScala.toMap.mapValues(jf => (f: Float) => jf(f).floatValue()).withDefaultValue(identity)
+    val perFeatureLongFunctions: Map[String, Long => Long] =
+      longFns.asScala.toMap.mapValues(lf => (l: Long) => lf(l).longValue()).withDefaultValue(identity)
+    val perFeatureStringFunctions: Map[String, String => String] =
+      strFns.asScala.toMap.mapValues(sf => (s: String) => sf(s)).withDefaultValue(identity)
+    (perFeatureFloatFunctions, perFeatureLongFunctions, perFeatureStringFunctions)
   }
+
+  def forStringMaps(featuresConfig: FeaturesConfig,
+                    tfRecordType: String,
+                    floatFns: JMap[String, JFunction[JFloat, JFloat]],
+                    longFns: JMap[String, JFunction[JLong, JLong]],
+                    strFns: JMap[String, JFunction[JString, JString]]): StringMapFeatureProcessor = {
+    val (ffs, lfs, sfs) = toScalaFns(floatFns, longFns, strFns)
+    val perFeaturePrimitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] =
+      PrimitiveProcessors.fromFunctionMaps(
+        featuresConfig,
+        tfRecordType,
+        ffs,
+        lfs,
+        sfs
+      )
+    StringMapFeatureProcessor(featuresConfig, perFeaturePrimitiveProcessors)
+  }
+
+  def forStringMaps(mf: ModelFeaturesConfig,
+                    tfRecordType: String,
+                    floatFns: JMap[String, JFunction[JFloat, JFloat]],
+                    longFns: JMap[String, JFunction[JLong, JLong]],
+                    strFns: JMap[String, JFunction[JString, JString]]): StringMapFeatureProcessor =
+    forStringMaps(mf.toFeaturesConfig(tfRecordType), tfRecordType, floatFns, longFns, strFns)
 }
 
 case class StringMapFeatureProcessor(featuresConfig: FeaturesConfig,
