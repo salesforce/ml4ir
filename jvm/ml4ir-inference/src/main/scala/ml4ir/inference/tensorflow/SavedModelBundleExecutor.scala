@@ -19,23 +19,22 @@ import org.tensorflow.example.SequenceExample
   * @param config
   * @see <a href="https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle">SavedModelBundle</a>
   */
-class SavedModelBundleExecutor(dirPath: String, config: ModelExecutorConfig)
-    extends (SequenceExample => Array[Float]) {
+class SavedModelBundleExecutor(dirPath: String, config: ModelExecutorConfig) extends (SequenceExample => Array[Float]) {
   val savedModelBundle = SavedModelBundle.load(dirPath, "serve")
   val session = savedModelBundle.session()
 
   override def apply(proto: SequenceExample): Array[Float] = {
-    val ModelExecutorConfig(inputNode, outputNode, padTo, _) = config
+    val ModelExecutorConfig(inputNode, outputNode, _, _) = config
     val inputTensor: Tensor[String] = Tensors.create(Array(proto.toByteArray))
     try {
-      val ranking = Array.ofDim[Float](1, padTo)
-      session
+      val resultTensor: Tensor[_] = session
         .runner()
         .feed(inputNode, inputTensor)
         .fetch(outputNode)
         .run()
         .get(0)
-        .copyTo(ranking)
+      val ranking = Array.ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt)
+      resultTensor.copyTo(ranking)
       ranking(0)
     } finally {
       inputTensor.close()
