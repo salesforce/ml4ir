@@ -22,7 +22,8 @@ object ModelFeaturesConfig {
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class ModelFeaturesConfig(@JsonProperty("features") features: List[FeatureConfig])
+case class ModelFeaturesConfig(@JsonProperty("rank") initialRank: FeatureConfig,
+                               @JsonProperty("features") features: List[FeatureConfig])
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class FeatureConfig(@JsonProperty("node_name") nodeName: String,
