@@ -1,11 +1,13 @@
 import ml4ir.io.file_io as file_io
 import yaml
+import pandas as pd
 
 from ml4ir.config.keys import FeatureTypeKey, TFRecordTypeKey
 from tensorflow.keras import Input
 from typing import List, Dict, Optional
 from logging import Logger
 import tensorflow as tf
+from ml4ir.data.tfrecord_helper import get_sequence_example_proto
 
 """
 Feature config YAML format
@@ -16,7 +18,8 @@ query_key:  # Unique query ID field
     trainable: <bool> # if the feature is a trainable tf element
     dtype: <Supported tensorflow data type | str>
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
-    is_group_metric_key: <boolean | default: false> # if feature should be used a groupby key to compute metrics
+    # if feature should be used a groupby key to compute metrics
+    is_group_metric_key: <boolean | default: false>
     feature_layer_info:
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
@@ -259,6 +262,16 @@ class FeatureConfig:
         else:
             return feature_info["dtype"]
 
+    def get_default_value(self, feature_info):
+        if feature_info["dtype"] == tf.float32:
+            return feature_info["serving_info"].get("default_value", 0.0)
+        elif feature_info["dtype"] == tf.int64:
+            return feature_info["serving_info"].get("default_value", 0)
+        elif feature_info["dtype"] == tf.string:
+            return feature_info["serving_info"].get("default_value", "")
+        else:
+            raise Exception("Unknown dtype {}".format(feature_info["dtype"]))
+
     def define_inputs(self) -> Dict[str, Input]:
         """
         Define the input layer for the tensorflow model
@@ -309,6 +322,35 @@ class FeatureConfig:
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": TFRecordTypeKey.SEQUENCE,
         }
+
+    def create_dummy_sequence_example(self, num_records=1, required_only=False):
+        """Create a SequenceExample protobuffer with dummy values"""
+        context_features = [
+            f
+            for f in self.get_context_features()
+            if ((not required_only) or (f["serving_info"].get("required", False)))
+        ]
+        sequence_features = [
+            f
+            for f in self.get_sequence_features()
+            if ((not required_only) or (f["serving_info"].get("required", False)))
+        ]
+
+        dummy_query = dict()
+        for feature_info in self.get_all_features():
+            dummy_value = self.get_default_value(feature_info)
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
+            dummy_query[feature_node_name] = [dummy_value] * num_records
+
+        dummy_query_group = pd.DataFrame(dummy_query).groupby(
+            self.get_context_features("node_name")
+        )
+
+        return dummy_query_group.apply(
+            lambda g: get_sequence_example_proto(
+                group=g, context_features=context_features, sequence_features=sequence_features
+            )
+        ).values[0]
 
 
 def parse_config(feature_config, logger: Optional[Logger] = None) -> FeatureConfig:

@@ -16,17 +16,6 @@ data in the train.SequenceExample protobuf format
 """
 
 
-def _get_default_value(dtype, serving_info):
-    if dtype == tf.float32:
-        return serving_info.get("default_value", 0.0)
-    elif dtype == tf.int64:
-        return serving_info.get("default_value", 0)
-    elif dtype == tf.string:
-        return serving_info.get("default_value", "")
-    else:
-        raise Exception("Unknown dtype {}".format(dtype))
-
-
 def make_parse_fn(
     feature_config: FeatureConfig,
     max_num_records: int = 25,
@@ -52,7 +41,7 @@ def make_parse_fn(
             feature_name = feature_info["name"]
             feature_node_name = feature_info.get("node_name", feature_name)
             dtype = feature_info["dtype"]
-            default_value = _get_default_value(dtype, serving_info)
+            default_value = feature_config.get_default_value(feature_info)
             if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
                 context_features_spec[feature_node_name] = io.FixedLenFeature(
                     [], dtype, default_value=default_value
@@ -87,8 +76,7 @@ def make_parse_fn(
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
             default_tensor = tf.constant(
-                value=_get_default_value(feature_info["dtype"], feature_info.get("serving_info")),
-                dtype=feature_info["dtype"],
+                value=feature_config.get_default_value(feature_info), dtype=feature_info["dtype"],
             )
             feature_tensor = context_features.get(feature_node_name, default_tensor)
 
@@ -125,20 +113,21 @@ def make_parse_fn(
 
             # Add mask for identifying padded records
             mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(reference_tensor)))
-            mask = tf.expand_dims(mask, axis=2)
             num_records = tf.cast(tf.reduce_sum(mask), tf.int64)
 
-            def crop_fn():
-                tf.print("\n[WARN] Bad query found. Number of records : ", tf.shape(mask)[1])
-                return image.crop_to_bounding_box(
-                    mask,
-                    offset_height=0,
-                    offset_width=0,
-                    target_height=1,
-                    target_width=max_num_records,
-                )
-
             if pad_records:
+                mask = tf.expand_dims(mask, axis=-1)
+
+                def crop_fn():
+                    tf.print("\n[WARN] Bad query found. Number of records : ", tf.shape(mask)[1])
+                    return image.crop_to_bounding_box(
+                        mask,
+                        offset_height=0,
+                        offset_width=0,
+                        target_height=1,
+                        target_width=max_num_records,
+                    )
+
                 mask = tf.cond(
                     tf.shape(mask)[1] < max_num_records,
                     # Pad if there are missing records
@@ -152,7 +141,9 @@ def make_parse_fn(
                     # Crop if there are extra records
                     crop_fn,
                 )
-            mask = tf.squeeze(mask)
+                mask = tf.squeeze(mask)
+            else:
+                mask = tf.squeeze(mask, axis=0)
 
             # Check validity of mask
             tf.debugging.assert_greater(num_records, tf.constant(0, dtype=tf.int64))
@@ -168,9 +159,7 @@ def make_parse_fn(
 
             default_tensor = tf.fill(
                 value=tf.constant(
-                    value=_get_default_value(
-                        feature_info["dtype"], feature_info.get("serving_info")
-                    ),
+                    value=feature_config.get_default_value(feature_info),
                     dtype=feature_info["dtype"],
                 ),
                 dims=[max_num_records if pad_records else num_records],
@@ -182,7 +171,7 @@ def make_parse_fn(
                     feature_tensor, new_shape=[1, max_num_records if pad_records else num_records]
                 )
                 feature_tensor = sparse.to_dense(feature_tensor)
-                feature_tensor = tf.squeeze(feature_tensor)
+                feature_tensor = tf.squeeze(feature_tensor, axis=0)
 
             # If feature is a string, then decode into numbers
             if feature_layer_info["type"] == FeatureTypeKey.STRING:

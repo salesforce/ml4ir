@@ -10,7 +10,7 @@ import tensorflow as tf
 
 
 class RankingModelTest(RankingTestBase):
-    def test_model_serving(self):
+    def _test_model_serving(self):
         """
         Train a simple model and test serving flow by loading the SavedModel
         """
@@ -135,3 +135,86 @@ class RankingModelTest(RankingTestBase):
         assert np.isclose(
             default_signature_predictions, tfrecord_signature_predictions, rtol=0.01,
         ).all()
+
+    def test_serving_n_records(self):
+        """Test serving signature with different number of records"""
+        feature_config_path = os.path.join(
+            self.root_data_dir, "tfrecord", self.feature_config_fname
+        )
+
+        feature_config: FeatureConfig = parse_config(feature_config_path)
+        self.args.metrics = ["categorical_accuracy"]
+        model = RankingModel(
+            model_config=self.model_config,
+            loss_key=self.args.loss,
+            scoring_key=self.args.scoring,
+            metrics_keys=self.args.metrics,
+            optimizer_key=self.args.optimizer,
+            feature_config=feature_config,
+            max_num_records=self.args.max_num_records,
+            model_file=self.args.model_file,
+            learning_rate=self.args.learning_rate,
+            learning_rate_decay=self.args.learning_rate_decay,
+            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            compute_intermediate_stats=self.args.compute_intermediate_stats,
+            gradient_clip_value=self.args.gradient_clip_value,
+            compile_keras_model=self.args.compile_keras_model,
+            logger=self.logger,
+        )
+        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
+
+        # Load SavedModel and get the right serving signature
+        tfrecord_model = kmodels.load_model(
+            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        )
+        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
+        tfrecord_signature = tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+
+        for num_records in range(1, 250):
+            proto = tf.constant(
+                [
+                    feature_config.create_dummy_sequence_example(
+                        num_records=num_records
+                    ).SerializeToString()
+                ]
+            )
+            tfrecord_signature(sequence_example_protos=proto)
+
+    def test_serving_required_fields_only(self):
+        """Test serving signature with protos with only required fields"""
+        feature_config_path = os.path.join(
+            self.root_data_dir, "tfrecord", self.feature_config_fname
+        )
+
+        feature_config: FeatureConfig = parse_config(feature_config_path)
+        self.args.metrics = ["categorical_accuracy"]
+        model = RankingModel(
+            model_config=self.model_config,
+            loss_key=self.args.loss,
+            scoring_key=self.args.scoring,
+            metrics_keys=self.args.metrics,
+            optimizer_key=self.args.optimizer,
+            feature_config=feature_config,
+            max_num_records=self.args.max_num_records,
+            model_file=self.args.model_file,
+            learning_rate=self.args.learning_rate,
+            learning_rate_decay=self.args.learning_rate_decay,
+            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            compute_intermediate_stats=self.args.compute_intermediate_stats,
+            gradient_clip_value=self.args.gradient_clip_value,
+            compile_keras_model=self.args.compile_keras_model,
+            logger=self.logger,
+        )
+        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
+
+        # Load SavedModel and get the right serving signature
+        tfrecord_model = kmodels.load_model(
+            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        )
+        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
+        tfrecord_signature = tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+
+        proto = tf.constant(
+            [feature_config.create_dummy_sequence_example(required_only=True).SerializeToString()]
+        )
+        tfrecord_signature(sequence_example_protos=proto)
