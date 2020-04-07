@@ -2,10 +2,20 @@ package ml4ir.inference.tensorflow
 
 import java.io.InputStream
 
-import ml4ir.inference.tensorflow.data.{Example, MultiFeatures, TestData}
+import com.google.common.collect.ImmutableMap
+import scala.collection.JavaConverters._
+import ml4ir.inference.tensorflow.data.{
+  Example,
+  FeatureProcessors,
+  ModelFeaturesConfig,
+  MultiFeatures,
+  StringMapSequenceExampleBuilder,
+  TestData
+}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
+
 @Test
 class TensorFlowInferenceTest extends TestData {
   val classLoader = getClass.getClassLoader
@@ -31,7 +41,7 @@ class TensorFlowInferenceTest extends TestData {
     )
     println(scores.mkString(", "))
   }
-  /*
+
   @Test
   def testSavedModelBundle() = {
     val bundlePath = classLoader.getResource("model_bundle").getPath
@@ -39,91 +49,21 @@ class TensorFlowInferenceTest extends TestData {
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_sequence_example_protos",
-        scoresNodeName = "StatefulPartitionedCall",
-        numDocsPerQuery = 25,
-        queryLenMax = 20
+        scoresNodeName = "StatefulPartitionedCall"
       )
     )
-    val (queryContext: Example, docs: Array[Example]) = testQueries
-    val protoBuilder = SequenceExampleBuilder(
-      FeatureConfig(
-        contextFeatures = List(FeatureField("query_text", "query_text", DataType.STRING, "")),
-        documentFeatures = List(
-          FeatureField("feat_0", "feat_0", DataType.FLOAT, "0"),
-          FeatureField("feat_1", "feat_1", DataType.FLOAT, "0"),
-          FeatureField("feat_2", "feat_2", DataType.FLOAT, "0"),
-          FeatureField("pos", "pos", DataType.INT64, "0")
-        )
-      )
-    )
-    val proto  = protoBuilder(queryContext, docs)
-    val scores = bundleExecutor(proto)
-    validateScores(scores, docs.length)
+    val configPath = classLoader.getResource("model_features.yaml").getPath
+    val modelFeatures = ModelFeaturesConfig.load(configPath)
+
+    val protoBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(modelFeatures,
+                                                                             ImmutableMap.of(),
+                                                                             ImmutableMap.of(),
+                                                                             ImmutableMap.of())
+
+    sampleQueryContexts.foreach { queryContext: Map[String, String] =>
+      val proto = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
+      val scores = bundleExecutor(proto)
+      validateScores(scores, sampleDocumentExamples.length)
+    }
   }
-
-   */
-
-  @Ignore
-  @Test
-  def testLoadSequenceExample() = {
-    val tfRecordStream: InputStream =
-      classLoader.getResourceAsStream("file_0.tfrecord")
-    val sequenceExample: SequenceExample =
-      SequenceExample.parseFrom(tfRecordStream)
-    assertNotNull(sequenceExample)
-  }
-
-  @Test
-  def testTFRecordInference() = {
-    val queryString = "magic"
-    val docsToScore = Array(
-      Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
-      Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
-    )
-    val (query, docs) = (
-      Example(
-        features = MultiFeatures(stringFeatures = Map("query_text" -> queryString))
-      ),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) =>
-          Example(
-            features = MultiFeatures(floatFeatures = map)
-          )
-      }
-    )
-  }
-
-  def testQueries: (Example, Array[Example]) = {
-    val query = "magic"
-    val docsToScore = Array(
-      Map(
-        "feat_0" -> 0.04f,
-        "feat_1" -> 0.08f,
-        "feat_2" -> 0.01f,
-        "fake_feat" -> 0.2f
-      ),
-      Map(
-        "feat_0" -> 0.4f,
-        "feat_1" -> 0.8f,
-        "feat_2" -> 0.1f,
-        "fake_feat" -> 0.3f
-      ),
-      Map("feat_0" -> 0.8f, "fake_feat" -> -1f)
-    )
-    (
-      Example(
-        features = MultiFeatures(stringFeatures = Map("query_text" -> query))
-      ),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) =>
-          Example(
-            features = MultiFeatures(
-              floatFeatures = map,
-              int64Features = Map("pos" -> idx.toLong)
-            )
-          )
-      }
-    )
-  }
-
 }

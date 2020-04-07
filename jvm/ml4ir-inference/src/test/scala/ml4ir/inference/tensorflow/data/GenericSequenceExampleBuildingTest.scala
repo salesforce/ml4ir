@@ -21,9 +21,12 @@ class GenericSequenceExampleBuildingTest {
 
     val ctxProcessor = new FeaturePreprocessor[SimpleQueryContext](
       modelFeatures.toFeaturesConfig("context"),
-      Map("uid" -> ((ctx: SimpleQueryContext) => Some(ctx.uid))).withDefaultValue(_ => None),
-      Map.empty.withDefaultValue(_ => None),
-      Map("q" -> ((ctx: SimpleQueryContext) => Some(ctx.q))).withDefaultValue(_ => None)
+      Map("uid" -> ((ctx: SimpleQueryContext) => Some(ctx.uid)), "unknown" -> ((_: SimpleQueryContext) => Some(1f)))
+        .withDefaultValue(_ => None),
+      Map.empty
+        .withDefaultValue(_ => None),
+      Map("q" -> ((ctx: SimpleQueryContext) => Some(ctx.q)))
+        .withDefaultValue(_ => None)
     )
 
     val seqProcessor = new FeaturePreprocessor[SimpleDocument](

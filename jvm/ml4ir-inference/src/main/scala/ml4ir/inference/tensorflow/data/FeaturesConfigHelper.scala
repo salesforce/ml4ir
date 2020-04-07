@@ -3,9 +3,17 @@ package ml4ir.inference.tensorflow.data
 case class NodeWithDefault(nodeName: String, defaultValue: String)
 
 object FeaturesConfigHelper {
-  implicit class MFConverter(mf: ModelFeaturesConfig) {
+
+  /**
+    * Provides implicit conversion from simple list of {@see FeatureConfig}s into a single {@code DataType}-keyed
+    * {@see FeaturesConfig} object.
+    * @param modelFeaturesConfig
+    */
+  implicit class MFConverter(modelFeaturesConfig: ModelFeaturesConfig) {
     def toFeaturesConfig(tfRecordType: String): FeaturesConfig = {
-      val features = mf.features ++ (if (tfRecordType.equals("sequence")) List(mf.initialRank) else List.empty)
+      // see ModelFeaturesConfig for more about the "rank" pseudo-feature
+      val specialFeatures = if (tfRecordType.equals("sequence")) List(modelFeaturesConfig.initialRank) else List.empty
+      val features = modelFeaturesConfig.features ++ specialFeatures
       val featuresConfig: FeaturesConfig =
         features
           .filter(_.tfRecordType.equalsIgnoreCase(tfRecordType))

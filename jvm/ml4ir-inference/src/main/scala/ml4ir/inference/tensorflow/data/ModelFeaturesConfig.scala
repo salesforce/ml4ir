@@ -21,6 +21,14 @@ object ModelFeaturesConfig {
   }
 }
 
+/**
+  * The configuration for performing model inference:
+  * @param initialRank a special required top-level "feature": defines a Tensorflow node in the model which describes
+  *                    which position in the candidate set was each candidate found (e.g. by an earlier round of
+  *                    scoring / retrieval).  It need not be supplied at inference-time, but is required in the config.
+  * @param features both a list of mappings between training features and their runtime name, as well as the datatype
+  *                 and default value if not supplied.
+  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class ModelFeaturesConfig(@JsonProperty("rank") initialRank: FeatureConfig,
                                @JsonProperty("features") features: List[FeatureConfig])

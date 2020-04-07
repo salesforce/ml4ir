@@ -24,7 +24,7 @@ class SavedModelBundleExecutor(dirPath: String, config: ModelExecutorConfig) ext
   val session = savedModelBundle.session()
 
   override def apply(proto: SequenceExample): Array[Float] = {
-    val ModelExecutorConfig(inputNode, outputNode, _, _) = config
+    val ModelExecutorConfig(inputNode, outputNode) = config
     val inputTensor: Tensor[String] = Tensors.create(Array(proto.toByteArray))
     try {
       val resultTensor: Tensor[_] = session

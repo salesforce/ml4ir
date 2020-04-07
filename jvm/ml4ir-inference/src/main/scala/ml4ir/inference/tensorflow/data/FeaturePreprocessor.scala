@@ -91,6 +91,8 @@ object PrimitiveProcessors {
             case (feature, _) =>
               feature -> new PrimitiveProcessor() { override def processString(s: String): String = sFuncs(feature)(s) }
           }
+        case (dt: DataType, _) =>
+          throw new UnsupportedOperationException(s"invalid data type in config: $dt")
       }
   }
 }

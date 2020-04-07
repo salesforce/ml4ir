@@ -35,24 +35,24 @@ object FeatureProcessors {
                     floatFns: JMap[String, JFunction[JFloat, JFloat]],
                     longFns: JMap[String, JFunction[JLong, JLong]],
                     strFns: JMap[String, JFunction[JString, JString]]): StringMapFeatureProcessor = {
-    val (ffs, lfs, sfs) = toScalaFns(floatFns, longFns, strFns)
+    val (scalaFloatFns, scalaLongFns, scalaStringFns) = toScalaFns(floatFns, longFns, strFns)
     val perFeaturePrimitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] =
       PrimitiveProcessors.fromFunctionMaps(
         featuresConfig,
         tfRecordType,
-        ffs,
-        lfs,
-        sfs
+        scalaFloatFns,
+        scalaLongFns,
+        scalaStringFns
       )
     StringMapFeatureProcessor(featuresConfig, perFeaturePrimitiveProcessors)
   }
 
-  def forStringMaps(mf: ModelFeaturesConfig,
+  def forStringMaps(modelFeaturesConfig: ModelFeaturesConfig,
                     tfRecordType: String,
                     floatFns: JMap[String, JFunction[JFloat, JFloat]],
                     longFns: JMap[String, JFunction[JLong, JLong]],
                     strFns: JMap[String, JFunction[JString, JString]]): StringMapFeatureProcessor =
-    forStringMaps(mf.toFeaturesConfig(tfRecordType), tfRecordType, floatFns, longFns, strFns)
+    forStringMaps(modelFeaturesConfig.toFeaturesConfig(tfRecordType), tfRecordType, floatFns, longFns, strFns)
 }
 
 case class StringMapFeatureProcessor(featuresConfig: FeaturesConfig,
