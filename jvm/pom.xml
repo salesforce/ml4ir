@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ml4ir</groupId>
   <artifactId>ml4ir-parent</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>ml4ir-parent</name>
   <packaging>pom</packaging>
 
