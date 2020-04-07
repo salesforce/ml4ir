@@ -10,7 +10,7 @@ import tensorflow as tf
 
 
 class RankingModelTest(RankingTestBase):
-    def _test_model_serving(self):
+    def test_model_serving(self):
         """
         Train a simple model and test serving flow by loading the SavedModel
         """
