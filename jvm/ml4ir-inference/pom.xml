@@ -5,13 +5,13 @@
   <parent>
     <groupId>ml4ir</groupId>
     <artifactId>ml4ir-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>ml4ir-inference</artifactId>
   <packaging>jar</packaging>
 
   <properties>
-    <jackson.version>2.7.5</jackson.version>
+    <jackson.version>2.10.0</jackson.version>
   </properties>
 
   <build>

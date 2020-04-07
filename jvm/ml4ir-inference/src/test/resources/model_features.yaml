@@ -11,8 +11,8 @@ query_key:
   serving_info:
     name: query_key
     required: false
+    default_value: ""
   tfrecord_type: context
-  default_value: ""
 rank:
   name: rank
   node_name: rank
@@ -25,8 +25,8 @@ rank:
   serving_info:
     name: rank
     required: false
+    default_value: 0
   tfrecord_type: sequence
-  default_value: 0
 label:
   name: label
   node_name: label
@@ -39,8 +39,8 @@ label:
   serving_info:
     name: label
     required: false
+    default_value: 0
   tfrecord_type: sequence
-  default_value: 0
 features:
   - name: query
     node_name: query_text
@@ -55,8 +55,8 @@ features:
     serving_info:
       name: q
       required: true
+      default_value: ""
     tfrecord_type: context
-    default_value: ""
   - name: user
     node_name: user_id
     trainable: false
@@ -69,8 +69,8 @@ features:
     serving_info:
       name: userId
       required: false
+      default_value: "__UNKNOWN_USER__"
     tfrecord_type: context
-    default_value: "__UNKNOWN_USER__"
   - name: context_float_1
     node_name: context_float_1
     trainable: true
@@ -83,8 +83,8 @@ features:
     serving_info:
       name: context_float_1
       required: false
+      default_value: 0
     tfrecord_type: context
-    default_value: 0
   - name: context_float_2
     node_name: context_float_2
     trainable: true
@@ -97,8 +97,8 @@ features:
     serving_info:
       name: context_float_2
       required: false
+      default_value: 1.5
     tfrecord_type: context
-    default_value: 1.5
 # NOTE: no context longs, so we verify the parser doesn't blow up when not all types are specified
 #  - name: context_long_1
 #    node_name: context_long_1
@@ -126,8 +126,8 @@ features:
 #    serving_info:
 #      name: context_long_2
 #      required: false
+#      default_value: 2147483649
 #    tfrecord_type: context
-#    default_value: 2147483649
   - name: title
     node_name: doc_title
     trainable: false
@@ -140,8 +140,8 @@ features:
     serving_info:
       name: docTitle
       required: false
+      default_value: ""
     tfrecord_type: sequence
-    default_value: ""
   - name: sequence_string_2
     node_name: sequence_string_2
     trainable: false
@@ -154,8 +154,8 @@ features:
     serving_info:
       name: sequence_string_2
       required: false
+      default_value: "sequence_string_2"
     tfrecord_type: sequence
-    default_value: "sequence_string_2"
   - name: popularity
     node_name: doc_popularity
     trainable: true
@@ -168,8 +168,8 @@ features:
     serving_info:
       name: docPopularity
       required: false
+      default_value: 0
     tfrecord_type: sequence
-    default_value: 0
   - name: age
     node_name: doc_age_in_hours
     trainable: true
@@ -182,8 +182,8 @@ features:
     serving_info:
       name: docAgeHours
       required: false
+      default_value: 2400.0
     tfrecord_type: sequence
-    default_value: 2400.0
   - name: views
     node_name: doc_views
     trainable: true
@@ -196,8 +196,8 @@ features:
     serving_info:
       name: numDocumentViews
       required: false
+      default_value: 0
     tfrecord_type: sequence
-    default_value: 0
   - name: sequence_long_2
     node_name: sequence_long_2
     trainable: true
@@ -210,5 +210,5 @@ features:
     serving_info:
       name: sequence_long_2
       required: false
+      default_value: 2147483649
     tfrecord_type: sequence
-    default_value: 2147483649

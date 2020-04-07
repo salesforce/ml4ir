@@ -12,7 +12,7 @@ class ModelFeaturesConfigParserTest {
       ModelFeaturesConfig.load(getClass.getClassLoader.getResource("model_features.yaml").getPath)
     assertEquals("incorrect feature count from config", 10, mf.features.size)
     mf.features
-      .map { case FeatureConfig(train, _, ServingConfig(inference), _, _) => inference -> train }
+      .map { case FeatureConfig(train, _, ServingConfig(inference, _), _) => inference -> train }
       .foreach(println)
   }
 }

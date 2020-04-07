@@ -12,7 +12,7 @@ object FeaturesConfigHelper {
           .groupBy(_.dType)
           .mapValues(
             _.map {
-              case FeatureConfig(nodeName, _, ServingConfig(servingName), defaultValue, _) =>
+              case FeatureConfig(nodeName, _, ServingConfig(servingName, defaultValue), _) =>
                 servingName -> NodeWithDefault(nodeName, defaultValue)
             }.toMap
           )
