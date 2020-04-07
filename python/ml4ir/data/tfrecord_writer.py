@@ -1,15 +1,16 @@
+import tensorflow as tf
 from tensorflow import train
 from tensorflow import io
 from ml4ir.io import file_io
 from typing import List
 from logging import Logger
-from ml4ir.config.features import FeatureConfig, parse_config
-from ml4ir.config.keys import TFRecordTypeKey
+from ml4ir.features.feature_config import FeatureConfig, parse_config
 from argparse import ArgumentParser
 import glob
 import os
 import sys
 from ml4ir.io.logging_utils import setup_logging
+from ml4ir.data.tfrecord_helper import get_sequence_example_proto
 
 
 """
@@ -35,65 +36,6 @@ python ml4ir/data/tfrecord_writer.py \
 --convert_single_files True
 
 """
-
-
-def _bytes_feature(values):
-    """Returns a bytes_list from a string / byte."""
-    values = [value.encode("utf-8") for value in values]
-    return train.Feature(bytes_list=train.BytesList(value=values))
-
-
-def _float_feature(values):
-    """Returns a float_list from a float / double."""
-    return train.Feature(float_list=train.FloatList(value=values))
-
-
-def _int64_feature(values):
-    """Returns an int64_list from a bool / enum / int / uint."""
-    return train.Feature(int64_list=train.Int64List(value=values))
-
-
-def _get_feature_fn(dtype):
-    """Returns appropriate feature function based on datatype"""
-    if dtype == "bytes":
-        return _bytes_feature
-    elif dtype == "float":
-        return _float_feature
-    elif dtype == "int":
-        return _int64_feature
-    else:
-        raise Exception("Feature dtype {} not supported".format(dtype))
-
-
-def _get_sequence_example_proto(group, feature_config: FeatureConfig):
-    """
-    Get a sequence example protobuf from a dataframe group
-
-    Args:
-        - group: pandas dataframe group
-    """
-    sequence_features_dict = dict()
-    context_features_dict = dict()
-
-    for feature_info in feature_config.get_context_features():
-        feature_name = feature_info["name"]
-        feature_fn = _get_feature_fn(feature_info["dtype"])
-        context_features_dict[feature_name] = feature_fn([group[feature_name].tolist()[0]])
-
-    for feature_info in feature_config.get_sequence_features():
-        feature_name = feature_info["name"]
-        feature_fn = _get_feature_fn(feature_info["dtype"])
-        if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-            sequence_features_dict[feature_name] = train.FeatureList(
-                feature=[feature_fn(group[feature_name].tolist())]
-            )
-
-    sequence_example_proto = train.SequenceExample(
-        context=train.Features(feature=context_features_dict),
-        feature_lists=train.FeatureLists(feature_list=sequence_features_dict),
-    )
-
-    return sequence_example_proto
 
 
 def write(
@@ -122,7 +64,11 @@ def write(
     with io.TFRecordWriter(tfrecord_file) as tf_writer:
         context_feature_names = feature_config.get_context_features(key="name")
         sequence_example_protos = df.groupby(context_feature_names).apply(
-            lambda g: _get_sequence_example_proto(group=g, feature_config=feature_config)
+            lambda g: get_sequence_example_proto(
+                group=g,
+                context_features=feature_config.get_context_features(),
+                sequence_features=feature_config.get_sequence_features(),
+            )
         )
         for sequence_example_proto in sequence_example_protos:
             tf_writer.write(sequence_example_proto.SerializeToString())

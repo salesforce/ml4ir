@@ -1,10 +1,13 @@
 import ml4ir.io.file_io as file_io
 import yaml
+import pandas as pd
 
 from ml4ir.config.keys import FeatureTypeKey, TFRecordTypeKey
 from tensorflow.keras import Input
 from typing import List, Dict, Optional
 from logging import Logger
+import tensorflow as tf
+from ml4ir.data.tfrecord_helper import get_sequence_example_proto
 
 """
 Feature config YAML format
@@ -13,17 +16,22 @@ query_key:  # Unique query ID field
     name: <str> # name of the feature in the input data
     node_name: <str> # tf graph node name
     trainable: <bool> # if the feature is a trainable tf element
-    dtype: <float or int or bytes | str>
+    dtype: <Supported tensorflow data type | str>
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
-    is_group_metric_key: <boolean | default: false> # if feature should be used a groupby key to compute metrics
+    # if feature should be used a groupby key to compute metrics
+    is_group_metric_key: <boolean | default: false>
     feature_layer_info:
         type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
-        max_length: <int> # Max length of string features
         # following keys are not supported yet
-        embedding_size: <int> # Embedding size for categorical/string features
-        embedding_type: <categorical or char or string | str>
+        embedding_size: <int> # Embedding size for categorical/bytes features
+        encoding_size: <int> # Sequence encoding size
+        encoding_type: <str> # Type of encoding - LSTM, CNN, etc.
         ...
+    preprocessing_info:
+        max_length: <int> # Max length of string features
+        to_lower: <bool> # Whether to convert string to lower case
+        remove_punctuation: <bool> # Whether to remove punctuations from string
     serving_info:
         name: <str> # name of input feature at serving time
         preprocessing_type: <str> # Any predefined feature preprocessing step to apply
@@ -248,22 +256,43 @@ class FeatureConfig:
         """
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
-    def define_inputs(self, max_num_records: int) -> Dict[str, Input]:
+    def get_dtype(self, feature_info: dict):
+        if feature_info["dtype"] == "string":
+            return tf.float32
+        else:
+            return feature_info["dtype"]
+
+    def get_default_value(self, feature_info):
+        if feature_info["dtype"] == tf.float32:
+            return feature_info["serving_info"].get("default_value", 0.0)
+        elif feature_info["dtype"] == tf.int64:
+            return feature_info["serving_info"].get("default_value", 0)
+        elif feature_info["dtype"] == tf.string:
+            return feature_info["serving_info"].get("default_value", "")
+        else:
+            raise Exception("Unknown dtype {}".format(feature_info["dtype"]))
+
+    def define_inputs(self) -> Dict[str, Input]:
         """
         Define the input layer for the tensorflow model
-
-        Args:
-            - max_num_records: Maximum number of records per query in the training data
 
         Returns:
             Dictionary of tensorflow graph input nodes
         """
 
-        def get_shape(feature_layer_info: dict):
+        def get_shape(feature_info: dict):
+            feature_layer_info = feature_info["feature_layer_info"]
+            preprocessing_info = feature_info.get("preprocessing_info", {})
+
+            # Setting size to None for sequence features as the num_records is variable
+            num_records = None
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+                num_records = 1
+
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (max_num_records,)
+                return (num_records,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (max_num_records, feature_layer_info["max_length"])
+                return (num_records, preprocessing_info["max_length"])
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 raise NotImplementedError
 
@@ -274,8 +303,12 @@ class FeatureConfig:
                 We could do this in the future, to help define more complex loss functions
             """
             node_name = feature_info.get("node_name", feature_info["name"])
-            shape = get_shape(feature_info["feature_layer_info"])
-            inputs[node_name] = Input(shape=shape, name=node_name)
+            inputs[node_name] = Input(
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
+            )
+
+        # # Define input node that stores number of records in a query
+        # inputs["num_records"] = Input(shape=(1,), name="num_records", dtype=tf.int32)
 
         return inputs
 
@@ -284,11 +317,40 @@ class FeatureConfig:
         return {
             "name": "mask",
             "trainable": False,
-            "dtype": "float",
+            "dtype": self.get_rank("dtype"),
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": TFRecordTypeKey.SEQUENCE,
         }
+
+    def create_dummy_sequence_example(self, num_records=1, required_only=False):
+        """Create a SequenceExample protobuffer with dummy values"""
+        context_features = [
+            f
+            for f in self.get_context_features()
+            if ((not required_only) or (f["serving_info"].get("required", False)))
+        ]
+        sequence_features = [
+            f
+            for f in self.get_sequence_features()
+            if ((not required_only) or (f["serving_info"].get("required", False)))
+        ]
+
+        dummy_query = dict()
+        for feature_info in self.get_all_features():
+            dummy_value = self.get_default_value(feature_info)
+            feature_node_name = feature_info.get("node_name", feature_info["name"])
+            dummy_query[feature_node_name] = [dummy_value] * num_records
+
+        dummy_query_group = pd.DataFrame(dummy_query).groupby(
+            self.get_context_features("node_name")
+        )
+
+        return dummy_query_group.apply(
+            lambda g: get_sequence_example_proto(
+                group=g, context_features=context_features, sequence_features=sequence_features
+            )
+        ).values[0]
 
 
 def parse_config(feature_config, logger: Optional[Logger] = None) -> FeatureConfig:

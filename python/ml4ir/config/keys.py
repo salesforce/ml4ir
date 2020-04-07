@@ -106,6 +106,10 @@ class ExecutionModeKey(Key):
     INFERENCE_EVALUATE = "inference_evaluate"
     TRAIN_INFERENCE_EVALUATE = "train_inference_evaluate"
     TRAIN_INFERENCE = "train_inference"
+    INFERENCE_RESAVE = "inference_resave"
+    EVALUATE_RESAVE = "evaluate_resave"
+    INFERENCE_EVALUATE_RESAVE = "inference_evaluate_resave"
+    RESAVE_ONLY = "resave_only"
 
 
 class ServingSignatureKey(Key):
@@ -113,3 +117,10 @@ class ServingSignatureKey(Key):
 
     DEFAULT = saved_model.DEFAULT_SERVING_SIGNATURE_DEF_KEY
     TFRECORD = "serving_tfrecord"
+
+
+class EncodingTypeKey(Key):
+    """Types of embeddings"""
+
+    BILSTM = "bilstm"
+    CNN = "cnn"

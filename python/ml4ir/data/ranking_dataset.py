@@ -7,7 +7,7 @@ import tensorflow as tf
 from ml4ir.config.keys import DataFormatKey, DataSplitKey
 from ml4ir.data import csv_reader
 from ml4ir.data import tfrecord_reader
-from ml4ir.config.features import FeatureConfig
+from ml4ir.features.feature_config import FeatureConfig
 
 
 class RankingDataset:

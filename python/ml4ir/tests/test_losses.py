@@ -1,7 +1,7 @@
 from ml4ir.tests.test_base import RankingTestBase
 from ml4ir.data.ranking_dataset import RankingDataset
 from ml4ir.model.ranking_model import RankingModel
-from ml4ir.config.features import FeatureConfig, parse_config
+from ml4ir.features.feature_config import FeatureConfig, parse_config
 import os
 import numpy as np
 
@@ -43,7 +43,9 @@ class RankingModelTest(RankingTestBase):
             learning_rate=self.args.learning_rate,
             learning_rate_decay=self.args.learning_rate_decay,
             learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            gradient_clip_value=self.args.gradient_clip_value,
             compute_intermediate_stats=self.args.compute_intermediate_stats,
+            compile_keras_model=self.args.compile_keras_model,
             logger=self.logger,
         )
 
