@@ -178,7 +178,10 @@ class RankingModelTest(RankingTestBase):
                     ).SerializeToString()
                 ]
             )
-            tfrecord_signature(sequence_example_protos=proto)
+            try:
+                tfrecord_signature(sequence_example_protos=proto)
+            except Exception:
+                assert False
 
     def test_serving_required_fields_only(self):
         """Test serving signature with protos with only required fields"""
@@ -217,4 +220,8 @@ class RankingModelTest(RankingTestBase):
         proto = tf.constant(
             [feature_config.create_dummy_sequence_example(required_only=True).SerializeToString()]
         )
-        tfrecord_signature(sequence_example_protos=proto)
+
+        try:
+            tfrecord_signature(sequence_example_protos=proto)
+        except Exception:
+            assert False
