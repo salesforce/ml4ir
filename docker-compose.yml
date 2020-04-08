@@ -1,0 +1,19 @@
+version: '2'
+services:
+  ml4ir:
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
+    command: ${ML4IR_CMD}
+    hostname: ml4ir
+    build:
+      context: .
+      dockerfile: python/ml4ir/build/Dockerfile
+      args:
+        - GIT_BRANCH=${GIT_BRANCH}
+        - BASE_IMAGE=${BASE_IMAGE}
+        - CLONE_GIT_REPO=${CLONE_GIT_REPO}
+    volumes:
+      - ./python/logs:/home/jenkins/logs
+      - ./python/data:/home/jenkins/data
+      - ./python/models:/home/jenkins/models
+    tty: true # uncomment for python debugging
+    stdin_open: true # uncomment for python debugging
