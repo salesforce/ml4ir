@@ -1,8 +1,11 @@
 package ml4ir.inference.tensorflow.data
 
+// FIXME: bring queries in sync with dummy model + config
 trait TestData {
   val Q = "q"
   val UID = "userId"
+
+  val baseConfigFile = "model_features_0_0_2.yaml"
 
   def sampleQueryContexts: List[Map[String, String]] = {
     List(

@@ -37,10 +37,9 @@ case class ModelFeaturesConfig(@JsonProperty("rank") initialRank: FeatureConfig,
 case class FeatureConfig(@JsonProperty("node_name") nodeName: String,
                          @JsonProperty("dtype") dTypeString: String,
                          @JsonProperty("serving_info") servingConfig: ServingConfig,
-                         @JsonProperty("default_value") defaultValue: String,
                          @JsonProperty("tfrecord_type") tfRecordType: String) {
   def dType: DataType = DataType.valueOf(dTypeString.toUpperCase)
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class ServingConfig(@JsonProperty("name") servingName: String)
+case class ServingConfig(@JsonProperty("name") servingName: String, @JsonProperty("default_value") defaultValue: String)

@@ -3,6 +3,8 @@ package ml4ir.inference.tensorflow.data
 import java.util.{Map => JMap}
 import java.util
 
+import com.google.common.collect.ImmutableMap
+
 case class StringMapSequenceExampleBuilder(
     modelFeatures: ModelFeaturesConfig,
     floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],
@@ -24,4 +26,7 @@ object StringMapSequenceExampleBuilder {
       longFns: util.Map[String, util.function.Function[java.lang.Long, java.lang.Long]],
       strFns: util.Map[String, util.function.Function[java.lang.String, java.lang.String]]
     )
+
+  def withFeatureProcessors(modelFeatures: ModelFeaturesConfig) =
+    StringMapSequenceExampleBuilder(modelFeatures, ImmutableMap.of(), ImmutableMap.of(), ImmutableMap.of());
 }

@@ -1,0 +1,114 @@
+query_key: 
+  name: query_key
+  node_name: query_key
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: query_key
+    required: false
+    default_value: 0
+  tfrecord_type: context
+rank:
+  name: pos
+  node_name: pos
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: pos
+    required: true
+    default_value: 0
+  tfrecord_type: sequence
+label:
+  name: label
+  node_name: label
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: label
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+features:
+  - name: doc_age_hours
+    node_name: doc_age_hours
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: docAgeHours
+      required: true
+      default_value: 2400
+    tfrecord_type: sequence
+  - name: num_doc_views
+    node_name: num_doc_views
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: numDocumentViews
+      required: true
+      default_value: 0
+    tfrecord_type: sequence
+  - name: doc_title
+    node_name: doc_title
+    trainable: true
+    dtype: string
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: docTitle
+      required: true
+      default_value: ""
+    tfrecord_type: sequence
+  - name: query_str
+    node_name: query_str
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      shape: null
+      encoding_type: bilstm
+      encoding_size: 128
+      embedding_size: 128
+    preprocessing_info:
+      max_length: 20
+    serving_info:
+      name: q
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: group
+    node_name: group
+    trainable: false
+    dtype: int64
+    log_at_inference: false
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: group
+      required: false
+      default_value: 0
+    tfrecord_type: context
