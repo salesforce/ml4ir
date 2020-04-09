@@ -285,8 +285,9 @@ class FeatureConfig:
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
             # Setting size to None for sequence features as the num_records is variable
-            num_records = None
-            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
+                num_records = None
+            else:
                 num_records = 1
 
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
@@ -307,9 +308,6 @@ class FeatureConfig:
                 shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
             )
 
-        # # Define input node that stores number of records in a query
-        # inputs["num_records"] = Input(shape=(1,), name="num_records", dtype=tf.int32)
-
         return inputs
 
     def generate_mask(self):
@@ -325,6 +323,10 @@ class FeatureConfig:
 
     def create_dummy_sequence_example(self, num_records=1, required_only=False):
         """Create a SequenceExample protobuffer with dummy values"""
+        """
+        TODO: The method should also be able to create a SequenceExample from
+        an input dictionary of feature values
+        """
         context_features = [
             f
             for f in self.get_context_features()

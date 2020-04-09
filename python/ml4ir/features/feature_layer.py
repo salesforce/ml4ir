@@ -28,8 +28,6 @@ def get_sequence_encoding(input, feature_info):
     if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
         # If feature is a context feature then tile it for all records
         encoding = tf.expand_dims(encoding, axis=1)
-        # encoding = tf.tile(encoding,
-        #                    tf.concat([tf.constant([1]), num_records, tf.constant([1])], axis=0))
     else:
         # If sequence feature, then reshape back to original shape
         # FIXME
