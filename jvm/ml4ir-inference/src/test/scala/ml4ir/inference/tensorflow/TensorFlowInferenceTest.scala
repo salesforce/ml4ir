@@ -35,13 +35,10 @@ class TensorFlowInferenceTest extends TestData {
         docScore > maskedScore
       )
     }
-    /*
-    FIXME: TestData needs to be in sync with the model for this to make sense.
     assertTrue(
       "second doc should score better than first",
       scores(1) > scores(0)
     )
-     */
     println(scores.mkString(", "))
   }
 

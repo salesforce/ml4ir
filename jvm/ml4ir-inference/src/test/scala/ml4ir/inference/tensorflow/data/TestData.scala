@@ -10,16 +10,16 @@ trait TestData {
   def sampleQueryContexts: List[Map[String, String]] = {
     List(
       Map(Q -> "example query", UID -> "john.smith@example.com"),
-      Map(Q -> "another" /* no UID supplied */ ),
+      Map(Q -> "Another query!" /* no UID supplied */ ),
       Map( /* no query?!? */ UID -> "user1234")
     )
   }
 
   def sampleDocumentExamples: List[Map[String, String]] = {
     List(
-      Map("docTitle" -> "another document title!", "numDocumentViews" -> "10", "docAgeHours" -> "240"),
-      Map("docTitle" -> "The document title!", "docAgeHours" -> "0.5", "numDocumentViews" -> "5"),
-      Map("docTitle" -> "", /* "numDocumentViews" -> "10" */ "docAgeHours" -> "24000")
+      Map("floatFeat0" -> "0.1", "floatFeat1" -> "0.2", "floatFeat2" -> "0.3"),
+      Map("floatFeat0" -> "1.1", "floatFeat1" -> "1.2", "floatFeat2" -> "1.3"),
+      Map("floatFeat0" -> "0.01", /* "floatFeat1" -> "10" */ "docAgeHours" -> "24000")
     )
   }
 }
