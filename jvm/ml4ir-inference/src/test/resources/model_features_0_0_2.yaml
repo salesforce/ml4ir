@@ -8,7 +8,7 @@ query_key:
     type: numeric
     shape: null
   serving_info:
-    name: query_key
+    name: queryId
     required: false
     default_value: 0
   tfrecord_type: context
@@ -22,7 +22,7 @@ rank:
     type: numeric
     shape: null
   serving_info:
-    name: pos
+    name: originalRank
     required: true
     default_value: 0
   tfrecord_type: sequence
@@ -41,8 +41,8 @@ label:
     default_value: 0
   tfrecord_type: sequence
 features:
-  - name: doc_age_hours
-    node_name: doc_age_hours
+  - name: feat_0
+    node_name: feat_0
     trainable: true
     dtype: float
     log_at_inference: false
@@ -50,35 +50,35 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: docAgeHours
+      name: floatFeat0
       required: true
-      default_value: 2400
+      default_value: 0.0
     tfrecord_type: sequence
-  - name: num_doc_views
-    node_name: num_doc_views
+  - name: feat_1
+    node_name: feat_1
     trainable: true
-    dtype: int64
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric
       shape: null
     serving_info:
-      name: numDocumentViews
+      name: floatFeat1
       required: true
-      default_value: 0
+      default_value: 0.0
     tfrecord_type: sequence
-  - name: doc_title
-    node_name: doc_title
+  - name: feat_2
+    node_name: feat_2
     trainable: true
-    dtype: string
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric
       shape: null
     serving_info:
-      name: docTitle
+      name: floatFeat2
       required: true
-      default_value: ""
+      default_value: 0.0
     tfrecord_type: sequence
   - name: query_str
     node_name: query_str

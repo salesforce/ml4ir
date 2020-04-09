@@ -12,9 +12,9 @@ import org.tensorflow.DataType
 
 import scala.collection.JavaConverters._
 
-case class SimpleQueryContext(q: String, uid: Float)
+case class SimpleQueryContext(q: String)
 
-case class SimpleDocument(title: String, numClicks: Long)
+case class SimpleDocument(floatFeat0: Float, floatFeat1: Float, floatFeat2: Float)
 
 @Test
 class GenericSequenceExampleBuildingTest extends TestData {
@@ -26,42 +26,44 @@ class GenericSequenceExampleBuildingTest extends TestData {
 
     val ctxProcessor = new FeaturePreprocessor[SimpleQueryContext](
       modelFeatures.toFeaturesConfig("context"),
-      Map("uid" -> ((ctx: SimpleQueryContext) => Some(ctx.uid)), "unknown" -> ((_: SimpleQueryContext) => Some(1f)))
+      floatExtractor = Map.empty
         .withDefaultValue(_ => None),
-      Map.empty
+      longExtractor = Map.empty
         .withDefaultValue(_ => None),
-      Map("q" -> ((ctx: SimpleQueryContext) => Some(ctx.q)))
+      stringExtractor = Map("q" -> ((ctx: SimpleQueryContext) => Some(ctx.q)))
         .withDefaultValue(_ => None)
     )
 
     val seqProcessor = new FeaturePreprocessor[SimpleDocument](
       modelFeatures.toFeaturesConfig("sequence"),
-      Map.empty.withDefaultValue(_ => None),
-      Map("numDocumentViews" -> ((doc: SimpleDocument) => Some(doc.numClicks))).withDefaultValue(_ => None),
-      Map("docTitle" -> ((doc: SimpleDocument) => Some(doc.title))).withDefaultValue(_ => None),
-      Map(DataType.STRING -> Map("docTitle" -> new PrimitiveProcessor() {
-        override def processString(s: String): String = s.toLowerCase
-      }))
+      floatExtractor = Map(
+        "floatFeat0" -> ((doc: SimpleDocument) => Some(doc.floatFeat0)),
+        "floatFeat1" -> ((doc: SimpleDocument) => Some(doc.floatFeat1)),
+        "floatFeat2" -> ((doc: SimpleDocument) => Some(doc.floatFeat2))
+      ).withDefaultValue(_ => None),
+      longExtractor = Map.empty.withDefaultValue(_ => None),
+      stringExtractor = Map.empty.withDefaultValue(_ => None)
     )
 
     val fp = new SequenceExampleBuilder[SimpleQueryContext, SimpleDocument](ctxProcessor, seqProcessor)
 
     val sequenceExample: SequenceExample = fp(
-      SimpleQueryContext("a query", 123f),
-      List(SimpleDocument("The title", 4), SimpleDocument("Yay!", 0))
+      SimpleQueryContext("a query!"),
+      List(SimpleDocument(0.1f, 0.2f, 0.3f), SimpleDocument(1.1f, 1.2f, 1.3f))
     )
     assertNotNull(sequenceExample)
 
     val featureListMap: Map[String, FeatureList] = sequenceExample.getFeatureLists.getFeatureListMap.asScala.toMap
 
-    val docViewsFeature: Feature = featureListMap("feat_1").getFeature(0)
-    val docViewsArray: Array[Long] = docViewsFeature.getInt64List.getValueList.asScala.toList.toArray.map(_.longValue())
-    assertArrayEquals("incorrectly processed document view features", Array(4L, 0L), docViewsArray)
+    val feat1: Feature = featureListMap("feat_1").getFeature(0)
+    val feat1Array: Array[Float] = feat1.getFloatList.getValueList.asScala.toList.toArray.map(_.floatValue())
+    assertArrayEquals("incorrectly processed document view features", Array(0.2f, 1.2f), feat1Array, 0.01f)
 
-    val titleFeature = featureListMap("doc_title").getFeature(0)
-    val titleArray: Array[String] = titleFeature.getBytesList.getValueList.asScala.toArray.map(_.toStringUtf8)
-    Array("the title", "yay!").zip(titleArray).foreach {
-      case (title, expectedTitle) => assertEquals("incorrectly processed title", title, expectedTitle)
+    val contextFeatures: Map[String, Feature] = sequenceExample.getContext.getFeatureMap.asScala.toMap
+    val queryFeature: Feature = contextFeatures("query_str")
+    val queryArray: Array[String] = queryFeature.getBytesList.getValueList.asScala.toArray.map(_.toStringUtf8)
+    Array("a query!").zip(queryArray).foreach {
+      case (query, expectedQuery) => assertEquals("incorrectly processed title", query, expectedQuery)
     }
   }
 
@@ -104,7 +106,7 @@ class GenericSequenceExampleBuildingTest extends TestData {
       }
       .toList
   }
-  @Test
+
   @throws[Exception]
   def serializeTestData(): Unit = {
     val modelFeatures: ModelFeaturesConfig = ModelFeaturesConfig.load(classLoader.getResource(baseConfigFile).getPath)
@@ -126,7 +128,6 @@ class GenericSequenceExampleBuildingTest extends TestData {
     //fos.close()
   }
 
-  @Test
   def loadTestData() = {
     val proto: SequenceExample = SequenceExample.parseFrom(new FileInputStream("/tmp/seqExamples.proto"))
     println(proto.toString)
