@@ -1,4 +1,4 @@
-/bin/bash common/run_docker.sh ml4ir \
+/bin/bash tools/run_docker.sh ml4ir \
 	python3 ml4ir/model/pipeline.py \
 	--data_dir ml4ir/tests/data/tfrecord \
 	--feature_config ml4ir/tests/data/tfrecord/feature_config.yaml \

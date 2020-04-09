@@ -37,7 +37,6 @@ COPY . /home/jenkins/ml4ir/
 # Set PYTHONPATH environment variable
 ENV PYTHONPATH=/home/jenkins/ml4ir/python
 WORKDIR $PYTHONPATH
-RUN ls $PYTHONPATH/ml4ir
 
 # Python dependencies
 RUN pip config set global.extra-index-url https://pypi.python.org/simple

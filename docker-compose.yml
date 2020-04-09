@@ -8,9 +8,9 @@ services:
       context: .
       dockerfile: python/ml4ir/build/Dockerfile
       args:
-        - GIT_BRANCH=${GIT_BRANCH}
         - BASE_IMAGE=${BASE_IMAGE}
         - CLONE_GIT_REPO=${CLONE_GIT_REPO}
+        - GIT_BRANCH=${GIT_BRANCH}
     volumes:
       - ./python/logs:/home/jenkins/logs
       - ./python/data:/home/jenkins/data
