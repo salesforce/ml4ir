@@ -1,8 +1,7 @@
 package ml4ir.inference.tensorflow.data
 
-import java.io.{FileInputStream, FileOutputStream}
+import java.io.FileInputStream
 import java.util.{List => JList, Map => JMap}
-import java.util
 
 import ml4ir.inference.tensorflow.data.FeaturesConfigHelper._
 import org.junit.Test
@@ -122,7 +121,7 @@ class GenericSequenceExampleBuildingTest extends TestData {
       ((queryContext, exampleList), i) <- queryContexts.zip(exampleLists).zipWithIndex
     } {
       val sequenceExample: SequenceExample = sequenceExampleBuilder.build(queryContext, exampleList)
-      TFRecordIO.write(sequenceExample.toByteArray, basePath + "_" + i)
+      //TFRecordIO.write(sequenceExample.toByteArray, basePath + "_" + i)
       //sequenceExample.writeTo(fos)
     }
     //fos.close()

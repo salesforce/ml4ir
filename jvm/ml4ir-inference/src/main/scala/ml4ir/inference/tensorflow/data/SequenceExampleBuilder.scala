@@ -79,8 +79,6 @@ class SequenceExampleBuilder[C, S](contextFeaturesPreprocessor: FeaturePreproces
   private def transpose[T: ClassTag](
       docFeatures: Array[Map[String, T]]
   ): Map[String, Array[T]] = {
-    // TODO: check that we don't need to pad anymore
-    // val numDocsPerQuery = config.numDocsPerQuery.getOrElse(docFeatures.length)
     case class FeatureVal(name: String, value: T, docIdx: Int)
     val featureSet: Set[String] = docFeatures.map(_.keySet).reduce(_ union _)
     docFeatures
