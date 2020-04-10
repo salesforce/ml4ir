@@ -4,6 +4,30 @@
 #### Requirements
 * python3.6+
 * pip3
+* docker (version 18.09+ tested)
+
+#### Docker (Recommended)
+We have set up a `docker-compose.yml` file for building and using docker containers to train models.
+
+To run unit tests
+```
+docker-compose up
+```
+
+To invoke ml4ir with custom arguments with docker, run
+```
+/bin/bash tools/run_docker.sh ml4ir \
+	python3 ml4ir/model/pipeline.py
+    <args>
+```
+Refer to usage section below for details on how to run ml4ir
+
+Check `python/ml4ir/scripts/example_run.sh` for a predefined example run.
+
+To run example invocation with docker,
+```
+/bin/bash python/ml4ir/scripts/example_run.sh
+```
 
 #### Virtual Environment
 Install virtualenv
@@ -86,6 +110,10 @@ python ml4ir/model/pipeline.py \
 --data_format csv \
 --model_file `pwd`/models/test/final/default \
 --execution_mode inference_only
+
+NOTE: Make sure to add the right data and feature config before training models.
+TODO: describe how to do this
+
 ```
 ## Running Tests
 To run all the python based tests under `ml4ir`
@@ -97,9 +125,6 @@ To run specific tests,
 ```
 python3 -m pytest /path/to/test/module
 ```
-
-NOTE: Make sure to add the right data and feature config before training models.
-TODO: describe how to do this
 
 ## Project Organization
 The following structure is a little out of date (TODO(jake) - fix it!)
