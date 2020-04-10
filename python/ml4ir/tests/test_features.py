@@ -70,10 +70,12 @@ class RankingModelTest(RankingTestBase):
         """
         sequence_tensor = np.random.randint(256, size=(batch_size, 1, max_length))
 
-        sequence_embedding = get_sequence_encoding(
-            sequence_tensor, feature_info, self.args.max_num_records
-        )
+        sequence_encoding = get_sequence_encoding(sequence_tensor, feature_info)
 
-        assert sequence_embedding.shape[0] == batch_size
-        assert sequence_embedding.shape[1] == self.args.max_num_records
-        assert sequence_embedding.shape[2] == encoding_size
+        assert sequence_encoding.shape[0] == batch_size
+        assert (
+            sequence_encoding.shape[1] == 1
+            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT
+            else self.args.max_num_records
+        )
+        assert sequence_encoding.shape[2] == encoding_size

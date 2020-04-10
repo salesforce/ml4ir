@@ -188,7 +188,7 @@ class RankingPipeline(object):
             self.logger.info("Ranking Dataset created")
 
             # Build model
-            model = RankingModel(
+            ranking_model = RankingModel(
                 model_config=self.model_config,
                 loss_key=self.loss,
                 scoring_key=self.scoring,
@@ -202,6 +202,7 @@ class RankingPipeline(object):
                 learning_rate_decay_steps=self.args.learning_rate_decay_steps,
                 gradient_clip_value=self.args.gradient_clip_value,
                 compute_intermediate_stats=self.args.compute_intermediate_stats,
+                compile_keras_model=self.args.compile_keras_model,
                 logger=self.logger,
             )
             self.logger.info("Ranking Model created")
@@ -213,7 +214,7 @@ class RankingPipeline(object):
                 ExecutionModeKey.TRAIN_ONLY,
             }:
                 # Train
-                model.fit(
+                ranking_model.fit(
                     dataset=ranking_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
@@ -221,17 +222,16 @@ class RankingPipeline(object):
                     logging_frequency=self.args.logging_frequency,
                 )
 
-                # Save model
-                model.save(models_dir=self.models_dir)
-
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
                 ExecutionModeKey.TRAIN_EVALUATE,
                 ExecutionModeKey.EVALUATE_ONLY,
                 ExecutionModeKey.INFERENCE_EVALUATE,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
-                model.evaluate(
+                ranking_model.evaluate(
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
@@ -244,13 +244,32 @@ class RankingPipeline(object):
                 ExecutionModeKey.TRAIN_INFERENCE,
                 ExecutionModeKey.INFERENCE_EVALUATE,
                 ExecutionModeKey.INFERENCE_ONLY,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.INFERENCE_RESAVE,
             }:
                 # Predict ranking scores
-                model.predict(
+                ranking_model.predict(
                     test_dataset=ranking_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logs_dir=self.logs_dir,
                     logging_frequency=self.args.logging_frequency,
+                )
+
+            # Save model
+            # NOTE: Model will be saved with the latest serving signatures
+            if self.args.execution_mode in {
+                ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
+                ExecutionModeKey.TRAIN_EVALUATE,
+                ExecutionModeKey.TRAIN_INFERENCE,
+                ExecutionModeKey.TRAIN_ONLY,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.EVALUATE_RESAVE,
+                ExecutionModeKey.INFERENCE_RESAVE,
+                ExecutionModeKey.RESAVE_ONLY,
+            }:
+                # Save model
+                ranking_model.save(
+                    models_dir=self.models_dir, pad_records=self.args.pad_records_at_inference
                 )
 
             # Finish
