@@ -12,8 +12,8 @@ services:
         - CLONE_GIT_REPO=${CLONE_GIT_REPO}
         - GIT_BRANCH=${GIT_BRANCH}
     volumes:
-      - ./python/logs:/home/jenkins/logs
-      - ./python/data:/home/jenkins/data
-      - ./python/models:/home/jenkins/models
+      - ./python/logs:/home/jenkins/ml4ir/python/logs
+      - ./python/data:/home/jenkins/ml4ir/python/data
+      - ./python/models:/home/jenkins/ml4ir/python/models
     tty: true # uncomment for python debugging
     stdin_open: true # uncomment for python debugging
