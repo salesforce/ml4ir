@@ -26,7 +26,7 @@ def define_default_signature(model, feature_config):
     return
 
 
-def define_tfrecord_signature(model, feature_config, pad_records):
+def define_tfrecord_signature(model, feature_config, pad_records, max_num_records):
     """
     Add signatures to the tf keras savedmodel
 
@@ -52,7 +52,7 @@ def define_tfrecord_signature(model, feature_config, pad_records):
     """
     tfrecord_parse_fn = make_parse_fn(
         feature_config=feature_config,
-        max_num_records=25,
+        max_num_records=max_num_records,
         required_only=True,
         pad_records=pad_records,
     )
@@ -110,10 +110,12 @@ def define_tfrecord_signature(model, feature_config, pad_records):
     return _serve_tfrecord
 
 
-def define_serving_signatures(model, feature_config, pad_records):
+def define_serving_signatures(model, feature_config, pad_records, max_num_records):
     """Defines all serving signatures for the SavedModel"""
     return {
         # ServingSignatureKey.DEFAULT: define_default_signature(
         #     model, feature_config),
-        ServingSignatureKey.TFRECORD: define_tfrecord_signature(model, feature_config, pad_records)
+        ServingSignatureKey.TFRECORD: define_tfrecord_signature(
+            model, feature_config, pad_records, max_num_records
+        )
     }

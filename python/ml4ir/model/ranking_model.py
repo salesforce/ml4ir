@@ -500,7 +500,9 @@ class RankingModel:
         saved_model.save(
             self.model,
             export_dir=os.path.join(model_file, "tfrecord"),
-            signatures=define_serving_signatures(self.model, self.feature_config, pad_records),
+            signatures=define_serving_signatures(
+                self.model, self.feature_config, pad_records, self.max_num_records
+            ),
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
