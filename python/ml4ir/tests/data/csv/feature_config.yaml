@@ -10,6 +10,7 @@ query_key:
   serving_info:
     name: query_key
     required: false
+    default_value: 0
   tfrecord_type: context
 rank:
   name: pos
@@ -22,7 +23,8 @@ rank:
     shape: null
   serving_info:
     name: pos
-    required: false
+    required: true
+    default_value: 0
   tfrecord_type: sequence
 label:
   name: label
@@ -36,6 +38,7 @@ label:
   serving_info:
     name: label
     required: false
+    default_value: 0
   tfrecord_type: sequence
 features:
   - name: feat_0
@@ -49,6 +52,7 @@ features:
     serving_info:
       name: feat_0
       required: true
+      default_value: 0.0
     tfrecord_type: sequence
   - name: feat_1
     node_name: feat_1
@@ -61,6 +65,7 @@ features:
     serving_info:
       name: feat_1
       required: true
+      default_value: 0.0
     tfrecord_type: sequence
   - name: feat_2
     node_name: feat_2
@@ -73,6 +78,7 @@ features:
     serving_info:
       name: feat_2
       required: true
+      default_value: 0.0
     tfrecord_type: sequence
   - name: query_str
     node_name: query_str
@@ -89,7 +95,8 @@ features:
       max_length: 20
     serving_info:
       name: query_str
-      required: false
+      required: true
+      default_value: ""
     tfrecord_type: context
   - name: group
     node_name: group
@@ -102,5 +109,6 @@ features:
       shape: null
     serving_info:
       name: group
-      required: true
+      required: false
+      default_value: 0
     tfrecord_type: context

@@ -17,11 +17,7 @@ class RankingModelTest(RankingTestBase):
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        feature_config_path = os.path.join(
-            self.root_data_dir, "tfrecord", self.feature_config_fname
-        )
-
-        feature_config: FeatureConfig = parse_config(feature_config_path)
+        feature_config: FeatureConfig = self.get_feature_config()
 
         self.args.metrics = ["categorical_accuracy"]
 
@@ -61,12 +57,13 @@ class RankingModelTest(RankingTestBase):
             learning_rate_decay_steps=self.args.learning_rate_decay_steps,
             compute_intermediate_stats=self.args.compute_intermediate_stats,
             gradient_clip_value=self.args.gradient_clip_value,
+            compile_keras_model=self.args.compile_keras_model,
             logger=self.logger,
         )
 
         model.fit(dataset=parsed_dataset, num_epochs=1, models_dir=self.output_dir)
 
-        model.save(models_dir=self.args.models_dir)
+        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
 
         # Load SavedModel and get the right serving signature
         default_model = kmodels.load_model(
@@ -83,9 +80,7 @@ class RankingModelTest(RankingTestBase):
 
         # Fetch a single batch for testing
         sequence_example_protos = next(iter(raw_dataset.test))
-        parsed_sequence_examples = {
-            k: tf.cast(v, tf.float32) for k, v in next(iter(parsed_dataset.test))[0].items()
-        }
+        parsed_sequence_examples = next(iter(parsed_dataset.test))[0]
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
@@ -93,9 +88,15 @@ class RankingModelTest(RankingTestBase):
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             "ranking_scores"
         ]
-        tfrecord_signature_predictions = tfrecord_signature(
-            sequence_example_protos=sequence_example_protos
-        )["ranking_scores"]
+
+        # Since we do not pad dummy records in tfrecord serving signature,
+        # we can only predict on a single record at a time
+        tfrecord_signature_predictions = [
+            tfrecord_signature(sequence_example_protos=tf.gather(sequence_example_protos, [i]))[
+                "ranking_scores"
+            ]
+            for i in range(self.args.batch_size)
+        ]
 
         def _flatten_records(x):
             """Collapse first two dimensions of a tensor -> [batch_size, max_num_records]"""
@@ -118,8 +119,8 @@ class RankingModelTest(RankingTestBase):
         default_signature_predictions = _filter_records(
             _flatten_records(default_signature_predictions), mask
         )
-        tfrecord_signature_predictions = _filter_records(
-            _flatten_records(tfrecord_signature_predictions), mask
+        tfrecord_signature_predictions = tf.squeeze(
+            tf.concat(tfrecord_signature_predictions, axis=1)
         )
 
         # Compare the scores from the different versions of the model
@@ -130,3 +131,71 @@ class RankingModelTest(RankingTestBase):
         assert np.isclose(
             default_signature_predictions, tfrecord_signature_predictions, rtol=0.01,
         ).all()
+
+    def get_feature_config(self):
+        feature_config_path = os.path.join(
+            self.root_data_dir, "tfrecord", self.feature_config_fname
+        )
+
+        return parse_config(feature_config_path)
+
+    def get_tfrecord_signature(self, feature_config: FeatureConfig):
+        self.args.metrics = ["categorical_accuracy"]
+        model = RankingModel(
+            model_config=self.model_config,
+            loss_key=self.args.loss,
+            scoring_key=self.args.scoring,
+            metrics_keys=self.args.metrics,
+            optimizer_key=self.args.optimizer,
+            feature_config=feature_config,
+            max_num_records=self.args.max_num_records,
+            model_file=self.args.model_file,
+            learning_rate=self.args.learning_rate,
+            learning_rate_decay=self.args.learning_rate_decay,
+            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            compute_intermediate_stats=self.args.compute_intermediate_stats,
+            gradient_clip_value=self.args.gradient_clip_value,
+            compile_keras_model=self.args.compile_keras_model,
+            logger=self.logger,
+        )
+        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
+
+        # Load SavedModel and get the right serving signature
+        tfrecord_model = kmodels.load_model(
+            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        )
+        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
+
+        return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+
+    def test_serving_n_records(self):
+        """Test serving signature with different number of records"""
+        feature_config: FeatureConfig = self.get_feature_config()
+        tfrecord_signature = self.get_tfrecord_signature(feature_config)
+
+        for num_records in range(1, 250):
+            proto = tf.constant(
+                [
+                    feature_config.create_dummy_sequence_example(
+                        num_records=num_records
+                    ).SerializeToString()
+                ]
+            )
+            try:
+                tfrecord_signature(sequence_example_protos=proto)
+            except Exception:
+                assert False
+
+    def test_serving_required_fields_only(self):
+        """Test serving signature with protos with only required fields"""
+        feature_config: FeatureConfig = self.get_feature_config()
+        tfrecord_signature = self.get_tfrecord_signature(feature_config)
+
+        proto = tf.constant(
+            [feature_config.create_dummy_sequence_example(required_only=True).SerializeToString()]
+        )
+
+        try:
+            tfrecord_signature(sequence_example_protos=proto)
+        except Exception:
+            assert False

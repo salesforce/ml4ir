@@ -4,7 +4,6 @@ import tensorflow as tf
 from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
-from tensorflow import TensorSpec, TensorArray
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras import backend as K
@@ -12,13 +11,13 @@ from tensorflow.keras import backend as K
 from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.features.feature_layer import define_feature_layer
 from ml4ir.config.keys import FeatureTypeKey, ScoringKey
-from ml4ir.config.keys import LossTypeKey, ServingSignatureKey
+from ml4ir.config.keys import LossTypeKey
 from ml4ir.model.optimizer import get_optimizer
 from ml4ir.model.losses.loss_base import RankingLossBase
 from ml4ir.model.losses import loss_factory
 from ml4ir.model.metrics import metric_factory, metrics_helper
 from ml4ir.model.scoring import scoring_factory
-from ml4ir.data.tfrecord_reader import make_parse_fn
+from ml4ir.model.serving import define_serving_signatures
 from ml4ir.io import file_io
 import pandas as pd
 import numpy as np
@@ -50,6 +49,7 @@ class RankingModel:
         learning_rate_decay_steps: int,
         gradient_clip_value: float,
         compute_intermediate_stats: bool,
+        compile_keras_model: bool,
         logger=None,
     ):
         self.model_config: dict = model_config
@@ -59,10 +59,13 @@ class RankingModel:
         self.max_num_records = max_num_records
 
         # Load/Build Model
-        if model_file:
+        if model_file and not compile_keras_model:
             """
-            NOTE: Retraining not supported. Currently loading SavedModel
-                  as a low level AutoTrackable object for inference
+            If a model file is specified, load it without compiling into a keras model
+
+            NOTE:
+            This will allow the model to be only used for inference and
+            cannot be used for retraining.
             """
             self.model: Model = self.load_model(model_file)
             self.is_compiled = False
@@ -92,8 +95,19 @@ class RankingModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = feature_config.define_inputs(max_num_records)
+            inputs: Dict[str, Input] = feature_config.define_inputs()
             self.model = self.build_model(inputs, optimizer, loss, metrics)
+
+            if model_file:
+                """
+                If model file is specified, load the weights from the SavedModel
+
+                NOTE:
+                The architecture, loss and metrics of self.model need to
+                be the same as the loaded SavedModel
+                """
+                self.load_weights(model_file)
+
             self.is_compiled = True
 
     def build_model(
@@ -389,11 +403,16 @@ class RankingModel:
         @tf.function
         def _filter_records(x, mask):
             """Filter records that were padded in each query"""
-            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, tf.constant(0.0)))))
+            return tf.squeeze(
+                tf.gather_nd(
+                    x,
+                    tf.where(tf.not_equal(tf.cast(mask, tf.int64), tf.constant(0, dtype="int64"))),
+                )
+            )
 
         @tf.function
         def _predict_score(features, label):
-            features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
+            # features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
             if self.is_compiled:
                 scores = infer(features)["ranking_scores"]
             else:
@@ -459,7 +478,7 @@ class RankingModel:
 
         return pd.DataFrame(predictions_dict)
 
-    def save(self, models_dir: str):
+    def save(self, models_dir: str, pad_records: bool):
         """
         Save tf.keras model to models_dir
 
@@ -481,7 +500,9 @@ class RankingModel:
         saved_model.save(
             self.model,
             export_dir=os.path.join(model_file, "tfrecord"),
-            signatures=self._build_saved_model_signatures(),
+            signatures=define_serving_signatures(
+                self.model, self.feature_config, pad_records, self.max_num_records
+            ),
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -531,96 +552,17 @@ class RankingModel:
         model = tf.keras.models.load_model(model_file, compile=False)
 
         self.logger.info("Successfully loaded SavedModel from {}".format(model_file))
-        self.logger.warning("Retraining is not supported. Model is loaded with compile=False")
+        self.logger.warning("Retraining is not yet supported. Model is loaded with compile=False")
 
         return model
 
-    def _build_saved_model_signatures(self):
-        """
-        Add signatures to the tf keras savedmodel
-        """
+    def load_weights(self, model_file: str):
+        # Load saved model with compile=False
+        loaded_model = self.load_model(model_file)
 
-        # Default signature
-        # TODO: Define input_signature
-        # @tf.function(input_signature=[])
-        # def _serve_default(**features):
-        #     features_dict = {k: tf.cast(v, tf.float32) for k, v in features.items()}
-        #     # Run the model to get predictions
-        #     predictions = self.model(inputs=features_dict)
-
-        #     # Mask the padded records
-        #     for key, value in predictions.items():
-        #         predictions[key] = tf.where(
-        #             tf.equal(features_dict['mask'], 0),
-        #             tf.constant(-np.inf),
-        #             predictions[key])
-
-        #     return predictions
-
-        # TFRecord Signature
-        # Define a parsing function for tfrecord protos
-        inputs = self.feature_config.get_all_features(key="node_name", include_label=False)
-        tfrecord_parse_fn = make_parse_fn(
-            feature_config=self.feature_config, max_num_records=self.max_num_records
-        )
-
-        # Define a serving signature for tfrecord
-        @tf.function(input_signature=[TensorSpec(shape=[None], dtype=tf.string)])
-        def _serve_tfrecord(sequence_example_protos):
-            input_size = tf.shape(sequence_example_protos)[0]
-            features_dict = {
-                feature: TensorArray(dtype=tf.float32, size=input_size) for feature in inputs
-            }
-
-            # Define loop index
-            i = tf.constant(0)
-
-            # Define loop condition
-            def loop_condition(i, sequence_example_protos, features_dict):
-                return tf.less(i, input_size)
-
-            # Define loop body
-            def loop_body(i, sequence_example_protos, features_dict):
-                """
-                TODO: Modify parse_fn from
-                parse_single_sequence_example -> parse_sequence_example
-                to handle a batch of TFRecord proto
-                """
-                features, labels = tfrecord_parse_fn(sequence_example_protos[i])
-                for feature, feature_val in features.items():
-                    features_dict[feature] = features_dict[feature].write(
-                        i, tf.cast(feature_val, tf.float32)
-                    )
-
-                i += 1
-
-                return i, sequence_example_protos, features_dict
-
-            # Parse all SequenceExample protos to get features
-            _, _, features_dict = tf.while_loop(
-                cond=loop_condition,
-                body=loop_body,
-                loop_vars=[i, sequence_example_protos, features_dict],
-            )
-
-            # Convert TensorArray to tensor
-            features_dict = {k: v.stack() for k, v in features_dict.items()}
-
-            # Run the model to get predictions
-            predictions = self.model(inputs=features_dict)
-
-            # Mask the padded records
-            for key, value in predictions.items():
-                predictions[key] = tf.where(
-                    tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
-                )
-
-            return predictions
-
-        return {
-            # ServingSignatureKey.DEFAULT: _serve_default,
-            ServingSignatureKey.TFRECORD: _serve_tfrecord
-        }
+        # Set weights of Keras model from the loaded model weights
+        self.model.set_weights(loaded_model.get_weights())
+        self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
         self, models_dir: str, logs_dir: str, is_training=True, logging_frequency=25

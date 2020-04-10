@@ -214,6 +214,22 @@ def define_args() -> ArgumentParser:
         help="Gradient clipping value/threshold for the optimizer.",
     )
 
+    parser.add_argument(
+        "--compile_keras_model",
+        type=bool,
+        default=False,
+        help="Whether to compile a loaded SavedModel into a Keras model. "
+        "NOTE: This requires that the SavedModel's architecture, loss, metrics, etc are the same as the RankingModel"
+        "If that is not the case, then you can still use a SavedModel from a model_file for inference/evaluation only",
+    )
+
+    parser.add_argument(
+        "--pad_records_at_inference",
+        type=bool,
+        default=False,
+        help="Whether to pad records at inference time. Used to define the TFRecord serving signature in the SavedModel",
+    )
+
     return parser
 
 
