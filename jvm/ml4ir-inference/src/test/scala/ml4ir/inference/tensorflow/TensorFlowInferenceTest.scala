@@ -2,14 +2,22 @@ package ml4ir.inference.tensorflow
 
 import java.io.InputStream
 
-import ml4ir.inference.tensorflow.utils.SequenceExampleBuilder
-import ml4ir.inference.tensorflow.data.{QueryContext, Document}
+import com.google.common.collect.ImmutableMap
+import scala.collection.JavaConverters._
+import ml4ir.inference.tensorflow.data.{
+  Example,
+  FeatureProcessors,
+  ModelFeaturesConfig,
+  MultiFeatures,
+  StringMapSequenceExampleBuilder,
+  TestData
+}
 import org.junit.{Ignore, Test}
 import org.junit.Assert._
 import org.tensorflow.example._
 
 @Test
-class TensorFlowInferenceTest {
+class TensorFlowInferenceTest extends TestData {
   val classLoader = getClass.getClassLoader
 
   def validateScores(scores: Array[Float], numDocs: Int) = {
@@ -35,71 +43,27 @@ class TensorFlowInferenceTest {
   }
 
   @Test
-  def testSavedModelBundle() = {
-    val bundlePath = classLoader.getResource("model_bundle").getPath
+  def testSavedModelBundle(): Unit = {
+    val bundlePath = classLoader.getResource("model_bundle_0_0_2").getPath
     val bundleExecutor = new SavedModelBundleExecutor(
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_sequence_example_protos",
-        scoresNodeName = "StatefulPartitionedCall",
-        numDocsPerQuery = 25,
-        queryLenMax = 20
+        scoresNodeName = "StatefulPartitionedCall"
       )
     )
-    val (queryContext, docs) = testQueries
-    val protoBuilder = SequenceExampleBuilder()
-    val proto = protoBuilder(queryContext, docs)
-    val scores = bundleExecutor(proto)
-    validateScores(scores, docs.length)
-  }
+    val configPath = classLoader.getResource("model_features_0_0_2.yaml").getPath
+    val modelFeatures = ModelFeaturesConfig.load(configPath)
 
-  @Ignore
-  @Test
-  def testLoadSequenceExample() = {
-    val tfRecordStream: InputStream =
-      classLoader.getResourceAsStream("file_0.tfrecord")
-    val sequenceExample: SequenceExample =
-      SequenceExample.parseFrom(tfRecordStream)
-    assertNotNull(sequenceExample)
-  }
+    val protoBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(modelFeatures,
+                                                                             ImmutableMap.of(),
+                                                                             ImmutableMap.of(),
+                                                                             ImmutableMap.of())
 
-  @Test
-  def testTFRecordInference() = {
-    val queryString = "magic"
-    val docsToScore = Array(
-      Map("feat_0" -> 0.04f, "feat_1" -> 0.08f, "feat_2" -> 0.01f),
-      Map("feat_0" -> 0.4f, "feat_1" -> 0.8f, "feat_2" -> 0.1f)
-    )
-    val (query, docs) = (
-      QueryContext(queryString = queryString, queryId = "1234Id"),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
-      }
-    )
-  }
-
-  def testQueries: (QueryContext, Array[Document]) = {
-    val query = "magic"
-    val docsToScore = Array(
-      Map(
-        "feat_0" -> 0.04f,
-        "feat_1" -> 0.08f,
-        "feat_2" -> 0.01f,
-        "fake_feat" -> 0.2f
-      ),
-      Map(
-        "feat_0" -> 0.4f,
-        "feat_1" -> 0.8f,
-        "feat_2" -> 0.1f,
-        "fake_feat" -> 0.3f
-      ),
-      Map("feat_0" -> 0.8f, "fake_feat" -> -1f)
-    )
-    (
-      QueryContext(queryString = query, queryId = "1234Id"),
-      docsToScore.zipWithIndex.map {
-        case (map, idx) => Document(floatFeatures = map, docId = idx.toString)
-      }
-    )
+    sampleQueryContexts.foreach { queryContext: Map[String, String] =>
+      val proto = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
+      val scores = bundleExecutor(proto)
+      validateScores(scores, sampleDocumentExamples.length)
+    }
   }
 }

@@ -8,7 +8,7 @@ query_key:
     type: numeric
     shape: null
   serving_info:
-    name: query_key
+    name: queryId
     required: false
     default_value: 0
   tfrecord_type: context
@@ -22,7 +22,7 @@ rank:
     type: numeric
     shape: null
   serving_info:
-    name: pos
+    name: originalRank
     required: true
     default_value: 0
   tfrecord_type: sequence
@@ -50,7 +50,7 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: feat_0
+      name: floatFeat0
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -63,7 +63,7 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: feat_1
+      name: floatFeat1
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -76,7 +76,7 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: feat_2
+      name: floatFeat2
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -94,7 +94,7 @@ features:
     preprocessing_info:
       max_length: 20
     serving_info:
-      name: query_str
+      name: q
       required: true
       default_value: ""
     tfrecord_type: context
