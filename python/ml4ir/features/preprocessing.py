@@ -1,7 +1,6 @@
 import string
 import re
 import tensorflow as tf
-from tensorflow import io
 
 
 # NOTE: We can eventually make this regex configurable through the FeatureConfig
@@ -24,12 +23,7 @@ def preprocess_text(feature_tensor, preprocessing_info):
     if preprocessing_info.get("to_lower", False):
         feature_tensor = tf.strings.lower(feature_tensor)
 
-    # Convert string to bytes
-    feature_tensor = io.decode_raw(
-        feature_tensor, out_type=tf.uint8, fixed_length=preprocessing_info["max_length"],
-    )
-
-    return tf.cast(feature_tensor, tf.float32)
+    return feature_tensor
 
 
 ##########################################

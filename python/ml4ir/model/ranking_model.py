@@ -274,9 +274,7 @@ class RankingModel:
         predictions_df_list = list()
         batch_count = 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
-            predictions_df = self._convert_predictions_to_df(
-                predictions_dict, self.feature_config.get_features_to_log()
-            )
+            predictions_df = pd.DataFrame(predictions_dict)
             if logs_dir:
                 if os.path.isfile(outfile):
                     predictions_df.to_csv(outfile, mode="a", header=False, index=False)
@@ -335,7 +333,7 @@ class RankingModel:
         batch_count = 0
         df_grouped_stats = pd.DataFrame()
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
-            predictions_df = self._convert_predictions_to_df(predictions_dict, evaluation_features)
+            predictions_df = pd.DataFrame(predictions_dict)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
                 df=predictions_df,
@@ -461,22 +459,6 @@ class RankingModel:
             return predictions_dict
 
         return _predict_score
-
-    def _convert_predictions_to_df(self, predictions_dict, features):
-        # If feature is a string, convert back from bytes to string
-        for feature_info in features:
-            feature_node_name = feature_info.get("node_name", feature_info["name"])
-            if feature_info["feature_layer_info"]["type"] == FeatureTypeKey.STRING:
-                str_feature = tf.strings.unicode_encode(
-                    tf.cast(predictions_dict[feature_node_name], tf.int32),
-                    output_encoding="UTF-8",
-                )
-                # TODO: Make this character parameterized
-                predictions_dict[feature_node_name] = tf.strings.regex_replace(
-                    str_feature, "\x00", ""
-                )
-
-        return pd.DataFrame(predictions_dict)
 
     def save(self, models_dir: str, pad_records: bool):
         """

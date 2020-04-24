@@ -257,10 +257,7 @@ class FeatureConfig:
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
     def get_dtype(self, feature_info: dict):
-        if feature_info["dtype"] == "string":
-            return tf.float32
-        else:
-            return feature_info["dtype"]
+        return feature_info["dtype"]
 
     def get_default_value(self, feature_info):
         if feature_info["dtype"] == tf.float32:
