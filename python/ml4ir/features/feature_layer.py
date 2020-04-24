@@ -46,41 +46,40 @@ def get_categorical_embedding(input_feature, feature_info):
     # String input features
     elif feature_info["dtype"] in (tf.string,):
         feature_layer_info = feature_info.get("feature_layer_info")
-        if feature_info["trainable"]:
-            embeddings_list = list()
-            for i in range(feature_layer_info["num_categorical_features"]):
-                # augmented_string = tf.strings.join([input_feature, tf.strings.as_string(tf.constant(i))])
-                augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(input_feature)
+        embeddings_list = list()
+        for i in range(feature_layer_info["num_categorical_features"]):
+            # augmented_string = tf.strings.join([input_feature, tf.strings.as_string(tf.constant(i))])
+            augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(input_feature)
 
-                hash_bucket = tf.strings.to_hash_bucket_fast(
-                    augmented_string, num_buckets=feature_layer_info["num_hash_buckets"]
-                )
-                embeddings_list.append(
-                    layers.Embedding(
-                        input_dim=feature_layer_info["num_hash_buckets"],
-                        output_dim=feature_layer_info["embedding_size"],
-                        name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
-                    )(hash_bucket)
-                )
+            hash_bucket = tf.strings.to_hash_bucket_fast(
+                augmented_string, num_buckets=feature_layer_info["num_hash_buckets"]
+            )
+            embeddings_list.append(
+                layers.Embedding(
+                    input_dim=feature_layer_info["num_hash_buckets"],
+                    output_dim=feature_layer_info["embedding_size"],
+                    name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
+                )(hash_bucket)
+            )
 
-            if feature_layer_info["merge_mode"] == "mean":
-                return tf.reduce_mean(
-                    embeddings_list,
-                    axis=0,
-                    name="categorical_embedding_{}".format(feature_info.get("name")),
-                )
-            elif feature_layer_info["merge_mode"] == "sum":
-                return tf.reduce_sum(
-                    embeddings_list,
-                    axis=0,
-                    name="categorical_embedding_{}".format(feature_info.get("name")),
-                )
-            elif feature_layer_info["merge_mode"] == "concat":
-                return tf.concat(
-                    embeddings_list,
-                    axis=-1,
-                    name="categorical_embedding_{}".format(feature_info.get("name")),
-                )
+        if feature_layer_info["merge_mode"] == "mean":
+            return tf.reduce_mean(
+                embeddings_list,
+                axis=0,
+                name="categorical_embedding_{}".format(feature_info.get("name")),
+            )
+        elif feature_layer_info["merge_mode"] == "sum":
+            return tf.reduce_sum(
+                embeddings_list,
+                axis=0,
+                name="categorical_embedding_{}".format(feature_info.get("name")),
+            )
+        elif feature_layer_info["merge_mode"] == "concat":
+            return tf.concat(
+                embeddings_list,
+                axis=-1,
+                name="categorical_embedding_{}".format(feature_info.get("name")),
+            )
 
 
 def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
@@ -144,18 +143,19 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
                 pass
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
-                categorical_embedding = get_categorical_embedding(
-                    inputs[feature_node_name], feature_info
-                )
-
-                tile_dims = tf.shape(
-                    tf.expand_dims(
-                        tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0), axis=-1,
+                if feature_info["trainable"]:
+                    categorical_embedding = get_categorical_embedding(
+                        inputs[feature_node_name], feature_info
                     )
-                )
-                categorical_embedding = tf.tile(categorical_embedding, tile_dims)
 
-                ranking_features.append(categorical_embedding)
+                    tile_dims = tf.shape(
+                        tf.expand_dims(
+                            tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0), axis=-1,
+                        )
+                    )
+                    categorical_embedding = tf.tile(categorical_embedding, tile_dims)
+
+                    ranking_features.append(categorical_embedding)
             else:
                 raise Exception(
                     "Unknown feature type {} for feature : {}".format(
