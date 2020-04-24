@@ -6,10 +6,10 @@ from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.config.keys import FeatureTypeKey, EncodingTypeKey, TFRecordTypeKey
 
 
-def get_sequence_encoding(input, feature_info):
+def get_sequence_encoding(input_feature, feature_info):
+    """Encode a sequence of numbers into a fixed size tensor"""
     feature_layer_info = feature_info["feature_layer_info"]
 
-    input_feature = tf.cast(input, tf.uint8)
     input_feature = tf.reshape(input_feature, [-1, feature_layer_info["max_length"]])
     if "embedding_size" in feature_layer_info:
         char_embedding = layers.Embedding(
@@ -34,6 +34,53 @@ def get_sequence_encoding(input, feature_info):
         encoding = tf.reshape(encoding, [-1, encoding, feature_layer_info["encoding_size"]],)
 
     return encoding
+
+
+def get_categorical_embedding(input_feature, feature_info):
+    """Embedding lookup for categorical features"""
+
+    # Numeric input features
+    if feature_info["dtype"] in (tf.float32, tf.int64):
+        raise NotImplementedError
+
+    # String input features
+    elif feature_info["dtype"] in (tf.string,):
+        feature_layer_info = feature_info.get("feature_layer_info")
+        if feature_info["trainable"]:
+            embeddings_list = list()
+            for i in range(feature_layer_info["num_categorical_features"]):
+                # augmented_string = tf.strings.join([input_feature, tf.strings.as_string(tf.constant(i))])
+                augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(input_feature)
+
+                hash_bucket = tf.strings.to_hash_bucket_fast(
+                    augmented_string, num_buckets=feature_layer_info["num_hash_buckets"]
+                )
+                embeddings_list.append(
+                    layers.Embedding(
+                        input_dim=32,
+                        output_dim=feature_layer_info["embedding_size"],
+                        name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
+                    )(hash_bucket)
+                )
+
+            if feature_layer_info["merge_mode"] == "mean":
+                return tf.reduce_mean(
+                    embeddings_list,
+                    axis=0,
+                    name="categorical_embedding_{}".format(feature_info.get("name")),
+                )
+            elif feature_layer_info["merge_mode"] == "sum":
+                return tf.reduce_sum(
+                    embeddings_list,
+                    axis=0,
+                    name="categorical_embedding_{}".format(feature_info.get("name")),
+                )
+            elif feature_layer_info["merge_mode"] == "concat":
+                return tf.concat(
+                    embeddings_list,
+                    axis=-1,
+                    name="categorical_embedding_{}".format(feature_info.get("name")),
+                )
 
 
 def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
@@ -70,16 +117,12 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
                 # String input features
                 elif feature_info["dtype"] in (tf.string,):
                     if feature_info["trainable"]:
-                        decoded_string_tensor = tf.cast(
-                            io.decode_raw(
+                        if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
+                            decoded_string_tensor = io.decode_raw(
                                 inputs[feature_node_name],
                                 out_type=tf.uint8,
                                 fixed_length=feature_layer_info["max_length"],
-                            ),
-                            tf.float32,
-                        )
-
-                        if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
+                            )
                             encoding = get_sequence_encoding(decoded_string_tensor, feature_info)
                             """
                             Creating a tensor [1, num_records, 1] dynamically
@@ -98,15 +141,21 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
                             ranking_features.append(encoding)
                         else:
                             raise NotImplementedError
-
+            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
+                pass
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
-                # Numeric input features
-                if feature_info["dtype"] in (tf.float32, tf.int64):
-                    raise NotImplementedError
+                categorical_embedding = get_categorical_embedding(
+                    inputs[feature_node_name], feature_info
+                )
 
-                # String input features
-                elif feature_info["dtype"] in (tf.string,):
-                    raise NotImplementedError
+                tile_dims = tf.shape(
+                    tf.expand_dims(
+                        tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0), axis=-1,
+                    )
+                )
+                categorical_embedding = tf.tile(categorical_embedding, tile_dims)
+
+                ranking_features.append(categorical_embedding)
             else:
                 raise Exception(
                     "Unknown feature type {} for feature : {}".format(

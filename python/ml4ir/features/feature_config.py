@@ -278,21 +278,11 @@ class FeatureConfig:
         """
 
         def get_shape(feature_info: dict):
-            feature_layer_info = feature_info["feature_layer_info"]
-            preprocessing_info = feature_info.get("preprocessing_info", {})
-
             # Setting size to None for sequence features as the num_records is variable
             if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-                num_records = None
+                return (None,)
             else:
-                num_records = 1
-
-            if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (num_records,)
-            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (num_records, preprocessing_info["max_length"])
-            elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
-                raise NotImplementedError
+                return (1,)
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):

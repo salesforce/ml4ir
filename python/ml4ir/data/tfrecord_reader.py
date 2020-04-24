@@ -72,7 +72,6 @@ def make_parse_fn(
         # Explode context features into all records
         for feature_info in feature_config.get_context_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
-            feature_layer_info = feature_info.get("feature_layer_info")
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
             default_tensor = tf.constant(
@@ -83,7 +82,7 @@ def make_parse_fn(
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
 
             # If feature is a string, then decode into numbers
-            if feature_layer_info["type"] == FeatureTypeKey.STRING:
+            if feature_info["dtype"] == tf.string:
                 feature_tensor = preprocessing.preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor
@@ -154,7 +153,6 @@ def make_parse_fn(
         # Pad sequence features to max_num_records
         for feature_info in feature_config.get_sequence_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
-            feature_layer_info = feature_info["feature_layer_info"]
             preprocessing_info = feature_info.get("preprocessing_info", {})
 
             default_tensor = tf.fill(
@@ -174,7 +172,7 @@ def make_parse_fn(
                 feature_tensor = tf.squeeze(feature_tensor, axis=0)
 
             # If feature is a string, then decode into numbers
-            if feature_layer_info["type"] == FeatureTypeKey.STRING:
+            if feature_info["dtype"] == tf.string:
                 feature_tensor = preprocessing.preprocess_text(feature_tensor, preprocessing_info)
 
             features_dict[feature_node_name] = feature_tensor

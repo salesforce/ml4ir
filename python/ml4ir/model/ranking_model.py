@@ -28,7 +28,7 @@ from typing import Dict, Optional, List, Type
 # Constants
 MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
 GROUP_METRICS_CSV_FILE = "group_metrics.csv"
-CHECKPOINT_FNAME = "checkpoint.hdf5"
+CHECKPOINT_FNAME = "checkpoint.tf"
 NEW_RANK_FIELD = "new_rank"
 NEW_SCORE_FIELD = "new_score"
 
