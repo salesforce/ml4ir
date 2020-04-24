@@ -57,7 +57,7 @@ def get_categorical_embedding(input_feature, feature_info):
                 )
                 embeddings_list.append(
                     layers.Embedding(
-                        input_dim=32,
+                        input_dim=feature_layer_info["num_hash_buckets"],
                         output_dim=feature_layer_info["embedding_size"],
                         name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
                     )(hash_bucket)
