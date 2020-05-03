@@ -39,15 +39,14 @@ def make_parse_fn(
         serving_info = feature_info["serving_info"]
         if not required_only or serving_info.get("required", feature_info["trainable"]):
             feature_name = feature_info["name"]
-            feature_node_name = feature_info.get("node_name", feature_name)
             dtype = feature_info["dtype"]
             default_value = feature_config.get_default_value(feature_info)
             if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
-                context_features_spec[feature_node_name] = io.FixedLenFeature(
+                context_features_spec[feature_name] = io.FixedLenFeature(
                     [], dtype, default_value=default_value
                 )
             elif feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-                sequence_features_spec[feature_node_name] = io.VarLenFeature(dtype=dtype)
+                sequence_features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
 
     @tf.function
     def _parse_sequence_example_fn(sequence_example_proto):
@@ -77,7 +76,7 @@ def make_parse_fn(
             default_tensor = tf.constant(
                 value=feature_config.get_default_value(feature_info), dtype=feature_info["dtype"],
             )
-            feature_tensor = context_features.get(feature_node_name, default_tensor)
+            feature_tensor = context_features.get(feature_info["name"], default_tensor)
 
             feature_tensor = tf.expand_dims(feature_tensor, axis=0)
 
@@ -162,7 +161,7 @@ def make_parse_fn(
                 ),
                 dims=[max_num_records if pad_records else num_records],
             )
-            feature_tensor = sequence_features.get(feature_node_name, default_tensor)
+            feature_tensor = sequence_features.get(feature_info["name"], default_tensor)
 
             if isinstance(feature_tensor, sparse.SparseTensor):
                 feature_tensor = sparse.reset_shape(

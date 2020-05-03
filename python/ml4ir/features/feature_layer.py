@@ -105,7 +105,7 @@ def define_feature_layer(feature_config: FeatureConfig, max_num_records: int):
                     dense_feature = inputs[feature_node_name]
 
                     if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT:
-                        dense_feature = tf.tile(dense_feature, numeric_tile_shape, name="broooo")
+                        dense_feature = tf.tile(dense_feature, numeric_tile_shape)
 
                     if feature_info["trainable"]:
                         dense_feature = tf.expand_dims(tf.cast(dense_feature, tf.float32), axis=-1)
