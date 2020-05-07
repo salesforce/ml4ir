@@ -90,6 +90,13 @@ class FeatureTypeKey(Key):
 
 
 class TFRecordTypeKey(Key):
+    """Example or SequenceExample"""
+
+    EXAMPLE = "example"
+    SEQUENCE_EXAMPLE = "sequence_example"
+
+
+class SequenceExampleTypeKey(Key):
     """Type of data in TFRecord SequenceExample protobuf"""
 
     SEQUENCE = "sequence"

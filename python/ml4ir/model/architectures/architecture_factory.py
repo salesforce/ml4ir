@@ -1,3 +1,6 @@
+# type: ignore
+# TODO: Fix typing
+
 from ml4ir.config.keys import ArchitectureKey
 from ml4ir.model.architectures.dnn import DNN
 

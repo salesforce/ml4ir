@@ -1,8 +1,11 @@
+# type: ignore
+# TODO: Fix typing
+
 import ml4ir.io.file_io as file_io
 import yaml
 import pandas as pd
 
-from ml4ir.config.keys import FeatureTypeKey, TFRecordTypeKey
+from ml4ir.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
 from tensorflow.keras import Input
 from typing import List, Dict, Optional
 from logging import Logger
@@ -54,18 +57,40 @@ features:
 
 class FeatureConfigKey:
     QUERY_KEY = "query_key"
-    RANK = "rank"
     LABEL = "label"
     FEATURES = "features"
 
 
 class FeatureConfig:
     """
-    Class to store features to be used for the ranking model
+    Class to store features to be used for the Relevance models
     """
 
     def __init__(self, features_dict, logger: Optional[Logger] = None):
         self.all_features = list()
+        self.query_key = None
+        self.label = None
+        self.features = None
+
+        # Features that can be used for training the model
+        self.train_features = list()
+        # Features that provide additional information about the query+records
+        self.metadata_features = list()
+        # Features to log at inference time
+        self.features_to_log = list()
+        # Features to be used as keys for computing group metrics
+        self.group_metrics_keys = list()
+
+        self.extract_features(features_dict, logger)
+
+        self.define_features()
+
+        self.log_initialization(logger)
+
+        if len(self.train_features) == 0:
+            raise Exception("No trainable features specified in the feature config")
+
+    def extract_features(self, features_dict, logger: Optional[Logger] = None):
 
         try:
             self.query_key = features_dict.get(FeatureConfigKey.QUERY_KEY)
@@ -74,14 +99,6 @@ class FeatureConfig:
             self.query_key = None
             if logger:
                 logger.warning("'query_key' key not found in the feature_config specified")
-
-        try:
-            self.rank = features_dict.get(FeatureConfigKey.RANK)
-            self.all_features.append(self.rank)
-        except KeyError:
-            self.rank = None
-            if logger:
-                logger.warning("'rank' key not found in the feature_config specified")
 
         try:
             self.label = features_dict.get(FeatureConfigKey.LABEL)
@@ -95,35 +112,12 @@ class FeatureConfig:
         except KeyError:
             raise KeyError("'features' key not found in the feature_config specified")
 
-        # Features that can be used for training the model
-        self.ranking_features = list()
-        # Features that provide additional information about the query+records
-        self.metadata_features = list()
-        # Features that contain information at the query level common to all records
-        self.context_features = list()
-        # Features that contain information at the record level
-        self.sequence_features = list()
-        # Features to log at inference time
-        self.features_to_log = list()
-        # Features to be used as keys for computing group metrics
-        self.group_metrics_keys = list()
+    def define_features(self):
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
-                self.ranking_features.append(feature_info)
+                self.train_features.append(feature_info)
             else:
                 self.metadata_features.append(feature_info)
-
-            if feature_info.get("tfrecord_type") == TFRecordTypeKey.CONTEXT:
-                self.context_features.append(feature_info)
-            elif feature_info.get("tfrecord_type") == TFRecordTypeKey.SEQUENCE:
-                self.sequence_features.append(feature_info)
-            else:
-                raise TypeError(
-                    "tfrecord_type should be either context or sequence "
-                    "but is {} for {}".format(
-                        feature_info.get("tfrecord_type"), feature_info.get("name")
-                    )
-                )
 
             if feature_info.get("log_at_inference", False):
                 self.features_to_log.append(feature_info)
@@ -131,28 +125,15 @@ class FeatureConfig:
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
 
-        if len(self.ranking_features) == 0:
-            raise Exception("No trainable features specified in the feature config")
-
-        self.log_initialization(logger)
-        self.mask = self.generate_mask()
-        self.all_features.append(self.get_mask())
-
     def log_initialization(self, logger):
         if logger:
             logger.info("Feature config loaded successfully")
             logger.info(
-                "Trainable Features : \n{}".format("\n".join(self.get_ranking_features("name")))
+                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
             )
-            logger.info("Click label : {}".format(self.get_label("name")))
+            logger.info("Label : {}".format(self.get_label("name")))
             logger.info(
                 "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
-            )
-            logger.info(
-                "Context Features : \n{}".format("\n".join(self.get_ranking_features("name")))
-            )
-            logger.info(
-                "Sequence Features : \n{}".format("\n".join(self.get_ranking_features("name")))
             )
 
     def _get_key_or_dict(self, dict_, key: str = None):
@@ -193,13 +174,6 @@ class FeatureConfig:
         """
         return self._get_key_or_dict(self.rank, key=key)
 
-    def get_mask(self, key: str = None):
-        """
-        Getter method for mask in FeatureConfig object
-        Can additionally be used to only fetch a particular value from the dict
-        """
-        return self._get_key_or_dict(self.mask, key=key)
-
     def get_all_features(self, key: str = None, include_label: bool = True):
         """
         Getter method for all_features in FeatureConfig object
@@ -214,12 +188,12 @@ class FeatureConfig:
             else:
                 return [fdict for fdict in all_features if fdict["name"] != self.get_label("name")]
 
-    def get_ranking_features(self, key: str = None):
+    def get_train_features(self, key: str = None):
         """
-        Getter method for ranking_features in FeatureConfig object
+        Getter method for train_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
         """
-        return self._get_list_of_keys_or_dicts(self.ranking_features, key=key)
+        return self._get_list_of_keys_or_dicts(self.train_features, key=key)
 
     def get_metadata_features(self, key: str = None):
         """
@@ -257,10 +231,7 @@ class FeatureConfig:
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
     def get_dtype(self, feature_info: dict):
-        if feature_info["dtype"] == "string":
-            return tf.float32
-        else:
-            return feature_info["dtype"]
+        return feature_info["dtype"]
 
     def get_default_value(self, feature_info):
         if feature_info["dtype"] == tf.float32:
@@ -282,18 +253,11 @@ class FeatureConfig:
 
         def get_shape(feature_info: dict):
             feature_layer_info = feature_info["feature_layer_info"]
-            preprocessing_info = feature_info.get("preprocessing_info", {})
-
-            # Setting size to None for sequence features as the num_records is variable
-            if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
-                num_records = None
-            else:
-                num_records = 1
 
             if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (num_records,)
+                return (1,)
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (num_records, preprocessing_info["max_length"])
+                return (1, feature_layer_info["args"]["max_length"])
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 raise NotImplementedError
 
@@ -310,6 +274,79 @@ class FeatureConfig:
 
         return inputs
 
+    def create_dummy_protobuf(self, num_records=1, required_only=False):
+        """Create an Example protobuffer with dummy values"""
+        """
+        TODO: The method should also be able to create a SequenceExample from
+        an input dictionary of feature values
+        """
+        raise NotImplementedError
+
+
+class ExampleFeatureConfig(FeatureConfig):
+    """Feature config overrides for data containing Example protos"""
+
+    def create_dummy_protobuf(self, num_records=1, required_only=False):
+        """Create a SequenceExample protobuffer with dummy values"""
+        raise NotImplementedError
+
+
+class SequenceExampleFeatureConfig(FeatureConfig):
+    """Feature config overrides for data containing SequenceExample protos"""
+
+    def __init__(self, features_dict, logger):
+        # Features that contain information at the query level common to all records
+        self.context_features = list()
+        # Features that contain information at the record level
+        self.sequence_features = list()
+
+        super(SequenceExampleFeatureConfig, self).__init__(features_dict, logger)
+
+        self.mask = self.generate_mask()
+        self.all_features.append(self.get_mask())
+
+    def define_features(self):
+        for feature_info in self.all_features:
+            if feature_info.get("trainable", True):
+                self.train_features.append(feature_info)
+            else:
+                self.metadata_features.append(feature_info)
+
+            if feature_info.get("tfrecord_type") == SequenceExampleTypeKey.CONTEXT:
+                self.context_features.append(feature_info)
+            elif feature_info.get("tfrecord_type") == SequenceExampleTypeKey.SEQUENCE:
+                self.sequence_features.append(feature_info)
+            else:
+                raise TypeError(
+                    "tfrecord_type should be either context or sequence "
+                    "but is {} for {}".format(
+                        feature_info.get("tfrecord_type"), feature_info.get("name")
+                    )
+                )
+
+            if feature_info.get("log_at_inference", False):
+                self.features_to_log.append(feature_info)
+
+            if feature_info.get("is_group_metric_key", False):
+                self.group_metrics_keys.append(feature_info)
+
+    def log_initialization(self, logger):
+        if logger:
+            logger.info("Feature config loaded successfully")
+            logger.info(
+                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
+            )
+            logger.info("Label : {}".format(self.get_label("name")))
+            logger.info(
+                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
+            )
+            logger.info(
+                "Context Features : \n{}".format("\n".join(self.get_context_features("name")))
+            )
+            logger.info(
+                "Sequence Features : \n{}".format("\n".join(self.get_sequence_features("name")))
+            )
+
     def generate_mask(self):
         """Add mask information used to flag padded records"""
         return {
@@ -318,10 +355,45 @@ class FeatureConfig:
             "dtype": self.get_rank("dtype"),
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
             "serving_info": {"name": "mask", "required": False},
-            "tfrecord_type": TFRecordTypeKey.SEQUENCE,
+            "tfrecord_type": SequenceExampleTypeKey.SEQUENCE,
         }
 
-    def create_dummy_sequence_example(self, num_records=1, required_only=False):
+    def get_mask(self, key: str = None):
+        """
+        Getter method for mask in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_key_or_dict(self.mask, key=key)
+
+    def define_inputs(self) -> Dict[str, Input]:
+        """
+        Define the input layer for the tensorflow model
+
+        Returns:
+            Dictionary of tensorflow graph input nodes
+        """
+
+        def get_shape(feature_info: dict):
+            # Setting size to None for sequence features as the num_records is variable
+            if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
+                return (None,)
+            else:
+                return (1,)
+
+        inputs: Dict[str, Input] = dict()
+        for feature_info in self.get_all_features(include_label=False):
+            """
+                NOTE: We currently do NOT define label as an input node in the model
+                We could do this in the future, to help define more complex loss functions
+            """
+            node_name = feature_info.get("node_name", feature_info["name"])
+            inputs[node_name] = Input(
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
+            )
+
+        return inputs
+
+    def create_dummy_protobuf(self, num_records=1, required_only=False):
         """Create a SequenceExample protobuffer with dummy values"""
         """
         TODO: The method should also be able to create a SequenceExample from
@@ -355,7 +427,9 @@ class FeatureConfig:
         ).values[0]
 
 
-def parse_config(feature_config, logger: Optional[Logger] = None) -> FeatureConfig:
+def parse_config(
+    tfrecord_type: str, feature_config, logger: Optional[Logger] = None
+) -> FeatureConfig:
     if feature_config.endswith(".yaml"):
         feature_config = file_io.read_yaml(feature_config)
         if logger:
@@ -363,6 +437,9 @@ def parse_config(feature_config, logger: Optional[Logger] = None) -> FeatureConf
     else:
         feature_config = yaml.safe_load(feature_config)
         if logger:
-            logger.info("Reading feature config from YAML string : {}".format(feature_config))
+            logger.info("Reading feature config from YAML string")
 
-    return FeatureConfig(feature_config, logger=logger)
+    if tfrecord_type == TFRecordTypeKey.EXAMPLE:
+        return ExampleFeatureConfig(feature_config, logger=logger)
+    else:
+        return SequenceExampleFeatureConfig(feature_config, logger=logger)

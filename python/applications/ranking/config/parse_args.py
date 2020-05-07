@@ -1,12 +1,16 @@
 # type: ignore
 # TODO: Fix typing
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 from typing import List
+from ml4ir.config.parse_args import RelevanceArgParser
 
 
-class RelevanceArgParser(ArgumentParser):
+class RankingArgParser(RelevanceArgParser):
     def __init__(self):
+
+        super(RankingArgParser, self).__init__()
+
         self.add_argument(
             "--data_dir",
             type=str,
@@ -179,10 +183,10 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--max_sequence_size",
+            "--max_num_records",
             type=int,
             default=25,
-            help="Maximum number of elements per sequence feature.",
+            help="Maximum number of records per query considered for ranking.",
         )
 
         self.add_argument(
@@ -241,4 +245,4 @@ class RelevanceArgParser(ArgumentParser):
 
 
 def get_args(args: List[str]) -> Namespace:
-    return RelevanceArgParser().parse_args(args)
+    return RankingArgParser().parse_args(args)

@@ -1,7 +1,6 @@
 import string
 import re
 import tensorflow as tf
-from tensorflow import io
 
 
 # NOTE: We can eventually make this regex configurable through the FeatureConfig
@@ -9,27 +8,45 @@ from tensorflow import io
 PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
 
 
+class PreprocessingMap:
+    def __init__(self):
+        self.key_to_fn = {
+            preprocess_text.__name__: preprocess_text
+            # Add more here
+        }
+
+    def add_fn(self, key, fn):
+        self.key_to_fn[key] = fn
+
+    def add_fns(self, keys_to_fns_dict):
+        self.key_to_fn.update(keys_to_fns_dict)
+
+    def get_fns(self):
+        return self.key_to_fn
+
+    def get_fn(self, key):
+        return self.key_to_fn.get(key)
+
+    def pop_fn(self, key):
+        self.key_to_fn.pop(key)
+
+
 @tf.function
-def preprocess_text(feature_tensor, preprocessing_info):
+def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
     """
     Args:
         feature_tensor: input feature tensor of type tf.string
-        preprocessing_info: dictionary containing preprocessing information for the feature
+        remove_pun
 
     Returns:
         processed float tensor
     """
-    if preprocessing_info.get("remove_punctuation", False):
+    if remove_punctuation:
         feature_tensor = tf.strings.regex_replace(feature_tensor, PUNCTUATION_REGEX, "")
-    if preprocessing_info.get("to_lower", False):
+    if to_lower:
         feature_tensor = tf.strings.lower(feature_tensor)
 
-    # Convert string to bytes
-    feature_tensor = io.decode_raw(
-        feature_tensor, out_type=tf.uint8, fixed_length=preprocessing_info["max_length"],
-    )
-
-    return tf.cast(feature_tensor, tf.float32)
+    return feature_tensor
 
 
 ##########################################

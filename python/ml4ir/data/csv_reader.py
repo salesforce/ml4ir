@@ -1,3 +1,6 @@
+# type: ignore
+# TODO: Fix typing
+
 from ml4ir.io import file_io
 import os
 import tensorflow as tf
@@ -12,8 +15,10 @@ TFRECORD_FILE = "file_0.tfrecord"
 def read(
     data_dir: str,
     feature_config: FeatureConfig,
+    tfrecord_type: str,
     tfrecord_dir: str,
     batch_size: int = 128,
+    preprocessing_keys_to_fns: dict = {},
     use_part_files: bool = False,
     max_num_records: int = 25,
     parse_tfrecord: bool = True,
@@ -53,18 +58,21 @@ def read(
     file_io.make_directory(tfrecord_dir, clear_dir=True)
 
     # Write tfrecord files
-    tfrecord_writer.write(
+    tfrecord_writer.write_from_files(
         csv_files=csv_files,
         tfrecord_file=os.path.join(tfrecord_dir, TFRECORD_FILE),
         feature_config=feature_config,
+        tfrecord_type=tfrecord_type,
         logger=logger,
     )
 
     dataset = tfrecord_reader.read(
         data_dir=tfrecord_dir,
         feature_config=feature_config,
+        tfrecord_type=tfrecord_type,
         max_num_records=max_num_records,
         batch_size=batch_size,
+        preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         parse_tfrecord=parse_tfrecord,
         logger=logger,
     )

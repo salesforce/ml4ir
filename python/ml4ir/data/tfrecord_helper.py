@@ -1,6 +1,9 @@
+# type: ignore
+# TODO: Fix typing
+
 from tensorflow import train
 import tensorflow as tf
-from ml4ir.config.keys import TFRecordTypeKey
+from ml4ir.config.keys import SequenceExampleTypeKey
 
 
 def _bytes_feature(values):
@@ -31,6 +34,25 @@ def _get_feature_fn(dtype):
         raise Exception("Feature dtype {} not supported".format(dtype))
 
 
+def get_example_proto(row, features):
+    """
+    Get an Example protobuf from a dataframe row
+
+    Args:
+        - row: pandas DataFrame row
+        - features: configuration for all features
+    """
+
+    features_dict = dict()
+
+    for feature_info in features:
+        feature_name = feature_info["name"]
+        feature_fn = _get_feature_fn(feature_info["dtype"])
+        features_dict[feature_name] = feature_fn([row[feature_name]])
+
+    return train.Example(features=train.Features(feature=features_dict))
+
+
 def get_sequence_example_proto(group, context_features, sequence_features):
     """
     Get a sequence example protobuf from a dataframe group
@@ -51,14 +73,12 @@ def get_sequence_example_proto(group, context_features, sequence_features):
     for feature_info in sequence_features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
-        if feature_info["tfrecord_type"] == TFRecordTypeKey.SEQUENCE:
+        if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
             sequence_features_dict[feature_name] = train.FeatureList(
                 feature=[feature_fn(group[feature_name].tolist())]
             )
 
-    sequence_example_proto = train.SequenceExample(
+    return train.SequenceExample(
         context=train.Features(feature=context_features_dict),
         feature_lists=train.FeatureLists(feature_list=sequence_features_dict),
     )
-
-    return sequence_example_proto

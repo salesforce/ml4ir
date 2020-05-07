@@ -1,16 +1,19 @@
-import tensorflow as tf
-from tensorflow import train
+# type: ignore
+# TODO: Fix typing
+
 from tensorflow import io
 from ml4ir.io import file_io
 from typing import List
 from logging import Logger
+from ml4ir.config.keys import TFRecordTypeKey
 from ml4ir.features.feature_config import FeatureConfig, parse_config
 from argparse import ArgumentParser
 import glob
 import os
 import sys
 from ml4ir.io.logging_utils import setup_logging
-from ml4ir.data.tfrecord_helper import get_sequence_example_proto
+from ml4ir.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
+from pandas import DataFrame
 
 
 """
@@ -38,8 +41,12 @@ python ml4ir/data/tfrecord_writer.py \
 """
 
 
-def write(
-    csv_files: List[str], tfrecord_file: str, feature_config: FeatureConfig, logger: Logger = None
+def write_from_files(
+    csv_files: List[str],
+    tfrecord_file: str,
+    feature_config: FeatureConfig,
+    tfrecord_type: str,
+    logger: Logger = None,
 ):
     """
     Converts data from CSV files into tfrecord data.
@@ -57,21 +64,53 @@ def write(
     # Read CSV data into a pandas dataframe
     df = file_io.read_df_list(csv_files, log=logger)
 
-    # Group pandas dataframe on query_id/query key and
-    # convert each group to a single sequence example proto
+    write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
+
+
+def write_from_df(
+    df: DataFrame,
+    tfrecord_file: str,
+    feature_config: FeatureConfig,
+    tfrecord_type: str,
+    logger: Logger = None,
+):
+    """
+    Converts data from CSV files into tfrecord data.
+    Output data protobuf format -> train.SequenceExample
+
+    Args:
+        df: pandas DataFrame
+        tfrecord_file: tfrecord file path to write the output
+        feature_config: str path to JSON feature config or str JSON feature config
+        logger: logging object
+
+    NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
+    """
+
     if logger:
         logger.info("Writing SequenceExample protobufs to : {}".format(tfrecord_file))
     with io.TFRecordWriter(tfrecord_file) as tf_writer:
-        context_feature_names = feature_config.get_context_features(key="name")
-        sequence_example_protos = df.groupby(context_feature_names).apply(
-            lambda g: get_sequence_example_proto(
-                group=g,
-                context_features=feature_config.get_context_features(),
-                sequence_features=feature_config.get_sequence_features(),
+        if tfrecord_type == TFRecordTypeKey.EXAMPLE:
+            protos = df.apply(
+                lambda row: get_example_proto(row=row, features=feature_config.get_all_features()),
+                axis=1,
             )
-        )
-        for sequence_example_proto in sequence_example_protos:
-            tf_writer.write(sequence_example_proto.SerializeToString())
+        elif tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
+            # Group pandas dataframe on query_id/query key and
+            # convert each group to a single sequence example proto
+            context_feature_names = feature_config.get_context_features(key="name")
+            protos = df.groupby(context_feature_names).apply(
+                lambda g: get_sequence_example_proto(
+                    group=g,
+                    context_features=feature_config.get_context_features(),
+                    sequence_features=feature_config.get_sequence_features(),
+                )
+            )
+
+        # Write to disk
+        for proto in protos:
+            tf_writer.write(proto.SerializeToString())
+
     tf_writer.close()
 
 
@@ -137,7 +176,7 @@ def main(argv):
             else:
                 tfrecord_file: str = args.tfrecord_file
 
-            write(
+            write_from_files(
                 csv_files=[csv_file],
                 tfrecord_file=tfrecord_file,
                 feature_config=feature_config,
@@ -154,7 +193,7 @@ def main(argv):
         else:
             tfrecord_file: str = args.tfrecord_file
 
-        write(
+        write_from_files(
             csv_files=csv_files,
             tfrecord_file=tfrecord_file,
             feature_config=feature_config,
