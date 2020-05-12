@@ -8,6 +8,7 @@ from ml4ir.features.feature_layer import define_example_feature_layer
 from ml4ir.features.feature_layer import define_sequence_example_feature_layer
 from tensorflow.keras import Input
 from typing import Dict
+import tensorflow as tf
 
 
 class InteractionModel:
@@ -65,7 +66,7 @@ class UnivariateInteractionModel(InteractionModel):
         return train_features, metadata_features
 
     def transform_features_op(self, train_features, metadata_features):
-        # Do something
-        # NOTE: Useful if we want to implement groupwise sampling strategies
+        # TODO: Make train_features a dictionary
+        train_features = tf.concat(train_features, axis=-1, name="train_features")
 
         return train_features, metadata_features

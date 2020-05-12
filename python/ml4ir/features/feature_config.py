@@ -252,14 +252,8 @@ class FeatureConfig:
         """
 
         def get_shape(feature_info: dict):
-            feature_layer_info = feature_info["feature_layer_info"]
-
-            if feature_layer_info["type"] == FeatureTypeKey.NUMERIC:
-                return (1,)
-            elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                return (1, feature_layer_info["args"]["max_length"])
-            elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
-                raise NotImplementedError
+            # TODO: Expand to other shapes
+            return (1,)
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):

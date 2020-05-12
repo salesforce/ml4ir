@@ -9,13 +9,17 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import saved_model
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
+import pandas as pd
+import numpy as np
 
 from ml4ir.features.feature_config import FeatureConfig
+from ml4ir.io import file_io
 from ml4ir.data.relevance_dataset import RelevanceDataset
 from ml4ir.model.losses.loss_base import RelevanceLossBase
 from ml4ir.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.model.serving import define_serving_signatures
+from ml4ir.model.scoring.prediction_helper import get_predict_fn
 
 from typing import Dict, Optional, List, Union
 
@@ -31,14 +35,12 @@ class RelevanceModel:
     def __init__(
         self,
         feature_config: FeatureConfig,
-        scorer: ScorerBase,
-        metrics: List[Union[kmetrics.Metric, str]],
-        optimizer: Optimizer,
         tfrecord_type: str,
+        scorer: Optional[ScorerBase] = None,
+        metrics: List[Union[kmetrics.Metric, str]] = [],
+        optimizer: Optional[Optimizer] = None,
         model_file: Optional[str] = None,
         compile_keras_model: bool = False,
-        # type: ignore
-        # TODO: Fix typing
         output_name: str = "score",
         logger=None,
     ):
@@ -63,7 +65,7 @@ class RelevanceModel:
             This will allow the model to be only used for inference and
             cannot be used for retraining.
             """
-            self.model: Model = self.load_model(model_file)
+            self.model: Model = self.load(model_file)
             self.is_compiled = False
         else:
 
@@ -194,6 +196,7 @@ class RelevanceModel:
         logging_frequency: str = 25,
         monitor_metric: str = "",
         monitor_mode: str = "",
+        patience=2,
     ):
         """
         Trains model for defined number of epochs
@@ -212,6 +215,7 @@ class RelevanceModel:
             logging_frequency=logging_frequency,
             monitor_mode=monitor_mode,
             monitor_metric=monitor_metric,
+            patience=patience,
         )
         if self.is_compiled:
             self.model.fit(
@@ -229,7 +233,8 @@ class RelevanceModel:
     def predict(
         self,
         test_dataset: data.TFRecordDataset,
-        inference_signature: str = None,
+        inference_signature: str = "serving_default",
+        additional_features: dict = {},
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
     ):
@@ -244,43 +249,49 @@ class RelevanceModel:
         Returns:
             ranking scores or new ranks for each record in a query
         """
-        # if logs_dir:
-        #     outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
-        #     # Delete file if it exists
-        #     file_io.rm_file(outfile)
+        if logs_dir:
+            outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            file_io.rm_file(outfile)
 
-        # _predict_fn = self._get_predict_fn(
-        #     inference_signature=inference_signature,
-        #     features_to_return=self.feature_config.get_features_to_log(),
-        # )
+        _predict_fn = get_predict_fn(
+            model=self.model,
+            tfrecord_type=self.tfrecord_type,
+            feature_config=self.feature_config,
+            inference_signature=inference_signature,
+            is_compiled=self.is_compiled,
+            output_name=self.output_name,
+            features_to_return=self.feature_config.get_features_to_log(),
+            additional_features=additional_features,
+            max_sequence_size=self.max_sequence_size,
+        )
 
-        # predictions_df_list = list()
-        # batch_count = 0
-        # for predictions_dict in test_dataset.map(_predict_fn).take(-1):
-        #     predictions_df = pd.DataFrame(predictions_dict)
-        #     if logs_dir:
-        #         if os.path.isfile(outfile):
-        #             predictions_df.to_csv(outfile, mode="a", header=False, index=False)
-        #         else:
-        #             # If writing first time, write headers to CSV file
-        #             predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-        #     else:
-        #         predictions_df_list.append(predictions_df)
+        predictions_df_list = list()
+        batch_count = 0
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            predictions_df = pd.DataFrame(predictions_dict)
+            if logs_dir:
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+            else:
+                predictions_df_list.append(predictions_df)
 
-        #     batch_count += 1
-        #     if batch_count % logging_frequency == 0:
-        #         self.logger.info("Finished predicting scores for {} batches".format(batch_count))
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished predicting scores for {} batches".format(batch_count))
 
-        # predictions_df = None
-        # if logs_dir:
-        #     self.logger.info("Model predictions written to -> {}".format(outfile))
-        # else:
-        #     self.logger.info("Model Predictions: ")
-        #     predictions_df = pd.concat(predictions_df_list)
-        #     self.logger.info(predictions_df)
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            predictions_df = pd.concat(predictions_df_list)
+            # self.logger.info("Model Predictions: ")
+            # self.logger.info(predictions_df)
 
-        # return predictions_df
-        pass
+        return predictions_df
 
     def evaluate(
         self,
@@ -290,19 +301,19 @@ class RelevanceModel:
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
     ):
-        """
-        Evaluate the ranking model
+        # """
+        # Evaluate the ranking model
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            logging_frequency: integer representing how often(in batches) to log status
-            metric_group_keys: list of fields to compute group based metrics on
-            save_to_file: set to True to save predictions to file like self.predict()
+        # Args:
+        #     test_dataset: an instance of tf.data.dataset
+        #     inference_signature: If using a SavedModel for prediction, specify the inference signature
+        #     logging_frequency: integer representing how often(in batches) to log status
+        #     metric_group_keys: list of fields to compute group based metrics on
+        #     save_to_file: set to True to save predictions to file like self.predict()
 
-        Returns:
-            metrics and groupwise metrics as pandas DataFrames
-        """
+        # Returns:
+        #     metrics and groupwise metrics as pandas DataFrames
+        # """
         # group_metrics_keys = self.feature_config.get_group_metrics_keys()
         # evaluation_features = group_metrics_keys + [
         #     self.feature_config.get_query_key(),
@@ -366,87 +377,6 @@ class RelevanceModel:
         # return df_overall_metrics, df_group_metrics
         pass
 
-    def _get_predict_fn(self, inference_signature, features_to_return):
-        # if self.is_compiled:
-        #     infer = self.model
-        # else:
-        #     # If SavedModel was loaded without compilation
-        #     infer = self.model.signatures[inference_signature]
-
-        # # Get features to log
-        # features_to_log = [f.get("node_name", f["name"]) for f in features_to_return] + [
-        #     "new_score",
-        #     "new_rank",
-        # ]
-
-        # @tf.function
-        # def _flatten_records(x):
-        #     """Collapse first two dimensions -> [batch_size, max_sequence_size]"""
-        #     return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
-
-        # @tf.function
-        # def _filter_records(x, mask):
-        #     """Filter records that were padded in each query"""
-        #     return tf.squeeze(
-        #         tf.gather_nd(
-        #             x,
-        #             tf.where(tf.not_equal(tf.cast(mask, tf.int64), tf.constant(0, dtype="int64"))),
-        #         )
-        #     )
-
-        # @tf.function
-        # def _predict_score(features, label):
-        #     # features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
-        #     if self.is_compiled:
-        #         scores = infer(features)[self.output_name]
-        #     else:
-        #         scores = infer(**features)[self.output_name]
-
-        #     # Set scores of padded records to 0
-        #     scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-        #     new_rank = tf.add(
-        #         tf.argsort(
-        #             tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True
-        #         ),
-        #         tf.constant(1),
-        #     )
-
-        #     predictions_dict = dict()
-        #     mask = _flatten_records(features["mask"])
-        #     for feature_name in features_to_log:
-        #         if feature_name == self.feature_config.get_label(key="node_name"):
-        #             feat_ = label
-        #         elif feature_name == RelevanceModelConstants.NEW_SCORE_FIELD:
-        #             feat_ = scores
-        #         elif feature_name == NEW_RANK_FIELD:
-        #             feat_ = new_rank
-        #         else:
-        #             if feature_name in features:
-        #                 feat_ = features[feature_name]
-        #             else:
-        #                 raise KeyError(
-        #                     "{} was not found in input training data".format(feature_name)
-        #                 )
-
-        #         # Explode context features to each record for logging
-        #         # NOTE: This assumes that the record dimension is on axis 1, like previously
-        #         feat_ = tf.cond(
-        #             tf.equal(tf.shape(feat_)[1], tf.constant(1)),
-        #             true_fn=lambda: K.repeat_elements(feat_, rep=self.max_sequence_size, axis=1),
-        #             false_fn=lambda: feat_,
-        #         )
-
-        #         # Collapse from one query per data point to one record per data point
-        #         # and remove padded dummy records
-        #         feat_ = _filter_records(_flatten_records(feat_), mask)
-
-        #         predictions_dict[feature_name] = feat_
-
-        #     return predictions_dict
-
-        # return _predict_score
-        pass
-
     def save(
         self,
         models_dir: str,
@@ -489,7 +419,7 @@ class RelevanceModel:
         )
         self.logger.info("Final model saved to : {}".format(model_file))
 
-    def load_model(self, model_file: str) -> Model:
+    def load(self, model_file: str) -> Model:
         """
         Loads model from the SavedModel file specified
 
@@ -541,7 +471,7 @@ class RelevanceModel:
 
     def load_weights(self, model_file: str):
         # Load saved model with compile=False
-        loaded_model = self.load_model(model_file)
+        loaded_model = self.load(model_file)
 
         # Set weights of Keras model from the loaded model weights
         self.model.set_weights(loaded_model.get_weights())
@@ -555,6 +485,7 @@ class RelevanceModel:
         logging_frequency=25,
         monitor_metric: str = "",
         monitor_mode: str = "",
+        patience=2,
     ):
         """
         Build callback hooks for the training loop
@@ -585,7 +516,7 @@ class RelevanceModel:
                 early_stopping_callback = callbacks.EarlyStopping(
                     monitor=monitor_metric,
                     mode=monitor_mode,
-                    patience=2,
+                    patience=patience,
                     verbose=1,
                     restore_best_weights=True,
                 )
@@ -646,10 +577,3 @@ class RelevanceModel:
         # Add more here
 
         return callbacks_list
-
-    def _transform_features(self, train_features, metadata_features, loss: RelevanceLossBase):
-        """
-        Transform the features as necessary for different
-        scoring and loss types
-        """
-        return train_features, metadata_features

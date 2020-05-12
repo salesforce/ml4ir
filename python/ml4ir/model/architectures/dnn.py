@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from typing import List
+import copy
 
 
 class DNNLayer:
@@ -28,7 +29,8 @@ class DNN:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
 
         return [
-            get_op(layer_args.pop("type"), layer_args) for layer_args in model_config["layers"]
+            get_op(layer_args["type"], {k: v for k, v in layer_args.items() if k not in "type"})
+            for layer_args in model_config["layers"]
         ]
 
     def get_architecture_op(self):
