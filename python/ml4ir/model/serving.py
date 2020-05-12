@@ -3,10 +3,9 @@
 
 import tensorflow as tf
 from tensorflow import TensorSpec, TensorArray
-from ml4ir.config.keys import ServingSignatureKey, TFRecordTypeKey
+from ml4ir.config.keys import ServingSignatureKey
 from ml4ir.data.tfrecord_reader import get_parse_fn
 from ml4ir.features.feature_config import FeatureConfig
-from ml4ir.features.preprocessing import PreprocessingMap
 
 
 def define_default_signature(model, feature_config):
