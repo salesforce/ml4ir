@@ -1,7 +1,7 @@
 # type: ignore
 # TODO: Fix typing
 
-from ml4ir.model.losses.loss_base import PointwiseLossBase
+from applications.ranking.model.losses.loss_base import PointwiseLossBase
 from tensorflow.keras import losses
 import tensorflow as tf
 from tensorflow.keras import layers
@@ -27,6 +27,6 @@ class SigmoidCrossEntropy(PointwiseLossBase):
 
         return _loss_fn
 
-    def get_final_activation_op(self):
+    def get_final_activation_op(self, output_name):
         # Pointwise sigmoid loss
-        return lambda logits, mask: layers.Activation("sigmoid", name="ranking_scores")(logits)
+        return lambda logits, mask: layers.Activation("sigmoid", name=output_name)(logits)

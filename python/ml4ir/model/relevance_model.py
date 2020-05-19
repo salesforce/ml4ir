@@ -10,18 +10,18 @@ from tensorflow import saved_model
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
-import numpy as np
 
 from ml4ir.features.feature_config import FeatureConfig
 from ml4ir.io import file_io
 from ml4ir.data.relevance_dataset import RelevanceDataset
 from ml4ir.model.losses.loss_base import RelevanceLossBase
+from ml4ir.model.metrics.metrics_impl import get_metrics_impl
 from ml4ir.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.model.serving import define_serving_signatures
 from ml4ir.model.scoring.prediction_helper import get_predict_fn
 
-from typing import Dict, Optional, List, Union
+from typing import Dict, Optional, List, Union, Type
 
 
 class RelevanceModelConstants:
@@ -37,7 +37,7 @@ class RelevanceModel:
         feature_config: FeatureConfig,
         tfrecord_type: str,
         scorer: Optional[ScorerBase] = None,
-        metrics: List[Union[kmetrics.Metric, str]] = [],
+        metrics: List[Union[Type[kmetrics.Metric], str]] = [],
         optimizer: Optional[Optimizer] = None,
         model_file: Optional[str] = None,
         compile_keras_model: bool = False,
@@ -83,6 +83,11 @@ class RelevanceModel:
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
+
+            # Get metric objects
+            metrics: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+            )
 
             # Compile model
             self.model.compile(
@@ -208,6 +213,8 @@ class RelevanceModel:
             logs_dir: directory to save model logs
             logging_frequency: every #batches to log results
         """
+        if not monitor_metric.startswith("val_"):
+            monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
             models_dir=models_dir,
             logs_dir=logs_dir,
@@ -380,7 +387,7 @@ class RelevanceModel:
     def save(
         self,
         models_dir: str,
-        preprocessing_keys_to_fns,
+        preprocessing_keys_to_fns={},
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,

@@ -7,6 +7,11 @@ from typing import List
 
 class RelevanceArgParser(ArgumentParser):
     def __init__(self):
+        super().__init__()
+        self.define_args()
+        self.set_default_args()
+
+    def define_args(self):
         self.add_argument(
             "--data_dir",
             type=str,
@@ -22,6 +27,14 @@ class RelevanceArgParser(ArgumentParser):
             default="tfrecord",
             help="Format of the data to be used. "
             "Should be one of the Data format keys in ml4ir/config/keys.py",
+        )
+
+        self.add_argument(
+            "--tfrecord_type",
+            type=str,
+            default="example",
+            help="TFRecord type of the data to be used. "
+            "Should be one of the TFRecord type keys in ml4ir/config/keys.py",
         )
 
         self.add_argument(
@@ -47,7 +60,7 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--optimizer",
+            "--optimizer_key",
             type=str,
             default="adam",
             help="Optimizer to use. Has to be one of the optimizers in OptimizerKey under "
@@ -55,26 +68,33 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--metrics",
+            "--loss_key",
             type=str,
-            default="['MRR', 'ACR']",
+            default=None,
+            help="Loss to optimize. Has to be one of the losses in LossKey under ml4ir/config/keys.py",
+        )
+
+        self.add_argument(
+            "--metrics_keys",
+            type=str,
+            default=None,
             help="Metric to compute. Can be a list. Has to be one of the metrics in MetricKey under "
             "ml4ir/config/keys.py",
         )
 
         self.add_argument(
-            "--loss",
+            "--monitor_metric",
             type=str,
-            default="sigmoid_cross_entropy",
-            help="Loss to optimize. Has to be one of the losses in LossKey under ml4ir/config/keys.py",
+            default=None,
+            help="Metric name to use for monitoring training loop in callbacks"
+            "ml4ir/config/keys.py",
         )
 
         self.add_argument(
-            "--scoring",
+            "--monitor_mode",
             type=str,
-            default="pointwise",
-            help="Scoring technique to use. Has to be one of the scoring types in ScoringKey in "
-            "ml4ir/config/keys.py",
+            default=None,
+            help="Metric mode to use for monitoring training loop in callbacks",
         )
 
         self.add_argument(
@@ -116,7 +136,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--execution_mode",
             type=str,
-            default="train_inference",
+            default="train_inference_evaluate",
             help="Execution mode for the pipeline. Should be one of ExecutionModeKey",
         )
 
@@ -181,7 +201,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--max_sequence_size",
             type=int,
-            default=25,
+            default=0,
             help="Maximum number of elements per sequence feature.",
         )
 
@@ -209,7 +229,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--group_metrics_min_queries",
             type=int,
-            default=25,
+            default=None,
             help="Minimum number of queries per group to be used to computed groupwise metrics.",
         )
 
@@ -230,14 +250,35 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--pad_records_at_inference",
+            "--use_all_fields_at_inference",
             type=bool,
             default=False,
-            help="Whether to pad records at inference time. Used to define the TFRecord serving signature in the SavedModel",
+            help="Whether to require all fields in the serving signature of the SavedModel. If set to False, only requires fields with required_only=True",
         )
 
-    def parse_args(self, args: List[str]) -> Namespace:
-        return self.parse_args()
+        self.add_argument(
+            "--pad_sequence_at_inference",
+            type=bool,
+            default=False,
+            help="Whether to pad sequence at inference time. Used to define the TFRecord serving signature in the SavedModel",
+        )
+
+        self.add_argument(
+            "--output_name",
+            type=str,
+            default="relevance_score",
+            help="Name of the output node of the model",
+        )
+
+        self.add_argument(
+            "--early_stopping_patience",
+            type=int,
+            default=2,
+            help="How many epochs to wait before early stopping on metric degradation",
+        )
+
+    def set_default_args(self):
+        pass
 
 
 def get_args(args: List[str]) -> Namespace:

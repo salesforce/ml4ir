@@ -8,9 +8,24 @@ query_key:
     type: numeric
     shape: null
   serving_info:
+    name: queryId
     required: false
     default_value: 0
   tfrecord_type: context
+rank:
+  name: pos
+  node_name: pos
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: originalRank
+    required: true
+    default_value: 0
+  tfrecord_type: sequence
 label:
   name: label
   node_name: label
@@ -21,6 +36,7 @@ label:
     type: numeric
     shape: null
   serving_info:
+    name: label
     required: false
     default_value: 0
   tfrecord_type: sequence
@@ -34,6 +50,7 @@ features:
       type: numeric
       shape: null
     serving_info:
+      name: floatFeat0
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -46,6 +63,7 @@ features:
       type: numeric
       shape: null
     serving_info:
+      name: floatFeat1
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -58,6 +76,7 @@ features:
       type: numeric
       shape: null
     serving_info:
+      name: floatFeat2
       required: true
       default_value: 0.0
     tfrecord_type: sequence
@@ -80,9 +99,8 @@ features:
         args:
           remove_punctuation: true
           to_lower: true
-      - fn: strip_numbers
     serving_info:
-      name: query_str
+      name: q
       required: true
       default_value: ""
     tfrecord_type: context
@@ -96,18 +114,7 @@ features:
       type: numeric
       shape: null
     serving_info:
+      name: group
       required: false
       default_value: 0
     tfrecord_type: context
-  - name: pos
-    node_name: pos
-    trainable: false
-    dtype: int64
-    log_at_inference: true
-    feature_layer_info:
-      type: numeric
-      shape: null
-    serving_info:
-      required: true
-      default_value: 0
-    tfrecord_type: sequence

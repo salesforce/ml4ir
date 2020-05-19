@@ -59,6 +59,7 @@ class FeatureConfigKey:
     QUERY_KEY = "query_key"
     LABEL = "label"
     FEATURES = "features"
+    RANK = "rank"
 
 
 class FeatureConfig:
@@ -166,13 +167,6 @@ class FeatureConfig:
         Can additionally be used to only fetch a particular value from the dict
         """
         return self._get_key_or_dict(self.label, key=key)
-
-    def get_rank(self, key: str = None):
-        """
-        Getter method for rank in FeatureConfig object
-        Can additionally be used to only fetch a particular value from the dict
-        """
-        return self._get_key_or_dict(self.rank, key=key)
 
     def get_all_features(self, key: str = None, include_label: bool = True):
         """
@@ -289,6 +283,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
     """Feature config overrides for data containing SequenceExample protos"""
 
     def __init__(self, features_dict, logger):
+        self.rank = None
         # Features that contain information at the query level common to all records
         self.context_features = list()
         # Features that contain information at the record level
@@ -298,6 +293,16 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
         self.mask = self.generate_mask()
         self.all_features.append(self.get_mask())
+
+    def extract_features(self, features_dict, logger: Optional[Logger] = None):
+        super().extract_features(features_dict, logger)
+        try:
+            self.rank = features_dict.get(FeatureConfigKey.RANK)
+            self.all_features.append(self.rank)
+        except KeyError:
+            self.rank = None
+            if logger:
+                logger.warning("'rank' key not found in the feature_config specified")
 
     def define_features(self):
         for feature_info in self.all_features:
@@ -351,6 +356,13 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": SequenceExampleTypeKey.SEQUENCE,
         }
+
+    def get_rank(self, key: str = None):
+        """
+        Getter method for rank in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_key_or_dict(self.rank, key=key)
 
     def get_mask(self, key: str = None):
         """

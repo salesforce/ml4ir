@@ -8,6 +8,9 @@ import numpy as np
 from tensorflow import Tensor
 from tensorflow import dtypes
 from typing import Optional
+from ml4ir.model.metrics.metrics_impl import MetricState
+from ml4ir.features.feature_config import FeatureConfig
+from typing import Dict
 
 
 class MeanMetricWrapper(metrics.Mean):
@@ -58,11 +61,12 @@ class MeanMetricWrapper(metrics.Mean):
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
         self,
-        rank: Tensor,
-        mask: Tensor,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        state: str = MetricState.NEW,
         name="MeanRankMetric",
-        rerank: bool = True,
         dtype: Optional[dtypes.DType] = None,
+        **kwargs
     ):
         """
         Creates a `MeanRankMetric` instance.
@@ -84,14 +88,16 @@ class MeanRankMetric(MeanMetricWrapper):
         If `sample_weight` is `None`, weights default to 1.
         Use `sample_weight` of 0 to mask values.
         """
-        name = "{}_{}".format("new" if rerank else "old", name)
+        name = "{}_{}".format(state, name)
+        rank = metadata_features[feature_config.get_rank("node_name")]
+        mask = metadata_features[feature_config.get_mask("node_name")]
         super(MeanRankMetric, self).__init__(
             self._compute, name, dtype=dtype, rank=rank, mask=mask
         )
-        self.rerank = rerank
+        self.state = state
 
     def _compute(self, y_true, y_pred, rank, mask):
-        if self.rerank:
+        if self.state == "new":
             """Rerank using trained model"""
             # Convert y_pred for the masked records to -inf
             y_pred = tf.where(tf.equal(mask, 0), tf.constant(-np.inf), y_pred)
@@ -139,8 +145,21 @@ class MRR(MeanRankMetric):
     then the MRR is 0.75
     """
 
-    def __init__(self, name="MRR", rerank=True, **kwargs):
-        super(MRR, self).__init__(name=name, rerank=rerank, **kwargs)
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="MRR",
+        state=MetricState.NEW,
+        **kwargs
+    ):
+        super(MRR, self).__init__(
+            feature_config=feature_config,
+            metadata_features=metadata_features,
+            name=name,
+            state=state,
+            **kwargs
+        )
 
     def _get_matches_hook(self, y_pred_click_ranks):
         """Return reciprocal click ranks for MRR"""
@@ -162,8 +181,21 @@ class ACR(MeanRankMetric):
     then the ACR is 1.50
     """
 
-    def __init__(self, name="ACR", rerank=True, **kwargs):
-        super(ACR, self).__init__(name=name, rerank=rerank, **kwargs)
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="ACR",
+        state=MetricState.NEW,
+        **kwargs
+    ):
+        super(ACR, self).__init__(
+            feature_config=feature_config,
+            metadata_features=metadata_features,
+            name=name,
+            state=state,
+            **kwargs
+        )
 
     def _get_matches_hook(self, y_pred_click_ranks):
         """Return click ranks for MRR"""
@@ -178,5 +210,12 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
     to maintain consistency of arguments to __init__
     """
 
-    def __init__(self, name="categorical_accuracy", rerank=True, **kwargs):
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="categorical_accuracy",
+        state=MetricState.NEW,
+        **kwargs
+    ):
         super(CategoricalAccuracy, self).__init__(name=name)

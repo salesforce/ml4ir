@@ -1,9 +1,8 @@
 # type: ignore
 # TODO: Fix typing
 
-from ml4ir.config.keys import MetricKey
-from ml4ir.model.metrics.metrics_impl import MRR, ACR, CategoricalAccuracy
-from typing import Type, List
+from applications.ranking.config.keys import MetricKey
+from applications.ranking.model.metrics.metrics_impl import MRR, ACR, CategoricalAccuracy
 from tensorflow.keras.metrics import Metric
 
 
@@ -17,11 +16,4 @@ def get_metric(metric_key: str) -> Metric:
     elif metric_key == MetricKey.CATEGORICAL_ACCURACY:
         return CategoricalAccuracy
     else:
-        raise NotImplementedError
-
-
-def get_metric_impl(metric: Type[Metric], **kwargs) -> List[Metric]:
-    return [
-        metric(rerank=False, **kwargs),
-        metric(rerank=True, **kwargs),
-    ]
+        return metric_key

@@ -4,6 +4,7 @@
 import socket
 import ast
 import tensorflow as tf
+from tensorflow.keras.optimizers import Optimizer
 import numpy as np
 import json
 import random
@@ -11,27 +12,23 @@ import traceback
 import os
 import sys
 import time
-import yaml
 from argparse import Namespace
 from logging import Logger
 from ml4ir.config.parse_args import get_args
 from ml4ir.features.feature_config import parse_config, FeatureConfig
 from ml4ir.io import logging_utils
 from ml4ir.io import file_io
-from ml4ir.data.ranking_dataset import RankingDataset
-from ml4ir.model.ranking_model import RankingModel
-
-from ml4ir.config.keys import LossKey
-from ml4ir.config.keys import ScoringKey
-from ml4ir.config.keys import MetricKey
+from ml4ir.data.relevance_dataset import RelevanceDataset
+from ml4ir.model.relevance_model import RelevanceModel
 from ml4ir.config.keys import OptimizerKey
 from ml4ir.config.keys import DataFormatKey
 from ml4ir.config.keys import ExecutionModeKey
+from ml4ir.config.keys import TFRecordTypeKey
 
 from typing import List
 
 
-class RankingPipeline(object):
+class RelevancePipeline(object):
     def __init__(self, args: Namespace):
         self.args = args
 
@@ -57,17 +54,17 @@ class RankingPipeline(object):
         file_io.make_directory(self.models_dir, clear_dir=False, log=self.logger)
 
         # Read/Parse model config YAML
-        self.model_config = self._read_model_config(self.args.model_config)
+        self.model_config_file = self.args.model_config
 
         # Setup other arguments
-        self.loss: str = self.args.loss
-        self.scoring: str = self.args.scoring
-        self.optimizer: str = self.args.optimizer
-        if self.args.metrics[0] == "[":
-            self.metrics: List[str] = ast.literal_eval(self.args.metrics)
+        self.loss_key: str = self.args.loss_key
+        self.optimizer_key: str = self.args.optimizer_key
+        if self.args.metrics_keys[0] == "[":
+            self.metrics_keys: List[str] = ast.literal_eval(self.args.metrics_keys)
         else:
-            self.metrics = [self.args.metrics]
+            self.metrics_keys = [self.args.metrics_keys]
         self.data_format: str = self.args.data_format
+        self.tfrecord_type: str = self.args.tfrecord_type
 
         # Validate args
         self.validate_args()
@@ -77,25 +74,14 @@ class RankingPipeline(object):
 
         # Load and parse feature config
         self.feature_config: FeatureConfig = parse_config(
-            self.args.feature_config, logger=self.logger
+            tfrecord_type=self.tfrecord_type,
+            feature_config=self.args.feature_config,
+            logger=self.logger,
         )
         self.logger.info("Feature config parsed and loaded")
 
         # Finished initialization
-        self.logger.info("Ranking Pipeline successfully initialized!")
-
-    def _read_model_config(self, model_config_str):
-        if model_config_str.endswith(".yaml"):
-            model_config = file_io.read_yaml(model_config_str)
-            self.logger.info(
-                "Reading model config from YAML file : {} \n{}".format(
-                    model_config, model_config_str
-                )
-            )
-        else:
-            model_config = yaml.safe_load(model_config_str)
-            self.logger.info("Reading model config from YAML string : \n{}".format(model_config))
-        return model_config
+        self.logger.info("Relevance Pipeline successfully initialized!")
 
     def setup_logging(self) -> Logger:
         # Remove status file from any previous job at the start of the current job
@@ -118,6 +104,7 @@ class RankingPipeline(object):
 
     def validate_args(self):
         unset_arguments = {key: value for (key, value) in vars(self.args).items() if value is None}
+
         if len(unset_arguments) > 0:
             raise Exception(
                 "Unset arguments (check usage): \n{}".format(
@@ -125,33 +112,24 @@ class RankingPipeline(object):
                 )
             )
 
-        if self.loss not in LossKey.get_all_keys():
-            raise Exception(
-                "Loss specified [{}] is not one of : {}".format(self.loss, LossKey.get_all_keys())
-            )
-        if self.scoring not in ScoringKey.get_all_keys():
-            raise Exception(
-                "Scoring method specified [{}] is not one of : {}".format(
-                    self.scoring, ScoringKey.get_all_keys()
-                )
-            )
-        if self.optimizer not in OptimizerKey.get_all_keys():
+        if self.optimizer_key not in OptimizerKey.get_all_keys():
             raise Exception(
                 "Optimizer specified [{}] is not one of : {}".format(
-                    self.optimizer, OptimizerKey.get_all_keys()
+                    self.optimizer_key, OptimizerKey.get_all_keys()
                 )
             )
-        for metric in self.metrics:
-            if metric not in MetricKey.get_all_keys():
-                raise Exception(
-                    "Metric specified [{}] is not one of : {}".format(
-                        metric, MetricKey.get_all_keys()
-                    )
-                )
+
         if self.data_format not in DataFormatKey.get_all_keys():
             raise Exception(
                 "Data format[{}] is not one of : {}".format(
                     self.data_format, DataFormatKey.get_all_keys()
+                )
+            )
+
+        if self.tfrecord_type not in TFRecordTypeKey.get_all_keys():
+            raise Exception(
+                "TFRecord type [{}] is not one of : {}".format(
+                    self.data_format, TFRecordTypeKey.get_all_keys()
                 )
             )
 
@@ -169,46 +147,50 @@ class RankingPipeline(object):
 
         return self
 
+    def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+        """
+        Creates RelevanceDataset
+
+        NOTE: Override this method to create custom dataset objects
+        """
+        # Prepare Dataset
+        relevance_dataset = RelevanceDataset(
+            data_dir=self.data_dir,
+            data_format=self.data_format,
+            feature_config=self.feature_config,
+            tfrecord_type=self.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+            train_pcent_split=self.args.train_pcent_split,
+            val_pcent_split=self.args.val_pcent_split,
+            test_pcent_split=self.args.test_pcent_split,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=True,
+            logger=self.logger,
+        )
+
+        return relevance_dataset
+
+    def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
+        """
+        Creates RelevanceModel
+
+        NOTE: Override this method to create custom loss, scorer, model objects
+        """
+        raise NotImplementedError
+
     def run(self):
         try:
             job_status = ("_SUCCESS", "")
 
-            # Prepare Dataset
-            ranking_dataset = RankingDataset(
-                data_dir=self.data_dir,
-                data_format=self.data_format,
-                feature_config=self.feature_config,
-                max_num_records=self.args.max_num_records,
-                loss_key=self.loss,
-                scoring_key=self.scoring,
-                batch_size=self.args.batch_size,
-                train_pcent_split=self.args.train_pcent_split,
-                val_pcent_split=self.args.val_pcent_split,
-                test_pcent_split=self.args.test_pcent_split,
-                use_part_files=self.args.use_part_files,
-                logger=self.logger,
-            )
-            self.logger.info("Ranking Dataset created")
+            # Build dataset
+            relevance_dataset = self.get_relevance_dataset()
+            self.logger.info("Relevance Dataset created")
 
             # Build model
-            ranking_model = RankingModel(
-                model_config=self.model_config,
-                loss_key=self.loss,
-                scoring_key=self.scoring,
-                metrics_keys=self.metrics,
-                optimizer_key=self.optimizer,
-                feature_config=self.feature_config,
-                max_num_records=self.args.max_num_records,
-                model_file=self.args.model_file,
-                learning_rate=self.args.learning_rate,
-                learning_rate_decay=self.args.learning_rate_decay,
-                learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-                gradient_clip_value=self.args.gradient_clip_value,
-                compute_intermediate_stats=self.args.compute_intermediate_stats,
-                compile_keras_model=self.args.compile_keras_model,
-                logger=self.logger,
-            )
-            self.logger.info("Ranking Model created")
+            relevance_model = self.get_relevance_model()
+            self.logger.info("Relevance Model created")
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
@@ -217,12 +199,15 @@ class RankingPipeline(object):
                 ExecutionModeKey.TRAIN_ONLY,
             }:
                 # Train
-                ranking_model.fit(
-                    dataset=ranking_dataset,
+                relevance_model.fit(
+                    dataset=relevance_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir,
                     logs_dir=self.logs_dir,
                     logging_frequency=self.args.logging_frequency,
+                    monitor_metric=self.args.monitor_metric,
+                    monitor_mode=self.args.monitor_mode,
+                    patience=self.args.early_stopping_patience,
                 )
 
             if self.args.execution_mode in {
@@ -234,8 +219,8 @@ class RankingPipeline(object):
                 ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
-                ranking_model.evaluate(
-                    test_dataset=ranking_dataset.test,
+                relevance_model.evaluate(
+                    test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
@@ -250,10 +235,11 @@ class RankingPipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
-                # Predict ranking scores
-                ranking_model.predict(
-                    test_dataset=ranking_dataset.test,
+                # Predict relevance scores
+                relevance_model.predict(
+                    test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
+                    additional_features={},
                     logs_dir=self.logs_dir,
                     logging_frequency=self.args.logging_frequency,
                 )
@@ -271,8 +257,12 @@ class RankingPipeline(object):
                 ExecutionModeKey.RESAVE_ONLY,
             }:
                 # Save model
-                ranking_model.save(
-                    models_dir=self.models_dir, pad_records=self.args.pad_records_at_inference
+                relevance_model.save(
+                    models_dir=self.models_dir,
+                    preprocessing_keys_to_fns={},
+                    postprocessing_fn=None,
+                    required_fields_only=not self.args.use_all_fields_at_inference,
+                    pad_sequence=self.args.pad_sequence_at_inference,
                 )
 
             # Finish
@@ -292,8 +282,8 @@ def main(argv):
     # Define args
     args = get_args(argv)
 
-    # Initialize Ranker and run in train/inference mode
-    rp = RankingPipeline(args=args)
+    # Initialize Relevance Pipeline and run in train/inference mode
+    rp = RelevancePipeline(args=args)
     rp.run()
 
 

@@ -1,7 +1,7 @@
 # type: ignore
 # TODO: Fix typing
 
-from ml4ir.model.losses.loss_base import ListwiseLossBase
+from applications.ranking.model.losses.loss_base import ListwiseLossBase
 import tensorflow as tf
 from tensorflow.keras import losses
 from tensorflow.keras import layers
@@ -33,8 +33,8 @@ class RankOneListNet(ListwiseLossBase):
 
         return _loss_fn
 
-    def get_final_activation_op(self):
-        softmax_op = layers.Softmax(axis=-1, name="ranking_scores")
+    def get_final_activation_op(self, output_name):
+        softmax_op = layers.Softmax(axis=-1, name=output_name)
 
         # Listwise Top 1 RankNet Loss
         def masked_softmax(logits, mask):

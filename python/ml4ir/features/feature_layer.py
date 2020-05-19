@@ -1,12 +1,16 @@
 # type: ignore
 # TODO: Fix typing
+# flake8: noqa
+# TODO: Fix complexity
 
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import io
 
 from ml4ir.features.feature_config import FeatureConfig
-from ml4ir.config.keys import FeatureTypeKey, EncodingTypeKey, SequenceExampleTypeKey
+from ml4ir.config.keys import FeatureTypeKey
+from ml4ir.config.keys import SequenceExampleTypeKey
+from ml4ir.config.keys import TFRecordTypeKey
 
 
 class FeatureLayerMap:
@@ -231,8 +235,14 @@ def define_sequence_example_feature_layer(
                     if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
                         dense_feature = tf.tile(dense_feature, numeric_tile_shape)
 
-                    if feature_info["trainable"]:
+                    if "fn" in feature_layer_info:
+                        dense_feature = feature_layer_map.get_fn(feature_layer_info["fn"])(
+                            dense_feature, feature_info
+                        )
+                    elif feature_info["trainable"]:
                         dense_feature = tf.expand_dims(tf.cast(dense_feature, tf.float32), axis=-1)
+
+                    if feature_info["trainable"]:
                         train_features.append(dense_feature)
                     else:
                         metadata_features[feature_node_name] = tf.cast(dense_feature, tf.float32)
@@ -240,48 +250,58 @@ def define_sequence_example_feature_layer(
                 # String input features
                 elif feature_info["dtype"] in (tf.string,):
                     if feature_info["trainable"]:
-                        if feature_layer_info["encoding_type"] == EncodingTypeKey.BILSTM:
-                            decoded_string_tensor = io.decode_raw(
-                                inputs[feature_node_name],
-                                out_type=tf.uint8,
-                                fixed_length=feature_layer_info["max_length"],
+                        decoded_string_tensor = io.decode_raw(
+                            inputs[feature_node_name],
+                            out_type=tf.uint8,
+                            fixed_length=feature_layer_info["args"]["max_length"],
+                        )
+                        if "fn" in feature_layer_info:
+                            dense_feature = feature_layer_map.get_fn(feature_layer_info["fn"])(
+                                decoded_string_tensor, feature_info
                             )
-                            encoding = get_sequence_encoding(decoded_string_tensor, feature_info)
-                            """
-                            Creating a tensor [1, sequence_size, 1] dynamically
-                            NOTE:
-                            Tried multiple methods using `convert_to_tensor`, `concat`, with no results
-                            """
-                            if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
-                                tile_dims = tf.shape(
-                                    tf.expand_dims(
-                                        tf.expand_dims(
-                                            tf.gather(inputs["mask"], indices=0), axis=0
-                                        ),
-                                        axis=-1,
-                                    )
-                                )
-                                encoding = tf.tile(encoding, tile_dims)
 
-                            train_features.append(encoding)
-                        else:
-                            raise NotImplementedError
+                        """
+                        Creating a tensor [1, sequence_size, 1] dynamically
+                        NOTE:
+                        Tried multiple methods using `convert_to_tensor`, `concat`, with no results
+                        """
+                        if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
+                            tile_dims = tf.shape(
+                                tf.expand_dims(
+                                    tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0),
+                                    axis=-1,
+                                )
+                            )
+                            dense_feature = tf.tile(dense_feature, tile_dims)
+
+                        train_features.append(dense_feature)
+
             elif feature_layer_info["type"] == FeatureTypeKey.STRING:
-                pass
+                if feature_info["trainable"]:
+                    raise ValueError(
+                        "Can not train on string tensors directly. Please use a feature layer"
+                    )
+                else:
+                    metadata_features[feature_node_name] = inputs[feature_node_name]
             elif feature_layer_info["type"] == FeatureTypeKey.CATEGORICAL:
                 if feature_info["trainable"]:
-                    categorical_embedding = get_categorical_embedding(
-                        inputs[feature_node_name], feature_info
-                    )
-
-                    tile_dims = tf.shape(
-                        tf.expand_dims(
-                            tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0), axis=-1,
+                    if "fn" in feature_layer_info:
+                        dense_feature = feature_layer_map.get_fn(feature_layer_info["fn"])(
+                            inputs[feature_node_name], feature_info
                         )
-                    )
-                    categorical_embedding = tf.tile(categorical_embedding, tile_dims)
 
-                    train_features.append(categorical_embedding)
+                    if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
+                        tile_dims = tf.shape(
+                            tf.expand_dims(
+                                tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0),
+                                axis=-1,
+                            )
+                        )
+                        dense_feature = tf.tile(dense_feature, tile_dims)
+
+                    train_features.append(dense_feature)
+                else:
+                    raise NotImplementedError
             else:
                 raise Exception(
                     "Unknown feature type {} for feature : {}".format(

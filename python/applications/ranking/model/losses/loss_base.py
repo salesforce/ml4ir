@@ -1,20 +1,30 @@
-from ml4ir.config.keys import LossTypeKey
+from applications.ranking.config.keys import LossTypeKey
 from ml4ir.model.losses.loss_base import RelevanceLossBase
 
 
-class PointwiseLossBase(RelevanceLossBase):
-    def __init__(self):
-        super(PointwiseLossBase, self).__init__()
-        self.loss_type = LossTypeKey.POINTWISE
+class RankingLossBase(RelevanceLossBase):
+    def __init__(self, loss_type, loss_key, scoring_type):
+        self.loss_type = None
+        self.loss_key = loss_key
+        self.scoring_type = scoring_type
 
 
-class PairwiseLossBase(RelevanceLossBase):
-    def __init__(self):
-        super(PairwiseLossBase, self).__init__()
-        self.loss_type = LossTypeKey.PAIRWISE
+class PointwiseLossBase(RankingLossBase):
+    def __init__(self, loss_key, scoring_type):
+        super(PointwiseLossBase, self).__init__(
+            loss_type=LossTypeKey.POINTWISE, loss_key=loss_key, scoring_type=scoring_type
+        )
 
 
-class ListwiseLossBase(RelevanceLossBase):
-    def __init__(self):
-        super(ListwiseLossBase, self).__init__()
-        self.loss_type = LossTypeKey.LISTWISE
+class PairwiseLossBase(RankingLossBase):
+    def __init__(self, loss_key, scoring_type):
+        super(PairwiseLossBase, self).__init__(
+            loss_type=LossTypeKey.PAIRWISE, loss_key=loss_key, scoring_type=scoring_type
+        )
+
+
+class ListwiseLossBase(RankingLossBase):
+    def __init__(self, loss_key, scoring_type):
+        super(ListwiseLossBase, self).__init__(
+            loss_type=LossTypeKey.LISTWISE, loss_key=loss_key, scoring_type=scoring_type
+        )

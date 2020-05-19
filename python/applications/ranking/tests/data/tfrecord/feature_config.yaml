@@ -86,13 +86,19 @@ features:
     dtype: string
     log_at_inference: true
     feature_layer_info:
-      type: string
+      type: numeric
       shape: null
-      encoding_type: bilstm
-      encoding_size: 128
-      embedding_size: 128
+      fn: get_sequence_encoding
+      args:
+        encoding_type: bilstm
+        encoding_size: 128
+        embedding_size: 128
+        max_length: 20
     preprocessing_info:
-      max_length: 20
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
     serving_info:
       name: q
       required: true
