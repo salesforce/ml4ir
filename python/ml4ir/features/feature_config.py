@@ -58,6 +58,7 @@ features:
 class FeatureConfigKey:
     QUERY_KEY = "query_key"
     LABEL = "label"
+    RANK = "rank"
     FEATURES = "features"
 
 
@@ -70,6 +71,7 @@ class FeatureConfig:
         self.all_features = list()
         self.query_key = None
         self.label = None
+        self.rank = None
         self.features = None
 
         # Features that can be used for training the model
@@ -105,6 +107,12 @@ class FeatureConfig:
             self.all_features.append(self.label)
         except KeyError:
             raise KeyError("'label' key not found in the feature_config specified")
+
+        try:
+            self.rank = features_dict.get(FeatureConfigKey.RANK)
+            self.all_features.append(self.rank)
+        except KeyError:
+            raise KeyError("'rank' key not found in the feature_config specified")
 
         try:
             self.features: List = features_dict.get(FeatureConfigKey.FEATURES)
@@ -346,7 +354,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         return {
             "name": "mask",
             "trainable": False,
-            "dtype": self.get_rank("dtype"),
+#            "dtype": self.get_rank("dtype"),
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": SequenceExampleTypeKey.SEQUENCE,
