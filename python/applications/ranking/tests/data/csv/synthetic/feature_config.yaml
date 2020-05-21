@@ -1,0 +1,82 @@
+query_key:
+  name: query_str
+  node_name: query_str
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: queryId
+    required: false
+    default_value: 0
+  tfrecord_type: context
+rank:
+  name: pos
+  node_name: pos
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: originalRank
+    required: true
+    default_value: 0
+  tfrecord_type: sequence
+label:
+  name: label
+  node_name: label
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: label
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+features:
+  - name: num_sequences
+    node_name: num_sequences
+    trainable: true
+    dtype: int64
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: num_sequences
+      required: false
+      default_value: 0
+    tfrecord_type: context
+  - name: label_rank
+    node_name: label_rank
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: label_rank
+      required: false
+      default_value: 1
+    tfrecord_type: context
+  - name: high_val_feature_1
+    node_name: high_val_feature_1
+    trainable: true
+    dtype: int64
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: high_val_feature_1
+      required: false
+      default_value: 0
+    tfrecord_type: sequence

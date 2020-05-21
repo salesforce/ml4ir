@@ -49,8 +49,11 @@ def create_dataset(data_dir: str,
 
         # Build data
         example_data = load_example_data(data_dir, logger)
-        fill_data(logger, example_data, max_num_records, feature_config, num_samples).to_csv(out_file, index=False)
+
+        df_synthetic = fill_data(logger, example_data, max_num_records, feature_config, num_samples)
+        df_synthetic.to_csv(out_file, index=False)
         logger.info('Synthetic data created! Location: {}'.format(out_file))
+        return df_synthetic
 
     except Exception as e:
         logger.error("!!! Error creating synthetic data: !!!\n{}".format(str(e)))
@@ -108,14 +111,14 @@ def fill_data(logger, example_data, max_num_records, feature_config, num_samples
 
     for _ in range(num_samples):
         # Generate a synthetic query ID
-        seed_id = random.sample(seed_dict[feature_config.get_query_key('name')], 1)
+        seed_id = str(random.sample(seed_dict[feature_config.get_query_key('name')], 1)[0])
         q_id = ''.join(random.sample(seed_id, len(seed_id)))
 
         # Sample the number of results and label rank from example data
-        q_nseq = random.sample(seed_dict[name_num_sequences], 1)
-        q_labelrank = random.sample(seed_dict[name_label_rank], 1)
+        q_nseq = random.sample(seed_dict[name_num_sequences], 1)[0]
+        q_labelrank = random.sample(seed_dict[name_label_rank], 1)[0]
 
-        for i in range(int(q_nseq[0])):
+        for i in range(int(q_nseq)):
             is_labeled_pos = (i + 1 == q_labelrank)
             row_dict = {
                 feature_config.get_query_key('name'): q_id,

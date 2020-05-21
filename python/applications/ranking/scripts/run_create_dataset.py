@@ -1,4 +1,3 @@
-# Run from ml4ir/python/applications/ranking directory
 # Run from ml4ir/python directory as: python3 applications/ranking/scripts/run_create_dataset.py
 
 from applications.ranking.data.scripts.create_dataset import create_dataset
