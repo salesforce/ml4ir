@@ -88,12 +88,6 @@ def fill_data(logger, example_data, max_num_records, feature_config, num_samples
     4. TODO Check that no record ID is used twice
     """
 
-    # Print yaml things
-#    logger.info('Yaml features: {}'.format(feature_config.get_all_features()))
-#    logger.info('Yaml features: {}'.format(feature_config.features_dict.get(feature_config.FeatureConfigKey.FEATURES)))
-#    logger.info('Yaml features: {}'.format(feature_config.all_features['name']))
-    logger.info('Yaml features: {}'.format(feature_config.all_features))
-
     # Set up new DF and example data distributions for sampling options
     rows_df = []
     seed_dict = {}  # the keys are source data columns, the values are lists of source data column values
@@ -114,10 +108,10 @@ def fill_data(logger, example_data, max_num_records, feature_config, num_samples
 
     for _ in range(num_samples):
         # Generate a synthetic query ID
-
         seed_id = random.sample(seed_dict[feature_config.get_query_key('name')], 1)
         q_id = ''.join(random.sample(seed_id, len(seed_id)))
-        # Sample the number of results and click rank from example data
+
+        # Sample the number of results and label rank from example data
         q_nseq = random.sample(seed_dict[name_num_sequences], 1)
         q_labelrank = random.sample(seed_dict[name_label_rank], 1)
 
