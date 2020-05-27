@@ -116,6 +116,18 @@ def filter_nres(seed_data, feature_query_key, feature_rank, feature_nres, max_nu
     return seed_data, nres
 
 
+def add_feature_highval(row_dict, feature_highval, is_labeled_pos, q_labelrank):
+    # Create ranking-specific high value scenario
+    # of the format {high_value_feature_1:[label1_val, label2_val]}
+    # Not creating examples of non-catastrophic failure, ie where the clicked record is not a name match
+    for hvk in feature_highval.keys():
+        if is_labeled_pos and q_labelrank > 1:
+            row_dict[hvk] = feature_highval[hvk][1]
+        else:
+            row_dict[hvk] = feature_highval[hvk][0]
+    return row_dict
+
+
 def fill_data(logger, seed_data, max_num_records, feature_config, feature_highval, feature_nres, num_samples):
     """
     Creates synthetic data using source data as template sampling source
@@ -183,14 +195,7 @@ def fill_data(logger, seed_data, max_num_records, feature_config, feature_highva
                     # row_dict[mycol] = random.sample(seed_dict_labeled_neg[mycol])
                     row_dict[mycol] = None
 
-            # Create ranking-specific high value scenario
-            # {high_value_feature_1:[label1_val, label2_val], high_value_feature_2: [unclicked_val, clicked_val]}
-            # Not creating examples of non-catastrophic failure, ie where the clicked record is not a name match
-            for hvk in feature_highval.keys():
-                if is_labeled_pos and q_labelrank > 1:
-                    row_dict[hvk] = feature_highval[hvk][1]
-                else:
-                    row_dict[hvk] = feature_highval[hvk][0]
+            row_dict = add_feature_highval(row_dict, feature_highval, is_labeled_pos, q_labelrank)
 
             rows_df.append(row_dict)
     return pd.DataFrame(rows_df)
