@@ -8,7 +8,7 @@ query_key:
     type: numeric
     shape: null
   serving_info:
-    name: queryId
+    name: query_key
     required: false
     default_value: 0
   tfrecord_type: context
@@ -22,7 +22,7 @@ rank:
     type: numeric
     shape: null
   serving_info:
-    name: originalRank
+    name: pos
     required: true
     default_value: 0
   tfrecord_type: sequence
@@ -41,42 +41,74 @@ label:
     default_value: 0
   tfrecord_type: sequence
 features:
-  - name: num_sequences
-    node_name: num_sequences
+  - name: feat_0
+    node_name: feat_0
     trainable: true
-    dtype: int64
-    log_at_inference: true
-    feature_layer_info:
-      type: numeric
-      shape: null
-    serving_info:
-      name: num_sequences
-      required: false
-      default_value: 0
-    tfrecord_type: context
-  - name: label_rank
-    node_name: label_rank
-    trainable: true
-    dtype: int64
+    dtype: float
     log_at_inference: false
     feature_layer_info:
       type: numeric
       shape: null
     serving_info:
-      name: label_rank
-      required: false
-      default_value: 1
-    tfrecord_type: context
-  - name: high_val_feature_1
-    node_name: high_val_feature_1
+      name: feat_0
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: feat_1
+    node_name: feat_1
     trainable: true
-    dtype: int64
-    log_at_inference: true
+    dtype: float
+    log_at_inference: false
     feature_layer_info:
       type: numeric
       shape: null
     serving_info:
-      name: high_val_feature_1
+      name: feat_1
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: feat_2
+    node_name: feat_2
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: feat_2
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: query_str
+    node_name: query_str
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: string
+      shape: null
+      encoding_type: bilstm
+      encoding_size: 128
+      embedding_size: 128
+    preprocessing_info:
+      max_length: 20
+    serving_info:
+      name: query_str
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: group
+    node_name: group
+    trainable: false
+    dtype: int64
+    log_at_inference: false
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: group
       required: false
       default_value: 0
-    tfrecord_type: sequence
+    tfrecord_type: context
