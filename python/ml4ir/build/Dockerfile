@@ -40,6 +40,7 @@ WORKDIR $PYTHONPATH
 
 # Python dependencies
 RUN pip config set global.extra-index-url https://pypi.python.org/simple
+RUN pip install --upgrade pip
 RUN pip install --upgrade setuptools
 RUN pip install -r requirements.txt
 

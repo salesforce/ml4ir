@@ -7,18 +7,30 @@ import numpy as np
 import os
 import random
 from argparse import Namespace
+from tensorflow.keras.metrics import Metric
+from tensorflow.keras.optimizers import Optimizer
 
-from ml4ir.base.io import file_io
+from ml4ir.base.model.relevance_model import RelevanceModel
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
+from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
+from ml4ir.base.model.optimizer import get_optimizer
+import ml4ir.base.io.file_io as file_io
 from ml4ir.base.io.logging_utils import setup_logging
-from ml4ir.base.config.parse_args import define_args
+from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.applications.ranking.model.ranking_model import RankingModel
+from ml4ir.applications.ranking.model.losses import loss_factory
+from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.ranking.config.parse_args import get_args
 
 import warnings
+from typing import Union, List, Type
 
 warnings.filterwarnings("ignore")
 
 
-OUTPUT_DIR = "ml4ir/tests/test_output"
-ROOT_DATA_DIR = "ml4ir/tests/data"
+OUTPUT_DIR = "ml4ir/applications/ranking/tests/test_output"
+ROOT_DATA_DIR = "ml4ir/applications/ranking/tests/data"
 FEATURE_CONFIG_FNAME = "feature_config.yaml"
 
 
@@ -43,7 +55,7 @@ class RankingTestBase(unittest.TestCase):
         random.seed(123)
 
         # Setup arguments
-        self.args: Namespace = define_args().parse_args([])
+        self.args: Namespace = get_args([])
         self.args.models_dir = output_dir
         self.args.logs_dir = output_dir
 
@@ -61,6 +73,69 @@ class RankingTestBase(unittest.TestCase):
 
         # Delete other temp directories
         file_io.rm_dir(os.path.join(self.root_data_dir, "csv", "tfrecord"))
+
+    def get_ranking_model(
+        self,
+        loss_key: str,
+        metrics_keys: List,
+        feature_config: FeatureConfig,
+        feature_layer_keys_to_fns={},
+    ) -> RelevanceModel:
+        """
+        Creates RankingModel
+
+        NOTE: Override this method to create custom loss, scorer, model objects
+        """
+
+        # Define interaction model
+        interaction_model: InteractionModel = UnivariateInteractionModel(
+            feature_config=feature_config,
+            feature_layer_keys_to_fns=feature_layer_keys_to_fns,
+            tfrecord_type=self.args.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+        )
+
+        # Define loss object from loss key
+        loss: RelevanceLossBase = loss_factory.get_loss(
+            loss_key=loss_key, scoring_type=self.args.scoring_type
+        )
+
+        # Define scorer
+        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+            model_config_file=self.args.model_config,
+            interaction_model=interaction_model,
+            loss=loss,
+            output_name=self.args.output_name,
+        )
+
+        # Define metrics objects from metrics keys
+        metrics: List[Union[Type[Metric], str]] = [
+            metric_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
+        ]
+
+        # Define optimizer
+        optimizer: Optimizer = get_optimizer(
+            optimizer_key=self.args.optimizer_key,
+            learning_rate=self.args.learning_rate,
+            learning_rate_decay=self.args.learning_rate_decay,
+            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
+            gradient_clip_value=self.args.gradient_clip_value,
+        )
+
+        # Combine the above to define a RelevanceModel
+        relevance_model: RelevanceModel = RankingModel(
+            feature_config=feature_config,
+            tfrecord_type=self.args.tfrecord_type,
+            scorer=scorer,
+            metrics=metrics,
+            optimizer=optimizer,
+            model_file=self.args.model_file,
+            compile_keras_model=self.args.compile_keras_model,
+            output_name=self.args.output_name,
+            logger=self.logger,
+        )
+
+        return relevance_model
 
 
 if __name__ == "__main__":

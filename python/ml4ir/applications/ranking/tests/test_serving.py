@@ -7,8 +7,9 @@ from tensorflow.keras import models as kmodels
 import tensorflow as tf
 
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.base.data.ranking_dataset import RankingDataset
-from ml4ir.base.model.ranking_model import RankingModel
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.base.config.keys import DataFormatKey
+from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import parse_config, FeatureConfig
 from ml4ir.base.config.keys import ServingSignatureKey
 
@@ -23,20 +24,21 @@ class RankingModelTest(RankingTestBase):
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         feature_config: FeatureConfig = self.get_feature_config()
 
-        self.args.metrics = ["categorical_accuracy"]
+        metrics_keys = ["categorical_accuracy"]
 
         def get_dataset(parse_tfrecord):
-            return RankingDataset(
+            return RelevanceDataset(
                 data_dir=data_dir,
-                data_format="tfrecord",
+                data_format=DataFormatKey.TFRECORD,
                 feature_config=feature_config,
-                max_num_records=self.args.max_num_records,
-                loss_key=self.args.loss,
-                scoring_key=self.args.scoring,
+                tfrecord_type=self.args.tfrecord_type,
+                max_sequence_size=self.args.max_sequence_size,
                 batch_size=self.args.batch_size,
+                preprocessing_keys_to_fns={},
                 train_pcent_split=self.args.train_pcent_split,
                 val_pcent_split=self.args.val_pcent_split,
                 test_pcent_split=self.args.test_pcent_split,
+                use_part_files=self.args.use_part_files,
                 parse_tfrecord=parse_tfrecord,
                 logger=self.logger,
             )
@@ -47,27 +49,19 @@ class RankingModelTest(RankingTestBase):
         # Parse the raw TFRecord dataset
         parsed_dataset = get_dataset(parse_tfrecord=True)
 
-        model = RankingModel(
-            model_config=self.model_config,
-            loss_key=self.args.loss,
-            scoring_key=self.args.scoring,
-            metrics_keys=self.args.metrics,
-            optimizer_key=self.args.optimizer,
-            feature_config=feature_config,
-            max_num_records=self.args.max_num_records,
-            model_file=self.args.model_file,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            compute_intermediate_stats=self.args.compute_intermediate_stats,
-            gradient_clip_value=self.args.gradient_clip_value,
-            compile_keras_model=self.args.compile_keras_model,
-            logger=self.logger,
+        model: RankingModel = self.get_ranking_model(
+            loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
         )
 
         model.fit(dataset=parsed_dataset, num_epochs=1, models_dir=self.output_dir)
 
-        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
+        model.save(
+            models_dir=self.args.models_dir,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only=not self.args.use_all_fields_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference,
+        )
 
         # Load SavedModel and get the right serving signature
         default_model = kmodels.load_model(
@@ -88,16 +82,16 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = model.predict(parsed_dataset_batch)["new_score"].values
+        model_predictions = model.predict(parsed_dataset_batch)[self.args.output_name].values
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
-            "ranking_scores"
+            self.args.output_name
         ]
 
         # Since we do not pad dummy records in tfrecord serving signature,
         # we can only predict on a single record at a time
         tfrecord_signature_predictions = [
-            tfrecord_signature(sequence_example_protos=tf.gather(sequence_example_protos, [i]))[
-                "ranking_scores"
+            tfrecord_signature(protos=tf.gather(sequence_example_protos, [i]))[
+                self.args.output_name
             ]
             for i in range(self.args.batch_size)
         ]
@@ -141,28 +135,26 @@ class RankingModelTest(RankingTestBase):
             self.root_data_dir, "tfrecord", self.feature_config_fname
         )
 
-        return parse_config(feature_config_path)
-
-    def get_tfrecord_signature(self, feature_config: FeatureConfig):
-        self.args.metrics = ["categorical_accuracy"]
-        model = RankingModel(
-            model_config=self.model_config,
-            loss_key=self.args.loss,
-            scoring_key=self.args.scoring,
-            metrics_keys=self.args.metrics,
-            optimizer_key=self.args.optimizer,
-            feature_config=feature_config,
-            max_num_records=self.args.max_num_records,
-            model_file=self.args.model_file,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            compute_intermediate_stats=self.args.compute_intermediate_stats,
-            gradient_clip_value=self.args.gradient_clip_value,
-            compile_keras_model=self.args.compile_keras_model,
+        feature_config: FeatureConfig = parse_config(
+            tfrecord_type=self.args.tfrecord_type,
+            feature_config=feature_config_path,
             logger=self.logger,
         )
-        model.save(models_dir=self.args.models_dir, pad_records=self.args.pad_records_at_inference)
+
+        return feature_config
+
+    def get_tfrecord_signature(self, feature_config: FeatureConfig):
+        metrics_keys = ["categorical_accuracy"]
+        model: RankingModel = self.get_ranking_model(
+            loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
+        )
+        model.save(
+            models_dir=self.args.models_dir,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only=not self.args.use_all_fields_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference,
+        )
 
         # Load SavedModel and get the right serving signature
         tfrecord_model = kmodels.load_model(
@@ -179,14 +171,10 @@ class RankingModelTest(RankingTestBase):
 
         for num_records in range(1, 250):
             proto = tf.constant(
-                [
-                    feature_config.create_dummy_sequence_example(
-                        num_records=num_records
-                    ).SerializeToString()
-                ]
+                [feature_config.create_dummy_protobuf(num_records=num_records).SerializeToString()]
             )
             try:
-                tfrecord_signature(sequence_example_protos=proto)
+                tfrecord_signature(protos=proto)
             except Exception:
                 assert False
 
@@ -196,10 +184,10 @@ class RankingModelTest(RankingTestBase):
         tfrecord_signature = self.get_tfrecord_signature(feature_config)
 
         proto = tf.constant(
-            [feature_config.create_dummy_sequence_example(required_only=True).SerializeToString()]
+            [feature_config.create_dummy_protobuf(required_only=True).SerializeToString()]
         )
 
         try:
-            tfrecord_signature(sequence_example_protos=proto)
+            tfrecord_signature(protos=proto)
         except Exception:
             assert False

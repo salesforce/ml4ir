@@ -1,14 +1,13 @@
 # type: ignore
 # TODO: Fix typing
 
-import tensorflow as tf
 import string
 import numpy as np
 
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.base.features import preprocessing
 from ml4ir.base.features.feature_layer import get_sequence_encoding
-from ml4ir.base.config.keys import TFRecordTypeKey
+from ml4ir.base.config.keys import SequenceExampleTypeKey
 
 
 class RankingModelTest(RankingTestBase):
@@ -16,19 +15,12 @@ class RankingModelTest(RankingTestBase):
         """
         Unit test text preprocessing
         """
-        preprocessing_info = {"to_lower": True, "max_length": 20, "remove_punctuation": True}
         input_text = "ABCabc123!@#"
-        processed_bytes_tensor = preprocessing.preprocess_text(input_text, preprocessing_info)
         processed_text = (
-            tf.strings.unicode_encode(
-                tf.cast(processed_bytes_tensor, tf.int32), output_encoding="UTF-8",
-            )
+            preprocessing.preprocess_text(input_text, remove_punctuation=True, to_lower=True)
             .numpy()
             .decode("utf-8")
         )
-
-        # Clipping and padding to the maximum length set
-        assert len(processed_bytes_tensor) == preprocessing_info["max_length"]
 
         # Converting to lower case
         assert processed_text.lower() == processed_text
@@ -55,12 +47,16 @@ class RankingModelTest(RankingTestBase):
         encoding_size = 512
         feature_info = {
             "feature_layer_info": {
-                "embedding_size": embedding_size,
-                "encoding_type": "bilstm",
-                "encoding_size": encoding_size,
+                "type": "numeric",
+                "fn": "get_sequence_encoding",
+                "args": {
+                    "embedding_size": embedding_size,
+                    "encoding_type": "bilstm",
+                    "encoding_size": encoding_size,
+                    "max_length": max_length,
+                },
             },
-            "preprocessing_info": {"max_length": max_length},
-            "tfrecord_type": TFRecordTypeKey.CONTEXT,
+            "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
         }
 
         """
@@ -79,7 +75,7 @@ class RankingModelTest(RankingTestBase):
         assert sequence_encoding.shape[0] == batch_size
         assert (
             sequence_encoding.shape[1] == 1
-            if feature_info["tfrecord_type"] == TFRecordTypeKey.CONTEXT
+            if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT
             else self.args.max_num_records
         )
         assert sequence_encoding.shape[2] == encoding_size

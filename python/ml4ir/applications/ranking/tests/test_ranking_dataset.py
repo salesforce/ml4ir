@@ -4,7 +4,7 @@
 import os
 
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.base.data.ranking_dataset import RankingDataset
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.feature_config import FeatureConfig, parse_config
 
 
@@ -33,23 +33,29 @@ class RankingDatasetTest(RankingTestBase):
 
     def get_ranking_dataset(self, data_dir: str, data_format: str, feature_config_path: str):
 
-        feature_config: FeatureConfig = parse_config(feature_config_path)
-
-        ranking_dataset = RankingDataset(
-            data_dir=data_dir,
-            data_format=data_format,
-            feature_config=feature_config,
-            max_num_records=self.args.max_num_records,
-            loss_key=self.args.loss,
-            scoring_key=self.args.scoring,
-            batch_size=self.args.batch_size,
-            train_pcent_split=self.args.train_pcent_split,
-            val_pcent_split=self.args.val_pcent_split,
-            test_pcent_split=self.args.test_pcent_split,
+        feature_config: FeatureConfig = parse_config(
+            tfrecord_type=self.args.tfrecord_type,
+            feature_config=feature_config_path,
             logger=self.logger,
         )
 
-        return ranking_dataset
+        relevance_dataset = RelevanceDataset(
+            data_dir=data_dir,
+            data_format=data_format,
+            feature_config=feature_config,
+            tfrecord_type=self.args.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns={},
+            train_pcent_split=self.args.train_pcent_split,
+            val_pcent_split=self.args.val_pcent_split,
+            test_pcent_split=self.args.test_pcent_split,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=True,
+            logger=self.logger,
+        )
+
+        return relevance_dataset
 
     def test_csv_dataset(self):
         """

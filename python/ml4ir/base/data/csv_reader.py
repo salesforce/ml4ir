@@ -22,7 +22,7 @@ def read(
     batch_size: int = 128,
     preprocessing_keys_to_fns: dict = {},
     use_part_files: bool = False,
-    max_num_records: int = 25,
+    max_sequence_size: int = 25,
     parse_tfrecord: bool = True,
     logger=None,
     **kwargs
@@ -44,7 +44,7 @@ def read(
         - tfrecord_dir: Path to directory where the serialized .tfrecord files will be stored
         - batch_size: int value specifying the size of the batch
         - use_part_files: bool value specifying whether to look for part files
-        - max_num_records: int value specifying max number of records per query
+        - max_sequence_size: int value specifying max number of records per query
         - logger: logging object
 
     Returns:
@@ -72,7 +72,7 @@ def read(
         data_dir=tfrecord_dir,
         feature_config=feature_config,
         tfrecord_type=tfrecord_type,
-        max_num_records=max_num_records,
+        max_sequence_size=max_sequence_size,
         batch_size=batch_size,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         parse_tfrecord=parse_tfrecord,

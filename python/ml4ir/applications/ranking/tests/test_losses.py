@@ -5,8 +5,8 @@ import os
 import numpy as np
 
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.base.data.ranking_dataset import RankingDataset
-from ml4ir.base.model.ranking_model import RankingModel
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig, parse_config
 
 
@@ -16,44 +16,37 @@ class RankingModelTest(RankingTestBase):
         feature_config_path = os.path.join(
             self.root_data_dir, "tfrecord", self.feature_config_fname
         )
-        feature_config: FeatureConfig = parse_config(feature_config_path)
+        feature_config: FeatureConfig = parse_config(
+            tfrecord_type=self.args.tfrecord_type,
+            feature_config=feature_config_path,
+            logger=self.logger,
+        )
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         data_format = "tfrecord"
 
-        self.args.metrics = ["MRR"]
+        metrics_keys = ["MRR"]
 
-        ranking_dataset = RankingDataset(
+        relevance_dataset = RelevanceDataset(
             data_dir=data_dir,
             data_format=data_format,
             feature_config=feature_config,
-            max_num_records=self.args.max_num_records,
-            loss_key=loss_key,
-            scoring_key=self.args.scoring,
+            tfrecord_type=self.args.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
             batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns={},
             train_pcent_split=self.args.train_pcent_split,
             val_pcent_split=self.args.val_pcent_split,
             test_pcent_split=self.args.test_pcent_split,
-            logger=self.logger,
-        )
-        ranking_model = RankingModel(
-            model_config=self.model_config,
-            loss_key=loss_key,
-            scoring_key=self.args.scoring,
-            metrics_keys=self.args.metrics,
-            optimizer_key=self.args.optimizer,
-            feature_config=feature_config,
-            max_num_records=self.args.max_num_records,
-            model_file=self.args.model_file,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
-            compute_intermediate_stats=self.args.compute_intermediate_stats,
-            compile_keras_model=self.args.compile_keras_model,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=True,
             logger=self.logger,
         )
 
-        metrics = ranking_model.model.evaluate(ranking_dataset.test)
+        ranking_model: RankingModel = self.get_ranking_model(
+            loss_key=loss_key, feature_config=feature_config, metrics_keys=metrics_keys
+        )
+
+        metrics = ranking_model.model.evaluate(relevance_dataset.test)
         return dict(zip(ranking_model.model.metrics_names, metrics))["loss"]
 
     def test_sigmoid_cross_entropy(self):
