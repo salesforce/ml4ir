@@ -17,16 +17,24 @@ docker-compose up
 To invoke ml4ir with custom arguments with docker, run
 ```
 /bin/bash tools/run_docker.sh ml4ir \
-	python3 ml4ir/model/pipeline.py
+	python3 ml4ir/base/pipeline.py
     <args>
 ```
-Refer to usage section below for details on how to run ml4ir
 
-Check `python/ml4ir/scripts/example_run.sh` for a predefined example run.
-
-To run example invocation with docker,
+For ranking applications, specifically, use
 ```
-/bin/bash python/ml4ir/scripts/example_run.sh
+/bin/bash tools/run_docker.sh ml4ir \
+	python3 ml4ir/applications/ranking/pipeline.py
+    <args>
+```
+
+Refer to usage section below for details on how to run ml4ir - ranking
+
+Check `ml4ir/applications/ranking/scripts/example_run.sh` for a predefined example run.
+
+To run example invocation of ranking application with docker,
+```
+/bin/bash python/ml4ir/applications/ranking/scripts/example_run.sh
 ```
 
 #### Virtual Environment
@@ -38,13 +46,13 @@ pip3 install virtualenv
 Create new python3 virtual environment inside your git repo (it's .gitignored, don't worry)
 ```
 cd $PLACE_YOU_CAlLED_GIT_CLONE/ml4ir
-python3 -m venv python/env/.ranking_venv3
+python3 -m venv python/env/.ml4ir_venv3
 ```
 
 Activate virtualenv
 ```
 cd python/
-source env/.ranking_venv3/bin/activate
+source env/.ml4ir_venv3/bin/activate
 ```
 
 Install all dependencies (carefully)
@@ -78,14 +86,18 @@ export PYTHONPATH=$PYTHONPATH:`pwd`/python
 ```
 
 ## Usage
-The entrypoint into the training or evaluation functionality of ml4ir is through `ml4ir/model/pipeline.py`
+The entrypoint into the training or evaluation functionality of ml4ir is through `ml4ir/base/pipeline.py` and for application specific overrides, look at `ml4ir/applications/<eg: ranking>/pipeline.py
 
+### ml4ir Library
+To use ml4ir as a deep learning library to build relevance models, look at the walkthrough under `notebooks/PointwiseRankingDemo.ipynb` or `notebooks/PointwiseRankingDemo.html`(contains architecture diagrams). The notebook walks one through building, training, saving, and the entire life cycle of a `RelevanceModel` from the bottom up. Additionally, the HTML version also sheds light on the design of ml4ir and the data format used.
+
+### Applications - Ranking
 #### Examples
 Using TFRecord
 ```
-python ml4ir/model/pipeline.py \
---data_dir `pwd`/ml4ir/tests/data/tfrecord \
---feature_config `pwd`/ml4ir/tests/data/tfrecord/feature_config.yaml \
+python ml4ir/applications/ranking/pipeline.py \
+--data_dir ml4ir/applications/ranking/tests/data/tfrecord \
+--feature_config ml4ir/applications/ranking/tests/data/tfrecord/feature_config.yaml \
 --run_id test \
 --data_format tfrecord \
 --execution_mode train_inference_evaluate
@@ -93,9 +105,9 @@ python ml4ir/model/pipeline.py \
 
 Using CSV
 ```
-python ml4ir/model/pipeline.py \
---data_dir `pwd`/ml4ir/tests/data/csv \
---feature_config `pwd`/ml4ir/tests/data/csv/feature_config.yaml \
+python ml4ir/applications/ranking/pipeline.py \
+--data_dir ml4ir/applications/ranking/tests/data/csv \
+--feature_config ml4ir/applications/ranking/tests/data/csv/feature_config.yaml \
 --run_id test \
 --data_format csv \
 --execution_mode train_inference_evaluate
@@ -103,11 +115,11 @@ python ml4ir/model/pipeline.py \
 
 Running in inference mode using the default serving signature
 ```
-python ml4ir/model/pipeline.py \
---data_dir `pwd`/ml4ir/tests/data/csv \
---feature_config `pwd`/ml4ir/tests/data/csv/feature_config.yaml \
+python ml4ir/applications/ranking/pipeline.py \
+--data_dir ml4ir/applications/ranking/tests/data/tfrecord \
+--feature_config ml4ir/applications/ranking/tests/data/tfrecord/feature_config.yaml \
 --run_id test \
---data_format csv \
+--data_format tfrecord \
 --model_file `pwd`/models/test/final/default \
 --execution_mode inference_only
 
