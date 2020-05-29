@@ -13099,10 +13099,10 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.io</span> <span class="kn">import</span> <span class="n">file_io</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.io</span> <span class="kn">import</span> <span class="n">file_io</span>
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -13119,7 +13119,7 @@ div#notebook {
 
 
 <span class="c1"># Load data</span>
-<span class="n">CSV_DATA_DIR</span> <span class="o">=</span> <span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/&#39;</span>
+<span class="n">CSV_DATA_DIR</span> <span class="o">=</span> <span class="s1">&#39;../ml4ir/applications/ranking/tests/data/csv&#39;</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">file_io</span><span class="o">.</span><span class="n">read_df_list</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CSV_DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)),</span> <span class="n">log</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
 
@@ -13143,15 +13143,15 @@ div#notebook {
 
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>DEBUG:root:Logger is initialized...
-INFO:root:Reading 12 files from [/Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/train/part-00002-68849bba-fc84-43b2-aed5-3afc50a30054-c000.csv, ..
-INFO:root:(73540, 46)
+INFO:root:Reading 1 files from [../ml4ir/applications/ranking/tests/data/csv/train/file_0.csv, ..
+INFO:root:(5676, 8)
 </pre>
 </div>
 </div>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[1]:</div>
+    <div class="prompt output_prompt">Out[5]:</div>
 
 
 
@@ -13183,372 +13183,68 @@ INFO:root:(73540, 46)
   </thead>
   <tbody>
     <tr>
-      <th>clicked</th>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>clicks_count</th>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>entity</th>
-      <td>Account</td>
-      <td>Account</td>
-      <td>Account</td>
-      <td>Account</td>
-      <td>Account</td>
-    </tr>
-    <tr>
-      <th>fr</th>
-      <td>1</td>
+      <th>query_key</th>
+      <td>2</td>
       <td>2</td>
       <td>5</td>
+      <td>5</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>query_str</th>
+      <td>MHS7A7RJB1Y4BJT</td>
+      <td>MHS7A7RJB1Y4BJT</td>
+      <td>KNJNWV</td>
+      <td>KNJNWV</td>
+      <td>KNJNWV</td>
+    </tr>
+    <tr>
+      <th>pos</th>
+      <td>2</td>
+      <td>1</td>
+      <td>6</td>
+      <td>3</td>
       <td>4</td>
-      <td>2</td>
     </tr>
     <tr>
-      <th>la</th>
-      <td>72.0374</td>
-      <td>262.037</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
+      <th>feat_0</th>
+      <td>0.47373</td>
+      <td>1.06319</td>
+      <td>1.36811</td>
+      <td>1.37063</td>
+      <td>1.3667</td>
     </tr>
     <tr>
-      <th>lm</th>
-      <td>5.11104</td>
-      <td>4.12563</td>
-      <td>593.184</td>
-      <td>592.992</td>
-      <td>0.000775463</td>
+      <th>feat_1</th>
+      <td>0</td>
+      <td>0.205381</td>
+      <td>0.030636</td>
+      <td>0.0412615</td>
+      <td>0.0825349</td>
     </tr>
     <tr>
-      <th>mru_aff_agg_count_nonzero(is_custom;is_in_search_layout)</th>
+      <th>feat_2</th>
+      <td>0</td>
+      <td>0.30103</td>
+      <td>0</td>
+      <td>0.30103</td>
+      <td>0.30103</td>
+    </tr>
+    <tr>
+      <th>label</th>
+      <td>0</td>
       <td>1</td>
-      <td>1</td>
       <td>0</td>
       <td>0</td>
       <td>0</td>
     </tr>
     <tr>
-      <th>mru_aff_agg_max(is_custom;is_in_search_layout)</th>
-      <td>0.60515</td>
-      <td>0.167382</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>mru_aff_agg_mean(is_custom;is_in_search_layout)</th>
-      <td>0.60515</td>
-      <td>0.167382</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>mru_aff_agg_median(is_custom;is_in_search_layout)</th>
-      <td>0.60515</td>
-      <td>0.167382</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>mru_aff_agg_min(is_custom;is_in_search_layout)</th>
-      <td>0.60515</td>
-      <td>0.167382</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>mru_aff_agg_sum(is_custom;is_in_search_layout)</th>
-      <td>0.60515</td>
-      <td>0.167382</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>num_results</th>
+      <th>group</th>
       <td>2</td>
       <td>2</td>
-      <td>5</td>
-      <td>5</td>
-      <td>5</td>
-    </tr>
-    <tr>
-      <th>organization_id</th>
-      <td>00D10000000L4CS</td>
-      <td>00D10000000L4CS</td>
-      <td>00D460000016HQQ</td>
-      <td>00D460000016HQQ</td>
-      <td>00D460000016HQQ</td>
-    </tr>
-    <tr>
-      <th>p_AccountSource</th>
       <td>0</td>
       <td>0</td>
       <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_BillingCity</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_BillingCountry</th>
-      <td>1</td>
-      <td>1</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_BillingCountryCode</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_BillingState</th>
-      <td>0.416309</td>
-      <td>0.416309</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_BillingStateCode</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_CleanStatus</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_CreatedById</th>
-      <td>0.639485</td>
-      <td>0.150215</td>
-      <td>0.409836</td>
-      <td>0.409836</td>
-      <td>0.282787</td>
-    </tr>
-    <tr>
-      <th>p_Industry</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_LastModifiedById</th>
-      <td>0.646766</td>
-      <td>0.646766</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0.598394</td>
-    </tr>
-    <tr>
-      <th>p_OwnerId</th>
-      <td>0.0145455</td>
-      <td>0.0145455</td>
-      <td>0.409836</td>
-      <td>0.409836</td>
-      <td>0.282787</td>
-    </tr>
-    <tr>
-      <th>p_Ownership</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ParentId</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_Rating</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ShippingCity</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ShippingCountry</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ShippingCountryCode</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ShippingState</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_ShippingStateCode</th>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_Site</th>
-      <td>0.478723</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>p_Type</th>
-      <td>0.716738</td>
-      <td>0.716738</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>pc_s</th>
-      <td>7</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>pv_s</th>
-      <td>33</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>query_id</th>
-      <td>-1148gal17fqd7</td>
-      <td>-1148gal17fqd7</td>
-      <td>-11dwz735nwtjc</td>
-      <td>-11dwz735nwtjc</td>
-      <td>-11dwz735nwtjc</td>
-    </tr>
-    <tr>
-      <th>query_number</th>
-      <td>3187</td>
-      <td>3187</td>
-      <td>3088</td>
-      <td>3088</td>
-      <td>3088</td>
-    </tr>
-    <tr>
-      <th>query_start</th>
-      <td>"サーランド・アイエヌイー"</td>
-      <td>"サーランド・アイエヌイー"</td>
-      <td>"vedrami"</td>
-      <td>"vedrami"</td>
-      <td>"vedrami"</td>
-    </tr>
-    <tr>
-      <th>record_id</th>
-      <td>0011000000tYNu2</td>
-      <td>0011000001Khv5s</td>
-      <td>0014600000xNmFn</td>
-      <td>0014600000xZIbA</td>
-      <td>0011M00002Mipnw</td>
-    </tr>
-    <tr>
-      <th>s</th>
-      <td>144.309</td>
-      <td>42.4669</td>
-      <td>5.24568</td>
-      <td>5.46293</td>
-      <td>14.7341</td>
-    </tr>
-    <tr>
-      <th>search_areas</th>
-      <td>header</td>
-      <td>header</td>
-      <td>header</td>
-      <td>header</td>
-      <td>header</td>
-    </tr>
-    <tr>
-      <th>sim_score</th>
-      <td>15.2555</td>
-      <td>14.4204</td>
-      <td>11.289</td>
-      <td>11.7561</td>
-      <td>14.7348</td>
-    </tr>
-    <tr>
-      <th>time</th>
-      <td>2019-08-08 00:53:54</td>
-      <td>2019-08-08 00:53:54</td>
-      <td>2019-08-17 23:06:07</td>
-      <td>2019-08-17 23:06:07</td>
-      <td>2019-08-17 23:06:07</td>
-    </tr>
-    <tr>
-      <th>user_id</th>
-      <td>005-GE-bjeN-4-9KJIAx5E</td>
-      <td>005-GE-bjeN-4-9KJIAx5E</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
     </tr>
   </tbody>
 </table>
@@ -13570,42 +13266,45 @@ INFO:root:(73540, 46)
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Set up the feature configurations</span>
-<span class="kn">from</span> <span class="nn">ml4ir.features.feature_config</span> <span class="kn">import</span> <span class="n">parse_config</span>
-<span class="kn">from</span> <span class="nn">ml4ir.features.feature_config</span> <span class="kn">import</span> <span class="n">ExampleFeatureConfig</span>
-<span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.features.feature_config</span> <span class="kn">import</span> <span class="n">parse_config</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.features.feature_config</span> <span class="kn">import</span> <span class="n">ExampleFeatureConfig</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
 <span class="kn">import</span> <span class="nn">json</span>
 
 <span class="n">feature_config_yaml</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span>
 <span class="s1">query_key: </span>
-<span class="s1">  name: query_id</span>
-<span class="s1">  node_name: query_id</span>
+<span class="s1">  name: query_key</span>
+<span class="s1">  node_name: query_key</span>
 <span class="s1">  trainable: false</span>
-<span class="s1">  dtype: string</span>
-<span class="s1">  log_at_inference: true</span>
-<span class="s1">  feature_layer_info:</span>
-<span class="s1">    type: string</span>
-<span class="s1">  serving_info:</span>
-<span class="s1">    name: query_id</span>
-<span class="s1">    required: false</span>
-<span class="s1">label:</span>
-<span class="s1">  name: clicked</span>
-<span class="s1">  node_name: clicked</span>
-<span class="s1">  trainable: false</span>
-<span class="s1">  dtype: float</span>
+<span class="s1">  dtype: int64</span>
 <span class="s1">  log_at_inference: true</span>
 <span class="s1">  feature_layer_info:</span>
 <span class="s1">    type: numeric</span>
 <span class="s1">    shape: null</span>
 <span class="s1">  serving_info:</span>
-<span class="s1">    name: clicked</span>
 <span class="s1">    required: false</span>
+<span class="s1">    default_value: 0</span>
+<span class="s1">  tfrecord_type: context</span>
+<span class="s1">label:</span>
+<span class="s1">  name: label</span>
+<span class="s1">  node_name: label</span>
+<span class="s1">  trainable: false</span>
+<span class="s1">  dtype: int64</span>
+<span class="s1">  log_at_inference: true</span>
+<span class="s1">  feature_layer_info:</span>
+<span class="s1">    type: numeric</span>
+<span class="s1">    shape: null</span>
+<span class="s1">  serving_info:</span>
+<span class="s1">    required: false</span>
+<span class="s1">    default_value: 0</span>
+<span class="s1">  tfrecord_type: sequence</span>
 <span class="s1">features:</span>
-<span class="s1">  - name: sim_score</span>
-<span class="s1">    node_name: sim_score</span>
+<span class="s1">  - name: feat_0</span>
+<span class="s1">    node_name: feat_0</span>
 <span class="s1">    trainable: true</span>
 <span class="s1">    dtype: float</span>
 <span class="s1">    log_at_inference: false</span>
@@ -13613,36 +13312,11 @@ INFO:root:(73540, 46)
 <span class="s1">      type: numeric</span>
 <span class="s1">      shape: null</span>
 <span class="s1">    serving_info:</span>
-<span class="s1">      name: sim_score</span>
 <span class="s1">      required: true</span>
-<span class="s1">  - name: p_OwnerId</span>
-<span class="s1">    node_name: p_OwnerId</span>
-<span class="s1">    trainable: true</span>
-<span class="s1">    dtype: float</span>
-<span class="s1">    log_at_inference: false</span>
-<span class="s1">    feature_layer_info:</span>
-<span class="s1">      type: numeric</span>
-<span class="s1">      shape: null</span>
-<span class="s1">      fn: signed_log</span>
-<span class="s1">      args:</span>
-<span class="s1">        shift: 1</span>
-<span class="s1">    serving_info:</span>
-<span class="s1">      name: p_OwnerId</span>
-<span class="s1">      required: true</span>
-<span class="s1">  - name: la</span>
-<span class="s1">    node_name: la</span>
-<span class="s1">    trainable: true</span>
-<span class="s1">    dtype: float</span>
-<span class="s1">    log_at_inference: false</span>
-<span class="s1">    feature_layer_info:</span>
-<span class="s1">      type: numeric</span>
-<span class="s1">      shape: null</span>
-<span class="s1">    serving_info:</span>
-<span class="s1">      name: la</span>
-<span class="s1">      required: true</span>
+<span class="s1">      default_value: 0.0</span>
 <span class="s1">    tfrecord_type: sequence</span>
-<span class="s1">  - name: pv_s</span>
-<span class="s1">    node_name: pv_s</span>
+<span class="s1">  - name: feat_1</span>
+<span class="s1">    node_name: feat_1</span>
 <span class="s1">    trainable: true</span>
 <span class="s1">    dtype: float</span>
 <span class="s1">    log_at_inference: false</span>
@@ -13650,11 +13324,23 @@ INFO:root:(73540, 46)
 <span class="s1">      type: numeric</span>
 <span class="s1">      shape: null</span>
 <span class="s1">    serving_info:</span>
-<span class="s1">      name: pv_s</span>
 <span class="s1">      required: true</span>
+<span class="s1">      default_value: 0.0</span>
 <span class="s1">    tfrecord_type: sequence</span>
-<span class="s1">  - name: query_start</span>
-<span class="s1">    node_name: query_start</span>
+<span class="s1">  - name: feat_2</span>
+<span class="s1">    node_name: feat_2</span>
+<span class="s1">    trainable: true</span>
+<span class="s1">    dtype: float</span>
+<span class="s1">    log_at_inference: false</span>
+<span class="s1">    feature_layer_info:</span>
+<span class="s1">      type: numeric</span>
+<span class="s1">      shape: null</span>
+<span class="s1">    serving_info:</span>
+<span class="s1">      required: true</span>
+<span class="s1">      default_value: 0.0</span>
+<span class="s1">    tfrecord_type: sequence</span>
+<span class="s1">  - name: query_str</span>
+<span class="s1">    node_name: query_str</span>
 <span class="s1">    trainable: true</span>
 <span class="s1">    dtype: string</span>
 <span class="s1">    log_at_inference: true</span>
@@ -13676,36 +13362,36 @@ INFO:root:(73540, 46)
 <span class="s1">    serving_info:</span>
 <span class="s1">      required: true</span>
 <span class="s1">      default_value: &quot;&quot;</span>
-<span class="s1">      name: query_str</span>
-<span class="s1">  - name: organization_id</span>
-<span class="s1">    node_name: organization_id</span>
+<span class="s1">    tfrecord_type: context</span>
+<span class="s1">  - name: group</span>
+<span class="s1">    node_name: group</span>
 <span class="s1">    trainable: true</span>
-<span class="s1">    dtype: string</span>
-<span class="s1">    log_at_inference: true</span>
+<span class="s1">    dtype: int64</span>
+<span class="s1">    log_at_inference: false</span>
 <span class="s1">    is_group_metric_key: true</span>
 <span class="s1">    feature_layer_info:</span>
-<span class="s1">      type: categorical</span>
-<span class="s1">      fn: get_categorical_embedding</span>
+<span class="s1">      type: numeric</span>
+<span class="s1">      shape: null</span>
+<span class="s1">      fn: custom_categorical_embedding</span>
 <span class="s1">      args:</span>
-<span class="s1">        num_categorical_features: 2</span>
-<span class="s1">        num_hash_buckets: 32</span>
-<span class="s1">        embedding_size: 32</span>
-<span class="s1">        merge_mode: concat</span>
+<span class="s1">        vocabulary_size: 16</span>
+<span class="s1">        embedding_size: 128</span>
 <span class="s1">    serving_info:</span>
-<span class="s1">      name: organization_id</span>
 <span class="s1">      required: false</span>
-<span class="s1">      default_value: &quot;&quot;</span>
-<span class="s1">  - name: fr</span>
-<span class="s1">    node_name: fr</span>
+<span class="s1">      default_value: 0</span>
+<span class="s1">    tfrecord_type: context</span>
+<span class="s1">  - name: pos</span>
+<span class="s1">    node_name: pos</span>
 <span class="s1">    trainable: false</span>
-<span class="s1">    dtype: float</span>
+<span class="s1">    dtype: int64</span>
 <span class="s1">    log_at_inference: true</span>
 <span class="s1">    feature_layer_info:</span>
 <span class="s1">      type: numeric</span>
 <span class="s1">      shape: null</span>
 <span class="s1">    serving_info:</span>
-<span class="s1">      name: fr</span>
 <span class="s1">      required: true</span>
+<span class="s1">      default_value: 0</span>
+<span class="s1">    tfrecord_type: sequence</span>
 <span class="s1">&#39;&#39;&#39;</span>
 <span class="n">feature_config</span><span class="p">:</span> <span class="n">ExampleFeatureConfig</span> <span class="o">=</span> <span class="n">parse_config</span><span class="p">(</span><span class="n">TFRecordTypeKey</span><span class="o">.</span><span class="n">EXAMPLE</span><span class="p">,</span> <span class="n">feature_config_yaml</span><span class="p">,</span> <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">)</span>
     
@@ -13729,100 +13415,52 @@ INFO:root:(73540, 46)
 <pre>INFO:root:Reading feature config from YAML string
 INFO:root:Feature config loaded successfully
 INFO:root:Trainable Features : 
-sim_score
-p_OwnerId
-la
-pv_s
-query_start
-organization_id
-INFO:root:Label : clicked
+feat_0
+feat_1
+feat_2
+query_str
+group
+INFO:root:Label : label
 INFO:root:Metadata Features : 
-query_id
-clicked
-fr
+query_key
+label
+pos
 INFO:root:[
     {
-        &#34;name&#34;: &#34;query_id&#34;,
-        &#34;node_name&#34;: &#34;query_id&#34;,
+        &#34;name&#34;: &#34;query_key&#34;,
+        &#34;node_name&#34;: &#34;query_key&#34;,
         &#34;trainable&#34;: false,
-        &#34;dtype&#34;: &#34;string&#34;,
-        &#34;log_at_inference&#34;: true,
-        &#34;feature_layer_info&#34;: {
-            &#34;type&#34;: &#34;string&#34;
-        },
-        &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;query_id&#34;,
-            &#34;required&#34;: false
-        }
-    },
-    {
-        &#34;name&#34;: &#34;clicked&#34;,
-        &#34;node_name&#34;: &#34;clicked&#34;,
-        &#34;trainable&#34;: false,
-        &#34;dtype&#34;: &#34;float&#34;,
+        &#34;dtype&#34;: &#34;int64&#34;,
         &#34;log_at_inference&#34;: true,
         &#34;feature_layer_info&#34;: {
             &#34;type&#34;: &#34;numeric&#34;,
             &#34;shape&#34;: null
         },
         &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;clicked&#34;,
-            &#34;required&#34;: false
-        }
+            &#34;required&#34;: false,
+            &#34;default_value&#34;: 0
+        },
+        &#34;tfrecord_type&#34;: &#34;context&#34;
     },
     {
-        &#34;name&#34;: &#34;sim_score&#34;,
-        &#34;node_name&#34;: &#34;sim_score&#34;,
-        &#34;trainable&#34;: true,
-        &#34;dtype&#34;: &#34;float&#34;,
-        &#34;log_at_inference&#34;: false,
+        &#34;name&#34;: &#34;label&#34;,
+        &#34;node_name&#34;: &#34;label&#34;,
+        &#34;trainable&#34;: false,
+        &#34;dtype&#34;: &#34;int64&#34;,
+        &#34;log_at_inference&#34;: true,
         &#34;feature_layer_info&#34;: {
             &#34;type&#34;: &#34;numeric&#34;,
             &#34;shape&#34;: null
         },
         &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;sim_score&#34;,
-            &#34;required&#34;: true
-        }
-    },
-    {
-        &#34;name&#34;: &#34;p_OwnerId&#34;,
-        &#34;node_name&#34;: &#34;p_OwnerId&#34;,
-        &#34;trainable&#34;: true,
-        &#34;dtype&#34;: &#34;float&#34;,
-        &#34;log_at_inference&#34;: false,
-        &#34;feature_layer_info&#34;: {
-            &#34;type&#34;: &#34;numeric&#34;,
-            &#34;shape&#34;: null,
-            &#34;fn&#34;: &#34;signed_log&#34;,
-            &#34;args&#34;: {
-                &#34;shift&#34;: 1
-            }
-        },
-        &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;p_OwnerId&#34;,
-            &#34;required&#34;: true
-        }
-    },
-    {
-        &#34;name&#34;: &#34;la&#34;,
-        &#34;node_name&#34;: &#34;la&#34;,
-        &#34;trainable&#34;: true,
-        &#34;dtype&#34;: &#34;float&#34;,
-        &#34;log_at_inference&#34;: false,
-        &#34;feature_layer_info&#34;: {
-            &#34;type&#34;: &#34;numeric&#34;,
-            &#34;shape&#34;: null
-        },
-        &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;la&#34;,
-            &#34;required&#34;: true
+            &#34;required&#34;: false,
+            &#34;default_value&#34;: 0
         },
         &#34;tfrecord_type&#34;: &#34;sequence&#34;
     },
     {
-        &#34;name&#34;: &#34;pv_s&#34;,
-        &#34;node_name&#34;: &#34;pv_s&#34;,
+        &#34;name&#34;: &#34;feat_0&#34;,
+        &#34;node_name&#34;: &#34;feat_0&#34;,
         &#34;trainable&#34;: true,
         &#34;dtype&#34;: &#34;float&#34;,
         &#34;log_at_inference&#34;: false,
@@ -13831,14 +13469,46 @@ INFO:root:[
             &#34;shape&#34;: null
         },
         &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;pv_s&#34;,
-            &#34;required&#34;: true
+            &#34;required&#34;: true,
+            &#34;default_value&#34;: 0.0
         },
         &#34;tfrecord_type&#34;: &#34;sequence&#34;
     },
     {
-        &#34;name&#34;: &#34;query_start&#34;,
-        &#34;node_name&#34;: &#34;query_start&#34;,
+        &#34;name&#34;: &#34;feat_1&#34;,
+        &#34;node_name&#34;: &#34;feat_1&#34;,
+        &#34;trainable&#34;: true,
+        &#34;dtype&#34;: &#34;float&#34;,
+        &#34;log_at_inference&#34;: false,
+        &#34;feature_layer_info&#34;: {
+            &#34;type&#34;: &#34;numeric&#34;,
+            &#34;shape&#34;: null
+        },
+        &#34;serving_info&#34;: {
+            &#34;required&#34;: true,
+            &#34;default_value&#34;: 0.0
+        },
+        &#34;tfrecord_type&#34;: &#34;sequence&#34;
+    },
+    {
+        &#34;name&#34;: &#34;feat_2&#34;,
+        &#34;node_name&#34;: &#34;feat_2&#34;,
+        &#34;trainable&#34;: true,
+        &#34;dtype&#34;: &#34;float&#34;,
+        &#34;log_at_inference&#34;: false,
+        &#34;feature_layer_info&#34;: {
+            &#34;type&#34;: &#34;numeric&#34;,
+            &#34;shape&#34;: null
+        },
+        &#34;serving_info&#34;: {
+            &#34;required&#34;: true,
+            &#34;default_value&#34;: 0.0
+        },
+        &#34;tfrecord_type&#34;: &#34;sequence&#34;
+    },
+    {
+        &#34;name&#34;: &#34;query_str&#34;,
+        &#34;node_name&#34;: &#34;query_str&#34;,
         &#34;trainable&#34;: true,
         &#34;dtype&#34;: &#34;string&#34;,
         &#34;log_at_inference&#34;: true,
@@ -13867,47 +13537,47 @@ INFO:root:[
         ],
         &#34;serving_info&#34;: {
             &#34;required&#34;: true,
-            &#34;default_value&#34;: &#34;&#34;,
-            &#34;name&#34;: &#34;query_str&#34;
-        }
+            &#34;default_value&#34;: &#34;&#34;
+        },
+        &#34;tfrecord_type&#34;: &#34;context&#34;
     },
     {
-        &#34;name&#34;: &#34;organization_id&#34;,
-        &#34;node_name&#34;: &#34;organization_id&#34;,
+        &#34;name&#34;: &#34;group&#34;,
+        &#34;node_name&#34;: &#34;group&#34;,
         &#34;trainable&#34;: true,
-        &#34;dtype&#34;: &#34;string&#34;,
-        &#34;log_at_inference&#34;: true,
+        &#34;dtype&#34;: &#34;int64&#34;,
+        &#34;log_at_inference&#34;: false,
         &#34;is_group_metric_key&#34;: true,
         &#34;feature_layer_info&#34;: {
-            &#34;type&#34;: &#34;categorical&#34;,
-            &#34;fn&#34;: &#34;get_categorical_embedding&#34;,
+            &#34;type&#34;: &#34;numeric&#34;,
+            &#34;shape&#34;: null,
+            &#34;fn&#34;: &#34;custom_categorical_embedding&#34;,
             &#34;args&#34;: {
-                &#34;num_categorical_features&#34;: 2,
-                &#34;num_hash_buckets&#34;: 32,
-                &#34;embedding_size&#34;: 32,
-                &#34;merge_mode&#34;: &#34;concat&#34;
+                &#34;vocabulary_size&#34;: 16,
+                &#34;embedding_size&#34;: 128
             }
         },
         &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;organization_id&#34;,
             &#34;required&#34;: false,
-            &#34;default_value&#34;: &#34;&#34;
-        }
+            &#34;default_value&#34;: 0
+        },
+        &#34;tfrecord_type&#34;: &#34;context&#34;
     },
     {
-        &#34;name&#34;: &#34;fr&#34;,
-        &#34;node_name&#34;: &#34;fr&#34;,
+        &#34;name&#34;: &#34;pos&#34;,
+        &#34;node_name&#34;: &#34;pos&#34;,
         &#34;trainable&#34;: false,
-        &#34;dtype&#34;: &#34;float&#34;,
+        &#34;dtype&#34;: &#34;int64&#34;,
         &#34;log_at_inference&#34;: true,
         &#34;feature_layer_info&#34;: {
             &#34;type&#34;: &#34;numeric&#34;,
             &#34;shape&#34;: null
         },
         &#34;serving_info&#34;: {
-            &#34;name&#34;: &#34;fr&#34;,
-            &#34;required&#34;: true
-        }
+            &#34;required&#34;: true,
+            &#34;default_value&#34;: 0
+        },
+        &#34;tfrecord_type&#34;: &#34;sequence&#34;
     }
 ]
 </pre>
@@ -13942,19 +13612,23 @@ INFO:root:[
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.io</span> <span class="kn">import</span> <span class="n">file_io</span>
-<span class="kn">from</span> <span class="nn">ml4ir.data</span> <span class="kn">import</span> <span class="n">tfrecord_writer</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.io</span> <span class="kn">import</span> <span class="n">file_io</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.data</span> <span class="kn">import</span> <span class="n">tfrecord_writer</span>
 <span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
 <span class="c1"># Load data</span>
 <span class="n">df</span> <span class="o">=</span> <span class="n">file_io</span><span class="o">.</span><span class="n">read_df_list</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CSV_DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;*.csv&quot;</span><span class="p">)))</span>
 
 <span class="c1"># Save as TFRecord SequenceExample/Example</span>
+<span class="n">TFRECORD_DIR</span> <span class="o">=</span> <span class="s1">&#39;../data/pointwise_ranking_demo/&#39;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">TFRECORD_DIR</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;../data/pointwise_ranking_demo/&#39;</span><span class="p">)</span>
 <span class="n">tfrecord_writer</span><span class="o">.</span><span class="n">write_from_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
-                              <span class="n">tfrecord_file</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/data/demo/tfrecords/file_0.tfrecord&#39;</span><span class="p">,</span>
+                              <span class="n">tfrecord_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">TFRECORD_DIR</span><span class="p">,</span> <span class="s1">&#39;file_0.tfrecord&#39;</span><span class="p">),</span>
                               <span class="n">feature_config</span><span class="o">=</span><span class="n">feature_config</span><span class="p">,</span>
                               <span class="n">tfrecord_type</span><span class="o">=</span><span class="n">TFRecordTypeKey</span><span class="o">.</span><span class="n">EXAMPLE</span><span class="p">)</span>
 
@@ -13972,7 +13646,7 @@ INFO:root:[
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[3]:</div>
+    <div class="prompt output_prompt">Out[18]:</div>
 
 
 
@@ -13995,299 +13669,71 @@ INFO:root:[
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>clicked</th>
-      <th>clicks_count</th>
-      <th>entity</th>
-      <th>fr</th>
-      <th>la</th>
-      <th>lm</th>
-      <th>mru_aff_agg_count_nonzero(is_custom;is_in_search_layout)</th>
-      <th>mru_aff_agg_max(is_custom;is_in_search_layout)</th>
-      <th>mru_aff_agg_mean(is_custom;is_in_search_layout)</th>
-      <th>mru_aff_agg_median(is_custom;is_in_search_layout)</th>
-      <th>mru_aff_agg_min(is_custom;is_in_search_layout)</th>
-      <th>mru_aff_agg_sum(is_custom;is_in_search_layout)</th>
-      <th>num_results</th>
-      <th>organization_id</th>
-      <th>p_AccountSource</th>
-      <th>p_BillingCity</th>
-      <th>p_BillingCountry</th>
-      <th>p_BillingCountryCode</th>
-      <th>p_BillingState</th>
-      <th>p_BillingStateCode</th>
-      <th>p_CleanStatus</th>
-      <th>p_CreatedById</th>
-      <th>p_Industry</th>
-      <th>p_LastModifiedById</th>
-      <th>p_OwnerId</th>
-      <th>p_Ownership</th>
-      <th>p_ParentId</th>
-      <th>p_Rating</th>
-      <th>p_ShippingCity</th>
-      <th>p_ShippingCountry</th>
-      <th>p_ShippingCountryCode</th>
-      <th>p_ShippingState</th>
-      <th>p_ShippingStateCode</th>
-      <th>p_Site</th>
-      <th>p_Type</th>
-      <th>pc_s</th>
-      <th>pv_s</th>
-      <th>query_id</th>
-      <th>query_number</th>
-      <th>query_start</th>
-      <th>record_id</th>
-      <th>s</th>
-      <th>search_areas</th>
-      <th>sim_score</th>
-      <th>time</th>
-      <th>user_id</th>
+      <th>query_key</th>
+      <th>query_str</th>
+      <th>pos</th>
+      <th>feat_0</th>
+      <th>feat_1</th>
+      <th>feat_2</th>
+      <th>label</th>
+      <th>group</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>1.0</td>
-      <td>1</td>
-      <td>Account</td>
-      <td>1.0</td>
-      <td>72.037431</td>
-      <td>5.111042</td>
-      <td>1.0</td>
-      <td>0.605150</td>
-      <td>0.605150</td>
-      <td>0.605150</td>
-      <td>0.605150</td>
-      <td>0.605150</td>
-      <td>2.0</td>
-      <td>00D10000000L4CS</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>1.0</td>
-      <td>0.0</td>
-      <td>0.416309</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.639485</td>
-      <td>0.0</td>
-      <td>0.646766</td>
-      <td>0.014545</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.478723</td>
-      <td>0.716738</td>
-      <td>7.0</td>
-      <td>33.0</td>
-      <td>-1148gal17fqd7</td>
-      <td>3187</td>
-      <td>"サーランド・アイエヌイー"</td>
-      <td>0011000000tYNu2</td>
-      <td>144.30891</td>
-      <td>header</td>
-      <td>15.255452</td>
-      <td>2019-08-08 00:53:54</td>
-      <td>005-GE-bjeN-4-9KJIAx5E</td>
+      <td>2</td>
+      <td>MHS7A7RJB1Y4BJT</td>
+      <td>2</td>
+      <td>0.473730</td>
+      <td>0.000000</td>
+      <td>0.00000</td>
+      <td>0</td>
+      <td>2</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>0.0</td>
+      <td>2</td>
+      <td>MHS7A7RJB1Y4BJT</td>
       <td>1</td>
-      <td>Account</td>
-      <td>2.0</td>
-      <td>262.037431</td>
-      <td>4.125625</td>
-      <td>1.0</td>
-      <td>0.167382</td>
-      <td>0.167382</td>
-      <td>0.167382</td>
-      <td>0.167382</td>
-      <td>0.167382</td>
-      <td>2.0</td>
-      <td>00D10000000L4CS</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>1.0</td>
-      <td>0.0</td>
-      <td>0.416309</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.150215</td>
-      <td>0.0</td>
-      <td>0.646766</td>
-      <td>0.014545</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.716738</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>-1148gal17fqd7</td>
-      <td>3187</td>
-      <td>"サーランド・アイエヌイー"</td>
-      <td>0011000001Khv5s</td>
-      <td>42.46688</td>
-      <td>header</td>
-      <td>14.420368</td>
-      <td>2019-08-08 00:53:54</td>
-      <td>005-GE-bjeN-4-9KJIAx5E</td>
+      <td>1.063190</td>
+      <td>0.205381</td>
+      <td>0.30103</td>
+      <td>1</td>
+      <td>2</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>0.0</td>
-      <td>1</td>
-      <td>Account</td>
-      <td>5.0</td>
-      <td>0.000000</td>
-      <td>593.184109</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>5.0</td>
-      <td>00D460000016HQQ</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.409836</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.409836</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>-11dwz735nwtjc</td>
-      <td>3088</td>
-      <td>"vedrami"</td>
-      <td>0014600000xNmFn</td>
-      <td>5.24568</td>
-      <td>header</td>
-      <td>11.289043</td>
-      <td>2019-08-17 23:06:07</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
+      <td>5</td>
+      <td>KNJNWV</td>
+      <td>6</td>
+      <td>1.368108</td>
+      <td>0.030636</td>
+      <td>0.00000</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>0.0</td>
-      <td>1</td>
-      <td>Account</td>
-      <td>4.0</td>
-      <td>0.000000</td>
-      <td>592.992442</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>5.0</td>
-      <td>00D460000016HQQ</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.409836</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.409836</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>-11dwz735nwtjc</td>
-      <td>3088</td>
-      <td>"vedrami"</td>
-      <td>0014600000xZIbA</td>
-      <td>5.46293</td>
-      <td>header</td>
-      <td>11.756130</td>
-      <td>2019-08-17 23:06:07</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
+      <td>5</td>
+      <td>KNJNWV</td>
+      <td>3</td>
+      <td>1.370628</td>
+      <td>0.041261</td>
+      <td>0.30103</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>1.0</td>
-      <td>1</td>
-      <td>Account</td>
-      <td>2.0</td>
-      <td>0.000000</td>
-      <td>0.000775</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>5.0</td>
-      <td>00D460000016HQQ</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.282787</td>
-      <td>0.0</td>
-      <td>0.598394</td>
-      <td>0.282787</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.000000</td>
-      <td>0.000000</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>-11dwz735nwtjc</td>
-      <td>3088</td>
-      <td>"vedrami"</td>
-      <td>0011M00002Mipnw</td>
-      <td>14.73413</td>
-      <td>header</td>
-      <td>14.734850</td>
-      <td>2019-08-17 23:06:07</td>
-      <td>005-GE-4AWyRW4cD4XSL7s</td>
+      <td>5</td>
+      <td>KNJNWV</td>
+      <td>4</td>
+      <td>1.366700</td>
+      <td>0.082535</td>
+      <td>0.30103</td>
+      <td>0</td>
+      <td>0</td>
     </tr>
   </tbody>
 </table>
@@ -14309,10 +13755,10 @@ INFO:root:[
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.data</span> <span class="kn">import</span> <span class="n">tfrecord_reader</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.data</span> <span class="kn">import</span> <span class="n">tfrecord_reader</span>
 <span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="nb">print</span> <span class="k">as</span> <span class="n">tfprint</span>
 <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
@@ -14326,7 +13772,7 @@ INFO:root:[
 <span class="p">}</span>
 
 <span class="c1"># Create a TFRecord dataset</span>
-<span class="n">dataset</span> <span class="o">=</span> <span class="n">tfrecord_reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/data/demo/tfrecords/&#39;</span><span class="p">,</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">tfrecord_reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="n">TFRECORD_DIR</span><span class="p">,</span>
                                <span class="n">feature_config</span><span class="o">=</span><span class="n">feature_config</span><span class="p">,</span>
                                <span class="n">tfrecord_type</span><span class="o">=</span><span class="n">TFRecordTypeKey</span><span class="o">.</span><span class="n">EXAMPLE</span><span class="p">,</span>
                                <span class="n">preprocessing_keys_to_fns</span><span class="o">=</span><span class="n">preprocessing_fns</span><span class="p">)</span>
@@ -14348,52 +13794,47 @@ INFO:root:[
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#39;query_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;clicked&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;sim_score&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;p_OwnerId&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;la&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;pv_s&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_start&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;organization_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;fr&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0)}
-({&#39;fr&#39;: [[1]
+<pre>{&#39;query_key&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;label&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;feat_0&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_1&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_2&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_str&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;group&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;pos&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0)}
+({&#39;feat_0&#39;: [[0.473729521]
+ [1.06319]
+ [1.36810815]
+ [1.37062836]
+ [1.36669993]],
+  &#39;feat_1&#39;: [[0]
+ [0.205380633]
+ [0.0306360275]
+ [0.0412614979]
+ [0.0825348869]],
+  &#39;feat_2&#39;: [[0]
+ [0.30103]
+ [0]
+ [0.30103]
+ [0.30103]],
+  &#39;group&#39;: [[2]
+ [2]
+ [0]
+ [0]
+ [0]],
+  &#39;pos&#39;: [[2]
+ [1]
+ [6]
+ [3]
+ [4]],
+  &#39;query_key&#39;: [[2]
  [2]
  [5]
- [4]
- [2]],
-  &#39;la&#39;: [[72.0374298]
- [262.037445]
+ [5]
+ [5]],
+  &#39;query_str&#39;: [[&#34;mhsarjbybjt&#34;]
+ [&#34;mhsarjbybjt&#34;]
+ [&#34;knjnwv&#34;]
+ [&#34;knjnwv&#34;]
+ [&#34;knjnwv&#34;]]},
+ [[0]
+ [1]
  [0]
  [0]
- [0]],
-  &#39;organization_id&#39;: [[&#34;00D10000000L4CS&#34;]
- [&#34;00D10000000L4CS&#34;]
- [&#34;00D460000016HQQ&#34;]
- [&#34;00D460000016HQQ&#34;]
- [&#34;00D460000016HQQ&#34;]],
-  &#39;p_OwnerId&#39;: [[0.0145454546]
- [0.0145454546]
- [0.409836054]
- [0.409836054]
- [0.282786876]],
-  &#39;pv_s&#39;: [[33]
- [0]
- [0]
- [0]
- [0]],
-  &#39;query_id&#39;: [[&#34;-1148gal17fqd7&#34;]
- [&#34;-1148gal17fqd7&#34;]
- [&#34;-11dwz735nwtjc&#34;]
- [&#34;-11dwz735nwtjc&#34;]
- [&#34;-11dwz735nwtjc&#34;]],
-  &#39;query_start&#39;: [[&#34;\343\202\265\343\203\274\343\203\251\343\203\263\343\203\211\343\203\273\343\202\242\343\202\244\343\202\250\343\203\214\343\202\244\343\203\274&#34;]
- [&#34;\343\202\265\343\203\274\343\203\251\343\203\263\343\203\211\343\203\273\343\202\242\343\202\244\343\202\250\343\203\214\343\202\244\343\203\274&#34;]
- [&#34;vedrami&#34;]
- [&#34;vedrami&#34;]
- [&#34;vedrami&#34;]],
-  &#39;sim_score&#39;: [[15.2554522]
- [14.4203682]
- [11.2890434]
- [11.7561302]
- [14.7348499]]},
- [[1]
- [0]
- [0]
- [0]
- [1]])
+ [0]])
 </pre>
 </div>
 </div>
@@ -14411,7 +13852,7 @@ INFO:root:[
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Variety of map, reduce, filter, shuffle operations can be used here</span>
@@ -14435,11 +13876,11 @@ INFO:root:[
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.data.relevance_dataset</span> <span class="kn">import</span> <span class="n">RelevanceDataset</span>
-<span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">DataFormatKey</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.data.relevance_dataset</span> <span class="kn">import</span> <span class="n">RelevanceDataset</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">DataFormatKey</span>
 
 <span class="n">relevance_dataset</span> <span class="o">=</span> <span class="n">RelevanceDataset</span><span class="p">(</span>
         <span class="n">data_dir</span><span class="o">=</span><span class="n">CSV_DATA_DIR</span><span class="p">,</span>
@@ -14470,10 +13911,11 @@ INFO:root:[
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Reading 12 files from [/Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/train/part-00000-68849bba-fc84-43b2-aed5-3afc50a30054-c000.csv, ..
-INFO:root:Writing SequenceExample protobufs to : /Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/tfrecord/train/file_0.tfrecord
-INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;/Users/ashish.srinivasa/search_relevance/model_t
-INFO:root:Reading 5 files from [/Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/validation/part-00000-2d86fde5-3c48-4985-b8b7-7e432fce7cc5-c000.csv, ..
+<pre>INFO:root:Reading 1 files from [../ml4ir/applications/ranking/tests/data/csv/train/file_0.csv, ..
+INFO:root:Writing SequenceExample protobufs to : ../ml4ir/applications/ranking/tests/data/csv/tfrecord/train/file_0.tfrecord
+INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;../ml4ir/applications/ranking/tests/data/csv/tfr
+INFO:root:Reading 1 files from [../ml4ir/applications/ranking/tests/data/csv/validation/file_0.csv, ..
+INFO:root:Writing SequenceExample protobufs to : ../ml4ir/applications/ranking/tests/data/csv/tfrecord/validation/file_0.tfrecord
 </pre>
 </div>
 </div>
@@ -14484,7 +13926,7 @@ INFO:root:Reading 5 files from [/Users/ashish.srinivasa/search_relevance/model_t
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#39;query_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;clicked&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;sim_score&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;p_OwnerId&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;la&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;pv_s&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_start&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;organization_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;fr&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0)}
+<pre>{&#39;query_key&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;label&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;feat_0&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_1&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_2&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_str&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;group&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;pos&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0)}
 </pre>
 </div>
 </div>
@@ -14495,9 +13937,9 @@ INFO:root:Reading 5 files from [/Users/ashish.srinivasa/search_relevance/model_t
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Writing SequenceExample protobufs to : /Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/tfrecord/validation/file_0.tfrecord
-INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;/Users/ashish.srinivasa/search_relevance/model_t
-INFO:root:Reading 6 files from [/Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/test/part-00000-b2239dde-0360-4611-90d0-23c6591de5ee-c000.csv, ..
+<pre>INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;../ml4ir/applications/ranking/tests/data/csv/tfr
+INFO:root:Reading 1 files from [../ml4ir/applications/ranking/tests/data/csv/test/file_0.csv, ..
+INFO:root:Writing SequenceExample protobufs to : ../ml4ir/applications/ranking/tests/data/csv/tfrecord/test/file_0.tfrecord
 </pre>
 </div>
 </div>
@@ -14508,7 +13950,7 @@ INFO:root:Reading 6 files from [/Users/ashish.srinivasa/search_relevance/model_t
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#39;query_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;clicked&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;sim_score&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;p_OwnerId&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;la&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;pv_s&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_start&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;organization_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;fr&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0)}
+<pre>{&#39;query_key&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;label&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;feat_0&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_1&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_2&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_str&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;group&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;pos&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0)}
 </pre>
 </div>
 </div>
@@ -14519,8 +13961,7 @@ INFO:root:Reading 6 files from [/Users/ashish.srinivasa/search_relevance/model_t
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Writing SequenceExample protobufs to : /Users/ashish.srinivasa/search_relevance/model_training/226/data/csv/seen_orgs/demo_Account/tfrecord/test/file_0.tfrecord
-INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;/Users/ashish.srinivasa/search_relevance/model_t
+<pre>INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : [&#39;../ml4ir/applications/ranking/tests/data/csv/tfr
 </pre>
 </div>
 </div>
@@ -14531,10 +13972,10 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#39;query_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;clicked&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;sim_score&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;p_OwnerId&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;la&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;pv_s&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_start&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;organization_id&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;fr&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0)}
-&lt;BatchDataset shapes: ({query_id: (128, 1), sim_score: (128, 1), p_OwnerId: (128, 1), la: (128, 1), pv_s: (128, 1), query_start: (128, 1), organization_id: (128, 1), fr: (128, 1)}, (128, 1)), types: ({query_id: tf.string, sim_score: tf.float32, p_OwnerId: tf.float32, la: tf.float32, pv_s: tf.float32, query_start: tf.string, organization_id: tf.string, fr: tf.float32}, tf.float32)&gt;
-&lt;BatchDataset shapes: ({query_id: (128, 1), sim_score: (128, 1), p_OwnerId: (128, 1), la: (128, 1), pv_s: (128, 1), query_start: (128, 1), organization_id: (128, 1), fr: (128, 1)}, (128, 1)), types: ({query_id: tf.string, sim_score: tf.float32, p_OwnerId: tf.float32, la: tf.float32, pv_s: tf.float32, query_start: tf.string, organization_id: tf.string, fr: tf.float32}, tf.float32)&gt;
-&lt;BatchDataset shapes: ({query_id: (128, 1), sim_score: (128, 1), p_OwnerId: (128, 1), la: (128, 1), pv_s: (128, 1), query_start: (128, 1), organization_id: (128, 1), fr: (128, 1)}, (128, 1)), types: ({query_id: tf.string, sim_score: tf.float32, p_OwnerId: tf.float32, la: tf.float32, pv_s: tf.float32, query_start: tf.string, organization_id: tf.string, fr: tf.float32}, tf.float32)&gt;
+<pre>{&#39;query_key&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;label&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;feat_0&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_1&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_2&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_str&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;group&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0), &#39;pos&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0)}
+&lt;BatchDataset shapes: ({query_key: (128, 1), feat_0: (128, 1), feat_1: (128, 1), feat_2: (128, 1), query_str: (128, 1), group: (128, 1), pos: (128, 1)}, (128, 1)), types: ({query_key: tf.int64, feat_0: tf.float32, feat_1: tf.float32, feat_2: tf.float32, query_str: tf.string, group: tf.int64, pos: tf.int64}, tf.int64)&gt;
+&lt;BatchDataset shapes: ({query_key: (128, 1), feat_0: (128, 1), feat_1: (128, 1), feat_2: (128, 1), query_str: (128, 1), group: (128, 1), pos: (128, 1)}, (128, 1)), types: ({query_key: tf.int64, feat_0: tf.float32, feat_1: tf.float32, feat_2: tf.float32, query_str: tf.string, group: tf.int64, pos: tf.int64}, tf.int64)&gt;
+&lt;BatchDataset shapes: ({query_key: (128, 1), feat_0: (128, 1), feat_1: (128, 1), feat_2: (128, 1), query_str: (128, 1), group: (128, 1), pos: (128, 1)}, (128, 1)), types: ({query_key: tf.int64, feat_0: tf.float32, feat_1: tf.float32, feat_2: tf.float32, query_str: tf.string, group: tf.int64, pos: tf.int64}, tf.int64)&gt;
 </pre>
 </div>
 </div>
@@ -14574,11 +14015,48 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.model.scoring.interaction_model</span> <span class="kn">import</span> <span class="n">InteractionModel</span><span class="p">,</span> <span class="n">UnivariateInteractionModel</span>
-<span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">feat_</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">K</span><span class="o">.</span><span class="n">repeat_elements</span><span class="p">(</span><span class="n">feat_</span><span class="p">,</span> <span class="n">rep</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>TensorShape([128, 25])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.model.scoring.interaction_model</span> <span class="kn">import</span> <span class="n">InteractionModel</span><span class="p">,</span> <span class="n">UnivariateInteractionModel</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
 
 <span class="c1"># Define custom feature layer ops</span>
 <span class="k">def</span> <span class="nf">get_categorical_embedding</span><span class="p">(</span><span class="n">input_feature</span><span class="p">,</span> <span class="n">feature_info</span><span class="p">):</span>
@@ -14627,11 +14105,11 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.model.scoring.scoring_model</span> <span class="kn">import</span> <span class="n">ScorerBase</span><span class="p">,</span> <span class="n">RelevanceScorer</span>
-<span class="kn">from</span> <span class="nn">ml4ir.model.losses.loss_base</span> <span class="kn">import</span> <span class="n">RelevanceLossBase</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.model.scoring.scoring_model</span> <span class="kn">import</span> <span class="n">ScorerBase</span><span class="p">,</span> <span class="n">RelevanceScorer</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.model.losses.loss_base</span> <span class="kn">import</span> <span class="n">RelevanceLossBase</span>
 <span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">layers</span>
 <span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">losses</span>
 
@@ -14655,7 +14133,7 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">logits</span><span class="p">,</span> <span class="n">mask</span><span class="p">:</span> <span class="n">layers</span><span class="o">.</span><span class="n">Activation</span><span class="p">(</span><span class="s2">&quot;sigmoid&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">output_name</span><span class="p">)(</span><span class="n">logits</span><span class="p">)</span>
 
 <span class="n">scorer</span><span class="p">:</span> <span class="n">ScorerBase</span> <span class="o">=</span> <span class="n">RelevanceScorer</span><span class="o">.</span><span class="n">from_model_config_file</span><span class="p">(</span>
-    <span class="n">model_config_file</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/ml4ir/python/ml4ir/config/default_model_config.yaml&#39;</span><span class="p">,</span>
+    <span class="n">model_config_file</span><span class="o">=</span><span class="s1">&#39;../ml4ir/base/config/default_model_config.yaml&#39;</span><span class="p">,</span>
     <span class="n">interaction_model</span><span class="o">=</span><span class="n">interaction_model</span><span class="p">,</span>
     <span class="n">loss</span><span class="o">=</span><span class="n">MyCustomLoss</span><span class="p">(),</span>
     <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;relevance_score&quot;</span><span class="p">)</span>
@@ -14727,12 +14205,13 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">metrics</span> <span class="k">as</span> <span class="n">kmetrics</span>
 
-<span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;binary_accuracy&#39;</span><span class="p">,</span> <span class="n">kmetrics</span><span class="o">.</span><span class="n">Precision</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;precision&#39;</span><span class="p">)]</span>
+<span class="c1"># metrics = [&#39;binary_accuracy&#39;, kmetrics.Precision(name=&#39;precision&#39;)]</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;binary_accuracy&#39;</span><span class="p">,</span> <span class="n">kmetrics</span><span class="o">.</span><span class="n">Precision</span><span class="p">]</span>
 </pre></div>
 
     </div>
@@ -14749,12 +14228,12 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow.keras.optimizers</span> <span class="kn">import</span> <span class="n">Optimizer</span>
-<span class="kn">from</span> <span class="nn">ml4ir.model.optimizer</span> <span class="kn">import</span> <span class="n">get_optimizer</span>
-<span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">OptimizerKey</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.model.optimizer</span> <span class="kn">import</span> <span class="n">get_optimizer</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">OptimizerKey</span>
 
 <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span> <span class="o">=</span> <span class="n">get_optimizer</span><span class="p">(</span>
                 <span class="n">optimizer_key</span><span class="o">=</span><span class="n">OptimizerKey</span><span class="o">.</span><span class="n">ADAM</span><span class="p">,</span>
@@ -14779,11 +14258,11 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.model.relevance_model</span> <span class="kn">import</span> <span class="n">RelevanceModel</span>
-<span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">OptimizerKey</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.model.relevance_model</span> <span class="kn">import</span> <span class="n">RelevanceModel</span>
+<span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">OptimizerKey</span>
 
 <span class="n">relevance_model</span> <span class="o">=</span> <span class="n">RelevanceModel</span><span class="p">(</span>
         <span class="n">feature_config</span><span class="o">=</span><span class="n">feature_config</span><span class="p">,</span>
@@ -14814,65 +14293,43 @@ INFO:root:Created TFRecordDataset from SequenceExample protobufs from 1 files : 
 __________________________________________________________________________________________________
 Layer (type)                    Output Shape         Param #     Connected to                     
 ==================================================================================================
-query_start (InputLayer)        [(None, 1)]          0                                            
+query_str (InputLayer)          [(None, 1)]          0                                            
 __________________________________________________________________________________________________
-tf_op_layer_DecodePaddedRaw (Te [(None, 1, 20)]      0           query_start[0][0]                
-__________________________________________________________________________________________________
-organization_id (InputLayer)    [(None, 1)]          0                                            
-__________________________________________________________________________________________________
-p_OwnerId (InputLayer)          [(None, 1)]          0                                            
+tf_op_layer_DecodePaddedRaw (Te [(None, 1, 20)]      0           query_str[0][0]                  
 __________________________________________________________________________________________________
 tf_op_layer_Reshape (TensorFlow [(None, 20)]         0           tf_op_layer_DecodePaddedRaw[0][0]
 __________________________________________________________________________________________________
-lambda (Lambda)                 (None, 1)            0           organization_id[0][0]            
-__________________________________________________________________________________________________
-lambda_1 (Lambda)               (None, 1)            0           organization_id[0][0]            
-__________________________________________________________________________________________________
-tf_op_layer_Add (TensorFlowOpLa [(None, 1)]          0           p_OwnerId[0][0]                  
-__________________________________________________________________________________________________
 embedding (Embedding)           (None, 20, 128)      32768       tf_op_layer_Reshape[0][0]        
 __________________________________________________________________________________________________
-tf_op_layer_StringToHashBucketF [(None, 1)]          0           lambda[0][0]                     
+feat_0 (InputLayer)             [(None, 1)]          0                                            
 __________________________________________________________________________________________________
-tf_op_layer_StringToHashBucketF [(None, 1)]          0           lambda_1[0][0]                   
+feat_1 (InputLayer)             [(None, 1)]          0                                            
 __________________________________________________________________________________________________
-sim_score (InputLayer)          [(None, 1)]          0                                            
-__________________________________________________________________________________________________
-tf_op_layer_Log (TensorFlowOpLa [(None, 1)]          0           tf_op_layer_Add[0][0]            
-__________________________________________________________________________________________________
-la (InputLayer)                 [(None, 1)]          0                                            
-__________________________________________________________________________________________________
-pv_s (InputLayer)               [(None, 1)]          0                                            
+feat_2 (InputLayer)             [(None, 1)]          0                                            
 __________________________________________________________________________________________________
 bidirectional (Bidirectional)   (None, 128)          98816       embedding[0][0]                  
 __________________________________________________________________________________________________
-categorical_embedding_organizat (None, 1, 32)        1024        tf_op_layer_StringToHashBucketFas
+group (InputLayer)              [(None, 1)]          0                                            
 __________________________________________________________________________________________________
-categorical_embedding_organizat (None, 1, 32)        1024        tf_op_layer_StringToHashBucketFas
+tf_op_layer_ExpandDims_1 (Tenso [(None, 1, 1)]       0           feat_0[0][0]                     
 __________________________________________________________________________________________________
-tf_op_layer_ExpandDims (TensorF [(None, 1, 1)]       0           sim_score[0][0]                  
+tf_op_layer_ExpandDims_2 (Tenso [(None, 1, 1)]       0           feat_1[0][0]                     
 __________________________________________________________________________________________________
-tf_op_layer_ExpandDims_1 (Tenso [(None, 1, 1)]       0           tf_op_layer_Log[0][0]            
-__________________________________________________________________________________________________
-tf_op_layer_ExpandDims_2 (Tenso [(None, 1, 1)]       0           la[0][0]                         
-__________________________________________________________________________________________________
-tf_op_layer_ExpandDims_3 (Tenso [(None, 1, 1)]       0           pv_s[0][0]                       
+tf_op_layer_ExpandDims_3 (Tenso [(None, 1, 1)]       0           feat_2[0][0]                     
 __________________________________________________________________________________________________
 tf_op_layer_ExpandDims_4 (Tenso [(None, 1, 128)]     0           bidirectional[0][0]              
 __________________________________________________________________________________________________
-tf_op_layer_categorical_embeddi [(None, 1, 64)]      0           categorical_embedding_organizatio
-                                                                 categorical_embedding_organizatio
+categorical_embedding_group (Em (None, 1, 128)       2048        group[0][0]                      
 __________________________________________________________________________________________________
-tf_op_layer_train_features (Ten [(None, 1, 196)]     0           tf_op_layer_ExpandDims[0][0]     
-                                                                 tf_op_layer_ExpandDims_1[0][0]   
+tf_op_layer_train_features (Ten [(None, 1, 259)]     0           tf_op_layer_ExpandDims_1[0][0]   
                                                                  tf_op_layer_ExpandDims_2[0][0]   
                                                                  tf_op_layer_ExpandDims_3[0][0]   
                                                                  tf_op_layer_ExpandDims_4[0][0]   
-                                                                 tf_op_layer_categorical_embedding
+                                                                 categorical_embedding_group[0][0]
 __________________________________________________________________________________________________
-tf_op_layer_train_features_1 (T [(None, 1, 196)]     0           tf_op_layer_train_features[0][0] 
+tf_op_layer_train_features_1 (T [(None, 1, 259)]     0           tf_op_layer_train_features[0][0] 
 __________________________________________________________________________________________________
-first_dense (Dense)             (None, 1, 256)       50432       tf_op_layer_train_features_1[0][0
+first_dense (Dense)             (None, 1, 256)       66560       tf_op_layer_train_features_1[0][0
 __________________________________________________________________________________________________
 first_dropout (Dropout)         (None, 1, 256)       0           first_dense[0][0]                
 __________________________________________________________________________________________________
@@ -14884,14 +14341,14 @@ final_dense (Dense)             (None, 1, 1)         65          second_dropout[
 __________________________________________________________________________________________________
 tf_op_layer_Squeeze (TensorFlow [(None, 1)]          0           final_dense[0][0]                
 __________________________________________________________________________________________________
-fr (InputLayer)                 [(None, 1)]          0                                            
+pos (InputLayer)                [(None, 1)]          0                                            
 __________________________________________________________________________________________________
-query_id (InputLayer)           [(None, 1)]          0                                            
+query_key (InputLayer)          [(None, 1)]          0                                            
 __________________________________________________________________________________________________
 relevance_score (Activation)    (None, 1)            0           tf_op_layer_Squeeze[0][0]        
 ==================================================================================================
-Total params: 200,577
-Trainable params: 200,577
+Total params: 216,705
+Trainable params: 216,705
 Non-trainable params: 0
 __________________________________________________________________________________________________
 </pre>
@@ -14904,13 +14361,18 @@ ________________________________________________________________________________
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">relevance_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">relevance_dataset</span><span class="p">,</span> 
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;../models&#39;</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;../models&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;../logs&#39;</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;../logs&#39;</span><span class="p">)</span>
+
+<span class="n">relevance_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">relevance_dataset</span><span class="p">,</span> 
                     <span class="n">num_epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> 
-                    <span class="n">models_dir</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/test/models&#39;</span><span class="p">,</span>
-                    <span class="n">logs_dir</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/test/logs&#39;</span><span class="p">,</span>
+                    <span class="n">models_dir</span><span class="o">=</span><span class="s1">&#39;../models&#39;</span><span class="p">,</span>
+                    <span class="n">logs_dir</span><span class="o">=</span><span class="s1">&#39;../logs&#39;</span><span class="p">,</span>
                     <span class="n">monitor_metric</span><span class="o">=</span><span class="s1">&#39;val_binary_accuracy&#39;</span><span class="p">,</span>
                     <span class="n">monitor_mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">)</span>
 </pre></div>
@@ -14953,7 +14415,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 1.5983713, &#39;binary_accuracy&#39;: 0.734375, &#39;precision&#39;: 0.0}
+<pre>INFO:root:[epoch: 1 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.7239491, &#39;binary_accuracy&#39;: 0.25, &#39;precision&#39;: 0.25}
 </pre>
 </div>
 </div>
@@ -14964,7 +14426,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>      1/Unknown - 4s 4s/step - loss: 1.5984 - binary_accuracy: 0.7344 - precision: 0.0000e+00</pre>
+<pre>      1/Unknown - 3s 3s/step - loss: 0.7239 - binary_accuracy: 0.2500 - precision: 0.2500</pre>
 </div>
 </div>
 
@@ -14974,7 +14436,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>WARNING:tensorflow:Method (on_train_batch_end) is slow compared to the batch update (0.171593). Check your callbacks.
+<pre>WARNING:tensorflow:Method (on_train_batch_end) is slow compared to the batch update (0.165884). Check your callbacks.
 </pre>
 </div>
 </div>
@@ -14985,7 +14447,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>     25/Unknown - 5s 217ms/step - loss: 2.0843 - binary_accuracy: 0.6856 - precision: 0.2558</pre>
+<pre>     25/Unknown - 5s 191ms/step - loss: 0.5786 - binary_accuracy: 0.7166 - precision: 0.2500</pre>
 </div>
 </div>
 
@@ -14995,7 +14457,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 1.1736131, &#39;binary_accuracy&#39;: 0.68719953, &#39;precision&#39;: 0.25738397}
+<pre>INFO:root:[epoch: 1 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.56174564, &#39;binary_accuracy&#39;: 0.7172476, &#39;precision&#39;: 0.25}
 </pre>
 </div>
 </div>
@@ -15006,448 +14468,7 @@ INFO:root:{}
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>     50/Unknown - 7s 138ms/step - loss: 1.4077 - binary_accuracy: 0.7073 - precision: 0.3061</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 50] {&#39;batch&#39;: 50, &#39;size&#39;: 128, &#39;loss&#39;: 0.7190441, &#39;binary_accuracy&#39;: 0.707261, &#39;precision&#39;: 0.3057325}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>     75/Unknown - 8s 113ms/step - loss: 1.1244 - binary_accuracy: 0.7218 - precision: 0.3210</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 75] {&#39;batch&#39;: 75, &#39;size&#39;: 128, &#39;loss&#39;: 0.4936908, &#39;binary_accuracy&#39;: 0.7224507, &#39;precision&#39;: 0.32373273}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    100/Unknown - 10s 100ms/step - loss: 0.9754 - binary_accuracy: 0.7316 - precision: 0.3449</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 100] {&#39;batch&#39;: 100, &#39;size&#39;: 128, &#39;loss&#39;: 0.4587879, &#39;binary_accuracy&#39;: 0.73220915, &#39;precision&#39;: 0.34557235}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    125/Unknown - 11s 91ms/step - loss: 0.8930 - binary_accuracy: 0.7352 - precision: 0.3453</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 125] {&#39;batch&#39;: 125, &#39;size&#39;: 128, &#39;loss&#39;: 0.54982805, &#39;binary_accuracy&#39;: 0.73536706, &#39;precision&#39;: 0.34530094}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    150/Unknown - 13s 85ms/step - loss: 0.8333 - binary_accuracy: 0.7390 - precision: 0.3452</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 150] {&#39;batch&#39;: 150, &#39;size&#39;: 128, &#39;loss&#39;: 0.46529648, &#39;binary_accuracy&#39;: 0.7392384, &#39;precision&#39;: 0.3452256}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    175/Unknown - 14s 81ms/step - loss: 0.7899 - binary_accuracy: 0.7411 - precision: 0.3449</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 175] {&#39;batch&#39;: 175, &#39;size&#39;: 128, &#39;loss&#39;: 0.4431533, &#39;binary_accuracy&#39;: 0.7412997, &#39;precision&#39;: 0.34486374}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    200/Unknown - 16s 78ms/step - loss: 0.7547 - binary_accuracy: 0.7435 - precision: 0.3452</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 200] {&#39;batch&#39;: 200, &#39;size&#39;: 128, &#39;loss&#39;: 1.1624768, &#39;binary_accuracy&#39;: 0.74323696, &#39;precision&#39;: 0.34265012}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    225/Unknown - 17s 76ms/step - loss: 0.7312 - binary_accuracy: 0.7447 - precision: 0.3473</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 225] {&#39;batch&#39;: 225, &#39;size&#39;: 128, &#39;loss&#39;: 0.48939902, &#39;binary_accuracy&#39;: 0.7448147, &#39;precision&#39;: 0.34733605}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    250/Unknown - 19s 74ms/step - loss: 0.7109 - binary_accuracy: 0.7455 - precision: 0.3513</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 250] {&#39;batch&#39;: 250, &#39;size&#39;: 128, &#39;loss&#39;: 0.48523676, &#39;binary_accuracy&#39;: 0.74542457, &#39;precision&#39;: 0.35126904}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    275/Unknown - 20s 72ms/step - loss: 0.6934 - binary_accuracy: 0.7466 - precision: 0.3534</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 275] {&#39;batch&#39;: 275, &#39;size&#39;: 128, &#39;loss&#39;: 0.4600544, &#39;binary_accuracy&#39;: 0.7465466, &#39;precision&#39;: 0.35335335}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    300/Unknown - 21s 71ms/step - loss: 0.6774 - binary_accuracy: 0.7476 - precision: 0.3558</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 300] {&#39;batch&#39;: 300, &#39;size&#39;: 128, &#39;loss&#39;: 0.6645515, &#39;binary_accuracy&#39;: 0.7475083, &#39;precision&#39;: 0.35509396}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    325/Unknown - 23s 70ms/step - loss: 0.6656 - binary_accuracy: 0.7479 - precision: 0.3559</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 325] {&#39;batch&#39;: 325, &#39;size&#39;: 128, &#39;loss&#39;: 0.5383286, &#39;binary_accuracy&#39;: 0.74784315, &#39;precision&#39;: 0.35594887}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    350/Unknown - 24s 69ms/step - loss: 0.6544 - binary_accuracy: 0.7485 - precision: 0.3562</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 350] {&#39;batch&#39;: 350, &#39;size&#39;: 128, &#39;loss&#39;: 0.5179654, &#39;binary_accuracy&#39;: 0.74850875, &#39;precision&#39;: 0.3562316}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    375/Unknown - 26s 68ms/step - loss: 0.6478 - binary_accuracy: 0.7487 - precision: 0.3547</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 375] {&#39;batch&#39;: 375, &#39;size&#39;: 128, &#39;loss&#39;: 0.5504646, &#39;binary_accuracy&#39;: 0.74873257, &#39;precision&#39;: 0.35474592}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    400/Unknown - 27s 68ms/step - loss: 0.6417 - binary_accuracy: 0.7488 - precision: 0.3520</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 400] {&#39;batch&#39;: 400, &#39;size&#39;: 128, &#39;loss&#39;: 0.56085396, &#39;binary_accuracy&#39;: 0.74875313, &#39;precision&#39;: 0.3519924}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    425/Unknown - 28s 67ms/step - loss: 0.6342 - binary_accuracy: 0.7490 - precision: 0.3513</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 425] {&#39;batch&#39;: 425, &#39;size&#39;: 128, &#39;loss&#39;: 0.41829738, &#39;binary_accuracy&#39;: 0.7491564, &#39;precision&#39;: 0.3512748}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    450/Unknown - 30s 66ms/step - loss: 0.6277 - binary_accuracy: 0.7493 - precision: 0.3522</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 450] {&#39;batch&#39;: 450, &#39;size&#39;: 128, &#39;loss&#39;: 0.53315645, &#39;binary_accuracy&#39;: 0.7492551, &#39;precision&#39;: 0.35216573}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    475/Unknown - 31s 66ms/step - loss: 0.6220 - binary_accuracy: 0.7495 - precision: 0.3527</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 475] {&#39;batch&#39;: 475, &#39;size&#39;: 128, &#39;loss&#39;: 0.46516466, &#39;binary_accuracy&#39;: 0.7494584, &#39;precision&#39;: 0.3533271}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    500/Unknown - 33s 65ms/step - loss: 0.6169 - binary_accuracy: 0.7497 - precision: 0.3536</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 500] {&#39;batch&#39;: 500, &#39;size&#39;: 128, &#39;loss&#39;: 0.50315136, &#39;binary_accuracy&#39;: 0.7497037, &#39;precision&#39;: 0.3536015}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    525/Unknown - 34s 65ms/step - loss: 0.6115 - binary_accuracy: 0.7499 - precision: 0.3535</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 525] {&#39;batch&#39;: 525, &#39;size&#39;: 128, &#39;loss&#39;: 0.55169874, &#39;binary_accuracy&#39;: 0.7498663, &#39;precision&#39;: 0.35354477}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    550/Unknown - 35s 64ms/step - loss: 0.6066 - binary_accuracy: 0.7503 - precision: 0.3544</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 1 | batch: 550] {&#39;batch&#39;: 550, &#39;size&#39;: 128, &#39;loss&#39;: 0.6030607, &#39;binary_accuracy&#39;: 0.7502977, &#39;precision&#39;: 0.35408923}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>    574/Unknown - 37s 64ms/step - loss: 0.6020 - binary_accuracy: 0.7508 - precision: 0.3556</pre>
+<pre>     44/Unknown - 6s 134ms/step - loss: 0.5696 - binary_accuracy: 0.7239 - precision: 0.2519</pre>
 </div>
 </div>
 
@@ -15471,7 +14492,7 @@ INFO:root:None
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-Epoch 00001: val_binary_accuracy improved from -inf to 0.75000, saving model to /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf
+Epoch 00001: val_binary_accuracy improved from -inf to 0.73899, saving model to /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf
 </pre>
 </div>
 </div>
@@ -15487,7 +14508,7 @@ Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
 INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf/assets
 INFO:root:End of Epoch 1
-INFO:root:{&#39;loss&#39;: 0.6019944026287425, &#39;binary_accuracy&#39;: 0.75081664, &#39;precision&#39;: 0.35555556, &#39;val_loss&#39;: 0.519770201437081, &#39;val_binary_accuracy&#39;: 0.75, &#39;val_precision&#39;: 0.44347826}
+INFO:root:{&#39;loss&#39;: 0.5695662525567141, &#39;binary_accuracy&#39;: 0.7238991, &#39;precision&#39;: 0.2519084, &#39;val_loss&#39;: 0.552171681414951, &#39;val_binary_accuracy&#39;: 0.7389915, &#39;val_precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -15498,7 +14519,7 @@ INFO:root:{&#39;loss&#39;: 0.6019944026287425, &#39;binary_accuracy&#39;: 0.7508
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>574/574 [==============================] - 75s 130ms/step - loss: 0.6020 - binary_accuracy: 0.7508 - precision: 0.3556 - val_loss: 0.0000e+00 - val_binary_accuracy: 0.0000e+00 - val_precision: 0.0000e+00
+<pre>44/44 [==============================] - 40s 898ms/step - loss: 0.5696 - binary_accuracy: 0.7239 - precision: 0.2519 - val_loss: 0.0000e+00 - val_binary_accuracy: 0.0000e+00 - val_precision: 0.0000e+00
 </pre>
 </div>
 </div>
@@ -15511,7 +14532,7 @@ INFO:root:{&#39;loss&#39;: 0.6019944026287425, &#39;binary_accuracy&#39;: 0.7508
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>INFO:root:Starting Epoch : 2
 INFO:root:{}
-INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.6413772, &#39;binary_accuracy&#39;: 0.734375, &#39;precision&#39;: 0.5}
+INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.54872704, &#39;binary_accuracy&#39;: 0.75, &#39;precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -15523,7 +14544,7 @@ INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>Epoch 2/5
- 25/574 [&gt;.............................] - ETA: 27s - loss: 0.5139 - binary_accuracy: 0.7575 - precision: 0.4444</pre>
+25/44 [================&gt;.............] - ETA: 1s - loss: 0.5568 - binary_accuracy: 0.7366 - precision: 0.0000e+00</pre>
 </div>
 </div>
 
@@ -15533,7 +14554,7 @@ INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.52195364, &#39;binary_accuracy&#39;: 0.75600964, &#39;precision&#39;: 0.44444445}
+<pre>INFO:root:[epoch: 2 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.55970335, &#39;binary_accuracy&#39;: 0.7364784, &#39;precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -15544,448 +14565,7 @@ INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre> 50/574 [=&gt;............................] - ETA: 27s - loss: 0.5195 - binary_accuracy: 0.7534 - precision: 0.3750</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 50] {&#39;batch&#39;: 50, &#39;size&#39;: 128, &#39;loss&#39;: 0.5453114, &#39;binary_accuracy&#39;: 0.7535233, &#39;precision&#39;: 0.4117647}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 75/574 [==&gt;...........................] - ETA: 25s - loss: 0.5117 - binary_accuracy: 0.7538 - precision: 0.4500</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 75] {&#39;batch&#39;: 75, &#39;size&#39;: 128, &#39;loss&#39;: 0.45093718, &#39;binary_accuracy&#39;: 0.7537007, &#39;precision&#39;: 0.45}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 99/574 [====&gt;.........................] - ETA: 23s - loss: 0.5059 - binary_accuracy: 0.7539 - precision: 0.4500</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 100] {&#39;batch&#39;: 100, &#39;size&#39;: 128, &#39;loss&#39;: 0.45277584, &#39;binary_accuracy&#39;: 0.75425434, &#39;precision&#39;: 0.47619048}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>124/574 [=====&gt;........................] - ETA: 22s - loss: 0.5076 - binary_accuracy: 0.7535 - precision: 0.4762</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 125] {&#39;batch&#39;: 125, &#39;size&#39;: 128, &#39;loss&#39;: 0.5010744, &#39;binary_accuracy&#39;: 0.7534722, &#39;precision&#39;: 0.47619048}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>150/574 [======&gt;.......................] - ETA: 21s - loss: 0.5061 - binary_accuracy: 0.7544 - precision: 0.5000</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 150] {&#39;batch&#39;: 150, &#39;size&#39;: 128, &#39;loss&#39;: 0.4153244, &#39;binary_accuracy&#39;: 0.7545012, &#39;precision&#39;: 0.5}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>175/574 [========&gt;.....................] - ETA: 20s - loss: 0.5046 - binary_accuracy: 0.7543 - precision: 0.5000</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 175] {&#39;batch&#39;: 175, &#39;size&#39;: 128, &#39;loss&#39;: 0.43496388, &#39;binary_accuracy&#39;: 0.75443894, &#39;precision&#39;: 0.5}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>200/574 [=========&gt;....................] - ETA: 18s - loss: 0.5024 - binary_accuracy: 0.7557 - precision: 0.5591</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 200] {&#39;batch&#39;: 200, &#39;size&#39;: 128, &#39;loss&#39;: 0.5457323, &#39;binary_accuracy&#39;: 0.75544155, &#39;precision&#39;: 0.5347222}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>225/574 [==========&gt;...................] - ETA: 17s - loss: 0.5027 - binary_accuracy: 0.7571 - precision: 0.5764</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 225] {&#39;batch&#39;: 225, &#39;size&#39;: 128, &#39;loss&#39;: 0.48109123, &#39;binary_accuracy&#39;: 0.7569483, &#39;precision&#39;: 0.56294537}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>250/574 [============&gt;.................] - ETA: 16s - loss: 0.5026 - binary_accuracy: 0.7565 - precision: 0.5452</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 250] {&#39;batch&#39;: 250, &#39;size&#39;: 128, &#39;loss&#39;: 0.47020584, &#39;binary_accuracy&#39;: 0.7567231, &#39;precision&#39;: 0.55057806}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>275/574 [=============&gt;................] - ETA: 15s - loss: 0.5020 - binary_accuracy: 0.7582 - precision: 0.5591</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 275] {&#39;batch&#39;: 275, &#39;size&#39;: 128, &#39;loss&#39;: 0.44894108, &#39;binary_accuracy&#39;: 0.7581239, &#39;precision&#39;: 0.55906314}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>300/574 [==============&gt;...............] - ETA: 13s - loss: 0.5008 - binary_accuracy: 0.7592 - precision: 0.5661</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 300] {&#39;batch&#39;: 300, &#39;size&#39;: 128, &#39;loss&#39;: 0.49977314, &#39;binary_accuracy&#39;: 0.7591622, &#39;precision&#39;: 0.56598985}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>325/574 [===============&gt;..............] - ETA: 12s - loss: 0.5043 - binary_accuracy: 0.7593 - precision: 0.5680</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 325] {&#39;batch&#39;: 325, &#39;size&#39;: 128, &#39;loss&#39;: 0.54220647, &#39;binary_accuracy&#39;: 0.7592983, &#39;precision&#39;: 0.56816506}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>350/574 [=================&gt;............] - ETA: 11s - loss: 0.5046 - binary_accuracy: 0.7591 - precision: 0.5653</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 350] {&#39;batch&#39;: 350, &#39;size&#39;: 128, &#39;loss&#39;: 0.49202523, &#39;binary_accuracy&#39;: 0.759237, &#39;precision&#39;: 0.56631577}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>374/574 [==================&gt;...........] - ETA: 10s - loss: 0.5039 - binary_accuracy: 0.7605 - precision: 0.5783</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 375] {&#39;batch&#39;: 375, &#39;size&#39;: 128, &#39;loss&#39;: 0.46744618, &#39;binary_accuracy&#39;: 0.7606591, &#39;precision&#39;: 0.58089554}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>400/574 [===================&gt;..........] - ETA: 8s - loss: 0.5035 - binary_accuracy: 0.7615 - precision: 0.5837</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 400] {&#39;batch&#39;: 400, &#39;size&#39;: 128, &#39;loss&#39;: 0.57126904, &#39;binary_accuracy&#39;: 0.7615142, &#39;precision&#39;: 0.58419245}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>425/574 [=====================&gt;........] - ETA: 7s - loss: 0.5027 - binary_accuracy: 0.7621 - precision: 0.5851</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 425] {&#39;batch&#39;: 425, &#39;size&#39;: 128, &#39;loss&#39;: 0.42490223, &#39;binary_accuracy&#39;: 0.7621406, &#39;precision&#39;: 0.5845889}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>450/574 [======================&gt;.......] - ETA: 6s - loss: 0.5026 - binary_accuracy: 0.7621 - precision: 0.5817</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 450] {&#39;batch&#39;: 450, &#39;size&#39;: 128, &#39;loss&#39;: 0.509471, &#39;binary_accuracy&#39;: 0.7621778, &#39;precision&#39;: 0.5825057}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>475/574 [=======================&gt;......] - ETA: 5s - loss: 0.5021 - binary_accuracy: 0.7629 - precision: 0.5867</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 475] {&#39;batch&#39;: 475, &#39;size&#39;: 128, &#39;loss&#39;: 0.46356392, &#39;binary_accuracy&#39;: 0.7629661, &#39;precision&#39;: 0.58750856}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>499/574 [=========================&gt;....] - ETA: 3s - loss: 0.5028 - binary_accuracy: 0.7620 - precision: 0.5694</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 500] {&#39;batch&#39;: 500, &#39;size&#39;: 128, &#39;loss&#39;: 0.49954456, &#39;binary_accuracy&#39;: 0.7619916, &#39;precision&#39;: 0.56942415}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>525/574 [==========================&gt;...] - ETA: 2s - loss: 0.5022 - binary_accuracy: 0.7616 - precision: 0.5694</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 525] {&#39;batch&#39;: 525, &#39;size&#39;: 128, &#39;loss&#39;: 0.53962064, &#39;binary_accuracy&#39;: 0.76158506, &#39;precision&#39;: 0.56942415}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>550/574 [===========================&gt;..] - ETA: 1s - loss: 0.5018 - binary_accuracy: 0.7615 - precision: 0.5694</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 2 | batch: 550] {&#39;batch&#39;: 550, &#39;size&#39;: 128, &#39;loss&#39;: 0.49365157, &#39;binary_accuracy&#39;: 0.7614848, &#39;precision&#39;: 0.56942415}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>573/574 [============================&gt;.] - ETA: 0s - loss: 0.5011 - binary_accuracy: 0.7616 - precision: 0.5694</pre>
+<pre>43/44 [============================&gt;.] - ETA: 0s - loss: 0.5546 - binary_accuracy: 0.7353 - precision: 0.0000e+00</pre>
 </div>
 </div>
 
@@ -15998,6 +14578,8 @@ INFO:root:[epoch: 2 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 <pre>INFO:root:Evaluating Model
 INFO:root:Completed evaluating model
 INFO:root:None
+INFO:root:End of Epoch 2
+INFO:root:{&#39;loss&#39;: 0.5549891997467388, &#39;binary_accuracy&#39;: 0.7354403, &#39;precision&#39;: 0.0, &#39;val_loss&#39;: 0.5520743321288716, &#39;val_binary_accuracy&#39;: 0.7389915, &#39;val_precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -16009,31 +14591,8 @@ INFO:root:None
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-Epoch 00002: val_binary_accuracy improved from 0.75000 to 0.75032, saving model to /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf/assets
-INFO:root:End of Epoch 2
-INFO:root:{&#39;loss&#39;: 0.5011326984246018, &#39;binary_accuracy&#39;: 0.7615282, &#39;precision&#39;: 0.56942415, &#39;val_loss&#39;: 0.49521544698295716, &#39;val_binary_accuracy&#39;: 0.7503214, &#39;val_precision&#39;: 0.0}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>574/574 [==============================] - 65s 113ms/step - loss: 0.5011 - binary_accuracy: 0.7615 - precision: 0.5694 - val_loss: 0.4952 - val_binary_accuracy: 0.7503 - val_precision: 0.0000e+00
+Epoch 00002: val_binary_accuracy did not improve from 0.73899
+44/44 [==============================] - 5s 103ms/step - loss: 0.5550 - binary_accuracy: 0.7354 - precision: 0.0000e+00 - val_loss: 0.5521 - val_binary_accuracy: 0.7390 - val_precision: 0.0000e+00
 </pre>
 </div>
 </div>
@@ -16046,7 +14605,7 @@ INFO:root:{&#39;loss&#39;: 0.5011326984246018, &#39;binary_accuracy&#39;: 0.7615
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>INFO:root:Starting Epoch : 3
 INFO:root:{}
-INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.5226297, &#39;binary_accuracy&#39;: 0.734375, &#39;precision&#39;: 0.0}
+INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.5562202, &#39;binary_accuracy&#39;: 0.75, &#39;precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -16058,7 +14617,7 @@ INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>Epoch 3/5
- 24/574 [&gt;.............................] - ETA: 26s - loss: 0.4939 - binary_accuracy: 0.7575 - precision: 0.0000e+00</pre>
+25/44 [================&gt;.............] - ETA: 1s - loss: 0.5498 - binary_accuracy: 0.7366 - precision: 0.0000e+00</pre>
 </div>
 </div>
 
@@ -16068,7 +14627,7 @@ INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.5069576, &#39;binary_accuracy&#39;: 0.7563101, &#39;precision&#39;: 0.0}
+<pre>INFO:root:[epoch: 3 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.5601772, &#39;binary_accuracy&#39;: 0.7364784, &#39;precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -16079,448 +14638,7 @@ INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre> 50/574 [=&gt;............................] - ETA: 25s - loss: 0.4941 - binary_accuracy: 0.7541 - precision: 0.0000e+00</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 50] {&#39;batch&#39;: 50, &#39;size&#39;: 128, &#39;loss&#39;: 0.5580002, &#39;binary_accuracy&#39;: 0.75398284, &#39;precision&#39;: 0.0}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 74/574 [==&gt;...........................] - ETA: 24s - loss: 0.4931 - binary_accuracy: 0.7564 - precision: 0.6034</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 75] {&#39;batch&#39;: 75, &#39;size&#39;: 128, &#39;loss&#39;: 0.4467469, &#39;binary_accuracy&#39;: 0.75637335, &#39;precision&#39;: 0.6034483}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>100/574 [====&gt;.........................] - ETA: 22s - loss: 0.4894 - binary_accuracy: 0.7622 - precision: 0.6303</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 100] {&#39;batch&#39;: 100, &#39;size&#39;: 128, &#39;loss&#39;: 0.4539711, &#39;binary_accuracy&#39;: 0.7622989, &#39;precision&#39;: 0.6223278}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>125/574 [=====&gt;........................] - ETA: 21s - loss: 0.4925 - binary_accuracy: 0.7619 - precision: 0.5878</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 125] {&#39;batch&#39;: 125, &#39;size&#39;: 128, &#39;loss&#39;: 0.5003998, &#39;binary_accuracy&#39;: 0.7620908, &#39;precision&#39;: 0.58891755}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>150/574 [======&gt;.......................] - ETA: 20s - loss: 0.4936 - binary_accuracy: 0.7642 - precision: 0.5897</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 150] {&#39;batch&#39;: 150, &#39;size&#39;: 128, &#39;loss&#39;: 0.4153316, &#39;binary_accuracy&#39;: 0.76453847, &#39;precision&#39;: 0.5911654}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>175/574 [========&gt;.....................] - ETA: 19s - loss: 0.4932 - binary_accuracy: 0.7654 - precision: 0.5962</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 175] {&#39;batch&#39;: 175, &#39;size&#39;: 128, &#39;loss&#39;: 0.42458063, &#39;binary_accuracy&#39;: 0.76584697, &#39;precision&#39;: 0.5983167}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>200/574 [=========&gt;....................] - ETA: 18s - loss: 0.4912 - binary_accuracy: 0.7674 - precision: 0.6003</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 200] {&#39;batch&#39;: 200, &#39;size&#39;: 128, &#39;loss&#39;: 0.51170653, &#39;binary_accuracy&#39;: 0.76737404, &#39;precision&#39;: 0.59974825}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>225/574 [==========&gt;...................] - ETA: 17s - loss: 0.4933 - binary_accuracy: 0.7685 - precision: 0.6004</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 225] {&#39;batch&#39;: 225, &#39;size&#39;: 128, &#39;loss&#39;: 0.4804725, &#39;binary_accuracy&#39;: 0.76842505, &#39;precision&#39;: 0.5980642}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>249/574 [============&gt;.................] - ETA: 16s - loss: 0.4928 - binary_accuracy: 0.7692 - precision: 0.6014</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 250] {&#39;batch&#39;: 250, &#39;size&#39;: 128, &#39;loss&#39;: 0.46579254, &#39;binary_accuracy&#39;: 0.76911104, &#39;precision&#39;: 0.6006019}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>275/574 [=============&gt;................] - ETA: 14s - loss: 0.4927 - binary_accuracy: 0.7691 - precision: 0.5899</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 275] {&#39;batch&#39;: 275, &#39;size&#39;: 128, &#39;loss&#39;: 0.44376534, &#39;binary_accuracy&#39;: 0.7692199, &#39;precision&#39;: 0.59090906}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>299/574 [==============&gt;...............] - ETA: 13s - loss: 0.4918 - binary_accuracy: 0.7702 - precision: 0.5935</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 300] {&#39;batch&#39;: 300, &#39;size&#39;: 128, &#39;loss&#39;: 0.4881662, &#39;binary_accuracy&#39;: 0.77040076, &#39;precision&#39;: 0.5949694}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>325/574 [===============&gt;..............] - ETA: 12s - loss: 0.4918 - binary_accuracy: 0.7699 - precision: 0.5890</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 325] {&#39;batch&#39;: 325, &#39;size&#39;: 128, &#39;loss&#39;: 0.5399495, &#39;binary_accuracy&#39;: 0.7697949, &#39;precision&#39;: 0.5881188}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>350/574 [=================&gt;............] - ETA: 11s - loss: 0.4910 - binary_accuracy: 0.7702 - precision: 0.5890</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 350] {&#39;batch&#39;: 350, &#39;size&#39;: 128, &#39;loss&#39;: 0.4853874, &#39;binary_accuracy&#39;: 0.77018785, &#39;precision&#39;: 0.58828104}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>375/574 [==================&gt;...........] - ETA: 10s - loss: 0.4904 - binary_accuracy: 0.7705 - precision: 0.5873</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 375] {&#39;batch&#39;: 375, &#39;size&#39;: 128, &#39;loss&#39;: 0.4886896, &#39;binary_accuracy&#39;: 0.7706117, &#39;precision&#39;: 0.587535}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>400/574 [===================&gt;..........] - ETA: 8s - loss: 0.4903 - binary_accuracy: 0.7711 - precision: 0.5879</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 400] {&#39;batch&#39;: 400, &#39;size&#39;: 128, &#39;loss&#39;: 0.5886405, &#39;binary_accuracy&#39;: 0.7710022, &#39;precision&#39;: 0.5882228}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>425/574 [=====================&gt;........] - ETA: 7s - loss: 0.4901 - binary_accuracy: 0.7714 - precision: 0.5905</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 425] {&#39;batch&#39;: 425, &#39;size&#39;: 128, &#39;loss&#39;: 0.41083932, &#39;binary_accuracy&#39;: 0.77149355, &#39;precision&#39;: 0.5902098}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>450/574 [======================&gt;.......] - ETA: 6s - loss: 0.4900 - binary_accuracy: 0.7711 - precision: 0.5880</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 450] {&#39;batch&#39;: 450, &#39;size&#39;: 128, &#39;loss&#39;: 0.502486, &#39;binary_accuracy&#39;: 0.7711856, &#39;precision&#39;: 0.5882135}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>475/574 [=======================&gt;......] - ETA: 4s - loss: 0.4902 - binary_accuracy: 0.7710 - precision: 0.5861</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 475] {&#39;batch&#39;: 475, &#39;size&#39;: 128, &#39;loss&#39;: 0.44240007, &#39;binary_accuracy&#39;: 0.77105767, &#39;precision&#39;: 0.5866298}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>500/574 [=========================&gt;....] - ETA: 3s - loss: 0.4903 - binary_accuracy: 0.7713 - precision: 0.5873</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 500] {&#39;batch&#39;: 500, &#39;size&#39;: 128, &#39;loss&#39;: 0.47010523, &#39;binary_accuracy&#39;: 0.77123874, &#39;precision&#39;: 0.5871979}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>525/574 [==========================&gt;...] - ETA: 2s - loss: 0.4898 - binary_accuracy: 0.7713 - precision: 0.5879</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 525] {&#39;batch&#39;: 525, &#39;size&#39;: 128, &#39;loss&#39;: 0.55627847, &#39;binary_accuracy&#39;: 0.77113533, &#39;precision&#39;: 0.58699036}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>550/574 [===========================&gt;..] - ETA: 1s - loss: 0.4897 - binary_accuracy: 0.7714 - precision: 0.5867</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 3 | batch: 550] {&#39;batch&#39;: 550, &#39;size&#39;: 128, &#39;loss&#39;: 0.482808, &#39;binary_accuracy&#39;: 0.77139574, &#39;precision&#39;: 0.58670604}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>572/574 [============================&gt;.] - ETA: 0s - loss: 0.4892 - binary_accuracy: 0.7717 - precision: 0.5875</pre>
+<pre>43/44 [============================&gt;.] - ETA: 0s - loss: 0.5492 - binary_accuracy: 0.7353 - precision: 0.0000e+00</pre>
 </div>
 </div>
 
@@ -16533,541 +14651,8 @@ INFO:root:[epoch: 3 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;l
 <pre>INFO:root:Evaluating Model
 INFO:root:Completed evaluating model
 INFO:root:None
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>
-Epoch 00003: val_binary_accuracy improved from 0.75032 to 0.77433, saving model to /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf/assets
 INFO:root:End of Epoch 3
-INFO:root:{&#39;loss&#39;: 0.4892062680334995, &#39;binary_accuracy&#39;: 0.77170897, &#39;precision&#39;: 0.58756983, &#39;val_loss&#39;: 0.49218266410163686, &#39;val_binary_accuracy&#39;: 0.7743275, &#39;val_precision&#39;: 0.60524607}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>574/574 [==============================] - 65s 113ms/step - loss: 0.4892 - binary_accuracy: 0.7717 - precision: 0.5876 - val_loss: 0.4922 - val_binary_accuracy: 0.7743 - val_precision: 0.6052
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Starting Epoch : 4
-INFO:root:{}
-INFO:root:[epoch: 4 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.5221034, &#39;binary_accuracy&#39;: 0.7265625, &#39;precision&#39;: 0.42857143}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Epoch 4/5
- 24/574 [&gt;.............................] - ETA: 25s - loss: 0.4881 - binary_accuracy: 0.7751 - precision: 0.6000</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.53485084, &#39;binary_accuracy&#39;: 0.77403843, &#39;precision&#39;: 0.6}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 49/574 [=&gt;............................] - ETA: 25s - loss: 0.4953 - binary_accuracy: 0.7690 - precision: 0.5752</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 50] {&#39;batch&#39;: 50, &#39;size&#39;: 128, &#39;loss&#39;: 0.6171161, &#39;binary_accuracy&#39;: 0.76868874, &#39;precision&#39;: 0.57100594}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 75/574 [==&gt;...........................] - ETA: 23s - loss: 0.4932 - binary_accuracy: 0.7695 - precision: 0.5723</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 75] {&#39;batch&#39;: 75, &#39;size&#39;: 128, &#39;loss&#39;: 0.4514361, &#39;binary_accuracy&#39;: 0.7702508, &#39;precision&#39;: 0.5762224}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 99/574 [====&gt;.........................] - ETA: 22s - loss: 0.4882 - binary_accuracy: 0.7741 - precision: 0.5971</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 100] {&#39;batch&#39;: 100, &#39;size&#39;: 128, &#39;loss&#39;: 0.44750535, &#39;binary_accuracy&#39;: 0.7739016, &#39;precision&#39;: 0.5937732}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>124/574 [=====&gt;........................] - ETA: 21s - loss: 0.4908 - binary_accuracy: 0.7723 - precision: 0.5871</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 125] {&#39;batch&#39;: 125, &#39;size&#39;: 128, &#39;loss&#39;: 0.4888888, &#39;binary_accuracy&#39;: 0.7725694, &#39;precision&#39;: 0.5884726}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>149/574 [======&gt;.......................] - ETA: 20s - loss: 0.4898 - binary_accuracy: 0.7740 - precision: 0.5913</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 150] {&#39;batch&#39;: 150, &#39;size&#39;: 128, &#39;loss&#39;: 0.4076032, &#39;binary_accuracy&#39;: 0.77405834, &#39;precision&#39;: 0.5910405}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>175/574 [========&gt;.....................] - ETA: 19s - loss: 0.4902 - binary_accuracy: 0.7740 - precision: 0.5911 ETA: 19s - loss: 0.4895 - binary_accuracy: 0.7740 - precision: </pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 175] {&#39;batch&#39;: 175, &#39;size&#39;: 128, &#39;loss&#39;: 0.41296238, &#39;binary_accuracy&#39;: 0.77445847, &#39;precision&#39;: 0.5927602}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>199/574 [=========&gt;....................] - ETA: 18s - loss: 0.4880 - binary_accuracy: 0.7750 - precision: 0.5917</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 200] {&#39;batch&#39;: 200, &#39;size&#39;: 128, &#39;loss&#39;: 0.97405255, &#39;binary_accuracy&#39;: 0.774759, &#39;precision&#39;: 0.5906328}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>225/574 [==========&gt;...................] - ETA: 17s - loss: 0.4915 - binary_accuracy: 0.7753 - precision: 0.5931</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 225] {&#39;batch&#39;: 225, &#39;size&#39;: 128, &#39;loss&#39;: 0.45724648, &#39;binary_accuracy&#39;: 0.7750968, &#39;precision&#39;: 0.59128237}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>249/574 [============&gt;.................] - ETA: 16s - loss: 0.4921 - binary_accuracy: 0.7751 - precision: 0.5933</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 250] {&#39;batch&#39;: 250, &#39;size&#39;: 128, &#39;loss&#39;: 0.45443135, &#39;binary_accuracy&#39;: 0.7749938, &#39;precision&#39;: 0.59298044}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>275/574 [=============&gt;................] - ETA: 14s - loss: 0.4932 - binary_accuracy: 0.7751 - precision: 0.5909</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 275] {&#39;batch&#39;: 275, &#39;size&#39;: 128, &#39;loss&#39;: 0.44401592, &#39;binary_accuracy&#39;: 0.7752491, &#39;precision&#39;: 0.59147424}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>300/574 [==============&gt;...............] - ETA: 13s - loss: 0.4921 - binary_accuracy: 0.7756 - precision: 0.5928</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 300] {&#39;batch&#39;: 300, &#39;size&#39;: 128, &#39;loss&#39;: 0.5923174, &#39;binary_accuracy&#39;: 0.7755918, &#39;precision&#39;: 0.59319633}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>325/574 [===============&gt;..............] - ETA: 12s - loss: 0.4928 - binary_accuracy: 0.7750 - precision: 0.5907 ETA: 12s - loss: 0.4928 - binary_accuracy: 0.7752 - precision: 0.</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 325] {&#39;batch&#39;: 325, &#39;size&#39;: 128, &#39;loss&#39;: 0.5382436, &#39;binary_accuracy&#39;: 0.7748754, &#39;precision&#39;: 0.59015334}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>350/574 [=================&gt;............] - ETA: 11s - loss: 0.4921 - binary_accuracy: 0.7750 - precision: 0.5904</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 350] {&#39;batch&#39;: 350, &#39;size&#39;: 128, &#39;loss&#39;: 0.47975457, &#39;binary_accuracy&#39;: 0.7750401, &#39;precision&#39;: 0.5901705}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>374/574 [==================&gt;...........] - ETA: 10s - loss: 0.4910 - binary_accuracy: 0.7753 - precision: 0.5895</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 375] {&#39;batch&#39;: 375, &#39;size&#39;: 128, &#39;loss&#39;: 0.44640577, &#39;binary_accuracy&#39;: 0.7753906, &#39;precision&#39;: 0.5900735}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>400/574 [===================&gt;..........] - ETA: 8s - loss: 0.4910 - binary_accuracy: 0.7754 - precision: 0.5905</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 400] {&#39;batch&#39;: 400, &#39;size&#39;: 128, &#39;loss&#39;: 0.57245266, &#39;binary_accuracy&#39;: 0.77538574, &#39;precision&#39;: 0.5908387}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>424/574 [=====================&gt;........] - ETA: 7s - loss: 0.4905 - binary_accuracy: 0.7757 - precision: 0.5930</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 425] {&#39;batch&#39;: 425, &#39;size&#39;: 128, &#39;loss&#39;: 0.40492058, &#39;binary_accuracy&#39;: 0.77574825, &#39;precision&#39;: 0.59265304}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>450/574 [======================&gt;.......] - ETA: 6s - loss: 0.4905 - binary_accuracy: 0.7750 - precision: 0.5902</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 450] {&#39;batch&#39;: 450, &#39;size&#39;: 128, &#39;loss&#39;: 0.5072038, &#39;binary_accuracy&#39;: 0.7750485, &#39;precision&#39;: 0.59050995}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>474/574 [=======================&gt;......] - ETA: 5s - loss: 0.4900 - binary_accuracy: 0.7754 - precision: 0.5920</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 475] {&#39;batch&#39;: 475, &#39;size&#39;: 128, &#39;loss&#39;: 0.4451639, &#39;binary_accuracy&#39;: 0.77545625, &#39;precision&#39;: 0.5927602}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>500/574 [=========================&gt;....] - ETA: 3s - loss: 0.4901 - binary_accuracy: 0.7753 - precision: 0.5923</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 500] {&#39;batch&#39;: 500, &#39;size&#39;: 128, &#39;loss&#39;: 0.46791086, &#39;binary_accuracy&#39;: 0.775262, &#39;precision&#39;: 0.5921089}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>525/574 [==========================&gt;...] - ETA: 2s - loss: 0.4894 - binary_accuracy: 0.7753 - precision: 0.5929</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 525] {&#39;batch&#39;: 525, &#39;size&#39;: 128, &#39;loss&#39;: 0.5599899, &#39;binary_accuracy&#39;: 0.775101, &#39;precision&#39;: 0.5918313}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>550/574 [===========================&gt;..] - ETA: 1s - loss: 0.4890 - binary_accuracy: 0.7752 - precision: 0.5907</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 4 | batch: 550] {&#39;batch&#39;: 550, &#39;size&#39;: 128, &#39;loss&#39;: 0.46875694, &#39;binary_accuracy&#39;: 0.7752524, &#39;precision&#39;: 0.59082913}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>573/574 [============================&gt;.] - ETA: 0s - loss: 0.4884 - binary_accuracy: 0.7756 - precision: 0.5919</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Evaluating Model
-INFO:root:Completed evaluating model
-INFO:root:None
+INFO:root:{&#39;loss&#39;: 0.5499178611419417, &#39;binary_accuracy&#39;: 0.7354403, &#39;precision&#39;: 0.0, &#39;val_loss&#39;: 0.5572924993254922, &#39;val_binary_accuracy&#39;: 0.7389915, &#39;val_precision&#39;: 0.0}
 </pre>
 </div>
 </div>
@@ -17079,545 +14664,9 @@ INFO:root:None
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-Epoch 00004: val_binary_accuracy improved from 0.77433 to 0.77445, saving model to /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/checkpoint.tf/assets
-INFO:root:End of Epoch 4
-INFO:root:{&#39;loss&#39;: 0.4884542630732267, &#39;binary_accuracy&#39;: 0.77556074, &#39;precision&#39;: 0.59209883, &#39;val_loss&#39;: 0.498164488544947, &#39;val_binary_accuracy&#39;: 0.77445114, &#39;val_precision&#39;: 0.63013333}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>574/574 [==============================] - 69s 119ms/step - loss: 0.4885 - binary_accuracy: 0.7756 - precision: 0.5921 - val_loss: 0.4982 - val_binary_accuracy: 0.7745 - val_precision: 0.6301
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Starting Epoch : 5
-INFO:root:{}
-INFO:root:[epoch: 5 | batch: 0] {&#39;batch&#39;: 0, &#39;size&#39;: 128, &#39;loss&#39;: 0.5239532, &#39;binary_accuracy&#39;: 0.734375, &#39;precision&#39;: 0.5}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Epoch 5/5
- 25/574 [&gt;.............................] - ETA: 34s - loss: 0.4872 - binary_accuracy: 0.7728 - precision: 0.5580</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 25] {&#39;batch&#39;: 25, &#39;size&#39;: 128, &#39;loss&#39;: 0.47862905, &#39;binary_accuracy&#39;: 0.77253604, &#39;precision&#39;: 0.5627907}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 50/574 [=&gt;............................] - ETA: 36s - loss: 0.4889 - binary_accuracy: 0.7719 - precision: 0.5748</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 50] {&#39;batch&#39;: 50, &#39;size&#39;: 128, &#39;loss&#39;: 0.5270434, &#39;binary_accuracy&#39;: 0.7717525, &#39;precision&#39;: 0.57474226}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre> 75/574 [==&gt;...........................] - ETA: 35s - loss: 0.4843 - binary_accuracy: 0.7736 - precision: 0.5820</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 75] {&#39;batch&#39;: 75, &#39;size&#39;: 128, &#39;loss&#39;: 0.4449924, &#39;binary_accuracy&#39;: 0.7743627, &#39;precision&#39;: 0.5851155}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>100/574 [====&gt;.........................] - ETA: 34s - loss: 0.4814 - binary_accuracy: 0.7775 - precision: 0.5958</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 100] {&#39;batch&#39;: 100, &#39;size&#39;: 128, &#39;loss&#39;: 0.4469484, &#39;binary_accuracy&#39;: 0.7774598, &#39;precision&#39;: 0.5940843}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>125/574 [=====&gt;........................] - ETA: 33s - loss: 0.4846 - binary_accuracy: 0.7758 - precision: 0.5911</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 125] {&#39;batch&#39;: 125, &#39;size&#39;: 128, &#39;loss&#39;: 0.49205008, &#39;binary_accuracy&#39;: 0.7757937, &#39;precision&#39;: 0.59116304}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>150/574 [======&gt;.......................] - ETA: 30s - loss: 0.4841 - binary_accuracy: 0.7763 - precision: 0.5924</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 150] {&#39;batch&#39;: 150, &#39;size&#39;: 128, &#39;loss&#39;: 0.40536088, &#39;binary_accuracy&#39;: 0.7764901, &#39;precision&#39;: 0.5929165}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>175/574 [========&gt;.....................] - ETA: 28s - loss: 0.4836 - binary_accuracy: 0.7769 - precision: 0.5981</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 175] {&#39;batch&#39;: 175, &#39;size&#39;: 128, &#39;loss&#39;: 0.41528273, &#39;binary_accuracy&#39;: 0.77734375, &#39;precision&#39;: 0.599537}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>200/574 [=========&gt;....................] - ETA: 25s - loss: 0.4822 - binary_accuracy: 0.7780 - precision: 0.5984</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 200] {&#39;batch&#39;: 200, &#39;size&#39;: 128, &#39;loss&#39;: 0.510151, &#39;binary_accuracy&#39;: 0.77767414, &#39;precision&#39;: 0.5971295}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>225/574 [==========&gt;...................] - ETA: 23s - loss: 0.4827 - binary_accuracy: 0.7779 - precision: 0.6004</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 225] {&#39;batch&#39;: 225, &#39;size&#39;: 128, &#39;loss&#39;: 0.45190272, &#39;binary_accuracy&#39;: 0.7777586, &#39;precision&#39;: 0.598853}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>250/574 [============&gt;.................] - ETA: 21s - loss: 0.4825 - binary_accuracy: 0.7768 - precision: 0.5954</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 250] {&#39;batch&#39;: 250, &#39;size&#39;: 128, &#39;loss&#39;: 0.45295066, &#39;binary_accuracy&#39;: 0.7767679, &#39;precision&#39;: 0.59555674}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>275/574 [=============&gt;................] - ETA: 19s - loss: 0.4811 - binary_accuracy: 0.7771 - precision: 0.5949</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 275] {&#39;batch&#39;: 275, &#39;size&#39;: 128, &#39;loss&#39;: 0.43111986, &#39;binary_accuracy&#39;: 0.7772588, &#39;precision&#39;: 0.59551376}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>300/574 [==============&gt;...............] - ETA: 18s - loss: 0.4803 - binary_accuracy: 0.7776 - precision: 0.5961</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 300] {&#39;batch&#39;: 300, &#39;size&#39;: 128, &#39;loss&#39;: 0.49345654, &#39;binary_accuracy&#39;: 0.7775384, &#39;precision&#39;: 0.59638554}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>325/574 [===============&gt;..............] - ETA: 16s - loss: 0.4809 - binary_accuracy: 0.7763 - precision: 0.5905</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 325] {&#39;batch&#39;: 325, &#39;size&#39;: 128, &#39;loss&#39;: 0.5356779, &#39;binary_accuracy&#39;: 0.7761695, &#39;precision&#39;: 0.58977985}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>350/574 [=================&gt;............] - ETA: 14s - loss: 0.4807 - binary_accuracy: 0.7761 - precision: 0.5886</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 350] {&#39;batch&#39;: 350, &#39;size&#39;: 128, &#39;loss&#39;: 0.50260824, &#39;binary_accuracy&#39;: 0.7760639, &#39;precision&#39;: 0.5882683}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>375/574 [==================&gt;...........] - ETA: 12s - loss: 0.4808 - binary_accuracy: 0.7758 - precision: 0.5884</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 375] {&#39;batch&#39;: 375, &#39;size&#39;: 128, &#39;loss&#39;: 0.45442122, &#39;binary_accuracy&#39;: 0.7759516, &#39;precision&#39;: 0.58900476}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>400/574 [===================&gt;..........] - ETA: 11s - loss: 0.4813 - binary_accuracy: 0.7755 - precision: 0.5884</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 400] {&#39;batch&#39;: 400, &#39;size&#39;: 128, &#39;loss&#39;: 0.5813779, &#39;binary_accuracy&#39;: 0.7754637, &#39;precision&#39;: 0.58861923}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>425/574 [=====================&gt;........] - ETA: 9s - loss: 0.4813 - binary_accuracy: 0.7753 - precision: 0.5891</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 425] {&#39;batch&#39;: 425, &#39;size&#39;: 128, &#39;loss&#39;: 0.40479752, &#39;binary_accuracy&#39;: 0.77532643, &#39;precision&#39;: 0.58884627}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>450/574 [======================&gt;.......] - ETA: 7s - loss: 0.4821 - binary_accuracy: 0.7743 - precision: 0.5848</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 450] {&#39;batch&#39;: 450, &#39;size&#39;: 128, &#39;loss&#39;: 0.510445, &#39;binary_accuracy&#39;: 0.7743556, &#39;precision&#39;: 0.58499324}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>475/574 [=======================&gt;......] - ETA: 6s - loss: 0.4825 - binary_accuracy: 0.7739 - precision: 0.5824</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 475] {&#39;batch&#39;: 475, &#39;size&#39;: 128, &#39;loss&#39;: 0.45415148, &#39;binary_accuracy&#39;: 0.7739299, &#39;precision&#39;: 0.58274794}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>500/574 [=========================&gt;....] - ETA: 4s - loss: 0.4829 - binary_accuracy: 0.7736 - precision: 0.5813</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 500] {&#39;batch&#39;: 500, &#39;size&#39;: 128, &#39;loss&#39;: 0.47972852, &#39;binary_accuracy&#39;: 0.77351546, &#39;precision&#39;: 0.58086866}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>525/574 [==========================&gt;...] - ETA: 3s - loss: 0.4826 - binary_accuracy: 0.7735 - precision: 0.5812</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 525] {&#39;batch&#39;: 525, &#39;size&#39;: 128, &#39;loss&#39;: 0.55574936, &#39;binary_accuracy&#39;: 0.7733038, &#39;precision&#39;: 0.580305}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>550/574 [===========================&gt;..] - ETA: 1s - loss: 0.4826 - binary_accuracy: 0.7735 - precision: 0.5796</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:[epoch: 5 | batch: 550] {&#39;batch&#39;: 550, &#39;size&#39;: 128, &#39;loss&#39;: 0.47307122, &#39;binary_accuracy&#39;: 0.7734659, &#39;precision&#39;: 0.5795181}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>573/574 [============================&gt;.] - ETA: 0s - loss: 0.4825 - binary_accuracy: 0.7737 - precision: 0.5796</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Evaluating Model
-INFO:root:Completed evaluating model
-INFO:root:None
-INFO:root:End of Epoch 5
-INFO:root:{&#39;loss&#39;: 0.48255686903249095, &#39;binary_accuracy&#39;: 0.77375054, &#39;precision&#39;: 0.5798534, &#39;val_loss&#39;: 0.48904773696691173, &#39;val_binary_accuracy&#39;: 0.7722261, &#39;val_precision&#39;: 0.6030712}
-</pre>
-</div>
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>
-Epoch 00005: val_binary_accuracy did not improve from 0.77445
-574/574 [==============================] - 47s 83ms/step - loss: 0.4826 - binary_accuracy: 0.7738 - precision: 0.5799 - val_loss: 0.4890 - val_binary_accuracy: 0.7722 - val_precision: 0.6031
+Epoch 00003: val_binary_accuracy did not improve from 0.73899
+Restoring model weights from the end of the best epoch.
+44/44 [==============================] - 5s 109ms/step - loss: 0.5499 - binary_accuracy: 0.7354 - precision: 0.0000e+00 - val_loss: 0.5573 - val_binary_accuracy: 0.7390 - val_precision: 0.0000e+00
 </pre>
 </div>
 </div>
@@ -17630,6 +14679,17 @@ Epoch 00005: val_binary_accuracy did not improve from 0.77445
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>INFO:root:Completed training model
 INFO:root:None
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 00003: early stopping
 </pre>
 </div>
 </div>
@@ -17655,11 +14715,15 @@ INFO:root:None
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">relevance_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-    <span class="n">models_dir</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/test/models&#39;</span><span class="p">,</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">MODEL_DIR</span> <span class="o">=</span> <span class="s1">&#39;../models/pointwise_ranking_demo&#39;</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">MODEL_DIR</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">MODEL_DIR</span><span class="p">)</span>
+    
+<span class="n">relevance_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+    <span class="n">models_dir</span><span class="o">=</span><span class="n">MODEL_DIR</span><span class="p">,</span>
     <span class="n">preprocessing_keys_to_fns</span><span class="o">=</span><span class="n">preprocessing_fns</span><span class="p">,</span>
     <span class="n">required_fields_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -17678,7 +14742,7 @@ INFO:root:None
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/final/default/assets
+<pre>INFO:tensorflow:Assets written to: ../models/pointwise_ranking_demo/final/default/assets
 </pre>
 </div>
 </div>
@@ -17689,7 +14753,7 @@ INFO:root:None
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>{&#39;sim_score&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;p_OwnerId&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;la&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;pv_s&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_start&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;fr&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0)}
+<pre>{&#39;feat_0&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_1&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;feat_2&#39;: FixedLenFeature(shape=[], dtype=&#39;float&#39;, default_value=0.0), &#39;query_str&#39;: FixedLenFeature(shape=[], dtype=&#39;string&#39;, default_value=&#39;&#39;), &#39;pos&#39;: FixedLenFeature(shape=[], dtype=&#39;int64&#39;, default_value=0)}
 </pre>
 </div>
 </div>
@@ -17700,8 +14764,8 @@ INFO:root:None
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:tensorflow:Assets written to: /Users/ashish.srinivasa/search_relevance/model_training/test/models/final/tfrecord/assets
-INFO:root:Final model saved to : /Users/ashish.srinivasa/search_relevance/model_training/test/models/final
+<pre>INFO:tensorflow:Assets written to: ../models/pointwise_ranking_demo/final/tfrecord/assets
+INFO:root:Final model saved to : ../models/pointwise_ranking_demo/final
 </pre>
 </div>
 </div>
@@ -17719,15 +14783,15 @@ INFO:root:Final model saved to : /Users/ashish.srinivasa/search_relevance/model_
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">ml4ir.base.config.keys</span> <span class="kn">import</span> <span class="n">TFRecordTypeKey</span>
 
 <span class="n">relevance_model</span> <span class="o">=</span> <span class="n">RelevanceModel</span><span class="p">(</span>
     <span class="n">feature_config</span><span class="o">=</span><span class="n">feature_config</span><span class="p">,</span>
     <span class="n">tfrecord_type</span><span class="o">=</span><span class="n">TFRecordTypeKey</span><span class="o">.</span><span class="n">EXAMPLE</span><span class="p">,</span>
-    <span class="n">model_file</span><span class="o">=</span><span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/test/models/final/default/&#39;</span><span class="p">,</span>
+    <span class="n">model_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">MODEL_DIR</span><span class="p">,</span> <span class="s1">&#39;final/default/&#39;</span><span class="p">),</span>
     <span class="n">logger</span><span class="o">=</span><span class="n">logger</span><span class="p">,</span>
     <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;relevance_score&quot;</span>
 <span class="p">)</span>
@@ -17752,32 +14816,18 @@ INFO:root:Final model saved to : /Users/ashish.srinivasa/search_relevance/model_
 
 
 <div class="output_subarea output_stream output_stderr output_text">
-<pre>INFO:root:Successfully loaded SavedModel from /Users/ashish.srinivasa/search_relevance/model_training/test/models/final/default/
+<pre>INFO:root:Successfully loaded SavedModel from ../models/pointwise_ranking_demo/final/default/
 WARNING:root:Retraining is not yet supported. Model is loaded with compile=False
 INFO:root:Is Keras model? True
 INFO:root:Is compiled? False
 INFO:root:Finished predicting scores for 25 batches
-INFO:root:Finished predicting scores for 50 batches
-INFO:root:Finished predicting scores for 75 batches
-INFO:root:Finished predicting scores for 100 batches
-INFO:root:Finished predicting scores for 125 batches
-INFO:root:Finished predicting scores for 150 batches
-INFO:root:Finished predicting scores for 175 batches
-INFO:root:Finished predicting scores for 200 batches
-INFO:root:Finished predicting scores for 225 batches
-INFO:root:Finished predicting scores for 250 batches
-INFO:root:Finished predicting scores for 275 batches
-INFO:root:Finished predicting scores for 300 batches
-INFO:root:Finished predicting scores for 325 batches
-INFO:root:Finished predicting scores for 350 batches
-INFO:root:Finished predicting scores for 375 batches
 </pre>
 </div>
 </div>
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[14]:</div>
+    <div class="prompt output_prompt">Out[37]:</div>
 
 
 
@@ -17800,239 +14850,213 @@ INFO:root:Finished predicting scores for 375 batches
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>query_id</th>
-      <th>clicked</th>
-      <th>query_start</th>
-      <th>organization_id</th>
-      <th>fr</th>
+      <th>query_key</th>
+      <th>label</th>
+      <th>query_str</th>
+      <th>pos</th>
       <th>relevance_score</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th>62</th>
-      <td>b'-5iiq5fb6om6y'</td>
-      <td>0.0</td>
-      <td>b'geller'</td>
-      <td>b'00D41000000e8Jh'</td>
-      <td>3.0</td>
-      <td>0.022727</td>
+      <th>3</th>
+      <td>740</td>
+      <td>0</td>
+      <td>b'btrnalst'</td>
+      <td>2</td>
+      <td>0.159647</td>
     </tr>
     <tr>
-      <th>13</th>
-      <td>b'cnq340c2kkl4'</td>
-      <td>0.0</td>
-      <td>b'roger martin'</td>
-      <td>b'00D20000000CYfb'</td>
-      <td>5.0</td>
-      <td>0.111123</td>
-    </tr>
-    <tr>
-      <th>87</th>
-      <td>b'-1dx5iadzgaghm'</td>
-      <td>0.0</td>
-      <td>b'angeline wiliams'</td>
-      <td>b'00DG0000000Bvr7'</td>
-      <td>4.0</td>
-      <td>0.082454</td>
-    </tr>
-    <tr>
-      <th>69</th>
-      <td>b'-1qh6c9glw55k4'</td>
-      <td>1.0</td>
-      <td>b'royal bolton'</td>
-      <td>b'00D0Y000000Ytxp'</td>
-      <td>1.0</td>
-      <td>0.529385</td>
-    </tr>
-    <tr>
-      <th>31</th>
-      <td>b'11pdwdu61ufb9'</td>
-      <td>0.0</td>
-      <td>b'bac'</td>
-      <td>b'00D58000000JmcR'</td>
-      <td>3.0</td>
-      <td>0.037587</td>
-    </tr>
-    <tr>
-      <th>113</th>
-      <td>b'11bs33qhvztsl'</td>
-      <td>0.0</td>
-      <td>b'bs jq'</td>
-      <td>b'00D30000000VTI4'</td>
-      <td>2.0</td>
-      <td>0.179891</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>b'-1rdi4y8wni3ku'</td>
-      <td>0.0</td>
-      <td>b'dexter and sharpe'</td>
-      <td>b'00D58000000JnA2'</td>
-      <td>3.0</td>
-      <td>0.258700</td>
-    </tr>
-    <tr>
-      <th>103</th>
-      <td>b'1iv83h4aa2z4'</td>
-      <td>1.0</td>
-      <td>b'q'</td>
-      <td>b'00D30000000n5Rn'</td>
-      <td>1.0</td>
-      <td>0.529385</td>
-    </tr>
-    <tr>
-      <th>120</th>
-      <td>b'-9cgoei6puzlq'</td>
-      <td>0.0</td>
-      <td>b'pearson'</td>
-      <td>b'00DG0000000ky2M'</td>
-      <td>1.0</td>
-      <td>0.038842</td>
-    </tr>
-    <tr>
-      <th>14</th>
-      <td>b'-1xoy5lujnfq1z'</td>
-      <td>0.0</td>
-      <td>b''</td>
-      <td>b'00DU0000000Lfqj'</td>
-      <td>1.0</td>
-      <td>0.514853</td>
-    </tr>
-    <tr>
-      <th>124</th>
-      <td>b'-14td5nzuet1mw'</td>
-      <td>0.0</td>
-      <td>b'virginia pits'</td>
-      <td>b'00D36000001Gtgr'</td>
-      <td>3.0</td>
-      <td>0.228822</td>
-    </tr>
-    <tr>
-      <th>44</th>
-      <td>b'1qp5x5bpmanwg'</td>
-      <td>0.0</td>
-      <td>b'chemin du tremblay longueuil'</td>
-      <td>b'00DE0000000aeLf'</td>
-      <td>5.0</td>
-      <td>0.115412</td>
-    </tr>
-    <tr>
-      <th>90</th>
-      <td>b'-1l500hkvw5wg9'</td>
-      <td>0.0</td>
-      <td>b''</td>
-      <td>b'00Di0000000dHcr'</td>
-      <td>2.0</td>
-      <td>0.162470</td>
-    </tr>
-    <tr>
-      <th>93</th>
-      <td>b'-1s7rj5yvdpzjt'</td>
-      <td>0.0</td>
-      <td>b'\xe6\x81\xb5\xe6\x96\xb9\xe3\x80\x80\xe5\xa5...</td>
-      <td>b'00D28000000eeYV'</td>
-      <td>6.0</td>
-      <td>0.118274</td>
-    </tr>
-    <tr>
-      <th>47</th>
-      <td>b'-1uxyo80tuq5n1'</td>
-      <td>0.0</td>
-      <td>b'bettacontabilidadegmailcom'</td>
-      <td>b'00Di0000000KK6j'</td>
-      <td>2.0</td>
-      <td>0.181704</td>
-    </tr>
-    <tr>
-      <th>125</th>
-      <td>b'1b9dyrfyeesw0'</td>
-      <td>0.0</td>
-      <td>b''</td>
-      <td>b'00Dd0000000hm9a'</td>
-      <td>2.0</td>
-      <td>0.260225</td>
-    </tr>
-    <tr>
-      <th>110</th>
-      <td>b'1louvvqyqg0wh'</td>
-      <td>0.0</td>
-      <td>b'carino'</td>
-      <td>b'00D80000000d2pY'</td>
-      <td>2.0</td>
-      <td>0.401644</td>
+      <th>111</th>
+      <td>862</td>
+      <td>0</td>
+      <td>b'asuckzekq'</td>
+      <td>5</td>
+      <td>0.330036</td>
     </tr>
     <tr>
       <th>71</th>
-      <td>b'-gsfikitsjrl3'</td>
-      <td>1.0</td>
-      <td>b'evolution abs ltd'</td>
-      <td>b'00D58000000JnA2'</td>
-      <td>1.0</td>
-      <td>0.529385</td>
+      <td>550</td>
+      <td>0</td>
+      <td>b'jxrofi'</td>
+      <td>5</td>
+      <td>0.150660</td>
     </tr>
     <tr>
-      <th>14</th>
-      <td>b'1o44jrm6tgngh'</td>
-      <td>0.0</td>
-      <td>b'bpp'</td>
-      <td>b'00Db0000000I6kM'</td>
-      <td>4.0</td>
-      <td>0.159927</td>
+      <th>112</th>
+      <td>1289</td>
+      <td>0</td>
+      <td>b'vdmw'</td>
+      <td>3</td>
+      <td>0.194256</td>
     </tr>
     <tr>
-      <th>103</th>
-      <td>b'grn950qq7jmv'</td>
-      <td>0.0</td>
-      <td>b'crane'</td>
-      <td>b'00D00000000SK3U'</td>
-      <td>4.0</td>
-      <td>0.115048</td>
+      <th>24</th>
+      <td>312</td>
+      <td>0</td>
+      <td>b'lbdavmmrydc'</td>
+      <td>2</td>
+      <td>0.241013</td>
+    </tr>
+    <tr>
+      <th>99</th>
+      <td>716</td>
+      <td>1</td>
+      <td>b'qdygiorga'</td>
+      <td>1</td>
+      <td>0.292963</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>1041</td>
+      <td>0</td>
+      <td>b'vivzygb'</td>
+      <td>3</td>
+      <td>0.131669</td>
+    </tr>
+    <tr>
+      <th>96</th>
+      <td>1305</td>
+      <td>0</td>
+      <td>b'wzeixcx'</td>
+      <td>2</td>
+      <td>0.219538</td>
+    </tr>
+    <tr>
+      <th>87</th>
+      <td>1116</td>
+      <td>0</td>
+      <td>b'asdbluvaqd'</td>
+      <td>4</td>
+      <td>0.173946</td>
     </tr>
     <tr>
       <th>47</th>
-      <td>b'1pgvgalksxtz'</td>
-      <td>1.0</td>
-      <td>b''</td>
-      <td>b'00DE0000000J4oS'</td>
-      <td>1.0</td>
-      <td>0.529385</td>
+      <td>1225</td>
+      <td>0</td>
+      <td>b'deiz'</td>
+      <td>5</td>
+      <td>0.328670</td>
     </tr>
     <tr>
-      <th>50</th>
-      <td>b'twwdmxazulz8'</td>
-      <td>0.0</td>
-      <td>b'\xce\x9c\xce\x97\xce\xa4\xce\x9f\xce\xa3\xce...</td>
-      <td>b'00D24000000cOlR'</td>
-      <td>2.0</td>
-      <td>0.216562</td>
+      <th>11</th>
+      <td>335</td>
+      <td>0</td>
+      <td>b'msyhmqbgv'</td>
+      <td>2</td>
+      <td>0.383353</td>
     </tr>
     <tr>
-      <th>49</th>
-      <td>b'mvugnnev33ne'</td>
-      <td>0.0</td>
-      <td>b'howe wayne'</td>
-      <td>b'00DC0000000QBmf'</td>
-      <td>4.0</td>
-      <td>0.085181</td>
+      <th>3</th>
+      <td>1028</td>
+      <td>1</td>
+      <td>b'ezjfm'</td>
+      <td>1</td>
+      <td>0.296478</td>
     </tr>
     <tr>
-      <th>23</th>
-      <td>b'166z822geefe'</td>
-      <td>1.0</td>
-      <td>b'mastercard'</td>
-      <td>b'00D3000000007Mm'</td>
-      <td>1.0</td>
-      <td>0.472046</td>
+      <th>75</th>
+      <td>1417</td>
+      <td>0</td>
+      <td>b'uelocxd'</td>
+      <td>1</td>
+      <td>0.253076</td>
     </tr>
     <tr>
-      <th>54</th>
-      <td>b'12jfxj61om0qb'</td>
-      <td>0.0</td>
-      <td>b''</td>
-      <td>b'00D36000000JauS'</td>
-      <td>4.0</td>
-      <td>0.083266</td>
+      <th>39</th>
+      <td>411</td>
+      <td>0</td>
+      <td>b'ubaz'</td>
+      <td>4</td>
+      <td>0.230614</td>
+    </tr>
+    <tr>
+      <th>104</th>
+      <td>1440</td>
+      <td>0</td>
+      <td>b'cqeeblpox'</td>
+      <td>2</td>
+      <td>0.174853</td>
+    </tr>
+    <tr>
+      <th>104</th>
+      <td>127</td>
+      <td>0</td>
+      <td>b'aglga'</td>
+      <td>3</td>
+      <td>0.214635</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>259</td>
+      <td>0</td>
+      <td>b'slbgt'</td>
+      <td>3</td>
+      <td>0.120438</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>1497</td>
+      <td>0</td>
+      <td>b'myfnyedneftsq'</td>
+      <td>2</td>
+      <td>0.264969</td>
+    </tr>
+    <tr>
+      <th>127</th>
+      <td>96</td>
+      <td>0</td>
+      <td>b'ahsc'</td>
+      <td>2</td>
+      <td>0.350593</td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>1352</td>
+      <td>0</td>
+      <td>b'tmlkorxgl'</td>
+      <td>1</td>
+      <td>0.129969</td>
+    </tr>
+    <tr>
+      <th>121</th>
+      <td>1198</td>
+      <td>0</td>
+      <td>b'hyndfao'</td>
+      <td>3</td>
+      <td>0.163997</td>
+    </tr>
+    <tr>
+      <th>91</th>
+      <td>1439</td>
+      <td>0</td>
+      <td>b'gfpxje'</td>
+      <td>4</td>
+      <td>0.169902</td>
+    </tr>
+    <tr>
+      <th>91</th>
+      <td>819</td>
+      <td>0</td>
+      <td>b'hgqqeblmfvg'</td>
+      <td>4</td>
+      <td>0.144211</td>
+    </tr>
+    <tr>
+      <th>93</th>
+      <td>307</td>
+      <td>0</td>
+      <td>b'aockwd'</td>
+      <td>2</td>
+      <td>0.288756</td>
+    </tr>
+    <tr>
+      <th>119</th>
+      <td>80</td>
+      <td>1</td>
+      <td>b'tsxsmso'</td>
+      <td>1</td>
+      <td>0.371655</td>
     </tr>
   </tbody>
 </table>
@@ -18054,14 +15078,14 @@ INFO:root:Finished predicting scores for 375 batches
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">models</span> <span class="k">as</span> <span class="n">kmodels</span>
 <span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="n">data</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">kmodels</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span>
-    <span class="s1">&#39;/Users/ashish.srinivasa/search_relevance/model_training/test/models/final/tfrecord/&#39;</span><span class="p">,</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">MODEL_DIR</span><span class="p">,</span> <span class="s1">&#39;final/tfrecord/&#39;</span><span class="p">),</span>
     <span class="nb">compile</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">infer_fn</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">signatures</span><span class="p">[</span><span class="s2">&quot;serving_tfrecord&quot;</span><span class="p">]</span>
 
@@ -18090,22 +15114,22 @@ INFO:root:Finished predicting scores for 375 batches
 
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>INFO:root:Example proto: 
-b&#39;\n\xe0\x01\n\x0e\n\x02fr\x12\x08\x12\x06\n\x04\x00\x00@@\n\x1c\n\x08query_id\x12\x10\n\x0e\n\x0c6x1ujo9wolpk\n\x10\n\x04pv_s\x12\x08\x12\x06\n\x04\x00\x00@@\n&amp;\n\x0forganization_id\x12\x13\n\x11\n\x0f00DA0000000gjoE\n\x13\n\x07clicked\x12\x08\x12\x06\n\x04\x00\x00\x00\x00\n\x15\n\tsim_score\x12\x08\x12\x06\n\x04z\x1cGA\n#\n\x0bquery_start\x12\x14\n\x12\n\x10&#34;DEK CANADA INC&#34;\n\x0e\n\x02la\x12\x08\x12\x06\n\x04\xa0\x1e3B\n\x15\n\tp_OwnerId\x12\x08\x12\x06\n\x04\x00\x00\x00\x00&#39;
+b&#39;\n\x9a\x01\n\x12\n\x06feat_0\x12\x08\x12\x06\n\x044\xb4\x19?\n\x12\n\x06feat_1\x12\x08\x12\x06\n\x04]\x04G&gt;\n\x0e\n\x05label\x12\x05\x1a\x03\n\x01\x00\n\x12\n\x06feat_2\x12\x08\x12\x06\n\x04\x9b \x9a&gt;\n\x0e\n\x05group\x12\x05\x1a\x03\n\x01\x01\n\x1a\n\tquery_str\x12\r\n\x0b\n\tLVA3934GV\n\x12\n\tquery_key\x12\x05\x1a\x03\n\x01\x01\n\x0c\n\x03pos\x12\x05\x1a\x03\n\x01\x02&#39;
 INFO:root:
 
 
 Predictions:
-INFO:root:{&#39;relevance_score&#39;: &lt;tf.Tensor: id=481910, shape=(10, 1), dtype=float32, numpy=
-array([[0.25162402],
-       [0.13889855],
-       [0.2713995 ],
-       [0.4688424 ],
-       [0.1046252 ],
-       [0.3022725 ],
-       [0.28454107],
-       [0.5293849 ],
-       [0.1596475 ],
-       [0.04213748]], dtype=float32)&gt;}
+INFO:root:{&#39;relevance_score&#39;: &lt;tf.Tensor: id=467301, shape=(10, 1), dtype=float32, numpy=
+array([[0.28492698],
+       [0.35929203],
+       [0.15038341],
+       [0.2560033 ],
+       [0.26309642],
+       [0.14505771],
+       [0.2560033 ],
+       [0.2990865 ],
+       [0.2936227 ],
+       [0.2741116 ]], dtype=float32)&gt;}
 </pre>
 </div>
 </div>
