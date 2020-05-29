@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import yaml
 from logging import Logger
 

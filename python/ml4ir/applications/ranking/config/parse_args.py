@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from argparse import Namespace
 
 from ml4ir.base.config.parse_args import RelevanceArgParser

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from ml4ir.base.model.scoring.scoring_base import ScoringBase
 
 

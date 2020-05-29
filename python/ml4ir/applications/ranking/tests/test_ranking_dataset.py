@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import os
 
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase

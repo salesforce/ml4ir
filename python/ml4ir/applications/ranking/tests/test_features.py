@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import string
 import numpy as np
 

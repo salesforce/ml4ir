@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import unittest
 import tensorflow as tf
 import numpy as np

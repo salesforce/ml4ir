@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import os
 import numpy as np
 from tensorflow.keras import models as kmodels

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from ml4ir.base.config.keys import ScoringKey
 from ml4ir.base.model.scoring.pointwise_scoring import PointwiseScoring
 from ml4ir.base.model.scoring.pairwise_scoring import PairwiseScoring

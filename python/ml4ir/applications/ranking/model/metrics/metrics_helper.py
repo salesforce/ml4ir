@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import pandas as pd
 
 from typing import List

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.ranking.config.keys import MetricKey

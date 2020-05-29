@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 import ml4ir.applications.ranking.model.losses.pointwise_losses as pointwise_losses
 import ml4ir.applications.ranking.model.losses.pairwise_losses as pairwise_losses

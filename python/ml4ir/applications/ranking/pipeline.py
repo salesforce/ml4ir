@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import sys
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric

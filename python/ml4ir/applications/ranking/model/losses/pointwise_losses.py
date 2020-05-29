@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow.keras import losses
 import tensorflow as tf
 from tensorflow.keras import layers

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import tensorflow as tf
 from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
