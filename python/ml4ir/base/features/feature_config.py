@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import yaml
 import pandas as pd
 from tensorflow.keras import Input
@@ -69,19 +66,19 @@ class FeatureConfig:
     """
 
     def __init__(self, features_dict, logger: Optional[Logger] = None):
-        self.all_features = list()
-        self.query_key = None
-        self.label = None
-        self.features = None
+        self.all_features: List[Optional[Dict]] = list()
+        self.query_key: Optional[Dict] = None
+        self.label: Optional[Dict] = None
+        self.features: List[Optional[Dict]] = list()
 
         # Features that can be used for training the model
-        self.train_features = list()
+        self.train_features: List[Dict] = list()
         # Features that provide additional information about the query+records
-        self.metadata_features = list()
+        self.metadata_features: List[Dict] = list()
         # Features to log at inference time
-        self.features_to_log = list()
+        self.features_to_log: List[Dict] = list()
         # Features to be used as keys for computing group metrics
-        self.group_metrics_keys = list()
+        self.group_metrics_keys: List[Dict] = list()
 
         self.extract_features(features_dict, logger)
 
@@ -109,7 +106,7 @@ class FeatureConfig:
             raise KeyError("'label' key not found in the feature_config specified")
 
         try:
-            self.features: List = features_dict.get(FeatureConfigKey.FEATURES)
+            self.features = features_dict.get(FeatureConfigKey.FEATURES)
             self.all_features.extend(self.features)
         except KeyError:
             raise KeyError("'features' key not found in the feature_config specified")
@@ -196,20 +193,6 @@ class FeatureConfig:
         Can additionally be used to only fetch a particular value from the dict
         """
         return self._get_list_of_keys_or_dicts(self.metadata_features, key=key)
-
-    def get_context_features(self, key: str = None):
-        """
-        Getter method for context_features in FeatureConfig object
-        Can additionally be used to only fetch a particular value from the dict
-        """
-        return self._get_list_of_keys_or_dicts(self.context_features, key=key)
-
-    def get_sequence_features(self, key: str = None):
-        """
-        Getter method for sequence_features in FeatureConfig object
-        Can additionally be used to only fetch a particular value from the dict
-        """
-        return self._get_list_of_keys_or_dicts(self.sequence_features, key=key)
 
     def get_features_to_log(self, key: str = None):
         """
@@ -329,6 +312,20 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
+
+    def get_context_features(self, key: str = None):
+        """
+        Getter method for context_features in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_list_of_keys_or_dicts(self.context_features, key=key)
+
+    def get_sequence_features(self, key: str = None):
+        """
+        Getter method for sequence_features in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_list_of_keys_or_dicts(self.sequence_features, key=key)
 
     def log_initialization(self, logger):
         if logger:

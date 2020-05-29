@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import glob
 import os
 from typing import Optional

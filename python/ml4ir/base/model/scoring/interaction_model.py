@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow.keras import Input
 import tensorflow as tf
 

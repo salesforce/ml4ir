@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow.keras import Input
 
 from ml4ir.base.model.architectures import architecture_factory

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow import io
 from typing import List
 from logging import Logger

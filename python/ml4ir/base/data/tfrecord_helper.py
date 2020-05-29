@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from tensorflow import train
 import tensorflow as tf
 

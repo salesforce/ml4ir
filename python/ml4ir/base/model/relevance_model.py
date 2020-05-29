@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import os
 from logging import Logger
 import tensorflow as tf
@@ -51,9 +48,9 @@ class RelevanceModel:
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
 
-        try:
+        if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
-        except AttributeError:
+        else:
             self.max_sequence_size = 0
 
         # Load/Build Model
@@ -85,7 +82,7 @@ class RelevanceModel:
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
 
             # Get metric objects
-            metrics: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+            metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
                 metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
             )
 
@@ -93,7 +90,7 @@ class RelevanceModel:
             self.model.compile(
                 optimizer=optimizer,
                 loss=loss_fn,
-                metrics=metrics,
+                metrics=metrics_impl,
                 experimental_run_tf_function=False,
             )
 
@@ -143,7 +140,6 @@ class RelevanceModel:
         return cls(
             scorer=scorer,
             feature_config=feature_config,
-            loss=loss,
             metrics=metrics,
             optimizer=optimizer,
             tfrecord_type=tfrecord_type,
@@ -197,8 +193,8 @@ class RelevanceModel:
         dataset: RelevanceDataset,
         num_epochs: int,
         models_dir: str,
-        logs_dir: str = None,
-        logging_frequency: str = 25,
+        logs_dir: Optional[str] = None,
+        logging_frequency: int = 25,
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
@@ -433,7 +429,7 @@ class RelevanceModel:
     def _build_callback_hooks(
         self,
         models_dir: str,
-        logs_dir: str,
+        logs_dir: Optional[str] = None,
         is_training=True,
         logging_frequency=25,
         monitor_metric: str = "",

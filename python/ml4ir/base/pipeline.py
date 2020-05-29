@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 import socket
 import ast
 import tensorflow as tf

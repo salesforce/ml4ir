@@ -1,5 +1,3 @@
-# type: ignore
-# TODO: Fix typing
 # flake8: noqa
 # TODO: Fix complexity
 

@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from argparse import ArgumentParser, Namespace
 from typing import List
 

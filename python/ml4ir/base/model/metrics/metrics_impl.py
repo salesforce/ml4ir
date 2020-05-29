@@ -1,6 +1,3 @@
-# type: ignore
-# TODO: Fix typing
-
 from typing import Type, List, Union
 from tensorflow.keras.metrics import Metric
 
