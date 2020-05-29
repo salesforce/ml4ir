@@ -29,14 +29,14 @@ def define_default_signature(model, feature_config):
 
 
 def define_tfrecord_signature(
-        model,
-        tfrecord_type: str,
-        feature_config: FeatureConfig,
-        preprocessing_keys_to_fns: dict,
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        max_sequence_size: int = 0,
+    model,
+    tfrecord_type: str,
+    feature_config: FeatureConfig,
+    preprocessing_keys_to_fns: dict,
+    postprocessing_fn=None,
+    required_fields_only: bool = True,
+    pad_sequence: bool = False,
+    max_sequence_size: int = 0,
 ):
     """
     Add signatures to the tf keras savedmodel
@@ -122,14 +122,14 @@ def define_tfrecord_signature(
 
 
 def define_serving_signatures(
-        model,
-        tfrecord_type: str,
-        feature_config: FeatureConfig,
-        preprocessing_keys_to_fns: dict,
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        max_sequence_size: int = 0,
+    model,
+    tfrecord_type: str,
+    feature_config: FeatureConfig,
+    preprocessing_keys_to_fns: dict,
+    postprocessing_fn=None,
+    required_fields_only: bool = True,
+    pad_sequence: bool = False,
+    max_sequence_size: int = 0,
 ):
     """Defines all serving signatures for the SavedModel"""
     return {

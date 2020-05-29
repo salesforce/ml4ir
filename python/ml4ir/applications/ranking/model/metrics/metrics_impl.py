@@ -58,13 +58,13 @@ class MeanMetricWrapper(metrics.Mean):
 
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            state: str = MetricState.NEW,
-            name="MeanRankMetric",
-            dtype: Optional[dtypes.DType] = None,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        state: str = MetricState.NEW,
+        name="MeanRankMetric",
+        dtype: Optional[dtypes.DType] = None,
+        **kwargs
     ):
         """
         Creates a `MeanRankMetric` instance.
@@ -144,12 +144,12 @@ class MRR(MeanRankMetric):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            name="MRR",
-            state=MetricState.NEW,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="MRR",
+        state=MetricState.NEW,
+        **kwargs
     ):
         super(MRR, self).__init__(
             feature_config=feature_config,
@@ -180,12 +180,12 @@ class ACR(MeanRankMetric):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            name="ACR",
-            state=MetricState.NEW,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="ACR",
+        state=MetricState.NEW,
+        **kwargs
     ):
         super(ACR, self).__init__(
             feature_config=feature_config,
@@ -209,11 +209,11 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            name="categorical_accuracy",
-            state=MetricState.NEW,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="categorical_accuracy",
+        state=MetricState.NEW,
+        **kwargs
     ):
         super(CategoricalAccuracy, self).__init__(name=name)
