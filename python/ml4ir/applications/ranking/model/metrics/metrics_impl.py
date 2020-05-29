@@ -1,7 +1,3 @@
-<<<<<<< HEAD:python/ml4ir/model/metrics/metrics_impl.py
-# type: ignore
-# TODO: Fix typing
-=======
 import tensorflow as tf
 from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
@@ -13,29 +9,21 @@ from ml4ir.base.model.metrics.metrics_impl import MetricState
 from ml4ir.base.features.feature_config import FeatureConfig
 
 from typing import Optional, Dict
->>>>>>> ba34ff34526926aa009ac7d5fb1babdf15be570b:python/ml4ir/applications/ranking/model/metrics/metrics_impl.py
-
-from typing import Type, List, Union
-from tensorflow.keras.metrics import Metric
-from ml4ir.features.feature_config import FeatureConfig
-from typing import Dict
 
 
-class MetricState:
-    OLD = "old"
-    NEW = "new"
+class MeanMetricWrapper(metrics.Mean):
+    """
+    Wraps a stateless metric function with the Mean metric.
 
+    Original tensorflow implementation ->
+    https://github.com/tensorflow/tensorflow/blob/r2.0/tensorflow/python/keras/metrics.py#L541-L590
 
-def get_metrics_impl(
-    metrics: List[Union[str, Type[Metric]]],
-    feature_config: FeatureConfig,
-    metadata_features: Dict,
-    **kwargs
-) -> List[Union[Metric, str]]:
+    NOTE: MeanMetricWrapper is not a public Class on tf.keras.metrics
+    """
 
-<<<<<<< HEAD:python/ml4ir/model/metrics/metrics_impl.py
-    metrics_impl: List[Union[Metric, str]] = list()
-=======
+    def __init__(self, fn, name=None, dtype=None, **kwargs):
+        """Creates a `MeanMetricWrapper` instance.
+
         Args:
           fn: The metric function to wrap, with signature
             `fn(y_true, y_pred, **kwargs)`.
@@ -70,13 +58,13 @@ def get_metrics_impl(
 
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        state: str = MetricState.NEW,
-        name="MeanRankMetric",
-        dtype: Optional[dtypes.DType] = None,
-        **kwargs
+            self,
+            feature_config: FeatureConfig,
+            metadata_features: Dict,
+            state: str = MetricState.NEW,
+            name="MeanRankMetric",
+            dtype: Optional[dtypes.DType] = None,
+            **kwargs
     ):
         """
         Creates a `MeanRankMetric` instance.
@@ -125,37 +113,8 @@ class MeanRankMetric(MeanMetricWrapper):
 
             # Compute rank of clicked record from predictions
             click_ranks = tf.gather_nd(y_pred_ranks, indices=y_true_clicks)
->>>>>>> ba34ff34526926aa009ac7d5fb1babdf15be570b:python/ml4ir/applications/ranking/model/metrics/metrics_impl.py
 
-    for metric in metrics:
-        if isinstance(metric, str):
-            # If metric is specified as a string, then do nothing
-            metrics_impl.append(metric)
         else:
-<<<<<<< HEAD:python/ml4ir/model/metrics/metrics_impl.py
-            # If metric is a class of type Metric
-            try:
-                metrics_impl.extend(
-                    [
-                        metric(
-                            state=MetricState.OLD,
-                            feature_config=feature_config,
-                            metadata_features=metadata_features,
-                            **kwargs
-                        ),
-                        metric(
-                            state=MetricState.NEW,
-                            feature_config=feature_config,
-                            metadata_features=metadata_features,
-                            **kwargs
-                        ),
-                    ]
-                )
-            except TypeError:
-                metrics_impl.append(metric())
-
-    return metrics_impl
-=======
             """Compute mean rank metric for existing data"""
             # Fetch indices of clicked records from y_true
             y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
@@ -185,12 +144,12 @@ class MRR(MeanRankMetric):
     """
 
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        name="MRR",
-        state=MetricState.NEW,
-        **kwargs
+            self,
+            feature_config: FeatureConfig,
+            metadata_features: Dict,
+            name="MRR",
+            state=MetricState.NEW,
+            **kwargs
     ):
         super(MRR, self).__init__(
             feature_config=feature_config,
@@ -221,12 +180,12 @@ class ACR(MeanRankMetric):
     """
 
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        name="ACR",
-        state=MetricState.NEW,
-        **kwargs
+            self,
+            feature_config: FeatureConfig,
+            metadata_features: Dict,
+            name="ACR",
+            state=MetricState.NEW,
+            **kwargs
     ):
         super(ACR, self).__init__(
             feature_config=feature_config,
@@ -250,12 +209,11 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
     """
 
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        name="categorical_accuracy",
-        state=MetricState.NEW,
-        **kwargs
+            self,
+            feature_config: FeatureConfig,
+            metadata_features: Dict,
+            name="categorical_accuracy",
+            state=MetricState.NEW,
+            **kwargs
     ):
         super(CategoricalAccuracy, self).__init__(name=name)
->>>>>>> ba34ff34526926aa009ac7d5fb1babdf15be570b:python/ml4ir/applications/ranking/model/metrics/metrics_impl.py

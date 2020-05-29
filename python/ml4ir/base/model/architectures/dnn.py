@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from typing import List
-import copy
 
 
 class DNNLayer:

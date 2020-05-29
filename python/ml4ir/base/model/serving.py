@@ -1,18 +1,9 @@
-# type: ignore
-# TODO: Fix typing
-
 import tensorflow as tf
 from tensorflow import TensorSpec, TensorArray
-<<<<<<< HEAD:python/ml4ir/model/serving.py
-from ml4ir.config.keys import ServingSignatureKey
-from ml4ir.data.tfrecord_reader import get_parse_fn
-from ml4ir.features.feature_config import FeatureConfig
-=======
 
 from ml4ir.base.config.keys import ServingSignatureKey
 from ml4ir.base.data.tfrecord_reader import get_parse_fn
 from ml4ir.base.features.feature_config import FeatureConfig
->>>>>>> ba34ff34526926aa009ac7d5fb1babdf15be570b:python/ml4ir/base/model/serving.py
 
 
 def define_default_signature(model, feature_config):
@@ -38,14 +29,14 @@ def define_default_signature(model, feature_config):
 
 
 def define_tfrecord_signature(
-    model,
-    tfrecord_type: str,
-    feature_config: FeatureConfig,
-    preprocessing_keys_to_fns: dict,
-    postprocessing_fn=None,
-    required_fields_only: bool = True,
-    pad_sequence: bool = False,
-    max_sequence_size: int = 0,
+        model,
+        tfrecord_type: str,
+        feature_config: FeatureConfig,
+        preprocessing_keys_to_fns: dict,
+        postprocessing_fn=None,
+        required_fields_only: bool = True,
+        pad_sequence: bool = False,
+        max_sequence_size: int = 0,
 ):
     """
     Add signatures to the tf keras savedmodel
@@ -131,14 +122,14 @@ def define_tfrecord_signature(
 
 
 def define_serving_signatures(
-    model,
-    tfrecord_type: str,
-    feature_config: FeatureConfig,
-    preprocessing_keys_to_fns: dict,
-    postprocessing_fn=None,
-    required_fields_only: bool = True,
-    pad_sequence: bool = False,
-    max_sequence_size: int = 0,
+        model,
+        tfrecord_type: str,
+        feature_config: FeatureConfig,
+        preprocessing_keys_to_fns: dict,
+        postprocessing_fn=None,
+        required_fields_only: bool = True,
+        pad_sequence: bool = False,
+        max_sequence_size: int = 0,
 ):
     """Defines all serving signatures for the SavedModel"""
     return {
