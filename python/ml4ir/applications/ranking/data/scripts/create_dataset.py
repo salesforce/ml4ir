@@ -1,4 +1,4 @@
-# Run from ml4ir/python directory as: python3 applications/ranking/data/scripts/create_dataset.py
+# Run from ml4ir/python directory as: python3 ml4ir/applications/ranking/data/scripts/create_dataset.py
 
 import os
 import random
@@ -8,9 +8,9 @@ import pandas as pd
 import numpy as np
 from logging import Logger
 
-from ml4ir.io import file_io
-from ml4ir.io import logging_utils
-from ml4ir.features.feature_config import parse_config, FeatureConfig
+from ml4ir.base.io import file_io
+from ml4ir.base.io import logging_utils
+from ml4ir.base.features.feature_config import parse_config, FeatureConfig
 
 
 def run_dataset_creation(data_dir: str,
@@ -202,9 +202,9 @@ def fill_data(logger, seed_data, max_num_records, feature_config, feature_highva
 
 
 def main():
-    data_dir = 'applications/ranking/data/example/'
-    out_dir = 'applications/ranking/data/synthetic/'
-    feature_config = 'applications/ranking/data/example/feature_config.yaml'
+    data_dir = 'ml4ir/applications/ranking/data/example/'
+    out_dir = 'ml4ir/applications/ranking/data/synthetic/'
+    feature_config = 'ml4ir/applications/ranking/data/example/feature_config.yaml'
     feature_highval = {'name_match':[0,1]}
     feature_num_results = 'num_results'
     max_num_records = 50

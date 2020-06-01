@@ -1,4 +1,4 @@
-# Run from ml4ir/python directory as: python3 -m pytest applications/ranking/tests/test_create_dataset.py
+# Run from ml4ir/python directory as: python3 -m pytest ml4ir/applications/ranking/tests/test_create_dataset.py
 
 import unittest
 import os
@@ -7,15 +7,15 @@ from argparse import Namespace
 import warnings
 warnings.filterwarnings("ignore")
 
-from ml4ir.io import file_io
-from ml4ir.io.logging_utils import setup_logging
-from applications.ranking.data.scripts.create_dataset import run_dataset_creation
+from ml4ir.base.io import file_io
+from ml4ir.base.io.logging_utils import setup_logging
+from ml4ir.applications.ranking.data.scripts.create_dataset import run_dataset_creation
 
 
-ROOT_DATA_DIR = "applications/ranking/tests/data/csv/train"
-FEATURE_CONFIG = "applications/ranking/tests/data/csv/synthetic/feature_config.yaml"
-OUTPUT_DIR = "applications/ranking/tests/test_output/synthetic"
-LOG_DIR = 'applications/ranking/tests/test_output_log/'
+ROOT_DATA_DIR = "ml4ir/applications/ranking/tests/data/csv/train"
+FEATURE_CONFIG = "ml4ir/applications/ranking/tests/data/csv/synthetic/feature_config.yaml"
+OUTPUT_DIR = "ml4ir/applications/ranking/tests/test_output/synthetic"
+LOG_DIR = 'ml4ir/applications/ranking/tests/test_output_log/'
 
 
 class RankingCreateDatasetTest(unittest.TestCase):
