@@ -1,0 +1,96 @@
+query_key:
+  name: query_str
+  node_name: query_str
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: query_key
+    required: false
+    default_value: 0
+  tfrecord_type: context
+rank:
+  name: pos
+  node_name: pos
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: pos
+    required: true
+    default_value: 0
+  tfrecord_type: sequence
+label:
+  name: label
+  node_name: label
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: label
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+features:
+  - name: feat_0
+    node_name: feat_0
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: feat_0
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: feat_1
+    node_name: feat_1
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: feat_1
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: feat_2
+    node_name: feat_2
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: feat_2
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: group
+    node_name: group
+    trainable: false
+    dtype: int64
+    log_at_inference: false
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: group
+      required: false
+      default_value: 0
+    tfrecord_type: context
