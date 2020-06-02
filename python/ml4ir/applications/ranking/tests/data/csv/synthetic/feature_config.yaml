@@ -80,24 +80,6 @@ features:
       required: true
       default_value: 0.0
     tfrecord_type: sequence
-  - name: query_str
-    node_name: query_str
-    trainable: true
-    dtype: string
-    log_at_inference: true
-    feature_layer_info:
-      type: string
-      shape: null
-      encoding_type: bilstm
-      encoding_size: 128
-      embedding_size: 128
-    preprocessing_info:
-      max_length: 20
-    serving_info:
-      name: query_str
-      required: true
-      default_value: ""
-    tfrecord_type: context
   - name: group
     node_name: group
     trainable: false
