@@ -6,6 +6,17 @@
 * pip3
 * docker (version 18.09+ tested)
 
+
+#### Using PIP
+ml4ir can be installed as a pip package by using the following command
+
+```
+pip install  'git+https://git@github.com/salesforce/ml4ir#egg=ml4ir&subdirectory=python'
+```
+
+This will install ml4ir-0.0.1 (the current version). In future, when this package is available on PyPI, it will be as simple as pip install ml4ir
+
+
 #### Docker (Recommended)
 We have set up a `docker-compose.yml` file for building and using docker containers to train models.
 
