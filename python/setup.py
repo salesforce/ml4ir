@@ -7,5 +7,6 @@ setup(
     description="Machine Learning libraries for Information Retrieval",
     author="Search Relevance, Salesforce",
     author_email="searchrelevancyscrumteam@salesforce.com ",
+    data_files=[("ml4ir/build", ["ml4ir/build/Dockerfile"])],
     license="ASL 2.0",
 )
