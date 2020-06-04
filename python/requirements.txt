@@ -88,4 +88,5 @@ tensorflow-text==2.0.1
 tensorflow-transform==0.15.0
 traitlets==4.3.3
 urllib3==1.25.7
+wandb==0.8.36
 wcwidth==0.1.8

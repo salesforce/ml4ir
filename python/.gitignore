@@ -88,6 +88,9 @@ target/
 # exclude trained models
 /models/
 
+# exclude wandb logs
+/wandb/
+
 # Mac OS-specific storage files
 .DS_Store
 */.DS_Store
