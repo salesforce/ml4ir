@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 
-def categorical_embedding_with_hash_buckets(input_feature, feature_info):
+def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
     """Embedding lookup for categorical features"""
 
     # Numeric input features
@@ -14,8 +14,8 @@ def categorical_embedding_with_hash_buckets(input_feature, feature_info):
         feature_layer_info = feature_info.get("feature_layer_info")
         embeddings_list = list()
         for i in range(feature_layer_info["args"]["num_categorical_features"]):
-            # augmented_string = tf.strings.join([input_feature, tf.strings.as_string(tf.constant(i))])
-            augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(input_feature)
+            # augmented_string = tf.strings.join([feature_tensor, tf.strings.as_string(tf.constant(i))])
+            augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(feature_tensor)
 
             hash_bucket = tf.strings.to_hash_bucket_fast(
                 augmented_string, num_buckets=feature_layer_info["args"]["num_hash_buckets"]
@@ -28,27 +28,32 @@ def categorical_embedding_with_hash_buckets(input_feature, feature_info):
                 )(hash_bucket)
             )
 
+        embedding = None
         if feature_layer_info["args"]["merge_mode"] == "mean":
-            return tf.reduce_mean(
+            embedding = tf.reduce_mean(
                 embeddings_list,
                 axis=0,
                 name="categorical_embedding_{}".format(feature_info.get("name")),
             )
         elif feature_layer_info["args"]["merge_mode"] == "sum":
-            return tf.reduce_sum(
+            embedding = tf.reduce_sum(
                 embeddings_list,
                 axis=0,
                 name="categorical_embedding_{}".format(feature_info.get("name")),
             )
         elif feature_layer_info["args"]["merge_mode"] == "concat":
-            return tf.concat(
+            embedding = tf.concat(
                 embeddings_list,
                 axis=-1,
                 name="categorical_embedding_{}".format(feature_info.get("name")),
             )
 
+        # embedding = tf.expand_dims(embedding, axis=-1)
 
-def categorical_embedding_with_indices(input_feature, feature_info):
+        return embedding
+
+
+def categorical_embedding_with_indices(feature_tensor, feature_info):
     """Embedding lookup for categorical features which already are converted to numeric indices"""
 
     feature_layer_info = feature_info.get("feature_layer_info")
@@ -56,10 +61,10 @@ def categorical_embedding_with_indices(input_feature, feature_info):
         input_dim=feature_layer_info["args"]["vocabulary_size"],
         output_dim=feature_layer_info["args"]["embedding_size"],
         name="categorical_embedding_{}".format(feature_info.get("name")),
-    )(input_feature)
+    )(feature_tensor)
 
 
-def categorical_embedding_with_vocabulary_file(input_feature, feature_info):
+def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
     Embedding lookup for string features with a vocabulary file to index
     """
