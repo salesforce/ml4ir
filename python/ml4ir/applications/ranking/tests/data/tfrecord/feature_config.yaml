@@ -2,7 +2,7 @@ query_key:
   name: query_key
   node_name: query_key
   trainable: false
-  dtype: int64
+  dtype: string
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -10,7 +10,7 @@ query_key:
   serving_info:
     name: queryId
     required: false
-    default_value: 0
+    default_value: ""
   tfrecord_type: context
 rank:
   name: pos
@@ -117,4 +117,18 @@ features:
       name: group
       required: false
       default_value: 0
+    tfrecord_type: context
+  - name: group_name
+    node_name: group_name
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: group_name
+      required: false
+      default_value: ""
     tfrecord_type: context
