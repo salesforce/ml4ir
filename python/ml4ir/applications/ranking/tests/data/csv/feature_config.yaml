@@ -88,7 +88,7 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: get_sequence_encoding
+      fn: bytes_sequence_to_encoding
       args:
         encoding_type: bilstm
         encoding_size: 128

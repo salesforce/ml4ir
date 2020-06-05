@@ -3,9 +3,7 @@ import tensorflow as tf
 
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
-from ml4ir.base.config.keys import TFRecordTypeKey
-from ml4ir.base.features.feature_layer import define_example_feature_layer
-from ml4ir.base.features.feature_layer import define_sequence_example_feature_layer
+from ml4ir.base.features.feature_layer import define_feature_layer
 
 from typing import Dict
 
@@ -51,21 +49,19 @@ class UnivariateInteractionModel(InteractionModel):
         self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
 
     def feature_layer_op(self, inputs: Dict[str, Input]):
-        if self.tfrecord_type == TFRecordTypeKey.EXAMPLE:
-            train_features, metadata_features = define_example_feature_layer(
-                feature_config=self.feature_config, feature_layer_map=self.feature_layer_map
-            )(inputs)
-        else:
-            train_features, metadata_features = define_sequence_example_feature_layer(
-                feature_config=self.feature_config,
-                feature_layer_map=self.feature_layer_map,
-                max_sequence_size=self.max_sequence_size,
-            )(inputs)
+        train_features, metadata_features = define_feature_layer(
+            feature_config=self.feature_config,
+            tfrecord_type=self.tfrecord_type,
+            feature_layer_map=self.feature_layer_map,
+        )(inputs)
 
         return train_features, metadata_features
 
     def transform_features_op(self, train_features, metadata_features):
-        # TODO: Make train_features a dictionary
+        # Sorting so that we control the order
+        train_features = [train_features[k] for k in sorted(train_features)]
+
+        # Concat all train features to get a dense feature vector
         train_features = tf.concat(train_features, axis=-1, name="train_features")
 
         return train_features, metadata_features

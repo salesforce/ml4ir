@@ -348,6 +348,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         """Add mask information used to flag padded records"""
         return {
             "name": "mask",
+            "node_name": "mask",
             "trainable": False,
             "dtype": self.get_rank("dtype"),
             "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
