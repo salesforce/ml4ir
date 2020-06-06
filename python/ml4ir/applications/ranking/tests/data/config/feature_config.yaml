@@ -106,13 +106,18 @@ features:
     tfrecord_type: context
   - name: group
     node_name: group
-    trainable: false
+    trainable: true
     dtype: int64
     log_at_inference: false
     is_group_metric_key: true
     feature_layer_info:
       type: numeric
       shape: null
+      fn: categorical_embedding_with_indices
+      args:
+        num_buckets: 8
+        embedding_size: 64
+        default_value: null
     serving_info:
       name: group
       required: false
@@ -127,12 +132,18 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: categorical_embedding_with_hash_buckets
+      # fn: categorical_embedding_with_hash_buckets
+      # args:
+      #   num_categorical_features: 4
+      #   num_hash_buckets: 64
+      #   embedding_size: 32
+      #   merge_mode: concat
+      fn: categorical_embedding_with_vocabulary_file
       args:
-        num_categorical_features: 4
-        num_hash_buckets: 64
-        embedding_size: 32
-        merge_mode: concat
+        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab.txt'
+        embedding_size: 64
+        default_value: -1
+        num_oov_buckets: 0
     serving_info:
       name: group_name
       required: false

@@ -1,5 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import layers
+from tensorflow import feature_column
+
+from ml4ir.base.io import file_io
 
 
 def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
@@ -55,17 +58,49 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
 
 def categorical_embedding_with_indices(feature_tensor, feature_info):
     """Embedding lookup for categorical features which already are converted to numeric indices"""
-
+    CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
-    return layers.Embedding(
-        input_dim=feature_layer_info["args"]["vocabulary_size"],
-        output_dim=feature_layer_info["args"]["embedding_size"],
-        name="categorical_embedding_{}".format(feature_info.get("name")),
-    )(feature_tensor)
+
+    categorical_fc = feature_column.categorical_column_with_identity(
+        CATEGORICAL_VARIABLE,
+        num_buckets=feature_layer_info["args"]["num_buckets"],
+        default_value=feature_layer_info["args"].get("default_value", None),
+    )
+    embedding_fc = feature_column.embedding_column(
+        categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
+    )
+
+    embedding = layers.DenseFeatures(
+        embedding_fc,
+        name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
+    )({CATEGORICAL_VARIABLE: feature_tensor})
+    embedding = tf.expand_dims(embedding, axis=1)
+
+    return embedding
 
 
 def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
     Embedding lookup for string features with a vocabulary file to index
     """
-    raise NotImplementedError
+    CATEGORICAL_VARIABLE = "categorical_variable"
+    feature_layer_info = feature_info.get("feature_layer_info")
+    vocabulary_list = file_io.read_list(feature_layer_info["args"]["vocabulary_file"])
+
+    categorical_fc = feature_column.categorical_column_with_vocabulary_list(
+        CATEGORICAL_VARIABLE,
+        vocabulary_list=vocabulary_list,
+        default_value=feature_layer_info["args"].get("default_value", -1),
+        num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
+    )
+    embedding_fc = feature_column.embedding_column(
+        categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
+    )
+
+    embedding = layers.DenseFeatures(
+        embedding_fc,
+        name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
+    )({CATEGORICAL_VARIABLE: feature_tensor})
+    embedding = tf.expand_dims(embedding, axis=1)
+
+    return embedding

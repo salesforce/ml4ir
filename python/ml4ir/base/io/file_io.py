@@ -45,6 +45,17 @@ def make_directory(dir_path: str, clear_dir: bool = False, log=None) -> str:
     return dir_path
 
 
+def read_list(infile: str):
+    """Read a text file"""
+    txt = ""
+    if infile.startswith("hdfs"):
+        raise NotImplementedError
+    else:
+        txt = open(infile, "r").read()
+
+    return [token.strip() for token in txt.splitlines()]
+
+
 def read_df(
     infile: str, sep: str = ",", index_col: int = None, log_path: bool = True, log=None
 ) -> Optional[pd.DataFrame]:
