@@ -89,13 +89,17 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     Tracking the issue currently and should be able to upgrade
     to current latest stable release 2.2.0 to test.
 
-    Different issues[2, 3] with TF2.2.0 regarding incompatibility of
+    Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
+    custom loss, metric layers
+
+    Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
     Keras Functional API models and Tensorflow
 
     References:
     [1] https://github.com/tensorflow/tensorflow/issues/31686
-    [2] https://github.com/tensorflow/probability/issues/519
-    [3] https://github.com/tensorflow/tensorflow/issues/35138
+    [2] https://github.com/tensorflow/tensorflow/issues/36954
+    [3] https://github.com/tensorflow/probability/issues/519
+    [4] https://github.com/tensorflow/tensorflow/issues/35138
     """
     CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
