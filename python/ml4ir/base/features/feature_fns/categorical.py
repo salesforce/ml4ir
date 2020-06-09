@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import feature_column
+from tensorflow import lookup
+import copy
 
 from ml4ir.base.io import file_io
 
@@ -101,24 +103,58 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     [3] https://github.com/tensorflow/probability/issues/519
     [4] https://github.com/tensorflow/tensorflow/issues/35138
     """
-    CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
     vocabulary_list = file_io.read_list(feature_layer_info["args"]["vocabulary_file"])
 
-    categorical_fc = feature_column.categorical_column_with_vocabulary_list(
-        CATEGORICAL_VARIABLE,
-        vocabulary_list=vocabulary_list,
-        default_value=feature_layer_info["args"].get("default_value", -1),
-        num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
-    )
-    embedding_fc = feature_column.embedding_column(
-        categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
+    # CATEGORICAL_VARIABLE = "categorical_variable"
+    # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
+    #     CATEGORICAL_VARIABLE,
+    #     vocabulary_list=vocabulary_list,
+    #     default_value=feature_layer_info["args"].get("default_value", -1),
+    #     num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
+    # )
+    # embedding_fc = feature_column.embedding_column(
+    #     categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
+    # )
+
+    # embedding = layers.DenseFeatures(
+    #     embedding_fc,
+    #     name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
+    # )({CATEGORICAL_VARIABLE: feature_tensor})
+    # embedding = tf.expand_dims(embedding, axis=1)
+
+    # return embedding
+
+    """
+    Define a lookup table using the vocabulary file
+
+    NOTE:
+    Issue[1] with using LookupTable with keras symbolic tensors; expects eager tensors.
+
+    Ref: https://github.com/tensorflow/tensorflow/issues/38305
+    """
+    num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
+    vocabulary_size = len(vocabulary_list)
+    lookup_table = lookup.StaticVocabularyTable(
+        initializer=lookup.KeyValueTensorInitializer(
+            keys=vocabulary_list,
+            values=range(vocabulary_size),
+            key_dtype=tf.string,
+            value_dtype=tf.int64,
+        ),
+        num_oov_buckets=num_oov_buckets,
+        name="{}_lookup_table".format(feature_info.get("node_name", feature_info["name"])),
     )
 
-    embedding = layers.DenseFeatures(
-        embedding_fc,
-        name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
-    )({CATEGORICAL_VARIABLE: feature_tensor})
-    embedding = tf.expand_dims(embedding, axis=1)
+    feature_tensor_indices = lookup_table.lookup(feature_tensor)
+    feature_info_new = copy.deepcopy(feature_info)
+    feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
+        vocabulary_size + num_oov_buckets
+    )
+    feature_info_new["feature_layer_info"]["args"]["default_value"] = vocabulary_size
+
+    embedding = categorical_embedding_with_indices(
+        feature_tensor=feature_tensor_indices, feature_info=feature_info_new
+    )
 
     return embedding

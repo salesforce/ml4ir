@@ -143,7 +143,7 @@ features:
         vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab.txt'
         embedding_size: 64
         default_value: -1
-        num_oov_buckets: 0
+        num_oov_buckets: 1
     serving_info:
       name: group_name
       required: false
