@@ -120,7 +120,7 @@ features:
         default_value: null
     serving_info:
       name: group
-      required: false
+      required: true
       default_value: 0
     tfrecord_type: context
   - name: group_name
@@ -146,6 +146,6 @@ features:
         num_oov_buckets: 1
     serving_info:
       name: group_name
-      required: false
+      required: true
       default_value: ""
     tfrecord_type: context

@@ -121,6 +121,9 @@ class RankingModelTest(RankingTestBase):
         # Compare the scores from the different versions of the model
         assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01,).all()
 
+        import pdb
+
+        pdb.set_trace()
         assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01,).all()
 
         assert np.isclose(
@@ -159,7 +162,7 @@ class RankingModelTest(RankingTestBase):
 
         return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
 
-    def _test_serving_n_records(self):
+    def test_serving_n_records(self):
         """Test serving signature with different number of records"""
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)
@@ -173,7 +176,7 @@ class RankingModelTest(RankingTestBase):
             except Exception:
                 assert False
 
-    def _test_serving_required_fields_only(self):
+    def test_serving_required_fields_only(self):
         """Test serving signature with protos with only required fields"""
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)

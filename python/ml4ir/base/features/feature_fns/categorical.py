@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import feature_column
 from tensorflow import lookup
+
 import copy
 
 from ml4ir.base.io import file_io
@@ -81,6 +82,53 @@ def categorical_embedding_with_indices(feature_tensor, feature_info):
     return embedding
 
 
+class VocabLookup(layers.Layer):
+    """
+    Defines a keras layer around a tf lookup table using the given vocabulary list
+
+    NOTE:
+    Issue[1] with using LookupTable with keras symbolic tensors; expects eager tensors.
+
+    Ref: https://github.com/tensorflow/tensorflow/issues/38305
+    """
+
+    def __init__(self, vocabulary_list, num_oov_buckets, feature_name):
+        super(VocabLookup, self).__init__(trainable=False, dtype=tf.int64)
+        self.vocabulary_list = vocabulary_list
+        self.vocabulary_size = len(vocabulary_list)
+        self.num_oov_buckets = num_oov_buckets
+        self.feature_name = feature_name
+
+    def build(self, input_shape):
+        table_init = lookup.KeyValueTensorInitializer(
+            keys=self.vocabulary_list,
+            values=range(self.vocabulary_size),
+            key_dtype=tf.string,
+            value_dtype=tf.int64,
+        )
+        self.lookup_table = lookup.StaticVocabularyTable(
+            initializer=table_init,
+            num_oov_buckets=self.num_oov_buckets,
+            name="{}_lookup_table".format(self.feature_name),
+        )
+        self.built = True
+
+    def call(self, input_text):
+        return self.lookup_table.lookup(input_text)
+
+    def get_config(self):
+        config = super(VocabLookup, self).get_config()
+        config.update(
+            {
+                "vocabulary_list": self.vocabulary_list,
+                "vocabulary_size": self.vocabulary_size,
+                "num_oov_buckets": self.num_oov_buckets,
+                "feature_name": self.feature_name,
+            }
+        )
+        return config
+
+
 def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
     Embedding lookup for string features with a vocabulary file to index
@@ -106,6 +154,9 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     feature_layer_info = feature_info.get("feature_layer_info")
     vocabulary_list = file_io.read_list(feature_layer_info["args"]["vocabulary_file"])
 
+    #
+    ##########################################################################
+    #
     # CATEGORICAL_VARIABLE = "categorical_variable"
     # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
     #     CATEGORICAL_VARIABLE,
@@ -122,31 +173,20 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     #     name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
     # )({CATEGORICAL_VARIABLE: feature_tensor})
     # embedding = tf.expand_dims(embedding, axis=1)
+    #
+    ##########################################################################
+    #
 
-    # return embedding
-
-    """
-    Define a lookup table using the vocabulary file
-
-    NOTE:
-    Issue[1] with using LookupTable with keras symbolic tensors; expects eager tensors.
-
-    Ref: https://github.com/tensorflow/tensorflow/issues/38305
-    """
+    # Define a lookup table to convert categorical variables to IDs
     num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
     vocabulary_size = len(vocabulary_list)
-    lookup_table = lookup.StaticVocabularyTable(
-        initializer=lookup.KeyValueTensorInitializer(
-            keys=vocabulary_list,
-            values=range(vocabulary_size),
-            key_dtype=tf.string,
-            value_dtype=tf.int64,
-        ),
+    lookup_table = VocabLookup(
+        vocabulary_list=vocabulary_list,
         num_oov_buckets=num_oov_buckets,
-        name="{}_lookup_table".format(feature_info.get("node_name", feature_info["name"])),
+        feature_name=feature_info.get("node_name", feature_info["name"]),
     )
+    feature_tensor_indices = lookup_table(feature_tensor)
 
-    feature_tensor_indices = lookup_table.lookup(feature_tensor)
     feature_info_new = copy.deepcopy(feature_info)
     feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
         vocabulary_size + num_oov_buckets
