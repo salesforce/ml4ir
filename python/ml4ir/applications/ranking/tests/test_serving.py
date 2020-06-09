@@ -128,9 +128,7 @@ class RankingModelTest(RankingTestBase):
         ).all()
 
     def get_feature_config(self):
-        feature_config_path = os.path.join(
-            self.root_data_dir, "tfrecord", self.feature_config_fname
-        )
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
 
         feature_config: FeatureConfig = parse_config(
             tfrecord_type=self.args.tfrecord_type,
@@ -161,7 +159,7 @@ class RankingModelTest(RankingTestBase):
 
         return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
 
-    def test_serving_n_records(self):
+    def _test_serving_n_records(self):
         """Test serving signature with different number of records"""
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)
@@ -175,7 +173,7 @@ class RankingModelTest(RankingTestBase):
             except Exception:
                 assert False
 
-    def test_serving_required_fields_only(self):
+    def _test_serving_required_fields_only(self):
         """Test serving signature with protos with only required fields"""
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)

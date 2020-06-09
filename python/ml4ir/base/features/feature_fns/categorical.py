@@ -82,6 +82,20 @@ def categorical_embedding_with_indices(feature_tensor, feature_info):
 def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
     Embedding lookup for string features with a vocabulary file to index
+
+    NOTE:
+    Current bug[1] with saving a Keras model when using
+    feature_column.categorical_column_with_vocabulary_list.
+    Tracking the issue currently and should be able to upgrade
+    to current latest stable release 2.2.0 to test.
+
+    Different issues[2, 3] with TF2.2.0 regarding incompatibility of
+    Keras Functional API models and Tensorflow
+
+    References:
+    [1] https://github.com/tensorflow/tensorflow/issues/31686
+    [2] https://github.com/tensorflow/probability/issues/519
+    [3] https://github.com/tensorflow/tensorflow/issues/35138
     """
     CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
