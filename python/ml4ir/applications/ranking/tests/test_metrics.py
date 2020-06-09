@@ -9,12 +9,12 @@ from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 
 # Constants
 GOLD_METRICS = {
-    "old_ACR": 1.6669,
-    "new_ACR": 2.3643,
-    "old_MRR": 0.7806,
-    "new_MRR": 0.6085,
-    "perc_improv_ACR": -41.8406,
-    "perc_improv_MRR": -22.0469,
+    "old_ACR": 1.6505,
+    "new_ACR": 2.5056,
+    "old_MRR": 0.7858,
+    "new_MRR": 0.5753,
+    "perc_improv_ACR": -51.8072,
+    "perc_improv_MRR": -26.7840,
     "query_count": 1408.0,
 }
 

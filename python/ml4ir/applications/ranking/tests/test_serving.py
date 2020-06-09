@@ -121,9 +121,6 @@ class RankingModelTest(RankingTestBase):
         # Compare the scores from the different versions of the model
         assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01,).all()
 
-        import pdb
-
-        pdb.set_trace()
         assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01,).all()
 
         assert np.isclose(
