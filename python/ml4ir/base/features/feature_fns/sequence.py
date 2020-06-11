@@ -51,15 +51,7 @@ def bytes_sequence_to_encoding(feature_tensor, feature_info):
         layers.LSTM(int(feature_layer_info["args"]["encoding_size"] / 2), return_sequences=False,),
         merge_mode="concat",
     )(char_embedding)
+
     encoding = tf.expand_dims(encoding, axis=1)
-    # if feature_info.get("tfrecord_type") == SequenceExampleTypeKey.CONTEXT:
-    #     # If feature is a context feature then tile it for all records
-    #     encoding = tf.expand_dims(encoding, axis=1)
-    # else:
-    #     # If sequence feature, then reshape back to original shape
-    #     # FIXME
-    #     encoding = tf.reshape(
-    #         encoding, [-1, encoding, feature_layer_info["args"]["encoding_size"]],
-    #     )
 
     return encoding
