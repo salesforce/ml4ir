@@ -61,7 +61,7 @@ class RankingDatasetTest(RankingTestBase):
         """
 
         data_dir = os.path.join(self.root_data_dir, "csv")
-        feature_config_path = os.path.join(self.root_data_dir, "csv", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
 
         ranking_dataset = self.get_ranking_dataset(
             data_dir=data_dir, data_format="csv", feature_config_path=feature_config_path
@@ -76,9 +76,7 @@ class RankingDatasetTest(RankingTestBase):
         """
 
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        feature_config_path = os.path.join(
-            self.root_data_dir, "tfrecord", self.feature_config_fname
-        )
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
 
         ranking_dataset = self.get_ranking_dataset(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path

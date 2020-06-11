@@ -2,7 +2,7 @@ query_key:
   name: query_key
   node_name: query_key
   trainable: false
-  dtype: int64
+  dtype: string
   log_at_inference: true
   feature_layer_info:
     type: numeric
@@ -10,7 +10,7 @@ query_key:
   serving_info:
     name: queryId
     required: false
-    default_value: 0
+    default_value: ""
   tfrecord_type: context
 rank:
   name: pos
@@ -88,7 +88,7 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: get_sequence_encoding
+      fn: bytes_sequence_to_encoding
       args:
         encoding_type: bilstm
         encoding_size: 128
@@ -106,15 +106,46 @@ features:
     tfrecord_type: context
   - name: group
     node_name: group
-    trainable: false
+    trainable: true
     dtype: int64
     log_at_inference: false
     is_group_metric_key: true
     feature_layer_info:
       type: numeric
       shape: null
+      fn: categorical_embedding_with_indices
+      args:
+        num_buckets: 8
+        embedding_size: 64
+        default_value: null
     serving_info:
       name: group
-      required: false
+      required: true
       default_value: 0
+    tfrecord_type: context
+  - name: group_name
+    node_name: group_name
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      # fn: categorical_embedding_with_hash_buckets
+      # args:
+      #   num_hash_buckets: 4
+      #   hash_bucket_size: 64
+      #   embedding_size: 32
+      #   merge_mode: concat
+      fn: categorical_embedding_with_vocabulary_file
+      args:
+        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab.txt'
+        embedding_size: 64
+        default_value: -1
+        num_oov_buckets: 1
+    serving_info:
+      name: group_name
+      required: true
+      default_value: ""
     tfrecord_type: context
