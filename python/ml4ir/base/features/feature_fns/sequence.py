@@ -9,7 +9,9 @@ def bytes_sequence_to_encoding(feature_tensor, feature_info):
 
     # Decode string tensor to bytes
     feature_tensor = io.decode_raw(
-        feature_tensor, out_type=tf.uint8, fixed_length=feature_layer_info["args"]["max_length"],
+        feature_tensor,
+        out_type=tf.uint8,
+        fixed_length=feature_layer_info["args"].get("max_length", None),
     )
 
     feature_tensor = tf.reshape(feature_tensor, [-1, feature_layer_info["args"]["max_length"]])

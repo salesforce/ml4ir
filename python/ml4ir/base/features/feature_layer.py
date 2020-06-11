@@ -12,9 +12,6 @@ from ml4ir.base.features.feature_fns.categorical import categorical_embedding_wi
 class FeatureLayerMap:
     """Class defining mapping from keys to feature layer functions"""
 
-    # Constants
-    GET_SEQUENCE_ENCODINg = "preprocess_text"
-
     def __init__(self):
         self.key_to_fn = {
             bytes_sequence_to_encoding.__name__: bytes_sequence_to_encoding,

@@ -19,16 +19,15 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
     elif feature_info["dtype"] in (tf.string,):
         feature_layer_info = feature_info.get("feature_layer_info")
         embeddings_list = list()
-        for i in range(feature_layer_info["args"]["num_categorical_features"]):
-            # augmented_string = tf.strings.join([feature_tensor, tf.strings.as_string(tf.constant(i))])
+        for i in range(feature_layer_info["args"]["num_hash_buckets"]):
             augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(feature_tensor)
 
             hash_bucket = tf.strings.to_hash_bucket_fast(
-                augmented_string, num_buckets=feature_layer_info["args"]["num_hash_buckets"]
+                augmented_string, num_buckets=feature_layer_info["args"]["hash_bucket_size"]
             )
             embeddings_list.append(
                 layers.Embedding(
-                    input_dim=feature_layer_info["args"]["num_hash_buckets"],
+                    input_dim=feature_layer_info["args"]["hash_bucket_size"],
                     output_dim=feature_layer_info["args"]["embedding_size"],
                     name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
                 )(hash_bucket)
@@ -54,7 +53,7 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
                 name="categorical_embedding_{}".format(feature_info.get("name")),
             )
 
-        # embedding = tf.expand_dims(embedding, axis=-1)
+        embedding = tf.expand_dims(embedding, axis=1)
 
         return embedding
 

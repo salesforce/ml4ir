@@ -134,8 +134,8 @@ features:
       shape: null
       # fn: categorical_embedding_with_hash_buckets
       # args:
-      #   num_categorical_features: 4
-      #   num_hash_buckets: 64
+      #   num_hash_buckets: 4
+      #   hash_bucket_size: 64
       #   embedding_size: 32
       #   merge_mode: concat
       fn: categorical_embedding_with_vocabulary_file
