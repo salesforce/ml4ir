@@ -40,11 +40,15 @@ def define_feature_layer(
     feature_config: FeatureConfig, tfrecord_type: str, feature_layer_map: FeatureLayerMap
 ):
     """
-    Define a feature layer that works on keras.Inputs
+    Defines a feature layer function that works on keras.Inputs
 
     Args:
         - feature_config: FeatureConfig object
+        - tfrecord_type: string defining the TFRecord type of the data
         - feature_layer_map: dictionary mapping custom function names to function definition
+
+    Returns:
+        feature layer function that works on keras.Inputs
 
     NOTE:
         - Use feature_layer_map to define custom functions when using ml4ir as a library

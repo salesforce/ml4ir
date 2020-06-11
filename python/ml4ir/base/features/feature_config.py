@@ -345,7 +345,18 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             )
 
     def generate_mask(self):
-        """Add mask information used to flag padded records"""
+        """
+        Add mask information used to flag padded records.
+        In order to create a batch of sequence examples from n TFRecords,
+        we need to make sure that they all have the same number of sequences.
+        To do this, we pad sequence records to a fixed max_sequence_size.
+        Now, we do not want to use these additional padded sequence records
+        to compute metrics and losses. Hence we maintain a boolean mask to
+        tell ml4ir the sequence records that were originally present.
+
+        In this method, we add the feature_info for the above mask feature as it
+        is not implicitly present in the data.
+        """
         return {
             "name": "mask",
             "node_name": "mask",

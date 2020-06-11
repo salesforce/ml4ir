@@ -9,7 +9,27 @@ from ml4ir.base.io import file_io
 
 
 def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
-    """Embedding lookup for categorical features"""
+    """
+    Convert a string feature tensor into a categorical embedding.
+    Works by first converting the string into num_hash_buckets buckets
+    each of size hash_bucket_size, then converting each hash bucket into
+    a categorical embdding of dimension embedding_size. Finally, these embeddings
+    are combined either through mean, sum or concat operations to generate the final
+    embedding.
+
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
+
+    Returns:
+        categorical embedding for the input feature_tensor
+
+    Args under feature_layer_info:
+        num_hash_buckets: int; number of different hash buckets to convert the input string into
+        hash_bucket_size: int; the size of each hash bucket
+        embedding_size: int; dimension size of the categorical embedding
+        merge_mode: str; can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
+    """
 
     # Numeric input features
     if feature_info["dtype"] in (tf.float32, tf.int64):
@@ -59,7 +79,26 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
 
 
 def categorical_embedding_with_indices(feature_tensor, feature_info):
-    """Embedding lookup for categorical features which already are converted to numeric indices"""
+    """
+    Convert input integer tensor into categorical embedding.
+    Works by converting the categorical indices in the input feature_tensor,
+    represented as integer values, into categorical embeddings.
+
+    Args:
+        feature_tensor: int feature tensor
+        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
+
+    Returns:
+        categorical embedding for the input feature_tensor
+
+    Args under feature_layer_info:
+        num_buckets: int; Maximum number of categorical values
+        default_value: int; default value to be assigned to indices out of the num_buckets range
+        embedding_size: int; dimension size of the categorical embedding
+
+    NOTE:
+    string based categorical features should already be converted into numeric indices
+    """
     CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
 
@@ -83,7 +122,14 @@ def categorical_embedding_with_indices(feature_tensor, feature_info):
 
 class VocabLookup(layers.Layer):
     """
-    Defines a keras layer around a tf lookup table using the given vocabulary list
+    Class defines a keras layer wrapper around a tf lookup table using the given vocabulary list.
+    Maps each entry of a vocabulary list into categorical indices.
+
+    Attributes:
+        vocabulary_list: List of strings that form the vocabulary set of categorical values
+        num_oov_buckets: Number of buckets to be used for out of vocabulary strings
+        feature_name: Name of the input feature tensor
+        lookup_table: Tensorflow look up table that maps strings to integer indices
 
     NOTE:
     Issue[1] with using LookupTable with keras symbolic tensors; expects eager tensors.
@@ -130,31 +176,46 @@ class VocabLookup(layers.Layer):
 
 def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
-    Embedding lookup for string features with a vocabulary file to index
+    Converts a string tensor into a categorical embedding representation.
+    Works by using a vocabulary file to convert the string tensor into categorical indices
+    and then converting the categories into embeddings.
 
-    NOTE:
-    Current bug[1] with saving a Keras model when using
-    feature_column.categorical_column_with_vocabulary_list.
-    Tracking the issue currently and should be able to upgrade
-    to current latest stable release 2.2.0 to test.
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
 
-    Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
-    custom loss, metric layers
+    Returns:
+        Categorical embedding representation of input feature_tensor
 
-    Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
-    Keras Functional API models and Tensorflow
-
-    References:
-    [1] https://github.com/tensorflow/tensorflow/issues/31686
-    [2] https://github.com/tensorflow/tensorflow/issues/36954
-    [3] https://github.com/tensorflow/probability/issues/519
-    [4] https://github.com/tensorflow/tensorflow/issues/35138
+    Args under feature_layer_info:
+        vocabulary_file: str; path to vocabulary file for the input tensor
+        num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
+                         encode strings into categorical indices
+        embedding_size: int; dimension size of categorical embedding
     """
     feature_layer_info = feature_info.get("feature_layer_info")
     vocabulary_list = file_io.read_list(feature_layer_info["args"]["vocabulary_file"])
 
     #
     ##########################################################################
+    #
+    # NOTE:
+    # Current bug[1] with saving a Keras model when using
+    # feature_column.categorical_column_with_vocabulary_list.
+    # Tracking the issue currently and should be able to upgrade
+    # to current latest stable release 2.2.0 to test.
+    #
+    # Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
+    # custom loss, metric layers
+    #
+    # Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
+    # Keras Functional API models and Tensorflow
+    #
+    # References:
+    # [1] https://github.com/tensorflow/tensorflow/issues/31686
+    # [2] https://github.com/tensorflow/tensorflow/issues/36954
+    # [3] https://github.com/tensorflow/probability/issues/519
+    # [4] https://github.com/tensorflow/tensorflow/issues/35138
     #
     # CATEGORICAL_VARIABLE = "categorical_variable"
     # categorical_fc = feature_column.categorical_column_with_vocabulary_list(

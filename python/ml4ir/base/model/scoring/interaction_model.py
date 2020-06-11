@@ -49,6 +49,16 @@ class UnivariateInteractionModel(InteractionModel):
         self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
 
     def feature_layer_op(self, inputs: Dict[str, Input]):
+        """
+        Apply feature layer functions on each of the tf.keras.Input
+
+        Args:
+            inputs: dictionary of keras input symbolic tensors
+
+        Returns:
+            train_features: dictionary of feature tensors that can be used for training
+            metadata_features: dictionary of feature tensors that can be used as additional metadata
+        """
         train_features, metadata_features = define_feature_layer(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
@@ -57,11 +67,26 @@ class UnivariateInteractionModel(InteractionModel):
 
         return train_features, metadata_features
 
-    def transform_features_op(self, train_features, metadata_features):
-        # Sorting so that we control the order
-        train_features = [train_features[k] for k in sorted(train_features)]
+    def transform_features_op(
+        self, train_features: Dict[str, tf.Tensor], metadata_features: Dict[str, tf.Tensor]
+    ):
+        """
+        Transform train_features and metadata_features after the
+        univariate feature_layer fns have been applied.
+
+        Args:
+            train_features: dictionary of feature tensors that can be used for training
+            metadata_features: dictionary of feature tensors that can be used as additional metadata
+
+        Returns:
+            train_features: single dense trainable feature tensor
+            metadata_features: dictionary of metadata feature tensors
+        """
+
+        # Sorting the train features dictionary so that we control the order
+        train_features_list = [train_features[k] for k in sorted(train_features)]
 
         # Concat all train features to get a dense feature vector
-        train_features = tf.concat(train_features, axis=-1, name="train_features")
+        train_features_transformed = tf.concat(train_features_list, axis=-1, name="train_features")
 
-        return train_features, metadata_features
+        return train_features_transformed, metadata_features

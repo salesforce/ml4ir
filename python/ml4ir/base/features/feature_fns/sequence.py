@@ -4,7 +4,29 @@ from tensorflow import io
 
 
 def bytes_sequence_to_encoding(feature_tensor, feature_info):
-    """Encode a sequence of numbers into a fixed size tensor"""
+    """
+    Encode a string tensor into an encoding.
+    Works by converting the string into a bytes sequence and then generating
+    a categorical/char embedding for each of the 256 bytes. The char/byte embeddings
+    are then combined using a biLSTM
+
+    Args:
+        feature_tensor: String feature tensor that is to be encoded
+        feature_info: Dictionary representing the feature_config for the input feature
+
+    Returns:
+        Encoded feature tensor
+
+    Args under feature_layer_info:
+        max_length: int; max length of bytes sequence
+        embedding_size: int; dimension size of the embedding;
+                        if null, then the tensor is just converted to its one-hot representation
+        encoding_size: int: dimension size of the sequence encoding computed using a biLSTM
+
+    NOTE:
+        The input dimension for the embedding is fixed to 256 because the string is
+        converted into a bytes sequence.
+    """
     feature_layer_info = feature_info["feature_layer_info"]
 
     # Decode string tensor to bytes

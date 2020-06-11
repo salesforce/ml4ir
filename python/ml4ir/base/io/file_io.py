@@ -46,7 +46,7 @@ def make_directory(dir_path: str, clear_dir: bool = False, log=None) -> str:
 
 
 def read_list(infile: str):
-    """Read a text file"""
+    """Read a text file and convert entries into a list of strings by splitting on newline"""
     txt = ""
     if infile.startswith("hdfs"):
         raise NotImplementedError
