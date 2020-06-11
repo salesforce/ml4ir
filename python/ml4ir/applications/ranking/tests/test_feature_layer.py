@@ -10,7 +10,7 @@ class RankingModelTest(RankingTestBase):
     def test_bytes_sequence_to_encoding(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
-        obtained through the bytes_sequence_to_encoding fn
+        obtained through the bytes_sequence_to_encoding function
         Works by converting each string into a bytes sequence and then
         passing it through a biLSTM.
 
