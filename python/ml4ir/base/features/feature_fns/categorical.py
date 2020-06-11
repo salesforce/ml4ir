@@ -15,11 +15,11 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
     each of size hash_bucket_size, then converting each hash bucket into
     a categorical embdding of dimension embedding_size. Finally, these embeddings
     are combined either through mean, sum or concat operations to generate the final
-    embedding.
+    embedding based on the feature_info.
 
     Args:
         feature_tensor: String feature tensor
-        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
 
     Returns:
         categorical embedding for the input feature_tensor
@@ -82,11 +82,11 @@ def categorical_embedding_with_indices(feature_tensor, feature_info):
     """
     Convert input integer tensor into categorical embedding.
     Works by converting the categorical indices in the input feature_tensor,
-    represented as integer values, into categorical embeddings.
+    represented as integer values, into categorical embeddings based on the feature_info.
 
     Args:
         feature_tensor: int feature tensor
-        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
 
     Returns:
         categorical embedding for the input feature_tensor
@@ -178,11 +178,11 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     """
     Converts a string tensor into a categorical embedding representation.
     Works by using a vocabulary file to convert the string tensor into categorical indices
-    and then converting the categories into embeddings.
+    and then converting the categories into embeddings based on the feature_info.
 
     Args:
         feature_tensor: String feature tensor
-        feature_info: Dictionary representing the feature_info for the specific feature from the FeatureConfig
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
 
     Returns:
         Categorical embedding representation of input feature_tensor

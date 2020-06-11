@@ -7,7 +7,8 @@ from ml4ir.base.features import preprocessing
 class RankingModelTest(RankingTestBase):
     def test_text_preprocesing(self):
         """
-        Unit test text preprocessing
+        Asserts the preprocessing of a string tensor by
+        converting it to its lower case form and removing punctuations
         """
         input_text = "ABCabc123!@#"
         processed_text = (

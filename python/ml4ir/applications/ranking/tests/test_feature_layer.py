@@ -9,8 +9,7 @@ import tensorflow as tf
 class RankingModelTest(RankingTestBase):
     def test_bytes_sequence_to_encoding(self):
         """
-        Goal:
-        Convert a string tensor to its corresponding sequence encoding
+        Asserts the conversion of a string tensor to its corresponding sequence encoding
         obtained through the bytes_sequence_to_encoding fn
         Works by converting each string into a bytes sequence and then
         passing it through a biLSTM.
@@ -88,8 +87,7 @@ class RankingModelTest(RankingTestBase):
 
     def test_categorical_embedding_with_indices(self):
         """
-        Goal:
-        Convert integer categorical indices into categorical embeddings
+        Asserts the conversion of integer categorical indices tensor into categorical embeddings
 
         The embeddding dimensions are controlled by the feature_info
         """
@@ -126,8 +124,7 @@ class RankingModelTest(RankingTestBase):
 
     def test_categorical_embedding_with_vocabulary_file(self):
         """
-        Goal:
-        Convert a categorical string tensor into a categorical embedding
+        Asserts the conversion of a categorical string tensor into a categorical embedding
         Works by converting the string into indices using a vocabulary file and then
         converting the indices into categorical embeddings
 
