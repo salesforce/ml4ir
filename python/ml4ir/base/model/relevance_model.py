@@ -348,7 +348,7 @@ class RelevanceModel:
         model_file = os.path.join(models_dir, "final")
 
         # Save model with default signature
-        saved_model.save(self.model, export_dir=os.path.join(model_file, "default"))
+        self.model.save(filepath=os.path.join(model_file, "default"))
 
         """
         Save model with custom signatures
@@ -356,9 +356,8 @@ class RelevanceModel:
         Currently supported
         - signature to read TFRecord SequenceExample inputs
         """
-        saved_model.save(
-            self.model,
-            export_dir=os.path.join(model_file, "tfrecord"),
+        self.model.save(
+            filepath=os.path.join(model_file, "tfrecord"),
             signatures=define_serving_signatures(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
@@ -400,21 +399,6 @@ class RelevanceModel:
         https://github.com/keras-team/keras/issues/3977
 
         """
-
-        #
-        # Converting the low level AutoTrackable model into a Keras Model
-        # using tensorflow hub KerasLayer as a wrapper
-        #
-        # def build_model(loaded_model):
-        #     x = self.feature_config.define_inputs()
-        #     # Wrap what's loaded to a KerasLayer
-        #     keras_layer = hub.KerasLayer(loaded_model, trainable=True)(x)
-        #     model = tf.keras.Model(x, keras_layer)
-        #     return model
-
-        # loaded_model = tf.saved_model.load(model_file)
-        # model = build_model(loaded_model)
-
         model = tf.keras.models.load_model(model_file, compile=False)
 
         self.logger.info("Successfully loaded SavedModel from {}".format(model_file))

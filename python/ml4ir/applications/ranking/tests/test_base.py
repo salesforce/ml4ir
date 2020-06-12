@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import os
 import random
+import gc
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
@@ -70,6 +71,10 @@ class RankingTestBase(unittest.TestCase):
 
         # Delete other temp directories
         file_io.rm_dir(os.path.join(self.root_data_dir, "csv", "tfrecord"))
+
+        # Clear memory
+        tf.keras.backend.clear_session()
+        gc.collect()
 
     def get_ranking_model(
         self,
