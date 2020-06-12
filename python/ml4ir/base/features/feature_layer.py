@@ -3,7 +3,7 @@ import tensorflow as tf
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import SequenceExampleTypeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
-from ml4ir.base.features.feature_fns.sequence import bytes_sequence_to_encoding
+from ml4ir.base.features.feature_fns.sequence import bytes_sequence_to_encoding_bilstm
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_hash_buckets
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_indices
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_vocabulary_file
@@ -14,7 +14,7 @@ class FeatureLayerMap:
 
     def __init__(self):
         self.key_to_fn = {
-            bytes_sequence_to_encoding.__name__: bytes_sequence_to_encoding,
+            bytes_sequence_to_encoding_bilstm.__name__: bytes_sequence_to_encoding_bilstm,
             categorical_embedding_with_hash_buckets.__name__: categorical_embedding_with_hash_buckets,
             categorical_embedding_with_indices.__name__: categorical_embedding_with_indices,
             categorical_embedding_with_vocabulary_file.__name__: categorical_embedding_with_vocabulary_file,
