@@ -88,7 +88,7 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: bytes_sequence_to_encoding
+      fn: bytes_sequence_to_encoding_bilstm
       args:
         encoding_type: bilstm
         encoding_size: 128
@@ -140,7 +140,7 @@ features:
       #   merge_mode: concat
       fn: categorical_embedding_with_vocabulary_file
       args:
-        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv'
+        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv'
         embedding_size: 64
         default_value: -1
         num_oov_buckets: 1
