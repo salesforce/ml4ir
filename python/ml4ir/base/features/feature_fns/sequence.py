@@ -3,7 +3,7 @@ from tensorflow.keras import layers
 from tensorflow import io
 
 
-def bytes_sequence_to_encoding(feature_tensor, feature_info):
+def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info):
     """
     Encode a string tensor into an encoding.
     Works by converting the string into a bytes sequence and then generating

@@ -7,10 +7,10 @@ import tensorflow as tf
 
 
 class RankingModelTest(RankingTestBase):
-    def test_bytes_sequence_to_encoding(self):
+    def test_bytes_sequence_to_encoding_bilstm(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
-        obtained through the bytes_sequence_to_encoding function
+        obtained through the bytes_sequence_to_encoding_bilstm function
         Works by converting each string into a bytes sequence and then
         passing it through a biLSTM.
 
@@ -22,7 +22,7 @@ class RankingModelTest(RankingTestBase):
         feature_info = {
             "feature_layer_info": {
                 "type": "numeric",
-                "fn": "bytes_sequence_to_encoding",
+                "fn": "bytes_sequence_to_encoding_bilstm",
                 "args": {
                     "encoding_type": "bilstm",
                     "encoding_size": encoding_size,
@@ -36,7 +36,9 @@ class RankingModelTest(RankingTestBase):
         # Define an input string tensor
         string_tensor = ["abc", "xyz", "123"]
 
-        sequence_encoding = sequence_fns.bytes_sequence_to_encoding(string_tensor, feature_info)
+        sequence_encoding = sequence_fns.bytes_sequence_to_encoding_bilstm(
+            string_tensor, feature_info
+        )
 
         # Assert the right shapes of the resulting encoding based on the feature_info
         assert sequence_encoding.shape[0] == len(string_tensor)
@@ -66,7 +68,6 @@ class RankingModelTest(RankingTestBase):
                     "merge_mode": "concat",
                 },
             },
-            "dtype": tf.string,
         }
 
         # Define an input string tensor
@@ -130,23 +131,27 @@ class RankingModelTest(RankingTestBase):
 
         The embedding dimensions, buckets, etc are controlled by the feature_info
         """
+        #####################################################
+        # Test for vocabulary file with ids mapping specified
+        #####################################################
         embedding_size = 32
         feature_info = {
             "name": "categorical_variable",
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_hash_buckets",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.txt",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv",
                     "embedding_size": embedding_size,
                     "default_value": -1,
                     "num_oov_buckets": 1,
                 },
             },
-            "dtype": tf.string,
         }
 
         # Define an input string tensor
-        string_tensor = tf.constant(["group_0", "group_1", "group_0", "group_10", "group_11"])
+        string_tensor = tf.constant(
+            ["group_0", "group_1", "group_0", "group_2", "group_10", "group_11"]
+        )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
             string_tensor, feature_info
@@ -160,4 +165,33 @@ class RankingModelTest(RankingTestBase):
         # Strings 0 and 2 should result in the same embedding because they are the same
         assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
-        assert tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
+
+        # Strings group_0 and group_2 should result in the same embedding because they are mapped to the same ID
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+
+        ########################################################
+        # Test for vocabulary file with no ids mapping specified
+        ########################################################
+        feature_info["feature_layer_info"]["args"][
+            "vocabulary_file"
+        ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
+
+        categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
+            string_tensor, feature_info
+        )
+
+        # Assert the right shapes of the resulting embedding
+        assert categorical_embedding.shape[0] == len(string_tensor)
+        assert categorical_embedding.shape[1] == 1
+        assert categorical_embedding.shape[2] == embedding_size
+
+        # Strings 0 and 2 should result in the same embedding because they are the same
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
+
+        # Strings group_0 and group_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))

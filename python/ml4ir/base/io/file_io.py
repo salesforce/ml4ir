@@ -45,19 +45,8 @@ def make_directory(dir_path: str, clear_dir: bool = False, log=None) -> str:
     return dir_path
 
 
-def read_list(infile: str):
-    """Read a text file and convert entries into a list of strings by splitting on newline"""
-    txt = ""
-    if infile.startswith("hdfs"):
-        raise NotImplementedError
-    else:
-        txt = open(infile, "r").read()
-
-    return [token.strip() for token in txt.splitlines()]
-
-
 def read_df(
-    infile: str, sep: str = ",", index_col: int = None, log_path: bool = True, log=None
+    infile: str, sep: str = ",", index_col: int = None, log_path: bool = False, log=None
 ) -> Optional[pd.DataFrame]:
     """
     Load a pandas dataframe from a file

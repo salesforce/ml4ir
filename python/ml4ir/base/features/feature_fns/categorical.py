@@ -10,7 +10,7 @@ from ml4ir.base.io import file_io
 
 def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
     """
-    Convert a string feature tensor into a categorical embedding.
+    Converts a string feature tensor into a categorical embedding.
     Works by first converting the string into num_hash_buckets buckets
     each of size hash_bucket_size, then converting each hash bucket into
     a categorical embdding of dimension embedding_size. Finally, these embeddings
@@ -30,57 +30,56 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
         embedding_size: int; dimension size of the categorical embedding
         merge_mode: str; can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
     """
+    feature_layer_info = feature_info.get("feature_layer_info")
+    embeddings_list = list()
+    for i in range(feature_layer_info["args"]["num_hash_buckets"]):
+        augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(feature_tensor)
 
-    # Numeric input features
-    if feature_info["dtype"] in (tf.float32, tf.int64):
-        raise NotImplementedError
+        hash_bucket = tf.strings.to_hash_bucket_fast(
+            augmented_string, num_buckets=feature_layer_info["args"]["hash_bucket_size"]
+        )
+        embeddings_list.append(
+            layers.Embedding(
+                input_dim=feature_layer_info["args"]["hash_bucket_size"],
+                output_dim=feature_layer_info["args"]["embedding_size"],
+                name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
+            )(hash_bucket)
+        )
 
-    # String input features
-    elif feature_info["dtype"] in (tf.string,):
-        feature_layer_info = feature_info.get("feature_layer_info")
-        embeddings_list = list()
-        for i in range(feature_layer_info["args"]["num_hash_buckets"]):
-            augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(feature_tensor)
-
-            hash_bucket = tf.strings.to_hash_bucket_fast(
-                augmented_string, num_buckets=feature_layer_info["args"]["hash_bucket_size"]
+    embedding = None
+    if feature_layer_info["args"]["merge_mode"] == "mean":
+        embedding = tf.reduce_mean(
+            embeddings_list,
+            axis=0,
+            name="categorical_embedding_{}".format(feature_info.get("name")),
+        )
+    elif feature_layer_info["args"]["merge_mode"] == "sum":
+        embedding = tf.reduce_sum(
+            embeddings_list,
+            axis=0,
+            name="categorical_embedding_{}".format(feature_info.get("name")),
+        )
+    elif feature_layer_info["args"]["merge_mode"] == "concat":
+        embedding = tf.concat(
+            embeddings_list,
+            axis=-1,
+            name="categorical_embedding_{}".format(feature_info.get("name")),
+        )
+    else:
+        raise KeyError(
+            "The merge_mode currently supported under categorical_embedding_with_hash_buckets are ['mean', 'sum', 'concat']. merge_mode specified in the feature config: {}".format(
+                feature_layer_info["args"]["merge_mode"]
             )
-            embeddings_list.append(
-                layers.Embedding(
-                    input_dim=feature_layer_info["args"]["hash_bucket_size"],
-                    output_dim=feature_layer_info["args"]["embedding_size"],
-                    name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
-                )(hash_bucket)
-            )
+        )
 
-        embedding = None
-        if feature_layer_info["args"]["merge_mode"] == "mean":
-            embedding = tf.reduce_mean(
-                embeddings_list,
-                axis=0,
-                name="categorical_embedding_{}".format(feature_info.get("name")),
-            )
-        elif feature_layer_info["args"]["merge_mode"] == "sum":
-            embedding = tf.reduce_sum(
-                embeddings_list,
-                axis=0,
-                name="categorical_embedding_{}".format(feature_info.get("name")),
-            )
-        elif feature_layer_info["args"]["merge_mode"] == "concat":
-            embedding = tf.concat(
-                embeddings_list,
-                axis=-1,
-                name="categorical_embedding_{}".format(feature_info.get("name")),
-            )
+    embedding = tf.expand_dims(embedding, axis=1)
 
-        embedding = tf.expand_dims(embedding, axis=1)
-
-        return embedding
+    return embedding
 
 
 def categorical_embedding_with_indices(feature_tensor, feature_info):
     """
-    Convert input integer tensor into categorical embedding.
+    Converts input integer tensor into categorical embedding.
     Works by converting the categorical indices in the input feature_tensor,
     represented as integer values, into categorical embeddings based on the feature_info.
 
@@ -122,7 +121,7 @@ def categorical_embedding_with_indices(feature_tensor, feature_info):
 
 class VocabLookup(layers.Layer):
     """
-    Class defines a keras layer wrapper around a tf lookup table using the given vocabulary list.
+    The class defines a keras layer wrapper around a tf lookup table using the given vocabulary list.
     Maps each entry of a vocabulary list into categorical indices.
 
     Attributes:
@@ -137,17 +136,18 @@ class VocabLookup(layers.Layer):
     Ref: https://github.com/tensorflow/tensorflow/issues/38305
     """
 
-    def __init__(self, vocabulary_list, num_oov_buckets, feature_name):
+    def __init__(self, vocabulary_keys, vocabulary_ids, num_oov_buckets, feature_name):
         super(VocabLookup, self).__init__(trainable=False, dtype=tf.int64)
-        self.vocabulary_list = vocabulary_list
-        self.vocabulary_size = len(vocabulary_list)
+        self.vocabulary_keys = vocabulary_keys
+        self.vocabulary_ids = vocabulary_ids
+        self.vocabulary_size = len(set(vocabulary_ids))
         self.num_oov_buckets = num_oov_buckets
         self.feature_name = feature_name
 
     def build(self, input_shape):
         table_init = lookup.KeyValueTensorInitializer(
-            keys=self.vocabulary_list,
-            values=range(self.vocabulary_size),
+            keys=self.vocabulary_keys,
+            values=self.vocabulary_ids,
             key_dtype=tf.string,
             value_dtype=tf.int64,
         )
@@ -188,13 +188,24 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
         Categorical embedding representation of input feature_tensor
 
     Args under feature_layer_info:
-        vocabulary_file: str; path to vocabulary file for the input tensor
+        vocabulary_file: str; path to vocabulary CSV file for the input tensor
         num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
                          encode strings into categorical indices
         embedding_size: int; dimension size of categorical embedding
+
+    NOTE:
+    The vocabulary CSV file must contain two columns - key, id,
+    where the key is mapped to one id thereby resulting in a
+    many-to-one vocabulary mapping.
+    If id field is absent, a unique whole number id is assigned by default
+    resulting in a one-to-one mapping
     """
     feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_list = file_io.read_list(feature_layer_info["args"]["vocabulary_file"])
+    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
+    vocabulary_keys = vocabulary_df["key"].values
+    vocabulary_ids = (
+        vocabulary_df["id"].values if "id" in vocabulary_df else range(len(vocabulary_keys))
+    )
 
     #
     ##########################################################################
@@ -239,9 +250,10 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
 
     # Define a lookup table to convert categorical variables to IDs
     num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
-    vocabulary_size = len(vocabulary_list)
+    vocabulary_size = len(set(vocabulary_ids))
     lookup_table = VocabLookup(
-        vocabulary_list=vocabulary_list,
+        vocabulary_keys=vocabulary_keys,
+        vocabulary_ids=vocabulary_ids,
         num_oov_buckets=num_oov_buckets,
         feature_name=feature_info.get("node_name", feature_info["name"]),
     )
