@@ -165,7 +165,8 @@ class VocabLookup(layers.Layer):
         config = super(VocabLookup, self).get_config()
         config.update(
             {
-                "vocabulary_list": self.vocabulary_list,
+                "vocabulary_keys": self.vocabulary_keys,
+                "vocabulary_ids": self.vocabulary_ids,
                 "vocabulary_size": self.vocabulary_size,
                 "num_oov_buckets": self.num_oov_buckets,
                 "feature_name": self.feature_name,
@@ -204,7 +205,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
     vocabulary_keys = vocabulary_df["key"].values
     vocabulary_ids = (
-        vocabulary_df["id"].values if "id" in vocabulary_df else range(len(vocabulary_keys))
+        vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
     )
 
     #
