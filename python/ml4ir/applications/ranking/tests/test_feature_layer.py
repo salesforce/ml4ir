@@ -131,6 +131,9 @@ class RankingModelTest(RankingTestBase):
 
         The embedding dimensions, buckets, etc are controlled by the feature_info
         """
+        #####################################################
+        # Test for vocabulary file with ids mapping specified
+        #####################################################
         embedding_size = 32
         feature_info = {
             "name": "categorical_variable",
@@ -166,4 +169,29 @@ class RankingModelTest(RankingTestBase):
 
         # Strings group_0 and group_2 should result in the same embedding because they are mapped to the same ID
         assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+
+        ########################################################
+        # Test for vocabulary file with no ids mapping specified
+        ########################################################
+        feature_info["feature_layer_info"]["args"][
+            "vocabulary_file"
+        ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
+
+        categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
+            string_tensor, feature_info
+        )
+
+        # Assert the right shapes of the resulting embedding
+        assert categorical_embedding.shape[0] == len(string_tensor)
+        assert categorical_embedding.shape[1] == 1
+        assert categorical_embedding.shape[2] == embedding_size
+
+        # Strings 0 and 2 should result in the same embedding because they are the same
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
+
+        # Strings group_0 and group_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
