@@ -25,13 +25,14 @@ jobs:
             mvn test
             mvn surefire-report:report-only
       - store_artifacts:
-          path: ml4ir-inference/target/site/surefire-report.html
+          path: jvm/ml4ir-inference/target/site/surefire-report.html
       - store_test_results:
-          path: ml4ir-inference/target/site/surefire-report.html
+          path: jvm/ml4ir-inference/target/site/surefire-report.html
 
   build_test_python:
     docker:
       - image: circleci/python:3.7.7
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
