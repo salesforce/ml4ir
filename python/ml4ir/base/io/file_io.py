@@ -46,7 +46,7 @@ def make_directory(dir_path: str, clear_dir: bool = False, log=None) -> str:
 
 
 def read_df(
-    infile: str, sep: str = ",", index_col: int = None, log_path: bool = True, log=None
+    infile: str, sep: str = ",", index_col: int = None, log_path: bool = False, log=None
 ) -> Optional[pd.DataFrame]:
     """
     Load a pandas dataframe from a file

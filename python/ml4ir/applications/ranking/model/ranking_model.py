@@ -102,7 +102,10 @@ class RankingModel(RelevanceModel):
                 new_rank_col=RankingConstants.NEW_RANK,
                 group_keys=self.feature_config.get_group_metrics_keys("node_name"),
             )
-            df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
+            if df_grouped_stats.empty:
+                df_grouped_stats = df_batch_grouped_stats
+            else:
+                df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info("Finished evaluating {} batches".format(batch_count))

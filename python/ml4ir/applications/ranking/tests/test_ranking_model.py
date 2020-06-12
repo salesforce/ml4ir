@@ -67,29 +67,27 @@ class RankingModelTest(RankingTestBase):
 
         # Test model training on CSV data
         data_dir = os.path.join(self.root_data_dir, "csv")
-        feature_config_path = os.path.join(self.root_data_dir, "csv", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
 
         csv_loss, csv_mrr = self.run_default_pipeline(
             data_dir=data_dir, data_format="csv", feature_config_path=feature_config_path
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(csv_loss, 0.58629, rtol=0.01)
-        assert np.isclose(csv_mrr, 0.69231, rtol=0.01)
+        assert np.isclose(csv_loss, 0.5723, rtol=0.01)
+        assert np.isclose(csv_mrr, 0.7047, rtol=0.01)
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        feature_config_path = os.path.join(
-            self.root_data_dir, "tfrecord", self.feature_config_fname
-        )
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
 
         tfrecord_loss, tfrecord_mrr = self.run_default_pipeline(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(tfrecord_loss, 0.58629, rtol=0.01)
-        assert np.isclose(tfrecord_mrr, 0.69231, rtol=0.01)
+        assert np.isclose(tfrecord_loss, 0.5723, rtol=0.01)
+        assert np.isclose(tfrecord_mrr, 0.7047, rtol=0.01)
 
         # Compare CSV and TFRecord loss and accuracies
         assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)

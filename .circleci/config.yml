@@ -66,4 +66,3 @@ workflows:
     jobs:
       - build_test_jvm
       - build_test_python
-

@@ -10,9 +10,7 @@ from ml4ir.base.features.feature_config import FeatureConfig, parse_config
 class RankingModelTest(RankingTestBase):
     def run_default_pipeline(self, loss_key: str):
         """Train a model with the default set of args"""
-        feature_config_path = os.path.join(
-            self.root_data_dir, "tfrecord", self.feature_config_fname
-        )
+        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
         feature_config: FeatureConfig = parse_config(
             tfrecord_type=self.args.tfrecord_type,
             feature_config=feature_config_path,

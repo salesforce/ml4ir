@@ -6,6 +6,17 @@
 * pip3
 * docker (version 18.09+ tested)
 
+
+#### Using PIP
+ml4ir can be installed as a pip package by using the following command
+
+```
+pip install  'git+https://git@github.com/salesforce/ml4ir#egg=ml4ir&subdirectory=python'
+```
+
+This will install ml4ir-0.0.1 (the current version). In future, when this package is available on PyPI, it will be as simple as pip install ml4ir
+
+
 #### Docker (Recommended)
 We have set up a `docker-compose.yml` file for building and using docker containers to train models.
 
@@ -97,7 +108,7 @@ Using TFRecord
 ```
 python ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/tfrecord \
---feature_config ml4ir/applications/ranking/tests/data/tfrecord/feature_config.yaml \
+--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
 --data_format tfrecord \
 --execution_mode train_inference_evaluate
@@ -107,7 +118,7 @@ Using CSV
 ```
 python ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/csv \
---feature_config ml4ir/applications/ranking/tests/data/csv/feature_config.yaml \
+--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
 --data_format csv \
 --execution_mode train_inference_evaluate
@@ -117,7 +128,7 @@ Running in inference mode using the default serving signature
 ```
 python ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/tfrecord \
---feature_config ml4ir/applications/ranking/tests/data/tfrecord/feature_config.yaml \
+--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
 --data_format tfrecord \
 --model_file `pwd`/models/test/final/default \
