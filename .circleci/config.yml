@@ -1,13 +1,68 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
+# Reference doc: https://circleci.com/docs/2.0/project-walkthrough/
 version: 2.1
-# Use a package of configuration called an orb.
-orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
+jobs:
+  build_test_jvm:
+    docker:
+      - image: circleci/openjdk:8u242-jdk
+    steps:
+      - checkout
+      - restore_cache:
+          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+      - run:
+          name: Build
+          command: |
+            cd jvm
+            mvn clean -Dmaven.test.skip=true install
+      - save_cache:
+          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+          paths:
+            - ~/.m2
+      - run:
+          name: Run JVM tests
+          command: |
+            cd jvm
+            mvn test
+            mvn surefire-report:report-only
+      - store_artifacts:
+          path: jvm/ml4ir-inference/target/site/surefire-report.html
+      - store_test_results:
+          path: jvm/ml4ir-inference/target/site/surefire-report.html
+
+  build_test_python:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+          paths:
+            - "venv"
+      - run:
+          name: Run Python tests
+          command: |
+            . venv/bin/activate
+            cd python
+            python3 -m pytest --html=pytest_report.html
+          no_output_timeout: 30m  # Time for running the tests before we timeout
+      - store_artifacts:
+          path: python/pytest_report.html
+      - store_test_results:
+          path: python/pytest_report.html
+
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
+  version: 2.1
+  build_and_test:
     jobs:
-      - welcome/run
+      - build_test_jvm
+      - build_test_python
