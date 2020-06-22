@@ -274,6 +274,13 @@ class RelevanceArgParser(ArgumentParser):
             help="How many epochs to wait before early stopping on metric degradation",
         )
 
+        self.add_argument(
+            "--use_wandb_tracking",
+            type=bool,
+            default=False,
+            help="Whether to track model performance and hyperparameters using Weights and Biases.",
+        )
+
     def set_default_args(self):
         pass
 

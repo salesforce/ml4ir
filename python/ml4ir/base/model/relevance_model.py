@@ -3,7 +3,7 @@ from logging import Logger
 import tensorflow as tf
 from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
-from tensorflow import saved_model
+from wandb.keras import WandbCallback
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
@@ -202,6 +202,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
+        use_wandb_tracking=False,
     ):
         """
         Trains model for defined number of epochs
@@ -223,6 +224,7 @@ class RelevanceModel:
             monitor_mode=monitor_mode,
             monitor_metric=monitor_metric,
             patience=patience,
+            use_wandb_tracking=use_wandb_tracking,
         )
         if self.is_compiled:
             self.model.fit(
@@ -423,6 +425,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
+        use_wandb_tracking=False,
     ):
         """
         Build callback hooks for the training loop
@@ -510,6 +513,10 @@ class RelevanceModel:
                 logger.info(logs)
 
         callbacks_list.append(DebuggingCallback())
+
+        # Weights and Biases Callback
+        if use_wandb_tracking:
+            callbacks_list.append(WandbCallback())
 
         # Add more here
 

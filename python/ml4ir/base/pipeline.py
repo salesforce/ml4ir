@@ -10,6 +10,7 @@ import sys
 import time
 from argparse import Namespace
 from logging import Logger
+import wandb
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.features.feature_config import parse_config, FeatureConfig
@@ -77,6 +78,9 @@ class RelevancePipeline(object):
         )
         self.logger.info("Feature config parsed and loaded")
 
+        # Setup wandb config
+        self.setup_wandb_config()
+
         # Finished initialization
         self.logger.info("Relevance Pipeline successfully initialized!")
 
@@ -131,6 +135,21 @@ class RelevancePipeline(object):
             )
 
         return self
+
+    def setup_wandb_config(self):
+        if self.args.use_wandb_tracking:
+            config = dict()
+
+            # Add command line script arguments
+            config.update(vars(self.args))
+
+            # Add feature config information
+            config.update(self.feature_config.get_wandb_config())
+
+            # Setup wandb
+            wandb.init(config=config)
+
+            self.logger.info("Setup weights and biases config")
 
     def finish(self):
         # Delete temp directories
@@ -205,6 +224,7 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
+                    use_wandb_tracking=self.args.use_wandb_tracking,
                 )
 
             if self.args.execution_mode in {
