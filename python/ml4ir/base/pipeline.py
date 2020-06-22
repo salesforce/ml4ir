@@ -147,7 +147,13 @@ class RelevancePipeline(object):
             config.update(self.feature_config.get_wandb_config())
 
             # Setup wandb
-            wandb.init(config=config)
+            wandb.init(
+                project="ml4ir",
+                name=self.run_id,
+                notes=self.args.run_notes,
+                group=self.args.run_group,
+                config=config,
+            )
 
             self.logger.info("Setup weights and biases config")
 
@@ -242,6 +248,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir,
+                    use_wandb_tracking=self.args.use_wandb_tracking,
                 )
 
             if self.args.execution_mode in {

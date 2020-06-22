@@ -152,6 +152,17 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--run_group",
+            type=str,
+            default="general",
+            help="Run group defining a meta grouping for the current training run.",
+        )
+
+        self.add_argument(
+            "--run_notes", type=str, default="", help="Notes for the current training run.",
+        )
+
+        self.add_argument(
             "--models_dir",
             type=str,
             default="models/",

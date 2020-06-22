@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import data
 import os
 import pandas as pd
+import wandb
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.io import file_io
@@ -55,6 +56,7 @@ class RankingModel(RelevanceModel):
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        use_wandb_tracking: bool = False,
     ):
         """
         Evaluate the ranking model
@@ -114,6 +116,12 @@ class RankingModel(RelevanceModel):
         df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
         self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
 
+        # Log metrics to weights and biases
+        if use_wandb_tracking:
+            wandb.run.summary.update(
+                {"test_{}".format(k): v for k, v in df_overall_metrics.to_dict().items()}
+            )
+
         df_group_metrics = None
         df_group_metrics_summary = None
         if group_metrics_keys:
@@ -140,6 +148,15 @@ class RankingModel(RelevanceModel):
                 )
             )
             self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
+
+            # Log metrics to weights and biases
+            if use_wandb_tracking:
+                wandb.run.summary.update(
+                    {
+                        "test_group_mean_{}".format(k): v
+                        for k, v in df_group_metrics_summary.T["mean"].to_dict().items()
+                    }
+                )
 
         return df_overall_metrics, df_group_metrics
 
