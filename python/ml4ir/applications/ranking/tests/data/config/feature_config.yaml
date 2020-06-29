@@ -80,6 +80,20 @@ features:
       required: true
       default_value: 0.0
     tfrecord_type: sequence
+  - name: feat_3
+    node_name: feat_3
+    trainable: false
+    dtype: float
+    log_at_inference: true
+    is_secondary_label: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: floatFeat3
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
   - name: query_str
     node_name: query_str
     trainable: true

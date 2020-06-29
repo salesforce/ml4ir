@@ -21,18 +21,15 @@ query_key:  # Unique query ID field
     log_at_inference: <boolean | default: false> # if feature should be logged to file in inference mode
     # if feature should be used a groupby key to compute metrics
     is_group_metric_key: <boolean | default: false>
+    is_secondary_label: <boolean | default: false>
     feature_layer_info:
-        type: <str> # some supported/predefined feature layer type; eg: embedding categorical
         shape: <list[int]>
-        # following keys are not supported yet
-        embedding_size: <int> # Embedding size for categorical/bytes features
-        encoding_size: <int> # Sequence encoding size
-        encoding_type: <str> # Type of encoding - LSTM, CNN, etc.
-        ...
+        fn: function name to be used for feature engineering; can be pre-defined or passed in
+        args: arguments for the fn specified
     preprocessing_info:
-        max_length: <int> # Max length of string features
-        to_lower: <bool> # Whether to convert string to lower case
-        remove_punctuation: <bool> # Whether to remove punctuations from string
+        - fn: function name to be used for preprocessing; can be pre-defined or passed in
+          args: arguments for the fn specified
+        - ...
     serving_info:
         name: <str> # name of input feature at serving time
         preprocessing_type: <str> # Any predefined feature preprocessing step to apply
@@ -41,7 +38,7 @@ query_key:  # Unique query ID field
     tfrecord_type: <context or sequence | str>
 rank:  # Field representing the initial rank of the record in a query
     ...
-label:  # Binary click label
+label:  # Binary label
     ...
 features:
     - name: feature_0
@@ -73,12 +70,20 @@ class FeatureConfig:
 
         # Features that can be used for training the model
         self.train_features: List[Dict] = list()
+
         # Features that provide additional information about the query+records
         self.metadata_features: List[Dict] = list()
+
         # Features to log at inference time
         self.features_to_log: List[Dict] = list()
+
         # Features to be used as keys for computing group metrics
+        # NOTE: Implementation is open-ended
         self.group_metrics_keys: List[Dict] = list()
+
+        # Features to be used as secondary labels for computing secondary metrics
+        # NOTE: Implementation is open-ended
+        self.secondary_labels: List[Dict] = list()
 
         self.extract_features(features_dict, logger)
 
@@ -123,6 +128,9 @@ class FeatureConfig:
 
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
+
+            if feature_info.get("is_secondary_label", False):
+                self.secondary_labels.append(feature_info)
 
     def log_initialization(self, logger):
         if logger:
@@ -207,6 +215,13 @@ class FeatureConfig:
         Can additionally be used to only fetch a particular value from the dict
         """
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
+
+    def get_secondary_labels(self, key: str = None):
+        """
+        Getter method for secondary_labels in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+        """
+        return self._get_list_of_keys_or_dicts(self.secondary_labels, key=key)
 
     def get_dtype(self, feature_info: dict):
         return feature_info["dtype"]
@@ -312,6 +327,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
+
+            if feature_info.get("is_secondary_label", False):
+                self.secondary_labels.append(feature_info)
 
     def get_context_features(self, key: str = None):
         """

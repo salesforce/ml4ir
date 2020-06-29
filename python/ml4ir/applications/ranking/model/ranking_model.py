@@ -70,11 +70,22 @@ class RankingModel(RelevanceModel):
             metrics and groupwise metrics as pandas DataFrames
         """
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
-        evaluation_features = group_metrics_keys + [
-            self.feature_config.get_query_key(),
-            self.feature_config.get_label(),
-            self.feature_config.get_rank(),
-        ]
+        evaluation_features = (
+            group_metrics_keys
+            + [
+                self.feature_config.get_query_key(),
+                self.feature_config.get_label(),
+                self.feature_config.get_rank(),
+            ]
+            + [
+                f
+                for f in self.feature_config.get_secondary_labels()
+                if f.get(
+                    "node_name",
+                    f["name"] not in self.feature_config.get_group_metrics_keys("node_name"),
+                )
+            ]
+        )
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
         _predict_fn = get_predict_fn(
@@ -101,6 +112,7 @@ class RankingModel(RelevanceModel):
                 old_rank_col=self.feature_config.get_rank("node_name"),
                 new_rank_col=RankingConstants.NEW_RANK,
                 group_keys=self.feature_config.get_group_metrics_keys("node_name"),
+                secondary_labels=self.feature_config.get_secondary_labels("node_name"),
             )
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
@@ -111,6 +123,9 @@ class RankingModel(RelevanceModel):
                 self.logger.info("Finished evaluating {} batches".format(batch_count))
 
         # Compute overall metrics
+        from IPython import embed
+
+        embed()
         df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
         self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
 
