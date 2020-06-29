@@ -71,20 +71,20 @@ def compute_failure_stats(
 
             failure_metrics_dict.update(
                 {
-                    "{}_old_failure_count".format(secondary_label): old_failure_count,
-                    "{}_new_failure_count".format(secondary_label): new_failure_count,
-                    "{}_old_failure_partial_count".format(
+                    "old_failure_count_{}".format(secondary_label): old_failure_count,
+                    "new_failure_count_{}".format(secondary_label): new_failure_count,
+                    "old_failure_partial_count_{}".format(
                         secondary_label
                     ): old_failure_partial_count,
-                    "{}_new_failure_partial_count".format(
+                    "new_failure_partial_count_{}".format(
                         secondary_label
                     ): new_failure_partial_count,
-                    "{}_old_failure_score".format(secondary_label): old_failure_score,
-                    "{}_new_failure_score".format(secondary_label): new_failure_score,
-                    "{}_old_failure_score_normalized".format(
+                    "old_failure_score_{}".format(secondary_label): old_failure_score,
+                    "new_failure_score_{}".format(secondary_label): new_failure_score,
+                    "old_failure_score_normalized_{}".format(
                         secondary_label
                     ): old_failure_score_normalized,
-                    "{}_new_failure_score_normalized".format(
+                    "new_failure_score_normalized_{}".format(
                         secondary_label
                     ): new_failure_score_normalized,
                 }
@@ -162,24 +162,38 @@ def get_grouped_stats(
 def summarize_grouped_stats(df_grouped):
     """Summarize and compute metrics from grouped ranking data stats"""
 
-    query_count = df_grouped["query_count"].sum()
+    if isinstance(df_grouped, pd.Series):
+        df_grouped_metrics = df_grouped.to_frame().T.sum()
+    else:
+        df_grouped_metrics = df_grouped.sum()
 
-    old_acr = df_grouped["sum_old_rank"].sum() / query_count
-    new_acr = df_grouped["sum_new_rank"].sum() / query_count
-    perc_improv_acr = ((old_acr - new_acr) / old_acr) * 100.0
+    query_count = df_grouped_metrics["query_count"]
+    df_grouped_metrics = df_grouped_metrics / query_count
+    df_grouped_metrics["query_count"] = query_count
 
-    old_mrr = df_grouped["sum_old_reciprocal_rank"].sum() / query_count
-    new_mrr = df_grouped["sum_new_reciprocal_rank"].sum() / query_count
-    perc_improv_mrr = ((new_mrr - old_mrr) / old_mrr) * 100.0
-
-    return pd.Series(
+    df_grouped_metrics = df_grouped_metrics.rename(
         {
-            "old_ACR": old_acr,
-            "new_ACR": new_acr,
-            "old_MRR": old_mrr,
-            "new_MRR": new_mrr,
-            "perc_improv_ACR": perc_improv_acr,
-            "perc_improv_MRR": perc_improv_mrr,
-            "query_count": query_count,
+            "sum_old_rank": "old_ACR",
+            "sum_new_rank": "new_ACR",
+            "sum_old_reciprocal_rank": "old_MRR",
+            "sum_new_reciprocal_rank": "new_MRR",
         }
     )
+
+    df_grouped_metrics["perc_improv_ACR"] = (
+        (df_grouped_metrics["old_ACR"] - df_grouped_metrics["new_ACR"])
+        / df_grouped_metrics["old_ACR"]
+    ) * 100.0
+    df_grouped_metrics["perc_improv_MRR"] = (
+        (df_grouped_metrics["new_MRR"] - df_grouped_metrics["old_MRR"])
+        / df_grouped_metrics["old_MRR"]
+    ) * 100.0
+    for col in df_grouped_metrics.to_dict().keys():
+        if "failure" in col:
+            metric_name = col[4:]
+            df_grouped_metrics["perc_improv_{}".format(metric_name)] = (
+                df_grouped_metrics["old_{}".format(metric_name)]
+                - df_grouped_metrics["new_{}".format(metric_name)]
+            ) / df_grouped_metrics["old_{}".format(metric_name)]
+
+    return df_grouped_metrics

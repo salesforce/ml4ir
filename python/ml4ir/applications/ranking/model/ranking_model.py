@@ -123,9 +123,6 @@ class RankingModel(RelevanceModel):
                 self.logger.info("Finished evaluating {} batches".format(batch_count))
 
         # Compute overall metrics
-        from IPython import embed
-
-        embed()
         df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
         self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
 
