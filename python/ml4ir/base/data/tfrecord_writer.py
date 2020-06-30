@@ -198,7 +198,7 @@ def define_arguments():
         action='store_true',
         help="When passed, converts CSV files individually. "
              "Results are written to out-dir replacing the filename's extension with .tfrecord."
-             "If not set, a single compined.tfrecord is created."
+             "If not set, a single combined.tfrecord is created."
              "All occurrences of a query key should be within a single file",
     )
     return parser
@@ -207,5 +207,4 @@ def define_arguments():
 if __name__ == "__main__":
     my_parser = define_arguments()
     args = my_parser.parse_args()
-    print(args)
     main(args)
