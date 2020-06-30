@@ -33,60 +33,56 @@ def compute_failure_stats(
                 query_group[new_rank_col] < new_click_rank
             ][secondary_label]
 
+            old_failure_all = 0
+            old_failure_any = 0
             old_failure_count = 0
-            old_failure_partial_count = 0
-            old_failure_score = 0
-            old_failure_score_normalized = 0
+            old_failure_count_normalized = 0
             if old_pre_click_secondary_label.size > 0:
                 # Query failure only if failure on all records
-                old_failure_count = (
+                old_failure_all = (
                     1 if (old_pre_click_secondary_label < click_secondary_label).all() else 0
                 )
                 # Query failure if failure on at least one record
-                old_failure_partial_count = (
+                old_failure_any = (
                     1 if (old_pre_click_secondary_label < click_secondary_label).any() else 0
                 )
                 # Count of failure records
-                old_failure_score = (old_pre_click_secondary_label < click_secondary_label).sum()
+                old_failure_count = (old_pre_click_secondary_label < click_secondary_label).sum()
                 # Normalizing to fraction of potential records
-                old_failure_score_normalized = old_failure_score / (old_click_rank - 1)
+                old_failure_count_normalized = old_failure_count / (old_click_rank - 1)
 
+            new_failure_all = 0
+            new_failure_any = 0
             new_failure_count = 0
-            new_failure_partial_count = 0
-            new_failure_score = 0
-            new_failure_score_normalized = 0
+            new_failure_count_normalized = 0
             if new_pre_click_secondary_label.size > 0:
                 # Query failure only if failure on all records
-                new_failure_count = (
+                new_failure_all = (
                     1 if (new_pre_click_secondary_label < click_secondary_label).all() else 0
                 )
                 # Query failure if failure on at least one record
-                new_failure_partial_count = (
+                new_failure_any = (
                     1 if (new_pre_click_secondary_label < click_secondary_label).any() else 0
                 )
                 # Count of failure records
-                new_failure_score = (new_pre_click_secondary_label < click_secondary_label).sum()
+                new_failure_count = (new_pre_click_secondary_label < click_secondary_label).sum()
                 # Normalizing to fraction of potential records
-                new_failure_score_normalized = new_failure_score / (new_click_rank - 1)
+                new_failure_count_normalized = new_failure_count / (new_click_rank - 1)
 
             failure_metrics_dict.update(
                 {
+                    "old_failure_all_{}".format(secondary_label): old_failure_all,
+                    "new_failure_all_{}".format(secondary_label): new_failure_all,
+                    "old_failure_any_{}".format(secondary_label): old_failure_any,
+                    "new_failure_any_{}".format(secondary_label): new_failure_any,
                     "old_failure_count_{}".format(secondary_label): old_failure_count,
                     "new_failure_count_{}".format(secondary_label): new_failure_count,
-                    "old_failure_partial_count_{}".format(
+                    "old_failure_count_normalized_{}".format(
                         secondary_label
-                    ): old_failure_partial_count,
-                    "new_failure_partial_count_{}".format(
+                    ): old_failure_count_normalized,
+                    "new_failure_count_normalized_{}".format(
                         secondary_label
-                    ): new_failure_partial_count,
-                    "old_failure_score_{}".format(secondary_label): old_failure_score,
-                    "new_failure_score_{}".format(secondary_label): new_failure_score,
-                    "old_failure_score_normalized_{}".format(
-                        secondary_label
-                    ): old_failure_score_normalized,
-                    "new_failure_score_normalized_{}".format(
-                        secondary_label
-                    ): new_failure_score_normalized,
+                    ): new_failure_count_normalized,
                 }
             )
 
@@ -172,11 +168,15 @@ def summarize_grouped_stats(df_grouped):
     df_grouped_metrics["query_count"] = query_count
 
     df_grouped_metrics = df_grouped_metrics.rename(
+        {c: "mean_{}".format(c) for c in df_grouped_metrics.to_dict().keys()}
+    )
+    df_grouped_metrics = df_grouped_metrics.rename(
         {
-            "sum_old_rank": "old_ACR",
-            "sum_new_rank": "new_ACR",
-            "sum_old_reciprocal_rank": "old_MRR",
-            "sum_new_reciprocal_rank": "new_MRR",
+            "mean_sum_old_rank": "old_ACR",
+            "mean_sum_new_rank": "new_ACR",
+            "mean_sum_old_reciprocal_rank": "old_MRR",
+            "mean_sum_new_reciprocal_rank": "new_MRR",
+            "mean_query_count": "query_count",
         }
     )
 
@@ -190,10 +190,10 @@ def summarize_grouped_stats(df_grouped):
     ) * 100.0
     for col in df_grouped_metrics.to_dict().keys():
         if "failure" in col:
-            metric_name = col[4:]
-            df_grouped_metrics["perc_improv_{}".format(metric_name)] = (
-                df_grouped_metrics["old_{}".format(metric_name)]
-                - df_grouped_metrics["new_{}".format(metric_name)]
-            ) / df_grouped_metrics["old_{}".format(metric_name)]
+            metric_name = col[len("mean_old_") :]
+            df_grouped_metrics["perc_improv_mean_{}".format(metric_name)] = (
+                df_grouped_metrics["mean_old_{}".format(metric_name)]
+                - df_grouped_metrics["mean_new_{}".format(metric_name)]
+            ) / df_grouped_metrics["mean_old_{}".format(metric_name)]
 
     return df_grouped_metrics
