@@ -42,12 +42,11 @@ def get_example_proto(row, features):
     """
 
     features_dict = dict()
-
     for feature_info in features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
-        features_dict[feature_name] = feature_fn([row[feature_name]])
-
+        value_upcasted = row[feature_name].astype(feature_info["dtype"])
+        features_dict[feature_name] = feature_fn([value_upcasted])
     return train.Example(features=train.Features(feature=features_dict))
 
 
