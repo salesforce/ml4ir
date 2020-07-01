@@ -1,6 +1,6 @@
 query_key: 
-  name: query_key
-  node_name: query_key
+  name: query_id
+  node_name: query_id
   trainable: false
   dtype: string
   log_at_inference: true
@@ -13,8 +13,8 @@ query_key:
     default_value: ""
   tfrecord_type: context
 rank:
-  name: pos
-  node_name: pos
+  name: rank
+  node_name: rank
   trainable: false
   dtype: int64
   log_at_inference: true
@@ -27,8 +27,8 @@ rank:
     default_value: 0
   tfrecord_type: sequence
 label:
-  name: label
-  node_name: label
+  name: clicked
+  node_name: clicked
   trainable: false
   dtype: int64
   log_at_inference: true
@@ -36,13 +36,13 @@ label:
     type: numeric
     shape: null
   serving_info:
-    name: label
+    name: clicked
     required: false
     default_value: 0
   tfrecord_type: sequence
 features:
-  - name: feat_0
-    node_name: feat_0
+  - name: text_match_score
+    node_name: text_match_score
     trainable: true
     dtype: float
     log_at_inference: false
@@ -50,12 +50,12 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: floatFeat0
+      name: textMatchScore
       required: true
       default_value: 0.0
     tfrecord_type: sequence
-  - name: feat_1
-    node_name: feat_1
+  - name: page_views_score
+    node_name: page_views_score
     trainable: true
     dtype: float
     log_at_inference: false
@@ -63,12 +63,12 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: floatFeat1
+      name: pageViewsScore
       required: true
       default_value: 0.0
     tfrecord_type: sequence
-  - name: feat_2
-    node_name: feat_2
+  - name: quality_score
+    node_name: quality_score
     trainable: true
     dtype: float
     log_at_inference: false
@@ -76,12 +76,12 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: floatFeat2
+      name: qualityScore
       required: true
       default_value: 0.0
     tfrecord_type: sequence
-  - name: feat_3
-    node_name: feat_3
+  - name: name_match
+    node_name: name_match
     trainable: false
     dtype: float
     log_at_inference: true
@@ -90,12 +90,12 @@ features:
       type: numeric
       shape: null
     serving_info:
-      name: floatFeat3
+      name: nameMatch
       required: true
       default_value: 0.0
     tfrecord_type: sequence
-  - name: query_str
-    node_name: query_str
+  - name: query_text
+    node_name: query_text
     trainable: true
     dtype: string
     log_at_inference: true
@@ -118,8 +118,8 @@ features:
       required: true
       default_value: ""
     tfrecord_type: context
-  - name: group
-    node_name: group
+  - name: domain_id
+    node_name: domain_id
     trainable: true
     dtype: int64
     log_at_inference: false
@@ -133,12 +133,12 @@ features:
         embedding_size: 64
         default_value: null
     serving_info:
-      name: group
+      name: domainID
       required: true
       default_value: 0
     tfrecord_type: context
-  - name: group_name
-    node_name: group_name
+  - name: domain_name
+    node_name: domain_name
     trainable: true
     dtype: string
     log_at_inference: true
@@ -159,7 +159,7 @@ features:
         default_value: -1
         num_oov_buckets: 1
     serving_info:
-      name: group_name
+      name: domainName
       required: true
       default_value: ""
     tfrecord_type: context

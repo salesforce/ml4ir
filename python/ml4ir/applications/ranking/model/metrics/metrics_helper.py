@@ -36,7 +36,7 @@ def compute_failure_stats(
             old_failure_all = 0
             old_failure_any = 0
             old_failure_count = 0
-            old_failure_count_normalized = 0
+            old_failure_fraction = 0
             if old_pre_click_secondary_label.size > 0:
                 # Query failure only if failure on all records
                 old_failure_all = (
@@ -49,12 +49,12 @@ def compute_failure_stats(
                 # Count of failure records
                 old_failure_count = (old_pre_click_secondary_label < click_secondary_label).sum()
                 # Normalizing to fraction of potential records
-                old_failure_count_normalized = old_failure_count / (old_click_rank - 1)
+                old_failure_fraction = old_failure_count / (old_click_rank - 1)
 
             new_failure_all = 0
             new_failure_any = 0
             new_failure_count = 0
-            new_failure_count_normalized = 0
+            new_failure_fraction = 0
             if new_pre_click_secondary_label.size > 0:
                 # Query failure only if failure on all records
                 new_failure_all = (
@@ -67,22 +67,30 @@ def compute_failure_stats(
                 # Count of failure records
                 new_failure_count = (new_pre_click_secondary_label < click_secondary_label).sum()
                 # Normalizing to fraction of potential records
-                new_failure_count_normalized = new_failure_count / (new_click_rank - 1)
+                new_failure_fraction = new_failure_count / (new_click_rank - 1)
 
             failure_metrics_dict.update(
                 {
-                    "old_failure_all_{}".format(secondary_label): old_failure_all,
-                    "new_failure_all_{}".format(secondary_label): new_failure_all,
-                    "old_failure_any_{}".format(secondary_label): old_failure_any,
-                    "new_failure_any_{}".format(secondary_label): new_failure_any,
-                    "old_failure_count_{}".format(secondary_label): old_failure_count,
-                    "new_failure_count_{}".format(secondary_label): new_failure_count,
-                    "old_failure_count_normalized_{}".format(
-                        secondary_label
-                    ): old_failure_count_normalized,
-                    "new_failure_count_normalized_{}".format(
-                        secondary_label
-                    ): new_failure_count_normalized,
+                    "old_{}_failure_all".format(secondary_label): old_failure_all,
+                    "new_{}_failure_all".format(secondary_label): new_failure_all,
+                    "old_{}_failure_any".format(secondary_label): old_failure_any,
+                    "new_{}_failure_any".format(secondary_label): new_failure_any,
+                    "old_{}_failure_all_rank".format(secondary_label): old_click_rank
+                    if old_failure_all
+                    else 0,
+                    "new_{}_failure_all_rank".format(secondary_label): new_click_rank
+                    if new_failure_all
+                    else 0,
+                    "old_{}_failure_any_rank".format(secondary_label): old_click_rank
+                    if old_failure_any
+                    else 0,
+                    "new_{}_failure_any_rank".format(secondary_label): new_click_rank
+                    if new_failure_any
+                    else 0,
+                    "old_{}_failure_any_count".format(secondary_label): old_failure_count,
+                    "new_{}_failure_any_count".format(secondary_label): new_failure_count,
+                    "old_{}_failure_any_fraction".format(secondary_label): old_failure_fraction,
+                    "new_{}_failure_any_fraction".format(secondary_label): new_failure_fraction,
                 }
             )
 
