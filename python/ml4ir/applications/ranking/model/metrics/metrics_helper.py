@@ -1,6 +1,6 @@
 import pandas as pd
 
-from typing import List
+from typing import List, Union
 
 
 def compute_failure_stats(
@@ -21,77 +21,82 @@ def compute_failure_stats(
         failure_metrics_dict = {
             k: v[0] for k, v in query_group[group_keys].to_dict(orient="list").items()
         }
+
+        # Define common internal function to compute failure metrics on secondary label values
+        def _compute_failure_stats_internal(
+            pre_click_secondary_label_values: pd.Series,
+            click_secondary_label_value: Union[int, float],
+            click_rank: int,
+            secondary_label: str,
+            prefix: str = "",
+        ):
+            failure_all = 0
+            failure_any = 0
+            failure_count = 0
+            failure_fraction = 0.0
+            if pre_click_secondary_label_values.size > 0:
+                # Query failure only if failure on all records
+                failure_all = (
+                    1
+                    if (pre_click_secondary_label_values < click_secondary_label_value).all()
+                    else 0
+                )
+                # Query failure if failure on at least one record
+                failure_any = (
+                    1
+                    if (pre_click_secondary_label_values < click_secondary_label_value).any()
+                    else 0
+                )
+                # Count of failure records
+                failure_count = (
+                    pre_click_secondary_label_values < click_secondary_label_value
+                ).sum()
+                # Normalizing to fraction of potential records
+                failure_fraction = failure_count / (click_rank - 1)
+
+            return {
+                "{}{}_failure_all".format(prefix, secondary_label): failure_all,
+                "{}{}_failure_any".format(prefix, secondary_label): failure_any,
+                "{}{}_failure_all_rank".format(prefix, secondary_label): click_rank
+                if failure_all
+                else 0,
+                "{}{}_failure_any_rank".format(prefix, secondary_label): click_rank
+                if failure_any
+                else 0,
+                "{}{}_failure_any_count".format(prefix, secondary_label): failure_count,
+                "{}{}_failure_any_fraction".format(prefix, secondary_label): failure_fraction,
+            }
+
         for secondary_label in secondary_labels:
-            click_secondary_label = query_group[query_group[label_col] == 1][
+            click_secondary_label_value = query_group[query_group[label_col] == 1][
                 secondary_label
             ].values[0]
 
-            old_pre_click_secondary_label = query_group[
+            old_pre_click_secondary_label_values = query_group[
                 query_group[old_rank_col] < old_click_rank
             ][secondary_label]
-            new_pre_click_secondary_label = query_group[
+            new_pre_click_secondary_label_values = query_group[
                 query_group[new_rank_col] < new_click_rank
             ][secondary_label]
 
-            old_failure_all = 0
-            old_failure_any = 0
-            old_failure_count = 0
-            old_failure_fraction = 0
-            if old_pre_click_secondary_label.size > 0:
-                # Query failure only if failure on all records
-                old_failure_all = (
-                    1 if (old_pre_click_secondary_label < click_secondary_label).all() else 0
-                )
-                # Query failure if failure on at least one record
-                old_failure_any = (
-                    1 if (old_pre_click_secondary_label < click_secondary_label).any() else 0
-                )
-                # Count of failure records
-                old_failure_count = (old_pre_click_secondary_label < click_secondary_label).sum()
-                # Normalizing to fraction of potential records
-                old_failure_fraction = old_failure_count / (old_click_rank - 1)
-
-            new_failure_all = 0
-            new_failure_any = 0
-            new_failure_count = 0
-            new_failure_fraction = 0
-            if new_pre_click_secondary_label.size > 0:
-                # Query failure only if failure on all records
-                new_failure_all = (
-                    1 if (new_pre_click_secondary_label < click_secondary_label).all() else 0
-                )
-                # Query failure if failure on at least one record
-                new_failure_any = (
-                    1 if (new_pre_click_secondary_label < click_secondary_label).any() else 0
-                )
-                # Count of failure records
-                new_failure_count = (new_pre_click_secondary_label < click_secondary_label).sum()
-                # Normalizing to fraction of potential records
-                new_failure_fraction = new_failure_count / (new_click_rank - 1)
-
+            # Compute failure stats for before and after ranking with model
             failure_metrics_dict.update(
-                {
-                    "old_{}_failure_all".format(secondary_label): old_failure_all,
-                    "new_{}_failure_all".format(secondary_label): new_failure_all,
-                    "old_{}_failure_any".format(secondary_label): old_failure_any,
-                    "new_{}_failure_any".format(secondary_label): new_failure_any,
-                    "old_{}_failure_all_rank".format(secondary_label): old_click_rank
-                    if old_failure_all
-                    else 0,
-                    "new_{}_failure_all_rank".format(secondary_label): new_click_rank
-                    if new_failure_all
-                    else 0,
-                    "old_{}_failure_any_rank".format(secondary_label): old_click_rank
-                    if old_failure_any
-                    else 0,
-                    "new_{}_failure_any_rank".format(secondary_label): new_click_rank
-                    if new_failure_any
-                    else 0,
-                    "old_{}_failure_any_count".format(secondary_label): old_failure_count,
-                    "new_{}_failure_any_count".format(secondary_label): new_failure_count,
-                    "old_{}_failure_any_fraction".format(secondary_label): old_failure_fraction,
-                    "new_{}_failure_any_fraction".format(secondary_label): new_failure_fraction,
-                }
+                _compute_failure_stats_internal(
+                    pre_click_secondary_label_values=old_pre_click_secondary_label_values,
+                    click_secondary_label_value=click_secondary_label_value,
+                    click_rank=old_click_rank,
+                    secondary_label=secondary_label,
+                    prefix="old_",
+                )
+            )
+            failure_metrics_dict.update(
+                _compute_failure_stats_internal(
+                    pre_click_secondary_label_values=new_pre_click_secondary_label_values,
+                    click_secondary_label_value=click_secondary_label_value,
+                    click_rank=new_click_rank,
+                    secondary_label=secondary_label,
+                    prefix="new_",
+                )
             )
 
         return pd.Series(failure_metrics_dict)
