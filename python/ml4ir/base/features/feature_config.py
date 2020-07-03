@@ -102,19 +102,19 @@ class FeatureConfig:
         except KeyError:
             self.query_key = None
             if logger:
-                logger.warning("'query_key' key not found in the feature_config specified")
+                logger.warning("'%s' key not found in the feature_config specified" % FeatureConfigKey.QUERY_KEY)
 
         try:
             self.label = features_dict.get(FeatureConfigKey.LABEL)
             self.all_features.append(self.label)
         except KeyError:
-            raise KeyError("'label' key not found in the feature_config specified")
+            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL)
 
         try:
             self.features = features_dict.get(FeatureConfigKey.FEATURES)
             self.all_features.extend(self.features)
         except KeyError:
-            raise KeyError("'features' key not found in the feature_config specified")
+            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES)
 
     def define_features(self):
         for feature_info in self.all_features:

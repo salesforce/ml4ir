@@ -1,8 +1,43 @@
+"""
+Writes data in Example or SequenceExample protobuf (tfrecords) format.
+
+To use it as a standalone script, refer to the argument spec
+at the bottom
+
+Syntax to convert a single or several CSVs:
+python ml4ir/base/data/tfrecord_writer.py \
+sequence|example \
+--csv-files <SPACE_SEPARATED_PATHS_TO_CSV_FILES> \
+--out-dir <PATH_TO_OUTPUT_DIR> \
+--feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
+--keep-single-files
+
+or to convert all CSV files in a dir
+python ml4ir/base/data/tfrecord_writer.py \
+sequence|example \
+--csv-dir <DIR_WITH_CSVs> \
+--out-dir <PATH_TO_OUTPUT_DIR> \
+--feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
+--keep-single-files
+
+Setting --keep-single-files writes one tfrecord file
+for each CSV file (better performance). If not set,
+joins everything to a single tfrecord file.
+
+Example:
+python ml4ir/base/data/tfrecord_writer.py \
+sequence \
+ --csv-files /tmp/d.csv /tmp/d2.csv \
+ --out-dir /tmp
+ --feature-config /tmp/fconfig.yaml \
+ --keep-single-files
+ """
+
 from tensorflow import io
 from typing import List
 from logging import Logger
 from argparse import ArgumentParser
-import glob
+import glob, logging
 import os
 import sys
 from pandas import DataFrame
@@ -13,30 +48,8 @@ from ml4ir.base.features.feature_config import FeatureConfig, parse_config
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
 
-
-"""
-This module contains helper methods for writing
-data in the train.SequenceExample protobuf format
-
-To use it as a standalone script, refer to the argument spec
-at the bottom
-
-Syntax:
-python ml4ir/data/tfrecord_writer.py \
---csv_dir <PATH_TO_CSV_DIR> \
---tfrecord_dir <PATH_TO_OUTPUT_DIR> \
---feature_config <PATH_TO_FEATURE_CONFIG> \
---convert_single_files <True/False>
-
-
-Example:
-python ml4ir/data/tfrecord_writer.py \
---csv_dir `pwd`/python/ml4ir/tests/data/csv/train \
---tfrecord_dir `pwd`/python/ml4ir/tests/data/tfrecord/train \
---feature_config `pwd`/python/ml4ir/tests/data/csv/feature_config.json \
---convert_single_files True
-
-"""
+MODES = {'example': TFRecordTypeKey.EXAMPLE,
+         'sequence':TFRecordTypeKey.SEQUENCE_EXAMPLE}
 
 
 def write_from_files(
@@ -53,7 +66,8 @@ def write_from_files(
     Args:
         csv_files: list of csv file paths to read data from
         tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to JSON feature config or str JSON feature config
+        feature_config: str path to YAML feature config or str YAML feature config
+        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
         logger: logging object
 
     NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
@@ -61,7 +75,6 @@ def write_from_files(
 
     # Read CSV data into a pandas dataframe
     df = file_io.read_df_list(csv_files, log=logger)
-
     write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
 
 
@@ -79,7 +92,8 @@ def write_from_df(
     Args:
         df: pandas DataFrame
         tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to JSON feature config or str JSON feature config
+        feature_config: str path to YAML feature config or str YAML feature config
+        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
         logger: logging object
 
     NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
@@ -104,100 +118,93 @@ def write_from_df(
                     sequence_features=feature_config.get_sequence_features(),
                 )
             )
-
+        else:
+            raise Exception("You have entered {} as tfrecords write mode. "
+                            "We only support {} and {}.".format(tfrecord_type,
+                                                                TFRecordTypeKey.EXAMPLE,
+                                                                TFRecordTypeKey.SEQUENCE_EXAMPLE))
         # Write to disk
         for proto in protos:
             tf_writer.write(proto.SerializeToString())
 
-    tf_writer.close()
 
-
-def main(argv):
-    """Convert CSV files into tfrecord SequenceExample files"""
-
-    # Define script arguments
-    parser = ArgumentParser(description="Process arguments for ml4ir ranking pipeline.")
-
-    parser.add_argument(
-        "--csv_dir", type=str, default=None, help="Path to the data directory containing CSV files"
-    )
-    parser.add_argument(
-        "--csv_file", type=str, default=None, help="Path to the CSV file to convert"
-    )
-    parser.add_argument(
-        "--tfrecord_dir",
-        type=str,
-        default=None,
-        help="Path to the output directory to write TFRecord files",
-    )
-    parser.add_argument(
-        "--tfrecord_file",
-        type=str,
-        default=None,
-        help="Path to the output file to write TFRecord data",
-    )
-    parser.add_argument(
-        "--feature_config",
-        type=str,
-        default=None,
-        help="Path to feature config JSON file or feature config JSON string",
-    )
-    parser.add_argument(
-        "--convert_single_files",
-        type=bool,
-        default=False,
-        help="Whether to convert each CSV file individually"
-        "All occurences of a query key should be within a single file",
-    )
-    args = parser.parse_args(argv)
-
-    # Get all CSV files to be converted
-    if args.csv_dir:
-        csv_files: List[str] = glob.glob(os.path.join(args.csv_dir, "*.csv"))
-    else:
-        csv_files: List[str] = [args.csv_file]
-
-    feature_config: FeatureConfig = parse_config(args.feature_config)
-
+def main(args):
+    """Convert CSV files into tfrecord Example/SequenceExample files"""
     # Setup logging
     logger: Logger = setup_logging()
 
+    # Get all CSV files to be converted, depending on user's arguments
+    if args.csv_dir:
+        csv_files: List[str] = glob.glob(os.path.join(args.csv_dir, "*.csv"))
+    else:
+        csv_files: List[str] = args.csv_files
+    # Load feat config
+    feature_config: FeatureConfig = parse_config(MODES[args.tfmode], args.feature_config, logger)
+
     # Convert to TFRecord SequenceExample protobufs and save
-    file_count = 0
-    if args.convert_single_files:
+    if args.keep_single_files:
         # Convert each CSV file individually - better performance
         for csv_file in csv_files:
-            if args.tfrecord_dir:
-                tfrecord_file: str = os.path.join(
-                    args.tfrecord_dir, "file_{}.tfrecord".format(file_count)
-                )
-            else:
-                tfrecord_file: str = args.tfrecord_file
-
+            tfrecord_file: str = os.path.basename(csv_file).replace(".csv", '')
+            tfrecord_file: str = os.path.join(args.out_dir, "{}.tfrecord".format(tfrecord_file))
             write_from_files(
                 csv_files=[csv_file],
                 tfrecord_file=tfrecord_file,
                 feature_config=feature_config,
                 logger=logger,
+                tfrecord_type=MODES[args.tfmode]
             )
 
-            file_count += 1
     else:
         # Convert all CSV files at once - expensive groupby operation
-        if args.tfrecord_dir:
-            tfrecord_file: str = os.path.join(
-                args.tfrecord_dir, "file_{}.tfrecord".format(file_count)
-            )
-        else:
-            tfrecord_file: str = args.tfrecord_file
-
+        tfrecord_file: str = os.path.join(args.out_dir, "combined.tfrecord")
         write_from_files(
             csv_files=csv_files,
             tfrecord_file=tfrecord_file,
             feature_config=feature_config,
             logger=logger,
+            tfrecord_type=MODES[args.tfmode]
         )
 
 
+def define_arguments():
+    first_doc_line = __doc__.strip().split("\n")[0]
+    parser = ArgumentParser(description=first_doc_line)
+    parser.add_argument(
+        'tfmode',
+        choices=MODES,  # Choices with a dict, shows the keys
+        help="select between `sequence` and `example` to write tf.Example or tf.SequenceExample")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--csv-dir", type=str,  help="Directory with CSV files; every .csv file will be converted."
+    )
+    group.add_argument(
+        "--csv-files", type=str, nargs="+", help="A single or more (space separated) CSV files to be converted."
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=str,
+        default=".",
+        help="Output directory for TFRecord files. Base filenames are maintained and .tfrecord is added as extension.",
+    )
+    parser.add_argument(
+        "--feature-config",
+        type=str,
+        default=None,
+        help="Path to feature config YAML file or feature config YAML string",
+    )
+    parser.add_argument(
+        "--keep-single-files",
+        action='store_true',
+        help="When passed, converts CSV files individually. "
+             "Results are written to out-dir replacing the filename's extension with .tfrecord."
+             "If not set, a single combined.tfrecord is created."
+             "All occurrences of a query key should be within a single file",
+    )
+    return parser
+
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    my_parser = define_arguments()
+    args = my_parser.parse_args()
+    main(args)
