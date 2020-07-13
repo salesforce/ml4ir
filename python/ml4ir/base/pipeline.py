@@ -200,9 +200,6 @@ class RelevancePipeline(object):
         try:
             job_status = ("_SUCCESS", "")
 
-            # If reading data from HDFS, transfer to temp location
-            self.copy_files_from_hdfs()
-
             # Build dataset
             relevance_dataset = self.get_relevance_dataset()
             self.logger.info("Relevance Dataset created")

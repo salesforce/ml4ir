@@ -1,9 +1,9 @@
-from pyspark.sql import DataFrame
 import json
 import yaml
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
-import os
+
+HDFS_PREFIX = "hdfs://"
 
 
 class SparkConfigHolder:
