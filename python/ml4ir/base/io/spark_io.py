@@ -113,6 +113,6 @@ def copy_to_hdfs(src, dest, overwrite=True, logger=None):
         logger.info("Copying files from {} to {}".format(src, dest))
 
     if overwrite and get_hdfs().exists(get_path_from_str(dest)):
-        get_hdfs().delete(get_path_from_str(dest), "true")
+        get_hdfs().delete(get_path_from_str(dest), True)
 
     get_hdfs().copyFromLocalFile(get_path_from_str(src), get_path_from_str(dest))
