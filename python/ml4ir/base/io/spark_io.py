@@ -58,7 +58,8 @@ def get_local_fs():
 def read_df(infile):
     """Read spark dataframe"""
     return (
-        get_spark_session.read.format("csv")
+        get_spark_session()
+        .read.format("csv")
         .option("header", "true")
         .option("inferschema", "true")
         .option("mode", "DROPMALFORMED")
