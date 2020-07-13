@@ -60,7 +60,7 @@ class RelevancePipeline(object):
         self.logger: Logger = self.setup_logging()
         self.logger.info("Logging initialized. Saving logs to : {}".format(self.logs_dir))
         self.logger.info("Run ID: {}".format(self.run_id))
-        self.logger.info("CLI args: \n{}".format(json.dumps(vars(self.args)).replace(",", "\n")))
+        self.logger.info("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config

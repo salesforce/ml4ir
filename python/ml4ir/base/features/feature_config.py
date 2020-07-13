@@ -1,5 +1,6 @@
 import yaml
 import pandas as pd
+import json
 from tensorflow.keras import Input
 from logging import Logger
 import tensorflow as tf
@@ -473,12 +474,10 @@ def parse_config(
 ) -> FeatureConfig:
     if feature_config.endswith(".yaml"):
         feature_config = file_io.read_yaml(feature_config, log=logger)
-        if logger:
-            logger.info("Reading feature config from YAML file : {}".format(feature_config))
     else:
         feature_config = yaml.safe_load(feature_config)
-        if logger:
-            logger.info("Reading feature config from YAML string")
+    if logger:
+        logger.info("Feature Config \n{}".format(json.dumps(feature_config, indent=4)))
 
     if tfrecord_type == TFRecordTypeKey.EXAMPLE:
         return ExampleFeatureConfig(feature_config, logger=logger)
