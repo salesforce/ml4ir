@@ -1,4 +1,3 @@
-import glob
 import os
 from typing import Optional
 from logging import Logger
@@ -27,24 +26,28 @@ class RelevanceDataset:
         test_pcent_split: float = -1,
         use_part_files: bool = False,
         parse_tfrecord: bool = True,
-        logger: Logger = None,
+        logger: Optional[Logger] = None,
     ):
         self.feature_config = feature_config
         self.max_sequence_size = max_sequence_size
+        self.logger = logger
 
         # If data directory is a HDFS path, first copy to local file system
         if data_dir.startswith(spark_io.HDFS_PREFIX):
+            if self.logger:
+                self.logger.info("Reading data from HDFS...")
             self.data_dir = DefaultDirectoryKey.TEMP_DATA
             file_io.make_directory(dir_path=self.data_dir, clear_dir=True, log=logger)
             spark_io.copy_from_hdfs(data_dir, self.data_dir, logger=logger)
         else:
+            if self.logger:
+                self.logger.info("Reading data from local file system...")
             self.data_dir = data_dir
 
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
         self.preprocessing_keys_to_fns = preprocessing_keys_to_fns
-        self.logger = logger
 
         self.train_pcent_split: float = train_pcent_split
         self.val_pcent_split: float = val_pcent_split
