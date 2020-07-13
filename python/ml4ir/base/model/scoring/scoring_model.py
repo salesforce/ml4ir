@@ -4,8 +4,9 @@ from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.io import file_io
+from logging import Logger
 
-from typing import Dict
+from typing import Dict, Optional
 
 
 class ScorerBase(object):
@@ -28,8 +29,9 @@ class ScorerBase(object):
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
         output_name: str,
+        logger: Optional[Logger] = None,
     ):
-        model_config = file_io.read_yaml(model_config_file)
+        model_config = file_io.read_yaml(model_config_file, log=logger)
 
         return cls(
             model_config=model_config,

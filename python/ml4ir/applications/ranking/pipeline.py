@@ -53,6 +53,7 @@ class RankingPipeline(RelevancePipeline):
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
+            logger=self.logger,
         )
 
         # Define metrics objects from metrics keys

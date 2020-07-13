@@ -102,19 +102,26 @@ class FeatureConfig:
         except KeyError:
             self.query_key = None
             if logger:
-                logger.warning("'%s' key not found in the feature_config specified" % FeatureConfigKey.QUERY_KEY)
+                logger.warning(
+                    "'%s' key not found in the feature_config specified"
+                    % FeatureConfigKey.QUERY_KEY
+                )
 
         try:
             self.label = features_dict.get(FeatureConfigKey.LABEL)
             self.all_features.append(self.label)
         except KeyError:
-            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL)
+            raise KeyError(
+                "'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL
+            )
 
         try:
             self.features = features_dict.get(FeatureConfigKey.FEATURES)
             self.all_features.extend(self.features)
         except KeyError:
-            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES)
+            raise KeyError(
+                "'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES
+            )
 
     def define_features(self):
         for feature_info in self.all_features:
@@ -465,7 +472,7 @@ def parse_config(
     tfrecord_type: str, feature_config, logger: Optional[Logger] = None
 ) -> FeatureConfig:
     if feature_config.endswith(".yaml"):
-        feature_config = file_io.read_yaml(feature_config)
+        feature_config = file_io.read_yaml(feature_config, log=logger)
         if logger:
             logger.info("Reading feature config from YAML file : {}".format(feature_config))
     else:
