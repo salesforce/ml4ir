@@ -36,7 +36,7 @@ class RelevanceDataset:
         if data_dir.startswith(spark_io.HDFS_PREFIX):
             self.data_dir = DefaultDirectoryKey.TEMP_DATA
             file_io.make_directory(dir_path=self.data_dir, clear_dir=True, log=logger)
-            spark_io.copy_from_hdfs(data_dir, self.data_dir, log=logger)
+            spark_io.copy_from_hdfs(data_dir, self.data_dir, logger=logger)
         else:
             self.data_dir = data_dir
 
