@@ -99,13 +99,14 @@ def copy_from_hdfs(src, dest, logger):
     get_hdfs().copyToLocalFile(get_path_from_str(src), get_path_from_str(dest))
 
 
-def copy_to_hdfs(src, dest, overwrite, logger):
+def copy_to_hdfs(src, dest, overwrite=True, logger=None):
     """
     Copy a directory/file to HDFS from local filesystem
 
     Args:
         - src: String path to source(on local file system)
         - dest: String path to destination(on HDFS)
+        - overwrite: Boolean to specify whether existing destination files should be overwritten
         - logger: logging handler
     """
     if logger:
