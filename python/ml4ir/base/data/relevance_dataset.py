@@ -4,10 +4,12 @@ from typing import Optional
 from logging import Logger
 import tensorflow as tf
 
-from ml4ir.base.config.keys import DataFormatKey, DataSplitKey
+from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectoryKey
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.io import spark_io
+from ml4ir.base.io import file_io
 
 
 class RelevanceDataset:
@@ -29,7 +31,15 @@ class RelevanceDataset:
     ):
         self.feature_config = feature_config
         self.max_sequence_size = max_sequence_size
-        self.data_dir: str = data_dir
+
+        # If data directory is a HDFS path, first copy to local file system
+        if data_dir.startswith(spark_io.HDFS_PREFIX):
+            self.data_dir = DefaultDirectoryKey.TEMP_DATA
+            file_io.make_directory(dir_path=self.data_dir, clear_dir=True, log=logger)
+            spark_io.copy_from_hdfs(data_dir, self.data_dir, log=logger)
+        else:
+            self.data_dir = data_dir
+
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size

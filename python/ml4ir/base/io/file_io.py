@@ -10,8 +10,11 @@ import yaml
 
 from typing import Optional
 
-# from pydoop import hdfs
+from ml4ir.base.io import spark_io
+
 from io import StringIO  # type: ignore
+
+HDFS_PREFIX = "hdfs://"
 
 
 def make_directory(dir_path: str, clear_dir: bool = False, log=None) -> str:
@@ -61,26 +64,17 @@ def read_df(
     Returns:
         pandas dataframe
     """
-    if infile.startswith("hdfs"):
-        # replace pydoop
-        # fp = hdfs.open(infile)
-        path_type = "HDFS"
+    if log_path:
+        log.info("Loading dataframe from path : {}".format(infile))
+
+    if infile.startswith(HDFS_PREFIX):
+        # NOTE: Move to fully spark dataframe based operations in the future
+        return spark_io.read_df(infile).toPandas()
     elif infile.endswith(".gz"):
         fp = gzip.open(os.path.expanduser(infile), "rb")
-        path_type = "local gzip"
     else:
         fp = open(os.path.expanduser(infile), "r")
-        path_type = "local"
 
-    if log_path:
-        log.info("Loading dataframe from {} path : {}".format(path_type, infile))
-
-    """
-    NOTE:
-    Currently, there seems to be a bug in the CSV writing function in MLData/sparkgen
-    which does not correctly escape string sequences containing multiple quotes.
-    This is being used as a stop gap fix.
-    """
     # Redirect stderr to custom string IO
     stderr_old = sys.stderr
     sys.stderr = bad_lines_io = StringIO()
@@ -152,17 +146,22 @@ def write_df(df, outfile: str = None, sep: str = ",", index: bool = True, log=No
 
     Returns:
         dataframe in csv form if outfile is None
-    """
-    output = df.to_csv(
-        sep=sep, index=index, quotechar='"', escapechar="\\", quoting=csv.QUOTE_NONNUMERIC
-    )
-    output = output.replace("\\", "\\\\")
 
-    if outfile:
-        fp = open(outfile, "w")
-        fp.write(output)
-        fp.close()
-    return output
+    NOTE: Does not support spark write
+    """
+    if outfile and outfile.startswith(HDFS_PREFIX):
+        raise NotImplementedError
+    else:
+        output = df.to_csv(
+            sep=sep, index=index, quotechar='"', escapechar="\\", quoting=csv.QUOTE_NONNUMERIC
+        )
+        output = output.replace("\\", "\\\\")
+
+        if outfile:
+            fp = open(outfile, "w")
+            fp.write(output)
+            fp.close()
+        return output
 
 
 def read_json(infile, log=None) -> dict:
@@ -175,12 +174,10 @@ def read_json(infile, log=None) -> dict:
     Returns:
         python dictionary
     """
-    if infile.startswith("hdfs"):
-        # replace pydoop
-        # f = hdfs.open(infile)
-        # dict_ = json.load(f)
-        # f.close()
-        raise NotImplementedError
+    if log:
+        log.info("Reading JSON file from : {}".format(infile))
+    if infile.startswith(HDFS_PREFIX):
+        return spark_io.read_json(infile)
     else:
         return json.load(open(infile, "r"))
 
@@ -195,7 +192,7 @@ def read_yaml(infile, log=None) -> dict:
     Returns:
         python dictionary
     """
-    if infile.startswith("hdfs"):
+    if infile.startswith(HDFS_PREFIX):
         raise NotImplementedError
     else:
         return yaml.safe_load(open(infile, "r"))
@@ -210,7 +207,7 @@ def write_json(json_dict: dict, outfile: str, log=None):
         outfile: path to the output file
         log: logging object
     """
-    if outfile.startswith("hdfs"):
+    if outfile.startswith(HDFS_PREFIX):
         # hdfs.dump(json.dumps(json_dict, indent=4, sort_keys=True), outfile)
         raise NotImplementedError
     else:
@@ -227,50 +224,29 @@ def path_exists(path: str, log=None) -> bool:
     Returns:
         True if path exists; False otherwise
     """
-    if path.startswith("hdfs"):
+    if path.startswith(HDFS_PREFIX):
         # return hdfs.path.exists(path)
         raise NotImplementedError
     else:
         return os.path.exists(path)
 
 
-def copy_dir_to_hdfs(src_path: str, dest_hdfs_path: str, log=None):
-    """
-    Copy directory from local file system to HDFS
-
-    Args:
-        src_path: local source path
-        dest_hdfs_path: destination path on hdfs
-    if dest_hdfs_path:
-        if not hdfs.path.exists(dest_hdfs_path):
-            hdfs.mkdir(dest_hdfs_path)
-        else:
-            hdfs.rmr(dest_hdfs_path)
-        for f in os.listdir(src_path):
-            if os.path.isdir(os.path.join(src_path, f)):
-                copy_dir_to_hdfs(os.path.join(src_path, f), os.path.join(dest_hdfs_path, f))
-            else:
-                hdfs.put(src_path + "/" + f, dest_hdfs_path + "/" + f)
-        log.info("Finished copying {} to Deepsea to {}".format(src_path, dest_hdfs_path))
-    else:
-        log.info("Output path not specified...skipping writing to hdfs")
-    """
-    raise NotImplementedError
-
-
 def get_files_in_directory(indir: str, extension=".csv", prefix="", log=None):
     """
-    Get list of csv files in a directory
+    Get list of files in a directory
 
     Args:
-        indir: input directory to search for csv files
+        indir: input directory to search for files
+        extension: extension of the files to search for
+        prefix: string file name prefix to narrow search
+        log: logging object
 
     Returns:
-        list of csv files
+        list of file path strings
     """
-    if indir.startswith("hdfs"):
-        # return sorted([f for f in hdfs.ls(indir) if f.endswith(extension)])
-        raise NotImplementedError
+    if indir.startswith(HDFS_PREFIX):
+        # NOTE: Current implementation just returns the directory wrapped in a list
+        return [indir]
     else:
         return sorted(glob.glob(os.path.join(indir, "{}*{}".format(prefix, extension))))
 
@@ -282,22 +258,28 @@ def clear_dir(dir_path: str, log=None):
     Args:
         dir_path: path to directory to be cleared
     """
-    for dir_content in glob.glob(os.path.join(dir_path, "*")):
-        if os.path.isfile(dir_content):
-            os.remove(dir_content)
-        elif os.path.isdir(dir_content):
-            shutil.rmtree(dir_content)
+    if dir_path.startswith(HDFS_PREFIX):
+        raise NotImplementedError
+    else:
+        for dir_content in glob.glob(os.path.join(dir_path, "*")):
+            if os.path.isfile(dir_content):
+                os.remove(dir_content)
+            elif os.path.isdir(dir_content):
+                shutil.rmtree(dir_content)
 
 
 def rm_dir(dir_path: str, log=None):
     """
-    Clear contents of existing directory
+    Delete existing directory
 
     Args:
         dir_path: path to directory to be removed
     """
-    if os.path.isdir(dir_path):
-        shutil.rmtree(dir_path)
+    if dir_path.startswith(HDFS_PREFIX):
+        raise NotImplementedError
+    else:
+        if os.path.isdir(dir_path):
+            shutil.rmtree(dir_path)
 
 
 def rm_file(file_path: str, log=None):
@@ -307,5 +289,8 @@ def rm_file(file_path: str, log=None):
     Args:
         file_path: path to file to be removed
     """
-    if os.path.isfile(file_path):
-        os.remove(file_path)
+    if file_path.startswith(HDFS_PREFIX):
+        raise NotImplementedError
+    else:
+        if os.path.isfile(file_path):
+            os.remove(file_path)

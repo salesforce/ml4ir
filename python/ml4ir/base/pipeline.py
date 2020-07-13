@@ -15,12 +15,14 @@ from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.features.feature_config import parse_config, FeatureConfig
 from ml4ir.base.io import logging_utils
 from ml4ir.base.io import file_io
+from ml4ir.base.io import spark_io
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.config.keys import OptimizerKey
 from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
+from ml4ir.base.config.keys import DefaultDirectoryKey
 
 from typing import List
 
@@ -36,19 +38,29 @@ class RelevancePipeline(object):
             self.run_id = "-".join([socket.gethostname(), time.strftime("%Y%m%d-%H%M%S")])
         self.start_time = time.time()
 
-        self.logs_dir: str = os.path.join(self.args.logs_dir, self.run_id)
+        # Setup directories
+        self.models_dir_hdfs = None
+        if self.args.models_dir.startswith(spark_io.HDFS_PREFIX):
+            self.models_dir_hdfs = self.args.models_dir
+            self.models_dir = os.path.join(DefaultDirectoryKey.MODELS, self.run_id)
+        else:
+            self.models_dir = os.path.join(self.args.models_dir, self.run_id)
+        self.logs_dir_hdfs = None
+        if self.args.logs_dir.startswith(spark_io.HDFS_PREFIX):
+            self.logs_dir_hdfs = self.args.logs_dir
+            self.logs_dir = os.path.join(DefaultDirectoryKey.LOGS, self.run_id)
+        else:
+            self.logs_dir = os.path.join(self.args.logs_dir, self.run_id)
+        self.data_dir: str = self.args.data_dir
+
+        file_io.make_directory(self.models_dir, clear_dir=False, log=None)
+        file_io.make_directory(self.logs_dir, clear_dir=True, log=None)
 
         # Setup logging
-        file_io.make_directory(self.logs_dir, clear_dir=True, log=None)
         self.logger: Logger = self.setup_logging()
         self.logger.info("Logging initialized. Saving logs to : {}".format(self.logs_dir))
         self.logger.info("Run ID: {}".format(self.run_id))
         self.logger.info("CLI args: \n{}".format(json.dumps(vars(self.args)).replace(",", "\n")))
-
-        # Setup directories
-        self.models_dir: str = os.path.join(self.args.models_dir, self.run_id)
-        self.data_dir: str = self.args.data_dir
-        file_io.make_directory(self.models_dir, clear_dir=False, log=self.logger)
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
@@ -133,9 +145,16 @@ class RelevancePipeline(object):
         return self
 
     def finish(self):
-        # Delete temp directories
+        # Delete temp data directories
         if self.data_format == DataFormatKey.CSV:
             file_io.rm_dir(os.path.join(self.data_dir, "tfrecord"))
+        file_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
+
+        # Copy logs and models to HDFS
+        if self.models_dir_hdfs:
+            spark_io.copy_to_hdfs(self.models_dir, self.models_dir_hdfs)
+        if self.logs_dir_hdfs:
+            spark_io.copy_to_hdfs(self.logs_dir, self.logs_dir_hdfs)
 
         e = int(time.time() - self.start_time)
         self.logger.info(
@@ -180,6 +199,9 @@ class RelevancePipeline(object):
     def run(self):
         try:
             job_status = ("_SUCCESS", "")
+
+            # If reading data from HDFS, transfer to temp location
+            self.copy_files_from_hdfs()
 
             # Build dataset
             relevance_dataset = self.get_relevance_dataset()
