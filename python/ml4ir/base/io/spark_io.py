@@ -40,7 +40,7 @@ def get_hadoop_config():
 def get_hdfs():
     """Get hadoop FileSystem handler"""
     if not SparkConfigHolder.HDFS:
-        SparkConfigHolder.HDFS = get_spark_context()._gateway.jvm.org.apache.hadoop.fs.FileSystem(
+        SparkConfigHolder.HDFS = get_spark_context()._gateway.jvm.org.apache.hadoop.fs.FileSystem.get(
             get_hadoop_config()
         )
 
