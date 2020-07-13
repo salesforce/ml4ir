@@ -21,7 +21,7 @@ def get_spark_session() -> SparkSession:
 
 def get_spark_context() -> SparkContext:
     """Get spark context"""
-    return get_spark_session().SparkContext
+    return get_spark_session().sparkContext
 
 
 def get_path_from_str(file_path):

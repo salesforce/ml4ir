@@ -1,3 +1,4 @@
+import glob
 import os
 from typing import Optional
 from logging import Logger
@@ -34,14 +35,10 @@ class RelevanceDataset:
 
         # If data directory is a HDFS path, first copy to local file system
         if data_dir.startswith(spark_io.HDFS_PREFIX):
-            if self.logger:
-                self.logger.info("Reading data from HDFS...")
             self.data_dir = DefaultDirectoryKey.TEMP_DATA
             file_io.make_directory(dir_path=self.data_dir, clear_dir=True, log=logger)
             spark_io.copy_from_hdfs(data_dir, self.data_dir, logger=logger)
         else:
-            if self.logger:
-                self.logger.info("Reading data from local file system...")
             self.data_dir = data_dir
 
         self.data_format: str = data_format
@@ -62,26 +59,9 @@ class RelevanceDataset:
     def create_dataset(self, parse_tfrecord=True):
         """
         Loads and creates train, validation and test datasets
-
-        The data needs to be stored in the following directory structure
-        data_dir
-        │
-        ├── train
-        │   ├── data_file
-        │   ├── data_file
-        │   ├── ...
-        │   └── data_file
-        ├── validation
-        │   ├── data_file
-        │   ├── data_file
-        │   ├── ...
-        │   └── data_file
-        └── test
-            ├── data_file
-            ├── data_file
-            ├── ...
-            └── data_file
         """
+        to_split = len(glob.glob(os.path.join(self.data_dir, DataSplitKey.TEST))) == 0
+
         if self.data_format == DataFormatKey.CSV:
             data_reader = csv_reader
         elif self.data_format == DataFormatKey.TFRECORD:
@@ -89,42 +69,75 @@ class RelevanceDataset:
         else:
             raise NotImplementedError
 
-        self.train = data_reader.read(
-            data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
-            max_sequence_size=self.max_sequence_size,
-            batch_size=self.batch_size,
-            preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
-            use_part_files=self.use_part_files,
-            parse_tfrecord=parse_tfrecord,
-            logger=self.logger,
-        )
-        self.validation = data_reader.read(
-            data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
-            max_sequence_size=self.max_sequence_size,
-            batch_size=self.batch_size,
-            preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
-            use_part_files=self.use_part_files,
-            parse_tfrecord=parse_tfrecord,
-            logger=self.logger,
-        )
-        self.test = data_reader.read(
-            data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
-            max_sequence_size=self.max_sequence_size,
-            batch_size=self.batch_size,
-            preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
-            use_part_files=self.use_part_files,
-            parse_tfrecord=parse_tfrecord,
-            logger=self.logger,
-        )
+        if to_split:
+            """
+            If the data is stored as
+            data_dir
+            │
+            ├── data_file
+            ├── data_file
+            ├── ...
+                              └── data_file
+            """
+            raise NotImplementedError
+
+        else:
+            """
+            If the data is stored as
+            data_dir
+            │
+            ├── train
+            │   ├── data_file
+            │   ├── data_file
+            │   ├── ...
+            │   └── data_file
+            ├── validation
+            │   ├── data_file
+            │   ├── data_file
+            │   ├── ...
+            │   └── data_file
+            └── test
+                ├── data_file
+                ├── data_file
+                ├── ...
+                └── data_file
+            """
+            self.train = data_reader.read(
+                data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
+                feature_config=self.feature_config,
+                tfrecord_type=self.tfrecord_type,
+                tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
+                max_sequence_size=self.max_sequence_size,
+                batch_size=self.batch_size,
+                preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
+                use_part_files=self.use_part_files,
+                parse_tfrecord=parse_tfrecord,
+                logger=self.logger,
+            )
+            self.validation = data_reader.read(
+                data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
+                feature_config=self.feature_config,
+                tfrecord_type=self.tfrecord_type,
+                tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
+                max_sequence_size=self.max_sequence_size,
+                batch_size=self.batch_size,
+                preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
+                use_part_files=self.use_part_files,
+                parse_tfrecord=parse_tfrecord,
+                logger=self.logger,
+            )
+            self.test = data_reader.read(
+                data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
+                feature_config=self.feature_config,
+                tfrecord_type=self.tfrecord_type,
+                tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
+                max_sequence_size=self.max_sequence_size,
+                batch_size=self.batch_size,
+                preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
+                use_part_files=self.use_part_files,
+                parse_tfrecord=parse_tfrecord,
+                logger=self.logger,
+            )
 
     def balance_classes(self):
         """
