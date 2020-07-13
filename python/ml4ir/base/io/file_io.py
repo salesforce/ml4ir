@@ -192,8 +192,10 @@ def read_yaml(infile, log=None) -> dict:
     Returns:
         python dictionary
     """
+    if log:
+        log.info("Reading YAML file from : {}".format(infile))
     if infile.startswith(HDFS_PREFIX):
-        raise NotImplementedError
+        return spark_io.read_yaml(infile)
     else:
         return yaml.safe_load(open(infile, "r"))
 
