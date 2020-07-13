@@ -152,9 +152,13 @@ class RelevancePipeline(object):
 
         # Copy logs and models to HDFS
         if self.models_dir_hdfs:
-            spark_io.copy_to_hdfs(self.models_dir, self.models_dir_hdfs, logger=self.logger)
+            spark_io.copy_to_hdfs(
+                self.models_dir, self.models_dir_hdfs, overwrite=True, logger=self.logger
+            )
         if self.logs_dir_hdfs:
-            spark_io.copy_to_hdfs(self.logs_dir, self.logs_dir_hdfs, logger=self.logger)
+            spark_io.copy_to_hdfs(
+                self.logs_dir, self.logs_dir_hdfs, overwrite=True, logger=self.logger
+            )
 
         e = int(time.time() - self.start_time)
         self.logger.info(
