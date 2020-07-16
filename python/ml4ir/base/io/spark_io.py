@@ -59,6 +59,29 @@ class SparkIO(FileIO):
             .toPandas()
         )
 
+    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
+        """
+        Load a pandas dataframe from a list of files
+
+        Args:
+            infiles: paths to the csv input files; can be hdfs paths
+            sep: separator to use for loading file
+            index_col: column to be used as index
+
+        Returns:
+            pandas dataframe
+        """
+        self.log("Reading {} files from [{}, ..".format(len(infiles), infiles[0]))
+        return (
+            self.spark_session.read.format("csv")
+            .option("header", "true")
+            .option("inferschema", "true")
+            .option("mode", "DROPMALFORMED")
+            .option("mergeSchema", "true")
+            .load(infiles)
+            .toPandas()
+        )
+
     def read_text_file(self, infile) -> str:
         """
         Read text file and return as string
