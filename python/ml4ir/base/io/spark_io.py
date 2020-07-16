@@ -22,6 +22,18 @@ class SparkIO(FileIO):
         )
         self.local_fs = self.hdfs.getLocal(self.hadoop_config)
 
+    def get_path_from_str(self, file_path: str):
+        """
+        Get Path object from string
+
+        Args:
+            file_path: string file path
+
+        Returns:
+            Hadoop Path object
+        """
+        return self.spark_context._gateway.jvm.org.apache.hadoop.fs.Path(file_path)
+
     def read_df(
         self, infile: str, sep: str = ",", index_col: int = None
     ) -> Optional[pd.DataFrame]:

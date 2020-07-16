@@ -214,7 +214,7 @@ class LocalIO(FileIO):
         self.log("{} files found under {}".format(len(files_in_directory), indir))
         return files_in_directory
 
-    def clear_dir(self, dir_path: str):
+    def clear_dir_contents(self, dir_path: str):
         """
         Clear contents of existing directory
 
@@ -237,7 +237,7 @@ class LocalIO(FileIO):
         """
         if os.path.isdir(dir_path):
             shutil.rmtree(dir_path)
-        self.log("Directory deleted : {}".format(dir_path))
+            self.log("Directory deleted : {}".format(dir_path))
 
     def rm_file(self, file_path: str):
         """
@@ -248,4 +248,4 @@ class LocalIO(FileIO):
         """
         if os.path.isfile(file_path):
             os.remove(file_path)
-        self.log("File deleted : {}".format(file_path))
+            self.log("File deleted : {}".format(file_path))
