@@ -2,8 +2,10 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import io
 
+from ml4ir.base.io.file_io import FileIO
 
-def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info):
+
+def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: FileIO):
     """
     Encode a string tensor into an encoding.
     Works by converting the string into a bytes sequence and then generating

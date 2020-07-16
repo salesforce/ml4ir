@@ -5,10 +5,10 @@ from tensorflow import lookup
 
 import copy
 
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
 
 
-def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
+def categorical_embedding_with_hash_buckets(feature_tensor, feature_info, file_io: FileIO):
     """
     Converts a string feature tensor into a categorical embedding.
     Works by first converting the string into num_hash_buckets buckets
@@ -77,7 +77,7 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info):
     return embedding
 
 
-def categorical_embedding_with_indices(feature_tensor, feature_info):
+def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: FileIO):
     """
     Converts input integer tensor into categorical embedding.
     Works by converting the categorical indices in the input feature_tensor,
@@ -175,7 +175,7 @@ class VocabLookup(layers.Layer):
         return config
 
 
-def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
+def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, file_io: FileIO):
     """
     Converts a string tensor into a categorical embedding representation.
     Works by using a vocabulary file to convert the string tensor into categorical indices
@@ -267,7 +267,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info):
     feature_info_new["feature_layer_info"]["args"]["default_value"] = vocabulary_size
 
     embedding = categorical_embedding_with_indices(
-        feature_tensor=feature_tensor_indices, feature_info=feature_info_new
+        feature_tensor=feature_tensor_indices, feature_info=feature_info_new, file_io=file_io
     )
 
     return embedding

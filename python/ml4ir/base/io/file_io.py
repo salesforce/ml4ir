@@ -10,6 +10,9 @@ class FileIO(object):
     def __init__(self, logger: Optional[Logger] = None):
         self.logger = logger
 
+    def set_logger(self, logger: Optional[Logger] = None):
+        self.logger = logger
+
     def log(self, string, mode=INFO):
         """
         Wrapper method for logging

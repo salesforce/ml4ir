@@ -37,19 +37,17 @@ from tensorflow import io
 from typing import List
 from logging import Logger
 from argparse import ArgumentParser
-import glob, logging
 import os
-import sys
 from pandas import DataFrame
 
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.config.keys import TFRecordTypeKey
-from ml4ir.base.features.feature_config import FeatureConfig, parse_config
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
 
-MODES = {'example': TFRecordTypeKey.EXAMPLE,
-         'sequence':TFRecordTypeKey.SEQUENCE_EXAMPLE}
+MODES = {"example": TFRecordTypeKey.EXAMPLE, "sequence": TFRecordTypeKey.SEQUENCE_EXAMPLE}
 
 
 def write_from_files(
@@ -57,6 +55,7 @@ def write_from_files(
     tfrecord_file: str,
     feature_config: FeatureConfig,
     tfrecord_type: str,
+    file_io: FileIO,
     logger: Logger = None,
 ):
     """
@@ -74,7 +73,7 @@ def write_from_files(
     """
 
     # Read CSV data into a pandas dataframe
-    df = file_io.read_df_list(csv_files, log=logger)
+    df = file_io.read_df_list(csv_files)
     write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
 
 
@@ -119,10 +118,12 @@ def write_from_df(
                 )
             )
         else:
-            raise Exception("You have entered {} as tfrecords write mode. "
-                            "We only support {} and {}.".format(tfrecord_type,
-                                                                TFRecordTypeKey.EXAMPLE,
-                                                                TFRecordTypeKey.SEQUENCE_EXAMPLE))
+            raise Exception(
+                "You have entered {} as tfrecords write mode. "
+                "We only support {} and {}.".format(
+                    tfrecord_type, TFRecordTypeKey.EXAMPLE, TFRecordTypeKey.SEQUENCE_EXAMPLE
+                )
+            )
         # Write to disk
         for proto in protos:
             tf_writer.write(proto.SerializeToString())
@@ -132,27 +133,36 @@ def main(args):
     """Convert CSV files into tfrecord Example/SequenceExample files"""
     # Setup logging
     logger: Logger = setup_logging()
+    file_io = LocalIO(logger)
 
     # Get all CSV files to be converted, depending on user's arguments
     if args.csv_dir:
-        csv_files: List[str] = glob.glob(os.path.join(args.csv_dir, "*.csv"))
+        csv_files: List[str] = file_io.get_files_in_directory(
+            indir=args.csv_dir, extension="*.csv"
+        )
     else:
         csv_files: List[str] = args.csv_files
+
     # Load feat config
-    feature_config: FeatureConfig = parse_config(MODES[args.tfmode], args.feature_config, logger)
+
+    feature_config: FeatureConfig = FeatureConfig.get_instance(
+        tfrecord_type=MODES[args.tfmode],
+        feature_config_dict=file_io.read_yaml(args.feature_config),
+        logger=logger,
+    )
 
     # Convert to TFRecord SequenceExample protobufs and save
     if args.keep_single_files:
         # Convert each CSV file individually - better performance
         for csv_file in csv_files:
-            tfrecord_file: str = os.path.basename(csv_file).replace(".csv", '')
+            tfrecord_file: str = os.path.basename(csv_file).replace(".csv", "")
             tfrecord_file: str = os.path.join(args.out_dir, "{}.tfrecord".format(tfrecord_file))
             write_from_files(
                 csv_files=[csv_file],
                 tfrecord_file=tfrecord_file,
                 feature_config=feature_config,
                 logger=logger,
-                tfrecord_type=MODES[args.tfmode]
+                tfrecord_type=MODES[args.tfmode],
             )
 
     else:
@@ -163,7 +173,8 @@ def main(args):
             tfrecord_file=tfrecord_file,
             feature_config=feature_config,
             logger=logger,
-            tfrecord_type=MODES[args.tfmode]
+            tfrecord_type=MODES[args.tfmode],
+            file_io=file_io,
         )
 
 
@@ -171,15 +182,19 @@ def define_arguments():
     first_doc_line = __doc__.strip().split("\n")[0]
     parser = ArgumentParser(description=first_doc_line)
     parser.add_argument(
-        'tfmode',
+        "tfmode",
         choices=MODES,  # Choices with a dict, shows the keys
-        help="select between `sequence` and `example` to write tf.Example or tf.SequenceExample")
+        help="select between `sequence` and `example` to write tf.Example or tf.SequenceExample",
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "--csv-dir", type=str,  help="Directory with CSV files; every .csv file will be converted."
+        "--csv-dir", type=str, help="Directory with CSV files; every .csv file will be converted."
     )
     group.add_argument(
-        "--csv-files", type=str, nargs="+", help="A single or more (space separated) CSV files to be converted."
+        "--csv-files",
+        type=str,
+        nargs="+",
+        help="A single or more (space separated) CSV files to be converted.",
     )
     parser.add_argument(
         "--out-dir",
@@ -195,11 +210,11 @@ def define_arguments():
     )
     parser.add_argument(
         "--keep-single-files",
-        action='store_true',
+        action="store_true",
         help="When passed, converts CSV files individually. "
-             "Results are written to out-dir replacing the filename's extension with .tfrecord."
-             "If not set, a single combined.tfrecord is created."
-             "All occurrences of a query key should be within a single file",
+        "Results are written to out-dir replacing the filename's extension with .tfrecord."
+        "If not set, a single combined.tfrecord is created."
+        "All occurrences of a query key should be within a single file",
     )
     return parser
 

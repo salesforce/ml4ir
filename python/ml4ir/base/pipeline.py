@@ -12,10 +12,10 @@ from argparse import Namespace
 from logging import Logger
 
 from ml4ir.base.config.parse_args import get_args
-from ml4ir.base.features.feature_config import parse_config, FeatureConfig
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io import logging_utils
-from ml4ir.base.io import file_io
-from ml4ir.base.io import spark_io
+from ml4ir.base.io.local_io import LocalIO
+from ml4ir.base.io.spark_io import SparkIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.config.keys import OptimizerKey
@@ -23,6 +23,7 @@ from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
+from ml4ir.base.config.keys import FileHandlerKey
 
 from typing import List
 
@@ -39,28 +40,43 @@ class RelevancePipeline(object):
         self.start_time = time.time()
 
         # Setup directories
+        self.local_io = LocalIO()
         self.models_dir_hdfs = None
-        if self.args.models_dir.startswith(spark_io.HDFS_PREFIX):
-            self.models_dir_hdfs = self.args.models_dir
-            self.models_dir = os.path.join(DefaultDirectoryKey.MODELS, self.run_id)
-        else:
-            self.models_dir = os.path.join(self.args.models_dir, self.run_id)
         self.logs_dir_hdfs = None
-        if self.args.logs_dir.startswith(spark_io.HDFS_PREFIX):
-            self.logs_dir_hdfs = self.args.logs_dir
-            self.logs_dir = os.path.join(DefaultDirectoryKey.LOGS, self.run_id)
-        else:
-            self.logs_dir = os.path.join(self.args.logs_dir, self.run_id)
-        self.data_dir: str = self.args.data_dir
+        self.data_dir_hdfs = None
+        if self.args.file_handler == FileHandlerKey.SPARK:
+            self.models_dir = self.args.models_dir
+            self.logs_dir = self.args.logs_dir
+            self.data_dir = self.args.data_dir
 
-        file_io.make_directory(self.models_dir, clear_dir=False, log=None)
-        file_io.make_directory(self.logs_dir, clear_dir=True, log=None)
+            self.models_dir_local = os.path.join(DefaultDirectoryKey.MODELS, self.run_id)
+            self.logs_dir_local = os.path.join(DefaultDirectoryKey.LOGS, self.run_id)
+            self.data_dir_local = os.path.join(
+                DefaultDirectoryKey.TEMP_DATA, os.path.basename(self.data_dir)
+            )
+        else:
+            self.models_dir_local = os.path.join(self.args.models_dir, self.run_id)
+            self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
+            self.data_dir_local = self.args.data_dir
 
         # Setup logging
+        self.local_io.make_directory(self.logs_dir_local, clear_dir=True)
         self.logger: Logger = self.setup_logging()
-        self.logger.info("Logging initialized. Saving logs to : {}".format(self.logs_dir))
+        self.logger.info("Logging initialized. Saving logs to : {}".format(self.logs_dir_local))
         self.logger.info("Run ID: {}".format(self.run_id))
-        self.logger.info("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
+        self.logger.debug("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
+        self.local_io.set_logger(self.logger)
+        self.local_io.make_directory(self.models_dir_local, clear_dir=False)
+
+        # Set the file handlers and respective setup
+        if self.args.file_handler == FileHandlerKey.LOCAL:
+            self.file_io = self.local_io
+        elif self.args.file_handler == FileHandlerKey.SPARK:
+            self.file_io = SparkIO(self.logger)
+
+            # Copy data dir from HDFS to local file system
+            self.local_io.make_directory(dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
+            self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
@@ -82,12 +98,11 @@ class RelevancePipeline(object):
         self.set_seeds()
 
         # Load and parse feature config
-        self.feature_config: FeatureConfig = parse_config(
+        self.feature_config: FeatureConfig = FeatureConfig.get_instance(
+            feature_config_dict=self.file_io.read_yaml(self.args.feature_config),
             tfrecord_type=self.tfrecord_type,
-            feature_config=self.args.feature_config,
             logger=self.logger,
         )
-        self.logger.info("Feature config parsed and loaded")
 
         # Finished initialization
         self.logger.info("Relevance Pipeline successfully initialized!")
@@ -95,12 +110,13 @@ class RelevancePipeline(object):
     def setup_logging(self) -> Logger:
         # Remove status file from any previous job at the start of the current job
         for status_file in ["_SUCCESS", "_FAILURE"]:
-            if os.path.exists(os.path.join(self.logs_dir, status_file)):
-                os.remove(os.path.join(self.logs_dir, status_file))
+            self.local_io.rm_file(os.path.join(self.logs_dir_local, status_file))
 
-        outfile: str = os.path.join(self.logs_dir, "output_log.csv")
-
-        return logging_utils.setup_logging(reset=True, file_name=outfile, log_to_file=True)
+        return logging_utils.setup_logging(
+            reset=True,
+            file_name=os.path.join(self.logs_dir_local, "output_log.csv"),
+            log_to_file=True,
+        )
 
     def set_seeds(self, reset_graph=True):
         # for repeatability
@@ -142,23 +158,25 @@ class RelevancePipeline(object):
                 )
             )
 
+        if self.args.file_handler not in FileHandlerKey.get_all_keys():
+            raise Exception(
+                "FileHandler [{}] is not one of : {}".format(
+                    self.args.file_handler, FileHandlerKey.get_all_keys()
+                )
+            )
+
         return self
 
     def finish(self):
         # Delete temp data directories
         if self.data_format == DataFormatKey.CSV:
-            file_io.rm_dir(os.path.join(self.data_dir, "tfrecord"))
-        file_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
+            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
 
-        # Copy logs and models to HDFS
-        if self.models_dir_hdfs:
-            spark_io.copy_to_hdfs(
-                self.models_dir, self.models_dir_hdfs, overwrite=True, logger=self.logger
-            )
-        if self.logs_dir_hdfs:
-            spark_io.copy_to_hdfs(
-                self.logs_dir, self.logs_dir_hdfs, overwrite=True, logger=self.logger
-            )
+        if self.args.file_handler == FileHandlerKey.SPARK:
+            # Copy logs and models to HDFS
+            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
 
         e = int(time.time() - self.start_time)
         self.logger.info(
@@ -175,7 +193,7 @@ class RelevancePipeline(object):
         """
         # Prepare Dataset
         relevance_dataset = RelevanceDataset(
-            data_dir=self.data_dir,
+            data_dir=self.data_dir_local,
             data_format=self.data_format,
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
@@ -187,6 +205,7 @@ class RelevancePipeline(object):
             test_pcent_split=self.args.test_pcent_split,
             use_part_files=self.args.use_part_files,
             parse_tfrecord=True,
+            file_io=self.local_io,
             logger=self.logger,
         )
 
@@ -222,8 +241,8 @@ class RelevancePipeline(object):
                 relevance_model.fit(
                     dataset=relevance_dataset,
                     num_epochs=self.args.num_epochs,
-                    models_dir=self.models_dir,
-                    logs_dir=self.logs_dir,
+                    models_dir=self.models_dir_local,
+                    logs_dir=self.logs_dir_local,
                     logging_frequency=self.args.logging_frequency,
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
@@ -244,7 +263,7 @@ class RelevancePipeline(object):
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
-                    logs_dir=self.logs_dir,
+                    logs_dir=self.logs_dir_local,
                 )
 
             if self.args.execution_mode in {
@@ -260,7 +279,7 @@ class RelevancePipeline(object):
                     test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
                     additional_features={},
-                    logs_dir=self.logs_dir,
+                    logs_dir=self.logs_dir_local,
                     logging_frequency=self.args.logging_frequency,
                 )
 
@@ -278,7 +297,7 @@ class RelevancePipeline(object):
             }:
                 # Save model
                 relevance_model.save(
-                    models_dir=self.models_dir,
+                    models_dir=self.models_dir_local,
                     preprocessing_keys_to_fns={},
                     postprocessing_fn=None,
                     required_fields_only=not self.args.use_all_fields_at_inference,
@@ -294,7 +313,7 @@ class RelevancePipeline(object):
             job_status = ("_FAILURE", "{}\n{}".format(str(e), traceback.format_exc()))
 
         # Write job status to file
-        with open(os.path.join(self.logs_dir, job_status[0]), "w") as f:
+        with open(os.path.join(self.logs_dir_local, job_status[0]), "w") as f:
             f.write(job_status[1])
 
 

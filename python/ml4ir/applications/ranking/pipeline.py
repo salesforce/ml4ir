@@ -40,6 +40,7 @@ class RankingPipeline(RelevancePipeline):
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
             tfrecord_type=self.tfrecord_type,
             max_sequence_size=self.args.max_sequence_size,
+            file_io=self.file_io,
         )
 
         # Define loss object from loss key
@@ -54,6 +55,7 @@ class RankingPipeline(RelevancePipeline):
             loss=loss,
             output_name=self.args.output_name,
             logger=self.logger,
+            file_io=self.file_io,
         )
 
         # Define metrics objects from metrics keys
@@ -80,6 +82,7 @@ class RankingPipeline(RelevancePipeline):
             model_file=self.args.model_file,
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
+            file_io=self.local_io,
             logger=self.logger,
         )
 

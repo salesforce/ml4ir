@@ -8,8 +8,7 @@ from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectory
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.io import spark_io
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
 
 
 class RelevanceDataset:
@@ -19,6 +18,7 @@ class RelevanceDataset:
         data_format: str,
         feature_config: FeatureConfig,
         tfrecord_type: str,
+        file_io: FileIO,
         max_sequence_size: int = 0,
         batch_size: int = 128,
         preprocessing_keys_to_fns: dict = {},
@@ -32,21 +32,12 @@ class RelevanceDataset:
         self.feature_config = feature_config
         self.max_sequence_size = max_sequence_size
         self.logger = logger
-
-        # If data directory is a HDFS path, first copy to local file system
-        if data_dir.startswith(spark_io.HDFS_PREFIX):
-            file_io.make_directory(
-                dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True, log=logger
-            )
-            spark_io.copy_from_hdfs(data_dir, DefaultDirectoryKey.TEMP_DATA, logger=logger)
-            self.data_dir = os.path.join(DefaultDirectoryKey.TEMP_DATA, os.path.basename(data_dir))
-        else:
-            self.data_dir = data_dir
-
+        self.data_dir = data_dir
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
         self.preprocessing_keys_to_fns = preprocessing_keys_to_fns
+        self.file_io = file_io
 
         self.train_pcent_split: float = train_pcent_split
         self.val_pcent_split: float = val_pcent_split
@@ -114,6 +105,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
             self.validation = data_reader.read(
@@ -126,6 +118,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
             self.test = data_reader.read(
@@ -138,6 +131,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
 

@@ -4,7 +4,6 @@ import os
 import pandas as pd
 
 from ml4ir.base.model.relevance_model import RelevanceModel
-from ml4ir.base.io import file_io
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.applications.ranking.model.scoring import prediction_helper
@@ -142,7 +141,7 @@ class RankingModel(RelevanceModel):
                 metrics_helper.summarize_grouped_stats, axis=1
             )
             if logs_dir:
-                file_io.write_df(
+                self.file_io.write_df(
                     df_group_metrics,
                     outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
                 )

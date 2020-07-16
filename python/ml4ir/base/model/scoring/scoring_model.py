@@ -3,7 +3,7 @@ from tensorflow.keras import Input
 from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
 from logging import Logger
 
 from typing import Dict, Optional
@@ -29,9 +29,10 @@ class ScorerBase(object):
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
         output_name: str,
+        file_io: FileIO,
         logger: Optional[Logger] = None,
     ):
-        model_config = file_io.read_yaml(model_config_file, log=logger)
+        model_config = file_io.read_yaml(model_config_file)
 
         return cls(
             model_config=model_config,

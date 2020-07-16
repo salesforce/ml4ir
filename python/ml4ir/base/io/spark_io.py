@@ -22,19 +22,6 @@ class SparkIO(FileIO):
         )
         self.local_fs = self.hdfs.getLocal(self.hadoop_config)
 
-    def make_directory(self, dir_path: str, clear_dir: bool = False) -> str:
-        """
-        Create directory structure specified recursively
-
-        Args:
-            dir_path: path for directory to be create
-            clear_dir: clear contents on existing directory
-
-        Returns:
-            directory path
-        """
-        raise NotImplementedError
-
     def read_df(
         self, infile: str, sep: str = ",", index_col: int = None
     ) -> Optional[pd.DataFrame]:
@@ -59,32 +46,6 @@ class SparkIO(FileIO):
             .load(infile)
             .toPandas()
         )
-
-    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
-        """
-        Load a pandas dataframe from a list of files
-
-        Args:
-            infiles: paths to the csv input files; can be hdfs paths
-            sep: separator to use for loading file
-            index_col: column to be used as index
-
-        Returns:
-            pandas dataframe
-        """
-        raise NotImplementedError
-
-    def write_df(self, df, outfile: str = None, sep: str = ",", index: bool = True):
-        """
-        Write a pandas dataframe to a file
-
-        Args:
-            df: dataframe to be written
-            outfile: path to the csv output file; can NOT be hdfs path currently
-            sep: separator to use for loading file
-            index: boolean specifying if index should be saved
-        """
-        raise NotImplementedError
 
     def read_text_file(self, infile) -> str:
         """
@@ -126,16 +87,6 @@ class SparkIO(FileIO):
         self.log("Reading YAML file : {}".format(infile))
         return yaml.safe_load(self.read_text_file(infile))
 
-    def write_json(self, json_dict: dict, outfile: str):
-        """
-        Write dictionary to a JSON file
-
-        Args:
-            json_dict: dictionary to be dumped to json file
-            outfile: path to the output file
-        """
-        raise NotImplementedError
-
     def path_exists(self, path: str) -> bool:
         """
         Check if a path exists
@@ -152,29 +103,6 @@ class SparkIO(FileIO):
         else:
             self.log("Path does not exist : {}".format(path))
             return False
-
-    def get_files_in_directory(self, indir: str, extension=".csv", prefix=""):
-        """
-        Get list of files in a directory
-
-        Args:
-            indir: input directory to search for files
-            extension: extension of the files to search for
-            prefix: string file name prefix to narrow search
-
-        Returns:
-            list of file path strings
-        """
-        raise NotImplementedError
-
-    def clear_dir(self, dir_path: str):
-        """
-        Clear contents of existing directory
-
-        Args:
-            dir_path: path to directory to be cleared
-        """
-        raise NotImplementedError
 
     def rm_dir(self, dir_path: str):
         """

@@ -4,6 +4,7 @@ import tensorflow as tf
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
 from ml4ir.base.features.feature_layer import define_feature_layer
+from ml4ir.base.io.file_io import FileIO
 
 from typing import Dict
 
@@ -41,12 +42,14 @@ class UnivariateInteractionModel(InteractionModel):
         feature_layer_keys_to_fns: dict,
         tfrecord_type: str,
         max_sequence_size: int = 0,
+        file_io: FileIO = None,
     ):
         self.feature_config = feature_config
         self.tfrecord_type = tfrecord_type
         self.max_sequence_size = max_sequence_size
         self.feature_layer_map = FeatureLayerMap()
         self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
+        self.file_io = file_io
 
     def feature_layer_op(self, inputs: Dict[str, Input]):
         """
@@ -63,6 +66,7 @@ class UnivariateInteractionModel(InteractionModel):
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             feature_layer_map=self.feature_layer_map,
+            file_io=self.file_io,
         )(inputs)
 
         return train_features, metadata_features
