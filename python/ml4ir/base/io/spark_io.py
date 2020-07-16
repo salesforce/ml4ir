@@ -146,9 +146,9 @@ class SparkIO(FileIO):
             - src: String path to source(on HDFS)
             - dest: String path to destination(on local file system)
         """
-        self.log("Copying files from {} to {}".format(src, dest))
-
         self.hdfs.copyToLocalFile(self.get_path_from_str(src), self.get_path_from_str(dest))
+
+        self.log("Finished copying files from {} to {}".format(src, dest))
 
     def copy_to_hdfs(self, src: str, dest: str, overwrite=True):
         """
@@ -159,9 +159,9 @@ class SparkIO(FileIO):
             - dest: String path to destination(on HDFS)
             - overwrite: Boolean to specify whether existing destination files should be overwritten
         """
-        self.log("Copying files from {} to {}".format(src, dest))
-
         if overwrite:
             self.rm_dir(dest)
 
         self.hdfs.copyFromLocalFile(self.get_path_from_str(src), self.get_path_from_str(dest))
+
+        self.log("Finished copying files from {} to {}".format(src, dest))
