@@ -79,7 +79,7 @@ class RelevanceDataset:
             ├── data_file
             ├── data_file
             ├── ...
-                              └── data_file
+            └── data_file
             """
             raise NotImplementedError
 
