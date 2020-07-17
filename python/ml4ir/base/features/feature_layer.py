@@ -7,6 +7,7 @@ from ml4ir.base.features.feature_fns.sequence import bytes_sequence_to_encoding_
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_hash_buckets
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_indices
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_vocabulary_file
+from ml4ir.base.io.file_io import FileIO
 
 
 class FeatureLayerMap:
@@ -37,7 +38,10 @@ class FeatureLayerMap:
 
 
 def define_feature_layer(
-    feature_config: FeatureConfig, tfrecord_type: str, feature_layer_map: FeatureLayerMap
+    feature_config: FeatureConfig,
+    tfrecord_type: str,
+    feature_layer_map: FeatureLayerMap,
+    file_io: FileIO,
 ):
     """
     Defines a feature layer function that works on keras.Inputs
@@ -78,7 +82,7 @@ def define_feature_layer(
 
             if "fn" in feature_layer_info:
                 feature_tensor = feature_layer_map.get_fn(feature_layer_info["fn"])(
-                    feature_tensor, feature_info
+                    feature_tensor=feature_tensor, feature_info=feature_info, file_io=file_io
                 )
             elif feature_info["trainable"]:
                 # Default feature layer

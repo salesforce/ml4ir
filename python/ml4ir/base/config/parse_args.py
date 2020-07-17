@@ -274,6 +274,13 @@ class RelevanceArgParser(ArgumentParser):
             help="How many epochs to wait before early stopping on metric degradation",
         )
 
+        self.add_argument(
+            "--file_handler",
+            type=str,
+            default="local",
+            help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
+        )
+
     def set_default_args(self):
         pass
 

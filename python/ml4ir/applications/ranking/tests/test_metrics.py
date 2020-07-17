@@ -3,7 +3,7 @@ import numpy as np
 
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
-from ml4ir.base.features.feature_config import FeatureConfig, parse_config
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 
 
@@ -40,9 +40,9 @@ GOLD_METRICS = {
 class RankingModelTest(RankingTestBase):
     def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str):
         """Train a model with the default set of args"""
-        feature_config: FeatureConfig = parse_config(
+        feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
-            feature_config=feature_config_path,
+            feature_config_dict=self.file_io.read_yaml(feature_config_path),
             logger=self.logger,
         )
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
@@ -63,6 +63,7 @@ class RankingModelTest(RankingTestBase):
             test_pcent_split=self.args.test_pcent_split,
             use_part_files=self.args.use_part_files,
             parse_tfrecord=True,
+            file_io=self.file_io,
             logger=self.logger,
         )
 

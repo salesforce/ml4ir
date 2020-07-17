@@ -61,6 +61,7 @@ pexpect==4.7.0
 pickleshare==0.7.5
 prompt-toolkit==3.0.2
 ptyprocess==0.6.0
+pyspark==3.0.0
 Pygments==2.5.2
 PyYAML==5.1
 requests==2.22.0

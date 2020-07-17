@@ -98,3 +98,19 @@ class EncodingTypeKey(Key):
 
     BILSTM = "bilstm"
     CNN = "cnn"
+
+
+class DefaultDirectoryKey(Key):
+    """Default directory paths"""
+
+    MODELS = "models"
+    LOGS = "logs"
+    DATA = "data"
+    TEMP_DATA = "data/temp"
+
+
+class FileHandlerKey(Key):
+    """File handler type"""
+
+    LOCAL = "local"
+    SPARK = "spark"

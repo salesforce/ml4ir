@@ -13,7 +13,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizer import get_optimizer
-import ml4ir.base.io.file_io as file_io
+from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
@@ -42,9 +42,10 @@ class RankingTestBase(unittest.TestCase):
         self.output_dir = output_dir
         self.root_data_dir = root_data_dir
         self.feature_config_fname = feature_config_fname
+        self.file_io = LocalIO()
 
         # Make temp output directory
-        file_io.make_directory(self.output_dir, clear_dir=True)
+        self.file_io.make_directory(self.output_dir, clear_dir=True)
 
         # Fix random seed values for repeatability
         tf.keras.backend.clear_session()
@@ -58,7 +59,7 @@ class RankingTestBase(unittest.TestCase):
         self.args.logs_dir = output_dir
 
         # Load model_config
-        self.model_config = file_io.read_yaml(self.args.model_config)
+        self.model_config = self.file_io.read_yaml(self.args.model_config)
 
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
@@ -67,10 +68,10 @@ class RankingTestBase(unittest.TestCase):
 
     def tearDown(self):
         # Delete output directory
-        file_io.rm_dir(self.output_dir)
+        self.file_io.rm_dir(self.output_dir)
 
         # Delete other temp directories
-        file_io.rm_dir(os.path.join(self.root_data_dir, "csv", "tfrecord"))
+        self.file_io.rm_dir(os.path.join(self.root_data_dir, "csv", "tfrecord"))
 
         # Clear memory
         tf.keras.backend.clear_session()
@@ -95,6 +96,7 @@ class RankingTestBase(unittest.TestCase):
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
             tfrecord_type=self.args.tfrecord_type,
             max_sequence_size=self.args.max_sequence_size,
+            file_io=self.file_io,
         )
 
         # Define loss object from loss key
@@ -108,6 +110,7 @@ class RankingTestBase(unittest.TestCase):
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
+            file_io=self.file_io,
         )
 
         # Define metrics objects from metrics keys
@@ -135,6 +138,7 @@ class RankingTestBase(unittest.TestCase):
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             logger=self.logger,
+            file_io=self.file_io,
         )
 
         return relevance_model

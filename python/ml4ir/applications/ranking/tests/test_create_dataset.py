@@ -3,7 +3,7 @@
 import unittest
 import os
 import warnings
-from ml4ir.base.io import file_io
+from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.applications.ranking.data.scripts.create_dataset import run_dataset_creation
 
@@ -27,9 +27,10 @@ class RankingCreateDatasetTest(unittest.TestCase):
         self.feature_config = feature_config
         self.output_dir = output_dir
         self.log_dir = log_dir
+        self.file_io = LocalIO()
 
         # Set up logging
-        file_io.make_directory(self.log_dir, clear_dir=True)
+        self.file_io.make_directory(self.log_dir, clear_dir=True)
         outfile: str = os.path.join(self.log_dir, "output_log.csv")
         self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
 
@@ -67,8 +68,8 @@ class RankingCreateDatasetTest(unittest.TestCase):
 
     def tearDown(self):
         # Delete output directory
-        file_io.rm_dir(self.output_dir)
-        file_io.rm_dir(self.log_dir)
+        self.file_io.rm_dir(self.output_dir)
+        self.file_io.rm_dir(self.log_dir)
 
 
 if __name__ == "__main__":

@@ -4,10 +4,11 @@ from typing import Optional
 from logging import Logger
 import tensorflow as tf
 
-from ml4ir.base.config.keys import DataFormatKey, DataSplitKey
+from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectoryKey
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.io.file_io import FileIO
 
 
 class RelevanceDataset:
@@ -17,6 +18,7 @@ class RelevanceDataset:
         data_format: str,
         feature_config: FeatureConfig,
         tfrecord_type: str,
+        file_io: FileIO,
         max_sequence_size: int = 0,
         batch_size: int = 128,
         preprocessing_keys_to_fns: dict = {},
@@ -25,16 +27,17 @@ class RelevanceDataset:
         test_pcent_split: float = -1,
         use_part_files: bool = False,
         parse_tfrecord: bool = True,
-        logger: Logger = None,
+        logger: Optional[Logger] = None,
     ):
         self.feature_config = feature_config
         self.max_sequence_size = max_sequence_size
-        self.data_dir: str = data_dir
+        self.logger = logger
+        self.data_dir = data_dir
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
         self.preprocessing_keys_to_fns = preprocessing_keys_to_fns
-        self.logger = logger
+        self.file_io = file_io
 
         self.train_pcent_split: float = train_pcent_split
         self.val_pcent_split: float = val_pcent_split
@@ -67,7 +70,7 @@ class RelevanceDataset:
             ├── data_file
             ├── data_file
             ├── ...
-                              └── data_file
+            └── data_file
             """
             raise NotImplementedError
 
@@ -80,17 +83,17 @@ class RelevanceDataset:
             │   ├── data_file
             │   ├── data_file
             │   ├── ...
-            │   └── data_file
+            │   └── data_file
             ├── validation
             │   ├── data_file
             │   ├── data_file
             │   ├── ...
-            │   └── data_file
+            │   └── data_file
             └── test
                 ├── data_file
                 ├── data_file
                 ├── ...
-                └── data_file
+                └── data_file
             """
             self.train = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
@@ -102,6 +105,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
             self.validation = data_reader.read(
@@ -114,6 +118,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
             self.test = data_reader.read(
@@ -126,6 +131,7 @@ class RelevanceDataset:
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
                 use_part_files=self.use_part_files,
                 parse_tfrecord=parse_tfrecord,
+                file_io=self.file_io,
                 logger=self.logger,
             )
 

@@ -1,10 +1,9 @@
-import yaml
 import pandas as pd
+import json
 from tensorflow.keras import Input
 from logging import Logger
 import tensorflow as tf
 
-import ml4ir.base.io.file_io as file_io
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto
 from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
 
@@ -94,6 +93,14 @@ class FeatureConfig:
         if len(self.train_features) == 0:
             raise Exception("No trainable features specified in the feature config")
 
+    @staticmethod
+    def get_instance(feature_config_dict: dict, tfrecord_type: str, logger: Logger):
+        logger.debug(json.dumps(feature_config_dict, indent=4))
+        if tfrecord_type == TFRecordTypeKey.EXAMPLE:
+            return ExampleFeatureConfig(feature_config_dict, logger=logger)
+        else:
+            return SequenceExampleFeatureConfig(feature_config_dict, logger=logger)
+
     def extract_features(self, features_dict, logger: Optional[Logger] = None):
 
         try:
@@ -102,19 +109,26 @@ class FeatureConfig:
         except KeyError:
             self.query_key = None
             if logger:
-                logger.warning("'%s' key not found in the feature_config specified" % FeatureConfigKey.QUERY_KEY)
+                logger.warning(
+                    "'%s' key not found in the feature_config specified"
+                    % FeatureConfigKey.QUERY_KEY
+                )
 
         try:
             self.label = features_dict.get(FeatureConfigKey.LABEL)
             self.all_features.append(self.label)
         except KeyError:
-            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL)
+            raise KeyError(
+                "'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL
+            )
 
         try:
             self.features = features_dict.get(FeatureConfigKey.FEATURES)
             self.all_features.extend(self.features)
         except KeyError:
-            raise KeyError("'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES)
+            raise KeyError(
+                "'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES
+            )
 
     def define_features(self):
         for feature_info in self.all_features:
@@ -459,21 +473,3 @@ class SequenceExampleFeatureConfig(FeatureConfig):
                 group=g, context_features=context_features, sequence_features=sequence_features
             )
         ).values[0]
-
-
-def parse_config(
-    tfrecord_type: str, feature_config, logger: Optional[Logger] = None
-) -> FeatureConfig:
-    if feature_config.endswith(".yaml"):
-        feature_config = file_io.read_yaml(feature_config)
-        if logger:
-            logger.info("Reading feature config from YAML file : {}".format(feature_config))
-    else:
-        feature_config = yaml.safe_load(feature_config)
-        if logger:
-            logger.info("Reading feature config from YAML string")
-
-    if tfrecord_type == TFRecordTypeKey.EXAMPLE:
-        return ExampleFeatureConfig(feature_config, logger=logger)
-    else:
-        return SequenceExampleFeatureConfig(feature_config, logger=logger)

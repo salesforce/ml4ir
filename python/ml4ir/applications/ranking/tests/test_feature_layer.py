@@ -37,7 +37,7 @@ class RankingModelTest(RankingTestBase):
         string_tensor = ["abc", "xyz", "123"]
 
         sequence_encoding = sequence_fns.bytes_sequence_to_encoding_bilstm(
-            string_tensor, feature_info
+            string_tensor, feature_info, self.file_io
         )
 
         # Assert the right shapes of the resulting encoding based on the feature_info
@@ -74,7 +74,7 @@ class RankingModelTest(RankingTestBase):
         string_tensor = ["group_0", "group_1", "group_0"]
 
         categorical_embedding = categorical_fns.categorical_embedding_with_hash_buckets(
-            string_tensor, feature_info
+            string_tensor, feature_info, self.file_io
         )
 
         # Assert the right shapes of the resulting embedding
@@ -110,7 +110,7 @@ class RankingModelTest(RankingTestBase):
         index_tensor = [0, 1, 2, 1, 10]
 
         categorical_embedding = categorical_fns.categorical_embedding_with_indices(
-            index_tensor, feature_info
+            index_tensor, feature_info, self.file_io
         )
 
         # Assert the right shapes of the resulting embedding
@@ -154,7 +154,7 @@ class RankingModelTest(RankingTestBase):
         )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
-            string_tensor, feature_info
+            string_tensor, feature_info, self.file_io
         )
 
         # Assert the right shapes of the resulting embedding
@@ -179,7 +179,7 @@ class RankingModelTest(RankingTestBase):
         ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
-            string_tensor, feature_info
+            string_tensor, feature_info, self.file_io
         )
 
         # Assert the right shapes of the resulting embedding

@@ -1,9 +1,9 @@
 import os
 import tensorflow as tf
 
-from ml4ir.base.io import file_io
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.data import tfrecord_reader, tfrecord_writer
+from ml4ir.base.io.file_io import FileIO
 
 from typing import List
 
@@ -16,6 +16,7 @@ def read(
     feature_config: FeatureConfig,
     tfrecord_type: str,
     tfrecord_dir: str,
+    file_io: FileIO,
     batch_size: int = 128,
     preprocessing_keys_to_fns: dict = {},
     use_part_files: bool = False,
@@ -62,6 +63,7 @@ def read(
         tfrecord_file=os.path.join(tfrecord_dir, TFRECORD_FILE),
         feature_config=feature_config,
         tfrecord_type=tfrecord_type,
+        file_io=file_io,
         logger=logger,
     )
 
@@ -73,6 +75,7 @@ def read(
         batch_size=batch_size,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         parse_tfrecord=parse_tfrecord,
+        file_io=file_io,
         logger=logger,
     )
 

@@ -3,13 +3,12 @@ from logging import Logger
 import tensorflow as tf
 from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
-from tensorflow import saved_model
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
 
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.metrics.metrics_impl import get_metrics_impl
@@ -33,6 +32,7 @@ class RelevanceModel:
         self,
         feature_config: FeatureConfig,
         tfrecord_type: str,
+        file_io: FileIO,
         scorer: Optional[ScorerBase] = None,
         metrics: List[Union[Type[kmetrics.Metric], str]] = [],
         optimizer: Optional[Optimizer] = None,
@@ -47,6 +47,7 @@ class RelevanceModel:
         self.output_name = output_name
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
+        self.file_io = file_io
 
         if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
@@ -125,6 +126,7 @@ class RelevanceModel:
         metrics: List[Union[kmetrics.Metric, str]],
         optimizer: Optimizer,
         tfrecord_type: str,
+        file_io: FileIO,
         model_file: Optional[str] = None,
         compile_keras_model: bool = False,
         output_name: str = "score",
@@ -150,6 +152,7 @@ class RelevanceModel:
             model_file=model_file,
             compile_keras_model=compile_keras_model,
             output_name=output_name,
+            file_io=file_io,
             logger=logger,
         )
 
@@ -167,6 +170,7 @@ class RelevanceModel:
         compile_keras_model: bool = False,
         output_name: str = "score",
         max_sequence_size: int = 0,
+        file_io: FileIO = None,
         logger=None,
     ):
         """Use this as constructor to use UnivariateInteractionModel and RelevanceScorer"""
@@ -189,6 +193,7 @@ class RelevanceModel:
             model_file=model_file,
             compile_keras_model=compile_keras_model,
             output_name=output_name,
+            file_io=file_io,
             logger=logger,
         )
 
@@ -259,7 +264,7 @@ class RelevanceModel:
         if logs_dir:
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
-            file_io.rm_file(outfile)
+            self.file_io.rm_file(outfile)
 
         _predict_fn = get_predict_fn(
             model=self.model,

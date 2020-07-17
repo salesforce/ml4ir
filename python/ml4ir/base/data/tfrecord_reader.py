@@ -5,7 +5,7 @@ from tensorflow import sparse
 from tensorflow import image
 from logging import Logger
 
-from ml4ir.base.io import file_io
+from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.features.preprocessing import PreprocessingMap
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import SequenceExampleTypeKey, TFRecordTypeKey
@@ -303,6 +303,7 @@ def read(
     data_dir: str,
     feature_config: FeatureConfig,
     tfrecord_type: str,
+    file_io: FileIO,
     max_sequence_size: int = 0,
     batch_size: int = 0,
     preprocessing_keys_to_fns: dict = {},
