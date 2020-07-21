@@ -34,8 +34,7 @@ class RankingModelTest(RankingTestBase):
         }
 
         # Define an input string tensor
-        string_tensor = ["abc", "xyz", "123"]
-
+        string_tensor = [["abc"], ["xyz"], ["123"]]
         sequence_encoding = sequence_fns.bytes_sequence_to_encoding_bilstm(
             string_tensor, feature_info, self.file_io
         )
@@ -138,7 +137,7 @@ class RankingModelTest(RankingTestBase):
         feature_info = {
             "name": "categorical_variable",
             "feature_layer_info": {
-                "fn": "categorical_embedding_with_hash_buckets",
+                "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
                     "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv",
                     "embedding_size": embedding_size,
@@ -195,3 +194,76 @@ class RankingModelTest(RankingTestBase):
         # Strings group_0 and group_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+
+    def test_categorical_indicator_with_vocabulary_file(self):
+        """
+        Asserts the conversion of a categorical string tensor into a one-hot representation
+        Works by converting the string into indices using a vocabulary file and then
+        converting the indices into one-hot vectors
+
+        The one-hot vector dimensions, buckets, etc are controlled by the feature_info
+        """
+        #####################################################
+        # Test for vocabulary file with ids mapping specified
+        #####################################################
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "fn": "categorical_indicator_with_vocabulary_file",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv",
+                    "num_oov_buckets": 1,
+                },
+            },
+            "default_value": "",
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["group_0", "group_1", "group_0", "group_2", "group_10", "group_11"]
+        )
+
+        categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
+            string_tensor, feature_info, self.file_io
+        )
+
+        # Assert the right shapes of the resulting one-hot vector
+        assert categorical_one_hot.shape[0] == len(string_tensor)
+        assert categorical_one_hot.shape[1] == 1
+        assert categorical_one_hot.shape[2] == 6
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
+
+        # Strings 0 and 2 should result in the same one-hot vector because they are the same
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
+
+        # Strings group_0 and group_2 should result in the same one-hot vector because they are mapped to the same ID
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
+
+        ########################################################
+        # Test for vocabulary file with no ids mapping specified
+        ########################################################
+        feature_info["feature_layer_info"]["args"][
+            "vocabulary_file"
+        ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
+
+        categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
+            string_tensor, feature_info, self.file_io
+        )
+
+        # Assert the right shapes of the resulting one-hot vector
+        assert categorical_one_hot.shape[0] == len(string_tensor)
+        assert categorical_one_hot.shape[1] == 1
+        assert categorical_one_hot.shape[2] == 6
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
+
+        # Strings 0 and 2 should result in the same one-hot vector because they are the same
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
+
+        # Strings group_0 and group_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))

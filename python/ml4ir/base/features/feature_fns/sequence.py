@@ -38,19 +38,21 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
         fixed_length=feature_layer_info["args"].get("max_length", None),
     )
 
-    feature_tensor = tf.reshape(feature_tensor, [-1, feature_layer_info["args"]["max_length"]])
+    feature_tensor = tf.squeeze(feature_tensor, axis=1)
     if "embedding_size" in feature_layer_info["args"]:
         char_embedding = layers.Embedding(
             input_dim=256,
             output_dim=feature_layer_info["args"]["embedding_size"],
             mask_zero=True,
-            input_length=feature_layer_info["args"]["max_length"],
+            input_length=feature_layer_info["args"].get("max_length", None),
         )(feature_tensor)
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
     encoding = layers.Bidirectional(
-        layers.LSTM(int(feature_layer_info["args"]["encoding_size"] / 2), return_sequences=False,),
+        layers.LSTM(
+            units=int(feature_layer_info["args"]["encoding_size"] / 2), return_sequences=False
+        ),
         merge_mode="concat",
     )(char_embedding)
 

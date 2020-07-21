@@ -41,7 +41,10 @@ class DNN:
                 layer_input = layer_op(layer_input)
 
             # Collapse extra dimensions
-            scores = tf.squeeze(layer_input, axis=-1)
+            if isinstance(self.layer_ops[-1], layers.Dense) and (self.layer_ops[-1].units == 1):
+                scores = tf.squeeze(layer_input, axis=-1)
+            else:
+                scores = layer_input
 
             return scores
 

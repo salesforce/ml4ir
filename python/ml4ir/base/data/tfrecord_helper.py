@@ -1,5 +1,6 @@
 from tensorflow import train
 import tensorflow as tf
+import pandas as pd
 
 from ml4ir.base.config.keys import SequenceExampleTypeKey
 
@@ -45,13 +46,17 @@ def get_example_proto(row, features):
     for feature_info in features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
+        # FIXME
         # When applying functions with axis=1, pandas performs upcasting,
         # so if we have a mix of floats/ints, converts everything to float
         # that breaks this part of the code. Example:
         # https://stackoverflow.com/questions/47143631/
         # how-do-i-preserve-datatype-when-using-apply-row-wise-in-pandas-dataframe
-        value_upcasted = row[feature_name].astype(feature_info["dtype"])
-        features_dict[feature_name] = feature_fn([value_upcasted])
+        features_dict[feature_name] = feature_fn(
+            [row[feature_name]]
+            if not pd.isna(row[feature_name])
+            else [feature_info["default_value"]]
+        )
     return train.Example(features=train.Features(feature=features_dict))
 
 

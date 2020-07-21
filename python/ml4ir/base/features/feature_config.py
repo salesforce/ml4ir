@@ -34,6 +34,7 @@ query_key:  # Unique query ID field
         preprocessing_type: <str> # Any predefined feature preprocessing step to apply
                                      # Defaults to just padding filling null values
         required: <bool> # Whether the feature is mandatory at serving time
+    default_value: default value for the feature
     tfrecord_type: <context or sequence | str>
 rank:  # Field representing the initial rank of the record in a query
     ...
@@ -259,8 +260,7 @@ class FeatureConfig:
         """
 
         def get_shape(feature_info: dict):
-            # TODO: Expand to other shapes
-            return (1,)
+            return feature_info.get("shape", (1,))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):
@@ -424,9 +424,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         def get_shape(feature_info: dict):
             # Setting size to None for sequence features as the num_records is variable
             if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-                return (None,)
+                return feature_info.get("shape", (None,))
             else:
-                return (1,)
+                return feature_info.get("shape", (1,))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):

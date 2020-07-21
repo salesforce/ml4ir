@@ -87,8 +87,10 @@ class MeanRankMetric(MeanMetricWrapper):
         Use `sample_weight` of 0 to mask values.
         """
         name = "{}_{}".format(state, name)
+        # TODO: Handle Example dataset without mask and rank fields
         rank = metadata_features[feature_config.get_rank("node_name")]
         mask = metadata_features[feature_config.get_mask("node_name")]
+
         super(MeanRankMetric, self).__init__(
             self._compute, name, dtype=dtype, rank=rank, mask=mask
         )
