@@ -230,6 +230,8 @@ class RankingModelTest(RankingTestBase):
         # Assert the right shapes of the resulting one-hot vector
         assert categorical_one_hot.shape[0] == len(string_tensor)
         assert categorical_one_hot.shape[1] == 1
+        assert categorical_one_hot.shape[2] == 6
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
 
         # Strings 0 and 2 should result in the same one-hot vector because they are the same
         assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
@@ -254,6 +256,8 @@ class RankingModelTest(RankingTestBase):
         # Assert the right shapes of the resulting one-hot vector
         assert categorical_one_hot.shape[0] == len(string_tensor)
         assert categorical_one_hot.shape[1] == 1
+        assert categorical_one_hot.shape[2] == 6
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
 
         # Strings 0 and 2 should result in the same one-hot vector because they are the same
         assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
