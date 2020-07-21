@@ -251,7 +251,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
 
     # Define a lookup table to convert categorical variables to IDs
     num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
-    vocabulary_size = len(set(vocabulary_ids))
+    vocabulary_size = len(set(vocabulary_keys))
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
         vocabulary_ids=vocabulary_ids,
@@ -347,7 +347,7 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
 
     # Define a lookup table to convert categorical variables to IDs
     num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
-    vocabulary_size = len(set(vocabulary_ids))
+    vocabulary_size = len(set(vocabulary_keys))
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
         vocabulary_ids=vocabulary_ids,
