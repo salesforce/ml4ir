@@ -1,3 +1,5 @@
+# Generating csv test data for classification model.
+
 from random import seed
 from random import randint
 
