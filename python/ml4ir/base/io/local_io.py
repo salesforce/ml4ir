@@ -140,7 +140,9 @@ class LocalIO(FileIO):
             fp = open(outfile, "w")
             fp.write(output)
             fp.close()
-        return output
+            return ""
+        else:
+            return output
 
     def read_json(self, infile) -> dict:
         """

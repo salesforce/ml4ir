@@ -44,7 +44,7 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
             input_dim=256,
             output_dim=feature_layer_info["args"]["embedding_size"],
             mask_zero=True,
-            input_length=feature_layer_info["args"]["max_length"],
+            input_length=feature_layer_info["args"].get("max_length", None),
         )(feature_tensor)
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)

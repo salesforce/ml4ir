@@ -1,5 +1,6 @@
 from tensorflow import train
 import tensorflow as tf
+import pandas as pd
 
 from ml4ir.base.config.keys import SequenceExampleTypeKey
 
@@ -51,7 +52,11 @@ def get_example_proto(row, features):
         # that breaks this part of the code. Example:
         # https://stackoverflow.com/questions/47143631/
         # how-do-i-preserve-datatype-when-using-apply-row-wise-in-pandas-dataframe
-        features_dict[feature_name] = feature_fn([row[feature_name]])
+        features_dict[feature_name] = feature_fn(
+            [row[feature_name]]
+            if not pd.isna(row[feature_name])
+            else [feature_info["default_value"]]
+        )
     return train.Example(features=train.Features(feature=features_dict))
 
 

@@ -34,8 +34,7 @@ class RankingModelTest(RankingTestBase):
         }
 
         # Define an input string tensor
-        string_tensor = ["abc", "xyz", "123"]
-
+        string_tensor = [["abc"], ["xyz"], ["123"]]
         sequence_encoding = sequence_fns.bytes_sequence_to_encoding_bilstm(
             string_tensor, feature_info, self.file_io
         )
