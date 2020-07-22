@@ -23,10 +23,10 @@ VOCABULARY_FEATURE_DOMAIN_ID = [str(i) for i in range(0, 20)]
 VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
 VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
 
+TOTAL_DATA_SIZE = 1000
 PARTITION_TRAIN = 0.7
 PARTITION_VALIDATION = 0.1
 PARTITION_TEST = 0.2
-TOTAL_DATA_SIZE = 1000
 
 
 class FeatureGenerator:
@@ -68,12 +68,12 @@ def generate_csv_test_data():
 
 
 def main():
-    """
-    Generates data under classification/tests folder used to train and assess classification model in tests.
-    """
     generate_csv_test_data()
     return
 
 
 if __name__ == "__main__":
+    """
+    Generates data under classification/tests folder used to train and assess classification model in tests.
+    """
     main()
