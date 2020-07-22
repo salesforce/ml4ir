@@ -100,7 +100,14 @@ export PYTHONPATH=$PYTHONPATH:`pwd`/python
 The entrypoint into the training or evaluation functionality of ml4ir is through `ml4ir/base/pipeline.py` and for application specific overrides, look at `ml4ir/applications/<eg: ranking>/pipeline.py
 
 ### ml4ir Library
-To use ml4ir as a deep learning library to build relevance models, look at the walkthrough under `notebooks/PointwiseRankingDemo.ipynb` or `notebooks/PointwiseRankingDemo.html`(contains architecture diagrams). The notebook walks one through building, training, saving, and the entire life cycle of a `RelevanceModel` from the bottom up. Additionally, the HTML version also sheds light on the design of ml4ir and the data format used.
+To use ml4ir as a deep learning library to build relevance models, look at the following walkthroughs under `notebooks/`
+- **Learning to Rank** : The `PointwiseRankingDemo` notebook walks you through building, training, saving, and the entire life cycle of a `RelevanceModel` from the bottom up. You can also find details regarding the architecture of ml4ir in it.
+- **Text Classification** : The `EntityPredictionDemo` notebook walks you through training a model to predict entity given a user context and query.
+
+Enter the following command to spin up Jupyter notebook on your browser to run the above notebooks
+```
+jupyter-notebook
+```
 
 ### Applications - Ranking
 #### Examples
