@@ -5,7 +5,6 @@ from random import randint
 
 import csv
 
-
 CSV_TRAIN_FILE_PATH = "data/csv/train/file_0.csv"
 CSV_TEST_FILE_PATH = "data/csv/test/file_0.csv"
 CSV_VALIDATION_FILE_PATH = "data/csv/validation/file_0.csv"
@@ -20,17 +19,16 @@ QUERY_VOCABULARY = [
     "my", "watch", "bid", "them", "make", "haste", "think", "hear", "ho", "friends", "ground", "liegemen", "dane"
 ]
 
-FEATURE_1_VOCABULARY = [str(i) for i in range(0, 20)]
+FEATURE_DOMAIN_ID_VOCABULARY = [str(i) for i in range(0, 20)]
 
-FEATURE_2_VOCABULARY = [
+FEATURE_ENTITY_VOCABULARY = [
     "AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"
 ]
 
-LABEL_VOCABULARY = [str(i) for i in range(0, 10)]
-
+LABEL_VOCABULARY = FEATURE_ENTITY_VOCABULARY[:5]
 
 class FeatureGenerator:
-
+    """Helper to randomly generate features based on a given vocabulary list."""
     def __init__(self, max_token_length, vocabulary, sequence_joiner=" "):
         self.__max_token_length = max_token_length
         self.__vocabulary = vocabulary
@@ -44,15 +42,16 @@ class FeatureGenerator:
 
 
 def generate_csv_test_data():
+    """Generates data under classification/tests folder."""
     seed(123)
-    query_feature_0_generator = FeatureGenerator(7, QUERY_VOCABULARY)
-    group_feature_1_generator = FeatureGenerator(1, FEATURE_1_VOCABULARY)
-    group_sequence_feature_2_generator = FeatureGenerator(20, FEATURE_2_VOCABULARY, sequence_joiner=",")
+    feature_query_text_generator = FeatureGenerator(7, QUERY_VOCABULARY)
+    feature_domain_id_generator = FeatureGenerator(1, FEATURE_DOMAIN_ID_VOCABULARY)
+    feature_user_context_generator = FeatureGenerator(20, FEATURE_ENTITY_VOCABULARY, sequence_joiner=",")
     label_generator = FeatureGenerator(1, LABEL_VOCABULARY)
     generators = [
-        query_feature_0_generator,
-        group_feature_1_generator,
-        group_sequence_feature_2_generator,
+        feature_query_text_generator,
+        feature_domain_id_generator,
+        feature_user_context_generator,
         label_generator
     ]
 
