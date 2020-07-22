@@ -31,7 +31,7 @@ PARTITION_TEST = 0.2
 
 class FeatureGenerator:
     """Helper to randomly generate features based on a given vocabulary list."""
-    def __init__(self, max_token_length, vocabulary, sequence_joiner=" "):
+    def __init__(self, vocabulary, max_token_length, sequence_joiner=" "):
         self.__max_token_length = max_token_length
         self.__vocabulary = vocabulary
         self.__vocabulary_length = len(vocabulary) - 1
@@ -46,9 +46,9 @@ class FeatureGenerator:
 def generate_csv_test_data():
     """Generates data under classification/tests/csv folder."""
     seed(123)
-    feature_query_text_generator = FeatureGenerator(7, VOCABULARY_QUERY)
-    feature_domain_id_generator = FeatureGenerator(1, VOCABULARY_FEATURE_DOMAIN_ID)
-    feature_user_context_generator = FeatureGenerator(20, VOCABULARY_FEATURE_ENTITY, sequence_joiner=",")
+    feature_query_text_generator = FeatureGenerator(VOCABULARY_QUERY, 7)
+    feature_domain_id_generator = FeatureGenerator(VOCABULARY_FEATURE_DOMAIN_ID, 1)
+    feature_user_context_generator = FeatureGenerator(VOCABULARY_FEATURE_ENTITY, 20, sequence_joiner=",")
     label_generator = FeatureGenerator(1, VOCABULARY_LABEL)
     generators = [
         feature_query_text_generator,
