@@ -49,7 +49,7 @@ def generate_csv_test_data():
     feature_query_text_generator = FeatureGenerator(VOCABULARY_QUERY, 7)
     feature_domain_id_generator = FeatureGenerator(VOCABULARY_FEATURE_DOMAIN_ID, 1)
     feature_user_context_generator = FeatureGenerator(VOCABULARY_FEATURE_ENTITY, 20, sequence_joiner=",")
-    label_generator = FeatureGenerator(1, VOCABULARY_LABEL)
+    label_generator = FeatureGenerator(VOCABULARY_LABEL, 1)
     generators = [
         feature_query_text_generator,
         feature_domain_id_generator,
