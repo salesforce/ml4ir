@@ -1,9 +1,11 @@
 # Generating csv test data for classification model in tests.
 
+import string
+import csv
+
 from random import seed
 from random import randint
 
-import csv
 
 CSV_TRAIN_FILE_PATH = "data/csv/train/file_0.csv"
 CSV_TEST_FILE_PATH = "data/csv/test/file_0.csv"
@@ -19,7 +21,7 @@ VOCABULARY_QUERY = [
     "guard", "not", "mouse", "stirring", "well", "good", "night", "if", "do", "meet", "horatio", "marcellus", "rivals",
     "my", "watch", "bid", "them", "make", "haste", "think", "hear", "ho", "friends", "ground", "liegemen", "dane"
 ]
-VOCABULARY_FEATURE_DOMAIN_ID = [str(i) for i in range(0, 20)]
+VOCABULARY_FEATURE_DOMAIN_ID = [char for char in string.ascii_lowercase.upper()]
 VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
 VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
 
@@ -61,7 +63,7 @@ def generate_csv_test_data():
                                 (CSV_TEST_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_VALIDATION),
                                 (CSV_VALIDATION_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TEST)]:
         rows = [COLUMNS_HEADER] + [['query_id_' + str(idx)] + [g.generate_feature() for g in generators]
-                                   for idx in range(0, number_rows)]
+                                   for idx in range(0, int(number_rows))]
         with open(path, 'w', newline='') as file:
             writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerows(rows)
