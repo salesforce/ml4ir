@@ -1,4 +1,4 @@
-# Generating csv test data for classification model.
+# Generating csv test data for classification model in tests.
 
 from random import seed
 from random import randint
@@ -9,7 +9,8 @@ CSV_TRAIN_FILE_PATH = "data/csv/train/file_0.csv"
 CSV_TEST_FILE_PATH = "data/csv/test/file_0.csv"
 CSV_VALIDATION_FILE_PATH = "data/csv/validation/file_0.csv"
 COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "entity_id"]
-QUERY_VOCABULARY = [
+
+VOCABULARY_QUERY = [
     "the", "tragedy", "of", "hamlet", "prince", "denmark", "shakespeare", "homepage", "entire", "play", "act", "i",
     "scene", "elsinore", "a", "platform", "before", "castle", "francisco", "at", "his", "post", "enter", "to", "him",
     "bernardo", "whos", "there", "nay", "answer", "me", "stand", "and", "unfold", "yourself", "long", "live", "king",
@@ -18,14 +19,15 @@ QUERY_VOCABULARY = [
     "guard", "not", "mouse", "stirring", "well", "good", "night", "if", "do", "meet", "horatio", "marcellus", "rivals",
     "my", "watch", "bid", "them", "make", "haste", "think", "hear", "ho", "friends", "ground", "liegemen", "dane"
 ]
+VOCABULARY_FEATURE_DOMAIN_ID = [str(i) for i in range(0, 20)]
+VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
+VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
 
-FEATURE_DOMAIN_ID_VOCABULARY = [str(i) for i in range(0, 20)]
+PARTITION_TRAIN = 0.7
+PARTITION_VALIDATION = 0.1
+PARTITION_TEST = 0.2
+TOTAL_DATA_SIZE = 1000
 
-FEATURE_ENTITY_VOCABULARY = [
-    "AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"
-]
-
-LABEL_VOCABULARY = FEATURE_ENTITY_VOCABULARY[:5]
 
 class FeatureGenerator:
     """Helper to randomly generate features based on a given vocabulary list."""
@@ -42,12 +44,12 @@ class FeatureGenerator:
 
 
 def generate_csv_test_data():
-    """Generates data under classification/tests folder."""
+    """Generates data under classification/tests/csv folder."""
     seed(123)
-    feature_query_text_generator = FeatureGenerator(7, QUERY_VOCABULARY)
-    feature_domain_id_generator = FeatureGenerator(1, FEATURE_DOMAIN_ID_VOCABULARY)
-    feature_user_context_generator = FeatureGenerator(20, FEATURE_ENTITY_VOCABULARY, sequence_joiner=",")
-    label_generator = FeatureGenerator(1, LABEL_VOCABULARY)
+    feature_query_text_generator = FeatureGenerator(7, VOCABULARY_QUERY)
+    feature_domain_id_generator = FeatureGenerator(1, VOCABULARY_FEATURE_DOMAIN_ID)
+    feature_user_context_generator = FeatureGenerator(20, VOCABULARY_FEATURE_ENTITY, sequence_joiner=",")
+    label_generator = FeatureGenerator(1, VOCABULARY_LABEL)
     generators = [
         feature_query_text_generator,
         feature_domain_id_generator,
@@ -55,15 +57,20 @@ def generate_csv_test_data():
         label_generator
     ]
 
-    for (path, number_rows) in [(CSV_TRAIN_FILE_PATH, 7000), (CSV_TEST_FILE_PATH, 2000),
-                                (CSV_VALIDATION_FILE_PATH, 1000)]:
-        rows = [COLUMNS_HEADER] + [['query_id_' + str(idx)] + [g.generate_feature() for g in generators] for idx in range(0, number_rows)]
+    for (path, number_rows) in [(CSV_TRAIN_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TRAIN),
+                                (CSV_TEST_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_VALIDATION),
+                                (CSV_VALIDATION_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TEST)]:
+        rows = [COLUMNS_HEADER] + [['query_id_' + str(idx)] + [g.generate_feature() for g in generators]
+                                   for idx in range(0, number_rows)]
         with open(path, 'w', newline='') as file:
             writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerows(rows)
 
 
 def main():
+    """
+    Generates data under classification/tests folder used to train and assess classification model in tests.
+    """
     generate_csv_test_data()
     return
 
