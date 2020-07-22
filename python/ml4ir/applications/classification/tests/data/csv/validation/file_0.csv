@@ -1,4 +1,4 @@
-"query_key","query_feature_0","group_feature_1","group_sequence_feature_2","entity"
+"query_key","query_text","domain_id","user_context","entity_id"
 "query_id_0","me","6","HHH,AAA,FFF,AAA,CCC","2"
 "query_id_1","your had mouse much bed make","0","HHH,DDD,HHH,HHH,HHH,EEE,FFF,CCC,BBB,FFF,DDD,HHH,CCC,HHH,FFF","3"
 "query_id_2","him tis","6","HHH,FFF,HHH,FFF,GGG,CCC,HHH,CCC,FFF,FFF,GGG,FFF,EEE,HHH","1"

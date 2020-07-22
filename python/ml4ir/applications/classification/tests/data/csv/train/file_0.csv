@@ -1,4 +1,4 @@
-"query_key","query_feature_0","group_feature_1","group_sequence_feature_2","entity"
+"query_key","query_text","domain_id","user_context","entity_id"
 "query_id_0","yourself","13","BBB,AAA,GGG,FFF,FFF,AAA,CCC,CCC,FFF","3"
 "query_id_1","the relief","19","BBB,AAA,FFF,HHH,BBB,AAA,BBB,CCC,CCC,AAA,EEE,GGG,HHH","7"
 "query_id_2","prince you upon guard sick whos marcellus","0","GGG,HHH,GGG,FFF,AAA,CCC,BBB,HHH,EEE,CCC,FFF,FFF,GGG","7"

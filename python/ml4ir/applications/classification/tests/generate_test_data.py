@@ -9,7 +9,7 @@ import csv
 CSV_TRAIN_FILE_PATH = "data/csv/train/file_0.csv"
 CSV_TEST_FILE_PATH = "data/csv/test/file_0.csv"
 CSV_VALIDATION_FILE_PATH = "data/csv/validation/file_0.csv"
-COLUMNS_HEADER = ["query_key", "query_feature_0", "group_feature_1", "group_sequence_feature_2", "entity"]
+COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "entity_id"]
 QUERY_VOCABULARY = [
     "the", "tragedy", "of", "hamlet", "prince", "denmark", "shakespeare", "homepage", "entire", "play", "act", "i",
     "scene", "elsinore", "a", "platform", "before", "castle", "francisco", "at", "his", "post", "enter", "to", "him",

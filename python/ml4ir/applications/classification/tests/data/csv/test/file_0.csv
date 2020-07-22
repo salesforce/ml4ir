@@ -1,4 +1,4 @@
-"query_key","query_feature_0","group_feature_1","group_sequence_feature_2","entity"
+"query_key","query_text","domain_id","user_context","entity_id"
 "query_id_0","stirring not","3","CCC,HHH","0"
 "query_id_1","whos if","9","EEE,FFF,BBB,GGG,FFF,GGG,DDD,FFF,HHH,AAA,GGG,DDD,EEE,FFF","4"
 "query_id_2","marcellus dane","19","DDD,AAA,BBB,EEE,FFF","2"
