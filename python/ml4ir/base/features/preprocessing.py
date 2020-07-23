@@ -68,14 +68,6 @@ def get_one_hot_vectorizer(feature_info, file_io: FileIO):
 
     Returns:
         processed float tensor
-
-    Example:
-        feature_tensor="AAA,BBB,CCC"
-        split_char=","
-        max_length=5
-        could returns the padded tokens [1, 2, 3, 0, 0]
-
-    :return:
     """
     label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
     label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
