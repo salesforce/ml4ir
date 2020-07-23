@@ -2,6 +2,9 @@ import string
 import re
 import tensorflow as tf
 
+from ml4ir.base.features.feature_fns.categorical import categorical_indicator_with_vocabulary_file
+from ml4ir.base.io.file_io import FileIO
+
 
 # NOTE: We can eventually make this regex configurable through the FeatureConfig
 # Keeping it simple for now
@@ -11,7 +14,8 @@ PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
 class PreprocessingMap:
     def __init__(self):
         self.key_to_fn = {
-            preprocess_text.__name__: preprocess_text
+            preprocess_text.__name__: preprocess_text,
+            split_string.__name__: split_string
             # Add more here
         }
 
@@ -51,6 +55,73 @@ def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
         feature_tensor = tf.strings.lower(feature_tensor)
 
     return feature_tensor
+
+
+def get_one_hot_vectorizer(feature_info, file_io: FileIO):
+    """
+    Returns a tf function to convert categorical string labels to a one hot encoding.
+
+    Args:
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig.
+                      See categorical_indicator_with_vocabulary_file, here it is used to read a vocabulary file to
+                      create the one hot encoding.
+
+    Returns:
+        processed float tensor
+
+    Example:
+        feature_tensor="AAA,BBB,CCC"
+        split_char=","
+        max_length=5
+        could returns the padded tokens [1, 2, 3, 0, 0]
+
+    :return:
+    """
+    label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
+    label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
+    one_hot_vectorizer = tf.keras.Model(inputs=label_str, outputs=label_one_hot)
+
+    @tf.function
+    def one_hot_vectorize(feature_tensor):
+        """
+        Args:
+            feature_tensor: input feature tensor of type tf.string.
+        Returns:
+            numerical value corresponding to the one hot encoding from this string.
+        """
+        return tf.squeeze(one_hot_vectorizer(feature_tensor), axis=[0])
+
+    return one_hot_vectorize
+
+
+@tf.function
+def split_string(feature_tensor, split_char=",", max_length=20):
+    """
+    String preprocessing function that splits and pads a sequence based on the max_length.
+
+    Args:
+        feature_tensor: input feature tensor of type tf.string.
+        split_char: string; string separator to split the string input.
+        max_length: int; max length of the sequence produced after padding.
+
+    Returns:
+        processed float tensor
+
+    Example:
+        feature_tensor="AAA,BBB,CCC"
+        split_char=","
+        max_length=5
+        could returns the padded tokens [1, 2, 3, 0, 0]
+    """
+    tokens = tf.strings.split(feature_tensor, sep=split_char).to_tensor()
+    padded_tokens = tf.image.pad_to_bounding_box(tf.expand_dims(tokens[:, :max_length], axis=-1),
+                                              offset_height=0,
+                                              offset_width=0,
+                                              target_height=1,
+                                              target_width=max_length)
+    padded_tokens = tf.squeeze(padded_tokens, axis=-1)
+    return padded_tokens
+
 
 
 ##########################################

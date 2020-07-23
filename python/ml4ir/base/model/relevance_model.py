@@ -331,7 +331,7 @@ class RelevanceModel:
         Override this method to implement your own evaluation metrics.
         """
         if self.is_compiled:
-            self.model.evaluate(test_dataset)
+            return self.model.evaluate(test_dataset)
         else:
             raise NotImplementedError
 
