@@ -283,7 +283,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
         vocabulary_keys = vocabulary_df.iloc[:,0]
     if "max_length" in feature_info:
         vocabulary_keys = vocabulary_keys[:feature_info["max_length"]]
-    vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"]).values
+    vocabulary_keys = vocabulary_keys.values
     vocabulary_ids = (
         vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
     )
