@@ -15,7 +15,7 @@ class PreprocessingMap:
     def __init__(self):
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
-            split_string.__name__: split_string
+            split_and_pad_string.__name__: split_and_pad_string
             # Add more here
         }
 
@@ -87,7 +87,7 @@ def get_one_hot_vectorizer(feature_info, file_io: FileIO):
 
 
 @tf.function
-def split_string(feature_tensor, split_char=",", max_length=20):
+def split_and_pad_string(feature_tensor, split_char=",", max_length=20):
     """
     String preprocessing function that splits and pads a sequence based on the max_length.
 
@@ -103,7 +103,7 @@ def split_string(feature_tensor, split_char=",", max_length=20):
         feature_tensor="AAA,BBB,CCC"
         split_char=","
         max_length=5
-        could returns the padded tokens [1, 2, 3, 0, 0]
+        could returns the padded tokens ['AAA', 'BBB', 'CCC', '', '']
     """
     tokens = tf.strings.split(feature_tensor, sep=split_char).to_tensor()
     padded_tokens = tf.image.pad_to_bounding_box(tf.expand_dims(tokens[:, :max_length], axis=-1),

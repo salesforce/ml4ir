@@ -156,9 +156,11 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
         vocabulary_keys = vocabulary_df["key"]
     else:
         vocabulary_keys = vocabulary_df.iloc[:,0]
-    if "max_length" in feature_info:
-        vocabulary_keys = vocabulary_keys[:feature_info["max_length"]]
-    vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"]).values
+    if "max_length" in args:
+        vocabulary_keys = vocabulary_keys[:args["max_length"]]
+    if "default_value" in feature_info:
+        vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"])
+    vocabulary_keys = vocabulary_keys.values
 
     vocabulary_ids = (
         vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
@@ -276,13 +278,14 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     resulting in a one-to-one mapping
     """
     feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
+    args = feature_layer_info["args"]
+    vocabulary_df = file_io.read_df(args["vocabulary_file"])
     if "key" in vocabulary_df.columns:
         vocabulary_keys = vocabulary_df["key"]
     else:
         vocabulary_keys = vocabulary_df.iloc[:,0]
-    if "max_length" in feature_info:
-        vocabulary_keys = vocabulary_keys[:feature_info["max_length"]]
+    if "max_length" in args:
+        vocabulary_keys = vocabulary_keys[:args["max_length"]]
     vocabulary_keys = vocabulary_keys.values
     vocabulary_ids = (
         vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
@@ -330,7 +333,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     #
 
     # Define a lookup table to convert categorical variables to IDs
-    num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
+    num_oov_buckets = args.get("num_oov_buckets", 1)
     vocabulary_size = len(set(vocabulary_keys))
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
@@ -382,13 +385,14 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     resulting in a one-to-one mapping
     """
     feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
+    args = feature_layer_info["args"]
+    vocabulary_df = file_io.read_df(args["vocabulary_file"])
     if "key" in vocabulary_df.columns:
         vocabulary_keys = vocabulary_df["key"]
     else:
         vocabulary_keys = vocabulary_df.iloc[:,0]
-    if "max_length" in feature_info:
-        vocabulary_keys = vocabulary_keys[:feature_info["max_length"]]
+    if "max_length" in args:
+        vocabulary_keys = vocabulary_keys[:args["max_length"]]
     vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"]).values
     vocabulary_ids = (
         vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
@@ -435,7 +439,7 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     #
 
     # Define a lookup table to convert categorical variables to IDs
-    num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
+    num_oov_buckets = args.get("num_oov_buckets", 1)
     vocabulary_size = len(set(vocabulary_keys))
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
