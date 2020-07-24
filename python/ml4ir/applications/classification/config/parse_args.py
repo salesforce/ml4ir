@@ -22,7 +22,6 @@ class ClassificationArgParser(RelevanceArgParser):
                          + "]",
             monitor_metric=MetricKey.CATEGORICAL_ACCURACY,
             monitor_mode="max",
-            max_sequence_size=25,
             group_metrics_min_queries=25,
             output_name="category_label",
         )
