@@ -3,12 +3,9 @@ import numpy as np
 import random
 import tensorflow as tf
 
-from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.features.preprocessing import get_one_hot_vectorizer
 from ml4ir.base.model.relevance_model import RelevanceModel
 
 class ClassificationModelTest(ClassificationTestBase):
@@ -25,32 +22,18 @@ class ClassificationModelTest(ClassificationTestBase):
         tf.random.set_seed(123)
         random.seed(123)
 
-        feature_config: FeatureConfig = FeatureConfig.get_instance(
-            tfrecord_type=self.args.tfrecord_type,
-            feature_config_dict=self.file_io.read_yaml(feature_config_path),
-            logger=self.logger,
-        )
+        args: Namespace = self.args
+        # Overriding test default setup args from parameters.
+        args.data_dir=data_dir
+        args.data_format=data_format
+        args.feature_config=feature_config_path
+        args.model_config=model_config_path
 
-        preprocessing_keys_to_fns = {
-            "one_hot_vectorize_label": get_one_hot_vectorizer(feature_config.get_label(), self.file_io)
-        }
+        classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
 
-        relevance_dataset = RelevanceDataset(
-            data_dir=data_dir,
-            data_format=data_format,
-            feature_config=feature_config,
-            tfrecord_type=self.args.tfrecord_type,
-            batch_size=self.args.batch_size,
-            preprocessing_keys_to_fns=preprocessing_keys_to_fns,
-            file_io=self.file_io,
-            logger=self.logger
-        )
+        relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
+        classification_model: RelevanceModel = classification_pipeline.get_relevance_model()
 
-        args: Namespace = get_args(["--data_dir", data_dir,
-                                    "--feature_config", feature_config_path,
-                                    "--model_config", model_config_path])
-
-        classification_model: RelevanceModel = ClassificationPipeline(args=args).get_relevance_model()
         classification_model.fit(dataset=relevance_dataset,
                                  num_epochs=5,
                                  models_dir=self.output_dir
