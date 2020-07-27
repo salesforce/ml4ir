@@ -8,6 +8,7 @@ from ml4ir.applications.classification.tests.test_base import ClassificationTest
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 
+
 class ClassificationModelTest(ClassificationTestBase):
     """
     Test end-to-end model training for classification from model retrieved with

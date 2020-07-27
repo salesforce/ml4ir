@@ -19,6 +19,7 @@ from ml4ir.base.pipeline import RelevancePipeline
 
 from typing import Union, List, Type
 
+
 class ClassificationPipeline(RelevancePipeline):
     """
     Pipeline defining the classification models.
