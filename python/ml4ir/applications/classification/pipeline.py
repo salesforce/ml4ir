@@ -39,7 +39,7 @@ class ClassificationPipeline(RelevancePipeline):
         interaction_model: InteractionModel = UnivariateInteractionModel(
             feature_config=self.feature_config,
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
-            tfrecord_type=TFRecordTypeKey.EXAMPLE,
+            tfrecord_type=self.tfrecord_type,
             file_io=self.file_io)
 
         # Define loss object from loss key
