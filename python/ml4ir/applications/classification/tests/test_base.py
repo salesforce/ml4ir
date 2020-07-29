@@ -56,9 +56,14 @@ class ClassificationTestBase(unittest.TestCase):
         # Setting small batch size less than testing data size
         self.args.batch_size = 32
 
+        # Load feature config
+        self.args.feature_config = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
+        self.feature_config = self.file_io.read_yaml(self.args.feature_config)
+
         # Load model_config
-        self.model_config = self.file_io.read_yaml(os.path.join(self.root_data_dir, "configs",
-                                                                self.feature_config_fname))
+        self.args.model_config = os.path.join(self.root_data_dir, "configs", self.model_config_fname)
+        self.model_config = self.file_io.read_yaml(self.args.model_config)
+
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
 
@@ -74,6 +79,26 @@ class ClassificationTestBase(unittest.TestCase):
         # Clear memory
         tf.keras.backend.clear_session()
         gc.collect()
+
+    def get_overridden_args(self, data_format:str = "tfrecord"):
+        """Overriding test default setup args from parameters."""
+        data_dir = os.path.join(self.root_data_dir, data_format)
+        # Fix random seed values for repeatability
+
+        args: Namespace = self.args
+        # Overriding test default setup args from parameters.
+        args.data_dir = data_dir
+        args.data_format = data_format
+        return args
+
+
+    @staticmethod
+    def set_seeds():
+        tf.keras.backend.clear_session()
+        np.random.seed(123)
+        tf.random.set_seed(123)
+        random.seed(123)
+        return
 
 
 if __name__ == "__main__":

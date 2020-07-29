@@ -1,7 +1,5 @@
 import os
 import numpy as np
-import random
-import tensorflow as tf
 
 from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
@@ -15,23 +13,14 @@ class ClassificationModelTest(ClassificationTestBase):
     :func:`~ml4ir.applications.classification.pipeline.ClassificationPipeline.get_relevance_model`
     """
 
-    def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str, model_config_path:str):
+    def run_default_pipeline(self, data_format: str):
         """Train a model with the default set of args"""
         # Fix random seed values for repeatability
-        tf.keras.backend.clear_session()
-        np.random.seed(123)
-        tf.random.set_seed(123)
-        random.seed(123)
+        self.set_seeds()
 
-        args: Namespace = self.args
-        # Overriding test default setup args from parameters.
-        args.data_dir=data_dir
-        args.data_format=data_format
-        args.feature_config=feature_config_path
-        args.model_config=model_config_path
+        args: Namespace = self.get_overridden_args(data_format)
 
         classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
-
         relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
         classification_model: RelevanceModel = classification_pipeline.get_relevance_model()
 
@@ -53,16 +42,8 @@ class ClassificationModelTest(ClassificationTestBase):
         """
         Test model training and evaluate the performance metrics from CSV data
         """
-
         # Test model training on CSV data
-        data_dir = os.path.join(self.root_data_dir, "csv")
-        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
-        model_config_path = os.path.join(self.root_data_dir, "configs", self.model_config_fname)
-
-        metrics = self.run_default_pipeline(
-            data_dir=data_dir, data_format="csv", feature_config_path=feature_config_path,
-            model_config_path=model_config_path
-        )
+        metrics = self.run_default_pipeline(data_format="csv")
 
         # Check if the loss and accuracy on the test set is the same
         assert np.isclose(metrics["loss"], 1.966392993927002, rtol=0.01)

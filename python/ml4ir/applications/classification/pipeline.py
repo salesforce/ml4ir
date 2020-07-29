@@ -84,7 +84,7 @@ class ClassificationPipeline(RelevancePipeline):
         )
         return relevance_model
 
-    def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+    def get_relevance_dataset(self, parse_tfrecord=True, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
         Creates RelevanceDataset
 
@@ -103,7 +103,7 @@ class ClassificationPipeline(RelevancePipeline):
             val_pcent_split=self.args.val_pcent_split,
             test_pcent_split=self.args.test_pcent_split,
             use_part_files=self.args.use_part_files,
-            parse_tfrecord=True,
+            parse_tfrecord=parse_tfrecord,
             file_io=self.local_io,
             logger=self.logger,
         )
