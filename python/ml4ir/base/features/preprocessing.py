@@ -12,10 +12,11 @@ PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
 
 
 class PreprocessingMap:
-    def __init__(self):
+    def __init__(self, feature_config, file_io):
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
-            split_and_pad_string.__name__: split_and_pad_string
+            split_and_pad_string.__name__: split_and_pad_string,
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(feature_config.get_label(), file_io)
             # Add more here
         }
 
@@ -57,7 +58,7 @@ def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
     return feature_tensor
 
 
-def get_one_hot_vectorizer(feature_info, file_io: FileIO):
+def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     """
     Returns a tf function to convert categorical string labels to a one hot encoding.
 
@@ -65,10 +66,16 @@ def get_one_hot_vectorizer(feature_info, file_io: FileIO):
         feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig.
                       See categorical_indicator_with_vocabulary_file, here it is used to read a vocabulary file to
                       create the one hot encoding.
+        file_io: FileIO required to load the vocabulary file.
 
     Returns:
         processed float tensor
     """
+    # Avoid initialization if there is no vocabulary file stated in feature config wrt to label definition.
+    if not ("args" in feature_info.get("feature_layer_info")) or not (
+            "vocabulary_file" in feature_info.get("feature_layer_info")["args"]):
+        return
+
     label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
     label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
     one_hot_vectorizer = tf.keras.Model(inputs=label_str, outputs=label_one_hot)

@@ -152,7 +152,7 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     """
     args = feature_info.get("feature_layer_info")["args"]
 
-    categorical_indices, vocabulary_keys, num_oov_buckets = get_categorical_indices_from_vocabulary(
+    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
         feature_info, feature_tensor, file_io
     )
 
@@ -198,7 +198,7 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     If id field is absent, a unique whole number id is assigned by default
     resulting in a one-to-one mapping
     """
-    categorical_indices, vocabulary_keys, num_oov_buckets = get_categorical_indices_from_vocabulary(
+    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
         feature_info, feature_tensor, file_io
     )
     vocabulary_size = len(set(vocabulary_keys))
@@ -282,7 +282,7 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     #
     ##########################################################################
     #
-    feature_tensor_indices, vocabulary_keys, num_oov_buckets = get_categorical_indices_from_vocabulary(
+    feature_tensor_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
         feature_info, feature_tensor, file_io
     )
 
@@ -302,7 +302,7 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     return categorical_one_hot
 
 
-def get_categorical_indices_from_vocabulary(feature_info, feature_tensor, file_io):
+def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io):
     """
     Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
     And encode the feature_tensor with the vocabulary.

@@ -27,7 +27,6 @@ def preprocess_feature(feature_tensor, feature_info, preprocessing_map):
                 feature_tensor = preprocessing_fn(
                     feature_tensor, **preprocessing_step.get("args", {})
                 )
-
     return feature_tensor
 
 
@@ -270,12 +269,13 @@ def get_parse_fn(
     tfrecord_type: str,
     feature_config: FeatureConfig,
     preprocessing_keys_to_fns: dict,
+    file_io: FileIO,
     max_sequence_size: int = 0,
     required_fields_only: bool = False,
     pad_sequence: bool = True,
 ):
     # Define preprocessing functions
-    preprocessing_map = PreprocessingMap()
+    preprocessing_map = PreprocessingMap(feature_config, file_io)
     preprocessing_map.add_fns(preprocessing_keys_to_fns)
 
     # Generate parsing function
@@ -332,6 +332,7 @@ def read(
     parse_fn = get_parse_fn(
         feature_config=feature_config,
         tfrecord_type=tfrecord_type,
+        file_io=file_io,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         max_sequence_size=max_sequence_size,
     )

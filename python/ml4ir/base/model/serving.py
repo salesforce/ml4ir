@@ -4,6 +4,7 @@ from tensorflow import TensorSpec, TensorArray
 from ml4ir.base.config.keys import ServingSignatureKey
 from ml4ir.base.data.tfrecord_reader import get_parse_fn
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.io.file_io import FileIO
 
 
 def define_default_signature(model, feature_config):
@@ -33,6 +34,7 @@ def define_tfrecord_signature(
     tfrecord_type: str,
     feature_config: FeatureConfig,
     preprocessing_keys_to_fns: dict,
+    file_io: FileIO,
     postprocessing_fn=None,
     required_fields_only: bool = True,
     pad_sequence: bool = False,
@@ -66,6 +68,7 @@ def define_tfrecord_signature(
         feature_config=feature_config,
         tfrecord_type=tfrecord_type,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+        file_io=file_io,
         max_sequence_size=max_sequence_size,
         required_fields_only=required_fields_only,
         pad_sequence=pad_sequence,
@@ -126,6 +129,7 @@ def define_serving_signatures(
     tfrecord_type: str,
     feature_config: FeatureConfig,
     preprocessing_keys_to_fns: dict,
+    file_io: FileIO,
     postprocessing_fn=None,
     required_fields_only: bool = True,
     pad_sequence: bool = False,
@@ -140,6 +144,7 @@ def define_serving_signatures(
             tfrecord_type=tfrecord_type,
             feature_config=feature_config,
             preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+            file_io=file_io,
             postprocessing_fn=postprocessing_fn,
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,

@@ -368,6 +368,7 @@ class RelevanceModel:
                 tfrecord_type=self.tfrecord_type,
                 feature_config=self.feature_config,
                 preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+                file_io=self.file_io,
                 postprocessing_fn=postprocessing_fn,
                 required_fields_only=required_fields_only,
                 pad_sequence=pad_sequence,

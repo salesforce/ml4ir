@@ -47,7 +47,7 @@ class RankingModelTest(RankingTestBase):
     def test_categorical_embedding_to_encoding_bilstm(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
-        obtained through the bytes_sequence_to_encoding_bilstm function
+        obtained through the categorical_embedding_to_encoding_bilstm function
         Works by converting each string into a bytes sequence and then
         passing it through a biLSTM.
 
@@ -92,7 +92,7 @@ class RankingModelTest(RankingTestBase):
     def test_categorical_embedding_to_encoding_bilstm_file_truncation(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
-        obtained through the bytes_sequence_to_encoding_bilstm function
+        obtained through the categorical_embedding_to_encoding_bilstm function
         Works by converting each string into a bytes sequence and then
         passing it through a biLSTM.
 

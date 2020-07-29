@@ -49,7 +49,7 @@ class RankingModelTest(RankingTestBase):
             "default_value": "",
         }
 
-        one_hot_vectorizer = preprocessing.get_one_hot_vectorizer(feature_info, self.file_io)
+        one_hot_vectorizer = preprocessing.get_one_hot_label_vectorizer(feature_info, self.file_io)
 
         # Assert 1st position
         one_hot_labels = one_hot_vectorizer(tf.constant(["AAA"]))
@@ -65,7 +65,6 @@ class RankingModelTest(RankingTestBase):
         one_hot_labels = one_hot_vectorizer(tf.constant(["out of vocabulary"]))
         expected_one_hot_labels = tf.constant([8*[0.] + [1.]])
         assert tf.reduce_all(tf.equal(one_hot_labels, expected_one_hot_labels))
-
 
     def test_split_and_pad_string(self):
         """
