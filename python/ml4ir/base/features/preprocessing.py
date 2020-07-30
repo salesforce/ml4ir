@@ -12,11 +12,10 @@ PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
 
 
 class PreprocessingMap:
-    def __init__(self, feature_config, file_io):
+    def __init__(self):
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
-            "one_hot_vectorize_label": get_one_hot_label_vectorizer(feature_config.get_label(), file_io)
             # Add more here
         }
 
@@ -71,13 +70,10 @@ def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     Returns:
         processed float tensor
     """
-    # Avoid initialization if there is no vocabulary file stated in feature config wrt to label definition.
-    if not ("args" in feature_info.get("feature_layer_info")) or not (
-            "vocabulary_file" in feature_info.get("feature_layer_info")["args"]):
-        return
-
     label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
     label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
+    # FIXME: we should avoid use another keras Model here (we are wrapping two Keras models here, which cause issues at
+    #  saving time).
     one_hot_vectorizer = tf.keras.Model(inputs=label_str, outputs=label_one_hot)
 
     @tf.function

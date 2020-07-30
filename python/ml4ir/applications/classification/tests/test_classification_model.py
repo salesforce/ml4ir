@@ -1,4 +1,3 @@
-import os
 import numpy as np
 
 from ml4ir.applications.classification.pipeline import ClassificationPipeline

@@ -8,6 +8,7 @@ from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
@@ -90,6 +91,11 @@ class ClassificationPipeline(RelevancePipeline):
 
         NOTE: Override this method to create custom dataset objects
         """
+        # Adding one_hot_vectorizer needed for classification.
+        preprocessing_keys_to_fns = {
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io)
+        }
+
         # Prepare Dataset
         relevance_dataset = RelevanceDataset(
             data_dir=self.data_dir_local,
@@ -98,7 +104,7 @@ class ClassificationPipeline(RelevancePipeline):
             tfrecord_type=self.tfrecord_type,
             max_sequence_size=self.args.max_sequence_size,
             batch_size=self.args.batch_size,
-            preprocessing_keys_to_fns={},
+            preprocessing_keys_to_fns=preprocessing_keys_to_fns,
             train_pcent_split=self.args.train_pcent_split,
             val_pcent_split=self.args.val_pcent_split,
             test_pcent_split=self.args.test_pcent_split,
