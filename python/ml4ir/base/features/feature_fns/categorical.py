@@ -5,7 +5,11 @@ from tensorflow import lookup
 
 import copy
 
+from ml4ir.base.features.feature_fns.sequence import get_bilstm_encoding
 from ml4ir.base.io.file_io import FileIO
+
+
+CATEGORICAL_VARIABLE = "categorical_variable"
 
 
 def categorical_embedding_with_hash_buckets(feature_tensor, feature_info, file_io: FileIO):
@@ -98,7 +102,6 @@ def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: Fi
     NOTE:
     string based categorical features should already be converted into numeric indices
     """
-    CATEGORICAL_VARIABLE = "categorical_variable"
     feature_layer_info = feature_info.get("feature_layer_info")
 
     categorical_fc = feature_column.categorical_column_with_identity(
@@ -117,6 +120,212 @@ def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: Fi
     embedding = tf.expand_dims(embedding, axis=1)
 
     return embedding
+
+
+def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_io: FileIO):
+    """
+    Encode a string tensor into categorical embedding.
+    Works by converting the string into a word sequence and then generating a categorical/char embedding for each words
+    based on the List of strings that form the vocabulary set of categorical values, defined by the argument
+    vocabulary_file.
+    The char/byte embeddings are then combined using a biLSTM.
+
+    Args:
+        feature_tensor: String feature tensor that is to be encoded
+        feature_info: Dictionary representing the feature_config for the input feature
+
+    Returns:
+        Encoded feature tensor
+
+    Args under feature_layer_info:
+        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+                        uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length: int; max number of rows to consider from the vocabulary file.
+                        if null, considers the entire file vocabulary.
+        embedding_size: int; dimension size of the embedding;
+                        if null, then the tensor is just converted to its one-hot representation
+        encoding_size: int: dimension size of the sequence encoding computed using a biLSTM
+
+    NOTE:
+        The input dimension for the embedding is fixed to 256 because the string is
+        converted into a bytes sequence.
+    """
+    args = feature_info.get("feature_layer_info")["args"]
+
+    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
+        feature_info, feature_tensor, file_io
+    )
+
+    vocabulary_size = len(set(vocabulary_keys))
+    categorical_embeddings = layers.Embedding(
+        input_dim=vocabulary_size + num_oov_buckets,
+        output_dim=args["embedding_size"],
+        mask_zero=True,
+        input_length=args.get("max_length")
+    )(categorical_indices)
+
+    categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
+    encoding = get_bilstm_encoding(categorical_embeddings, int(args["encoding_size"] / 2))
+    return encoding
+
+
+def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, file_io: FileIO):
+    """
+    Converts a string tensor into a categorical embedding representation.
+    Works by using a vocabulary file to convert the string tensor into categorical indices
+    and then converting the categories into embeddings based on the feature_info.
+
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+
+    Returns:
+        Categorical embedding representation of input feature_tensor
+
+    Args under feature_layer_info:
+        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+                        uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length: int; max number of rows to consider from the vocabulary file.
+                        if null, considers the entire file vocabulary.
+        num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
+                         encode strings into categorical indices
+        embedding_size: int; dimension size of categorical embedding
+
+    NOTE:
+    The vocabulary CSV file must contain two columns - key, id,
+    where the key is mapped to one id thereby resulting in a
+    many-to-one vocabulary mapping.
+    If id field is absent, a unique whole number id is assigned by default
+    resulting in a one-to-one mapping
+    """
+    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
+        feature_info, feature_tensor, file_io
+    )
+    vocabulary_size = len(set(vocabulary_keys))
+    feature_info_new = copy.deepcopy(feature_info)
+    feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
+        vocabulary_size + num_oov_buckets
+    )
+    feature_info_new["feature_layer_info"]["args"]["default_value"] = vocabulary_size
+
+    embedding = categorical_embedding_with_indices(
+        feature_tensor=categorical_indices, feature_info=feature_info_new, file_io=file_io
+    )
+
+    return embedding
+
+
+def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, file_io: FileIO):
+    """
+    Converts a string tensor into a categorical one-hot representation.
+    Works by using a vocabulary file to convert the string tensor into categorical indices
+    and then converting the categories into one-hot representation.
+
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+
+    Returns:
+        Categorical one-hot representation of input feature_tensor
+
+    Args under feature_layer_info:
+        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+                        uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length: int; max number of rows to consider from the vocabulary file.
+                        if null, considers the entire file vocabulary.
+        num_oov_buckets: int - optional; number of out of vocabulary buckets/slots to be used to
+                         encode strings into categorical indices. If not specified, the default is 1.
+
+    NOTE:
+    The vocabulary CSV file must contain two columns - key, id,
+    where the key is mapped to one id thereby resulting in a
+    many-to-one vocabulary mapping.
+    If id field is absent, a unique whole number id is assigned by default
+    resulting in a one-to-one mapping
+    """
+    #
+    ##########################################################################
+    #
+    # NOTE:
+    # Current bug[1] with saving a Keras model when using
+    # feature_column.categorical_column_with_vocabulary_list.
+    # Tracking the issue currently and should be able to upgrade
+    # to current latest stable release 2.2.0 to test.
+    #
+    # Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
+    # custom loss, metric layers
+    #
+    # Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
+    # Keras Functional API models and Tensorflow
+    #
+    # References:
+    # [1] https://github.com/tensorflow/tensorflow/issues/31686
+    # [2] https://github.com/tensorflow/tensorflow/issues/36954
+    # [3] https://github.com/tensorflow/probability/issues/519
+    # [4] https://github.com/tensorflow/tensorflow/issues/35138
+    #
+    # CATEGORICAL_VARIABLE = "categorical_variable"
+    # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
+    #     CATEGORICAL_VARIABLE,
+    #     vocabulary_list=vocabulary_list,
+    #     default_value=feature_layer_info["args"].get("default_value", -1),
+    #     num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
+    # )
+    #
+    # indicator_fc = feature_column.indicator_column(categorical_fc)
+    #
+    # categorical_one_hot = layers.DenseFeatures(
+    #     indicator_fc,
+    #     name="{}_one_hot".format(feature_info.get("node_name", feature_info["name"])),
+    # )({CATEGORICAL_VARIABLE: feature_tensor})
+    # categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
+    #
+    ##########################################################################
+    #
+    feature_tensor_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
+        feature_info, feature_tensor, file_io
+    )
+
+    vocabulary_size = len(set(vocabulary_keys))
+
+    categorical_identity_fc = feature_column.categorical_column_with_identity(
+        CATEGORICAL_VARIABLE, num_buckets=vocabulary_size + num_oov_buckets
+    )
+    indicator_fc = feature_column.indicator_column(categorical_identity_fc)
+
+    categorical_one_hot = layers.DenseFeatures(
+        indicator_fc,
+        name="{}_one_hot".format(feature_info.get("node_name", feature_info["name"])),
+    )({CATEGORICAL_VARIABLE: feature_tensor_indices})
+    categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
+
+    return categorical_one_hot
+
+
+def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io):
+    """
+    Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
+    And encode the feature_tensor with the vocabulary.
+
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+
+    Returns:
+        categorical_indices: tensor; corresponding to encode of the feature_tensor based on the vocabulary.
+        num_oov_buckets: int; applied num_oov_buckets
+        vocabulary_keys: values of the vocabulary stated in the vocabulary_file.
+    """
+    vocabulary_keys, vocabulary_ids = get_vocabulary_info(feature_info, file_io)
+    num_oov_buckets = feature_info.get("feature_layer_info")["args"].get("num_oov_buckets", 1)
+    lookup_table = VocabLookup(
+        vocabulary_keys=vocabulary_keys,
+        vocabulary_ids=vocabulary_ids,
+        num_oov_buckets=num_oov_buckets,
+        feature_name=feature_info.get("node_name", feature_info["name"]),
+    )
+    categorical_indices = lookup_table(feature_tensor)
+    return categorical_indices, vocabulary_keys, num_oov_buckets
 
 
 class VocabLookup(layers.Layer):
@@ -175,197 +384,33 @@ class VocabLookup(layers.Layer):
         return config
 
 
-def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, file_io: FileIO):
+def get_vocabulary_info(feature_info, file_io):
     """
-    Converts a string tensor into a categorical embedding representation.
-    Works by using a vocabulary file to convert the string tensor into categorical indices
-    and then converting the categories into embeddings based on the feature_info.
+    Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
 
     Args:
-        feature_tensor: String feature tensor
         feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-
+            vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+                    uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+            max_length: int; max number of rows to consider from the vocabulary file.
+                    if null, considers the entire file vocabulary.
+            default_value: default stated value in the configure used to replace missing data points.
     Returns:
-        Categorical embedding representation of input feature_tensor
-
-    Args under feature_layer_info:
-        vocabulary_file: str; path to vocabulary CSV file for the input tensor
-        num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
-                         encode strings into categorical indices
-        embedding_size: int; dimension size of categorical embedding
-
-    NOTE:
-    The vocabulary CSV file must contain two columns - key, id,
-    where the key is mapped to one id thereby resulting in a
-    many-to-one vocabulary mapping.
-    If id field is absent, a unique whole number id is assigned by default
-    resulting in a one-to-one mapping
+        vocabulary_keys: values of the vocabulary stated in the vocabulary_file.
+        vocabulary_ids: corresponding encoding ids (values of the vocabulary_keys).
     """
-    feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
-    vocabulary_keys = vocabulary_df["key"].values
+    args = feature_info.get("feature_layer_info")["args"]
+    vocabulary_df = file_io.read_df(args["vocabulary_file"])
+    if "key" in vocabulary_df.columns:
+        vocabulary_keys = vocabulary_df["key"]
+    else:
+        vocabulary_keys = vocabulary_df.iloc[:, 0]
+    if "max_length" in args:
+        vocabulary_keys = vocabulary_keys[:args["max_length"]]
+    if "default_value" in feature_info:
+        vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"])
+    vocabulary_keys = vocabulary_keys.values
     vocabulary_ids = (
         vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
     )
-
-    #
-    ##########################################################################
-    #
-    # NOTE:
-    # Current bug[1] with saving a Keras model when using
-    # feature_column.categorical_column_with_vocabulary_list.
-    # Tracking the issue currently and should be able to upgrade
-    # to current latest stable release 2.2.0 to test.
-    #
-    # Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
-    # custom loss, metric layers
-    #
-    # Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
-    # Keras Functional API models and Tensorflow
-    #
-    # References:
-    # [1] https://github.com/tensorflow/tensorflow/issues/31686
-    # [2] https://github.com/tensorflow/tensorflow/issues/36954
-    # [3] https://github.com/tensorflow/probability/issues/519
-    # [4] https://github.com/tensorflow/tensorflow/issues/35138
-    #
-    # CATEGORICAL_VARIABLE = "categorical_variable"
-    # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
-    #     CATEGORICAL_VARIABLE,
-    #     vocabulary_list=vocabulary_list,
-    #     default_value=feature_layer_info["args"].get("default_value", -1),
-    #     num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
-    # )
-    # embedding_fc = feature_column.embedding_column(
-    #     categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
-    # )
-
-    # embedding = layers.DenseFeatures(
-    #     embedding_fc,
-    #     name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
-    # )({CATEGORICAL_VARIABLE: feature_tensor})
-    # embedding = tf.expand_dims(embedding, axis=1)
-    #
-    ##########################################################################
-    #
-
-    # Define a lookup table to convert categorical variables to IDs
-    num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
-    vocabulary_size = len(set(vocabulary_keys))
-    lookup_table = VocabLookup(
-        vocabulary_keys=vocabulary_keys,
-        vocabulary_ids=vocabulary_ids,
-        num_oov_buckets=num_oov_buckets,
-        feature_name=feature_info.get("node_name", feature_info["name"]),
-    )
-    feature_tensor_indices = lookup_table(feature_tensor)
-
-    feature_info_new = copy.deepcopy(feature_info)
-    feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
-        vocabulary_size + num_oov_buckets
-    )
-    feature_info_new["feature_layer_info"]["args"]["default_value"] = vocabulary_size
-
-    embedding = categorical_embedding_with_indices(
-        feature_tensor=feature_tensor_indices, feature_info=feature_info_new, file_io=file_io
-    )
-
-    return embedding
-
-
-def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, file_io: FileIO):
-    """
-    Converts a string tensor into a categorical one-hot representation.
-    Works by using a vocabulary file to convert the string tensor into categorical indices
-    and then converting the categories into one-hot representation.
-
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-
-    Returns:
-        Categorical one-hot representation of input feature_tensor
-
-    Args under feature_layer_info:
-        vocabulary_file: str; path to vocabulary CSV file for the input tensor
-        num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
-                         encode strings into categorical indices
-
-    NOTE:
-    The vocabulary CSV file must contain two columns - key, id,
-    where the key is mapped to one id thereby resulting in a
-    many-to-one vocabulary mapping.
-    If id field is absent, a unique whole number id is assigned by default
-    resulting in a one-to-one mapping
-    """
-    feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
-    vocabulary_keys = vocabulary_df["key"].fillna(feature_info["default_value"]).values
-    vocabulary_ids = (
-        vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
-    )
-
-    #
-    ##########################################################################
-    #
-    # NOTE:
-    # Current bug[1] with saving a Keras model when using
-    # feature_column.categorical_column_with_vocabulary_list.
-    # Tracking the issue currently and should be able to upgrade
-    # to current latest stable release 2.2.0 to test.
-    #
-    # Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
-    # custom loss, metric layers
-    #
-    # Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
-    # Keras Functional API models and Tensorflow
-    #
-    # References:
-    # [1] https://github.com/tensorflow/tensorflow/issues/31686
-    # [2] https://github.com/tensorflow/tensorflow/issues/36954
-    # [3] https://github.com/tensorflow/probability/issues/519
-    # [4] https://github.com/tensorflow/tensorflow/issues/35138
-    #
-    # CATEGORICAL_VARIABLE = "categorical_variable"
-    # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
-    #     CATEGORICAL_VARIABLE,
-    #     vocabulary_list=vocabulary_list,
-    #     default_value=feature_layer_info["args"].get("default_value", -1),
-    #     num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
-    # )
-    #
-    # indicator_fc = feature_column.indicator_column(categorical_fc)
-    #
-    # categorical_one_hot = layers.DenseFeatures(
-    #     indicator_fc,
-    #     name="{}_one_hot".format(feature_info.get("node_name", feature_info["name"])),
-    # )({CATEGORICAL_VARIABLE: feature_tensor})
-    # categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
-    #
-    ##########################################################################
-    #
-
-    # Define a lookup table to convert categorical variables to IDs
-    num_oov_buckets = feature_layer_info["args"].get("num_oov_buckets", 1)
-    vocabulary_size = len(set(vocabulary_keys))
-    lookup_table = VocabLookup(
-        vocabulary_keys=vocabulary_keys,
-        vocabulary_ids=vocabulary_ids,
-        num_oov_buckets=num_oov_buckets,
-        feature_name=feature_info.get("node_name", feature_info["name"]),
-    )
-    feature_tensor_indices = lookup_table(feature_tensor)
-
-    CATEGORICAL_VARIABLE = "categorical_variable"
-    categorical_identity_fc = feature_column.categorical_column_with_identity(
-        CATEGORICAL_VARIABLE, num_buckets=vocabulary_size + num_oov_buckets
-    )
-    indicator_fc = feature_column.indicator_column(categorical_identity_fc)
-
-    categorical_one_hot = layers.DenseFeatures(
-        indicator_fc,
-        name="{}_one_hot".format(feature_info.get("node_name", feature_info["name"])),
-    )({CATEGORICAL_VARIABLE: feature_tensor_indices})
-    categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
-
-    return categorical_one_hot
+    return vocabulary_keys, vocabulary_ids

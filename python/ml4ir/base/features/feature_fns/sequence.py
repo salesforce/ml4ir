@@ -29,33 +29,40 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
         The input dimension for the embedding is fixed to 256 because the string is
         converted into a bytes sequence.
     """
-    feature_layer_info = feature_info["feature_layer_info"]
+    args = feature_info["feature_layer_info"]["args"]
 
     # Decode string tensor to bytes
     feature_tensor = io.decode_raw(
         feature_tensor,
         out_type=tf.uint8,
-        fixed_length=feature_layer_info["args"].get("max_length", None),
+        fixed_length=args.get("max_length", None),
     )
 
     feature_tensor = tf.squeeze(feature_tensor, axis=1)
-    if "embedding_size" in feature_layer_info["args"]:
+    if "embedding_size" in args:
         char_embedding = layers.Embedding(
             input_dim=256,
-            output_dim=feature_layer_info["args"]["embedding_size"],
+            output_dim=args["embedding_size"],
             mask_zero=True,
-            input_length=feature_layer_info["args"].get("max_length", None),
+            input_length=args.get("max_length", None),
         )(feature_tensor)
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
+    encoding = get_bilstm_encoding(char_embedding, int(args["encoding_size"] / 2))
+
+    return encoding
+
+
+def get_bilstm_encoding(embedding, units):
+    """
+    Builds a bilstm on to on the embedding passed as input.
+    """
     encoding = layers.Bidirectional(
         layers.LSTM(
-            units=int(feature_layer_info["args"]["encoding_size"] / 2), return_sequences=False
+            units=units, return_sequences=False
         ),
         merge_mode="concat",
-    )(char_embedding)
-
+    )(embedding)
     encoding = tf.expand_dims(encoding, axis=1)
-
     return encoding

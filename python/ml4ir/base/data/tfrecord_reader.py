@@ -27,7 +27,6 @@ def preprocess_feature(feature_tensor, feature_info, preprocessing_map):
                 feature_tensor = preprocessing_fn(
                     feature_tensor, **preprocessing_step.get("args", {})
                 )
-
     return feature_tensor
 
 

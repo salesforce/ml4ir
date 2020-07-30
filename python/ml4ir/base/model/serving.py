@@ -4,6 +4,7 @@ from tensorflow import TensorSpec, TensorArray
 from ml4ir.base.config.keys import ServingSignatureKey
 from ml4ir.base.data.tfrecord_reader import get_parse_fn
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.io.file_io import FileIO
 
 
 def define_default_signature(model, feature_config):
@@ -133,8 +134,6 @@ def define_serving_signatures(
 ):
     """Defines all serving signatures for the SavedModel"""
     return {
-        # ServingSignatureKey.DEFAULT: define_default_signature(
-        #     model, feature_config),
         ServingSignatureKey.TFRECORD: define_tfrecord_signature(
             model=model,
             tfrecord_type=tfrecord_type,
