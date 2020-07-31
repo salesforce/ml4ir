@@ -10,7 +10,14 @@ from random import randint
 CSV_TRAIN_FILE_PATH = "data/csv/train/file_0.csv"
 CSV_TEST_FILE_PATH = "data/csv/test/file_0.csv"
 CSV_VALIDATION_FILE_PATH = "data/csv/validation/file_0.csv"
-COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "entity_id"]
+CSV_VOCABULARY_QUERY_FILE_PATH = "data/configs/vocabulary/query_word.csv"
+CSV_VOCABULARY_DOMAIN_ID_FILE_PATH = "data/configs/vocabulary/domain_id.csv"
+CSV_VOCABULARY_ENTITY_FILE_PATH = "data/configs/vocabulary/entity_id.csv"
+
+CSV_DATA_COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "entity_id"]
+CSV_VOCABULARY_QUERY_COLUMNS_HEADER = ["word"]
+CSV_VOCABULARY_DOMAIN_ID_COLUMNS_HEADER = ["domain_id"]
+CSV_VOCABULARY_ENTITY_COLUMNS_HEADER = ["entity"]
 
 VOCABULARY_QUERY = [
     "the", "tragedy", "of", "hamlet", "prince", "denmark", "shakespeare", "homepage", "entire", "play", "act", "i",
@@ -24,6 +31,12 @@ VOCABULARY_QUERY = [
 VOCABULARY_FEATURE_DOMAIN_ID = [char for char in string.ascii_lowercase.upper()]
 VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
 VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
+
+VOCABULARY_PATH_HEADER_DATA = [
+    (CSV_VOCABULARY_QUERY_FILE_PATH, CSV_VOCABULARY_QUERY_COLUMNS_HEADER, VOCABULARY_QUERY),
+    (CSV_VOCABULARY_DOMAIN_ID_FILE_PATH, CSV_VOCABULARY_DOMAIN_ID_COLUMNS_HEADER, VOCABULARY_FEATURE_DOMAIN_ID),
+    (CSV_VOCABULARY_ENTITY_FILE_PATH, CSV_VOCABULARY_ENTITY_COLUMNS_HEADER, VOCABULARY_FEATURE_ENTITY)
+]
 
 TOTAL_DATA_SIZE = 1000
 PARTITION_TRAIN = 0.7
@@ -60,10 +73,19 @@ def generate_csv_test_data():
     ]
 
     for (path, number_rows) in [(CSV_TRAIN_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TRAIN),
-                                (CSV_TEST_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_VALIDATION),
-                                (CSV_VALIDATION_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TEST)]:
-        rows = [COLUMNS_HEADER] + [['query_id_' + str(idx)] + [g.generate_feature() for g in generators]
+                                (CSV_TEST_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_TEST),
+                                (CSV_VALIDATION_FILE_PATH, TOTAL_DATA_SIZE * PARTITION_VALIDATION)]:
+        rows = [CSV_DATA_COLUMNS_HEADER] + [['query_id_' + str(idx)] + [g.generate_feature() for g in generators]
                                    for idx in range(0, int(number_rows))]
+        with open(path, 'w', newline='') as file:
+            writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC)
+            writer.writerows(rows)
+
+
+def generate_csv_vocabulary_data():
+    """Generates vocabulary data under classification/tests/csv folder."""
+    for (path, header, data) in VOCABULARY_PATH_HEADER_DATA:
+        rows = [header] + [[word] for word in data]
         with open(path, 'w', newline='') as file:
             writer = csv.writer(file, quoting=csv.QUOTE_NONNUMERIC)
             writer.writerows(rows)
@@ -71,6 +93,7 @@ def generate_csv_test_data():
 
 def main():
     generate_csv_test_data()
+    generate_csv_vocabulary_data()
     return
 
 

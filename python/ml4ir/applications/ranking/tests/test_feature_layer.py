@@ -44,6 +44,97 @@ class RankingModelTest(RankingTestBase):
         assert sequence_encoding.shape[1] == 1
         assert sequence_encoding.shape[2] == encoding_size
 
+    def test_categorical_embedding_to_encoding_bilstm(self):
+        """
+        Asserts the conversion of a string tensor to its corresponding sequence encoding
+        obtained through the categorical_embedding_to_encoding_bilstm function
+        Works by converting each string into a bytes sequence and then
+        passing it through a biLSTM.
+
+        The embedding and encoding dimensions are controlled by the feature_info
+        """
+        embedding_size = 128
+        encoding_size = 512
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "type": "numeric",
+                "fn": "categorical_embedding_to_encoding_bilstm",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv",
+                    "encoding_type": "bilstm",
+                    "encoding_size": encoding_size,
+                    "embedding_size": embedding_size,
+                },
+            },
+            "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            [[["AAA"]], [["BBB"]], [["AAA"]], [["CCC"]], [["out_of_vocabulary"]]]
+        )
+        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
+            string_tensor, feature_info, self.file_io
+        )
+
+        # Assert the right shapes of the resulting encoding based on the feature_info
+        assert sequence_encoding.shape[0] == len(string_tensor)
+        assert sequence_encoding.shape[1] == 1
+        assert sequence_encoding.shape[2] == encoding_size
+
+        # Strings 0 and 2 should result in the same embedding because they are the same
+        assert tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[2]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[3], sequence_encoding[4]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[1], sequence_encoding[4]))
+
+    def test_categorical_embedding_to_encoding_bilstm_file_truncation(self):
+        """
+        Asserts the conversion of a string tensor to its corresponding sequence encoding
+        obtained through the categorical_embedding_to_encoding_bilstm function
+        Works by converting each string into a bytes sequence and then
+        passing it through a biLSTM.
+
+        The embedding and encoding dimensions are controlled by the feature_info
+        """
+        max_length = 2
+        embedding_size = 128
+        encoding_size = 512
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "type": "numeric",
+                "fn": "categorical_embedding_to_encoding_bilstm",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv",
+                    "encoding_type": "bilstm",
+                    "encoding_size": encoding_size,
+                    "embedding_size": embedding_size,
+                    "max_length": max_length,
+                },
+            },
+            "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            [[["AAA"]], [["BBB"]], [["AAA"]], [["CCC"]], [["out_of_vocabulary"]]]
+        )
+        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
+            string_tensor, feature_info, self.file_io
+        )
+
+        # Assert the right shapes of the resulting encoding based on the feature_info
+        assert sequence_encoding.shape[0] == len(string_tensor)
+        assert sequence_encoding.shape[1] == 1
+        assert sequence_encoding.shape[2] == encoding_size
+
+        assert tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[2]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
+        assert tf.reduce_all(tf.equal(sequence_encoding[3], sequence_encoding[4]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[1], sequence_encoding[4]))
+
     def test_categorical_embedding_with_hash_buckets(self):
         """
         Goal:
