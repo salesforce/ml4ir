@@ -161,7 +161,7 @@ class RankingModelTest(RankingTestBase):
         }
 
         # Define an input string tensor
-        string_tensor = ["group_0", "group_1", "group_0"]
+        string_tensor = ["domain_0", "domain_1", "domain_0"]
 
         categorical_embedding = categorical_fns.categorical_embedding_with_hash_buckets(
             string_tensor, feature_info, self.file_io
@@ -230,7 +230,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
                     "embedding_size": embedding_size,
                     "default_value": -1,
                     "num_oov_buckets": 1,
@@ -240,7 +240,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["group_0", "group_1", "group_0", "group_2", "group_10", "group_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
@@ -257,7 +257,7 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
         assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
 
-        # Strings group_0 and group_2 should result in the same embedding because they are mapped to the same ID
+        # Strings domain_0 and domain_2 should result in the same embedding because they are mapped to the same ID
         assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
@@ -266,7 +266,7 @@ class RankingModelTest(RankingTestBase):
         ########################################################
         feature_info["feature_layer_info"]["args"][
             "vocabulary_file"
-        ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
+        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
             string_tensor, feature_info, self.file_io
@@ -282,9 +282,80 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
         assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
 
-        # Strings group_0 and group_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
+        # Strings domain_0 and domain_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+
+    def categorical_embedding_with_vocabulary_file_and_dropout(self):
+        """
+        Asserts the conversion of a categorical string tensor into an embedding representation
+        Works by converting the string into indices using a vocabulary file and then dropping these indices into the OOV index at dropout_rate rate.
+
+        The embedding size, dropout_rate are controlled by feature_info
+        """
+        #####################################################
+        # Test for vocabulary file with ids mapping specified
+        #####################################################
+        embedding_size = 32
+        dropout_rate = 0.999
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "fn": "categorical_embedding_with_vocabulary_file",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
+                    "embedding_size": embedding_size,
+                    "dropout_rate": dropout_rate,
+                },
+            },
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
+        )
+        try:
+            categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
+                string_tensor, feature_info, self.file_io
+            )
+        except ValueError:
+            # Should throw error as method does not work with IDs containing 0
+            assert True
+
+        ########################################################
+        # Test for vocabulary file with no ids mapping specified
+        ########################################################
+        feature_info["feature_layer_info"]["args"][
+            "vocabulary_file"
+        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
+
+        categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
+        embedding_tensor = categorical_fns.categorical_embedding_with_vocabulary_file(
+            categorcial_tensor, feature_info, self.file_io
+        )
+        model = tf.keras.model(categorcial_tensor, embedding_tensor)
+
+        categorical_embedding = model(string_tensor, training=False)
+
+        # Assert the right shapes of the resulting embedding
+        assert categorical_embedding.shape[0] == len(string_tensor)
+        assert categorical_embedding.shape[1] == 1
+        assert categorical_embedding.shape[2] == embedding_size
+
+        # Strings 0 and 2 should result in the same embedding because they are the same
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
+
+        # Strings domain_0 and domain_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
+
+        categorical_embedding = model(string_tensor, training=True)
+
+        # Since dropout_rate is set to 0.999, all categorical indices
+        # should be masked to OOV index and thus the embeddings should be the same
+        assert tf.reduce_all(tf.equal(categorical_embedding, categorical_embedding[0]))
 
     def test_categorical_indicator_with_vocabulary_file(self):
         """
@@ -302,7 +373,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_indicator_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/group_name_vocab.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
                     "num_oov_buckets": 1,
                 },
             },
@@ -311,7 +382,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["group_0", "group_1", "group_0", "group_2", "group_10", "group_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
@@ -329,7 +400,7 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
         assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
 
-        # Strings group_0 and group_2 should result in the same one-hot vector because they are mapped to the same ID
+        # Strings domain_0 and domain_2 should result in the same one-hot vector because they are mapped to the same ID
         assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
         assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
 
@@ -338,7 +409,7 @@ class RankingModelTest(RankingTestBase):
         ########################################################
         feature_info["feature_layer_info"]["args"][
             "vocabulary_file"
-        ] = "ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv"
+        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
 
         categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
             string_tensor, feature_info, self.file_io
@@ -355,6 +426,6 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
         assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
 
-        # Strings group_0 and group_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
+        # Strings domain_0 and domain_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
         assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
         assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))

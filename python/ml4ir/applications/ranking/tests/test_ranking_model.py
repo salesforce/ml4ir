@@ -75,8 +75,8 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(csv_loss, 0.556431, rtol=0.01)
-        assert np.isclose(csv_mrr, 0.703246, rtol=0.01)
+        assert np.isclose(csv_loss, 0.56748, rtol=0.01)
+        assert np.isclose(csv_mrr, 0.70396, rtol=0.01)
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
@@ -87,8 +87,8 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(tfrecord_loss, 0.556431, rtol=0.01)
-        assert np.isclose(tfrecord_mrr, 0.703246, rtol=0.01)
+        assert np.isclose(tfrecord_loss, 0.56748, rtol=0.01)
+        assert np.isclose(tfrecord_mrr, 0.70396, rtol=0.01)
 
         # Compare CSV and TFRecord loss and accuracies
         assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)

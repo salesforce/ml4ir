@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import feature_column
 from tensorflow import lookup
+from tensorflow.keras import backend as K
 
 import copy
 
@@ -152,16 +153,18 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     """
     args = feature_info.get("feature_layer_info")["args"]
 
-    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
-        feature_info, feature_tensor, file_io
-    )
+    (
+        categorical_indices,
+        vocabulary_keys,
+        num_oov_buckets,
+    ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
 
     vocabulary_size = len(set(vocabulary_keys))
     categorical_embeddings = layers.Embedding(
         input_dim=vocabulary_size + num_oov_buckets,
         output_dim=args["embedding_size"],
         mask_zero=True,
-        input_length=args.get("max_length")
+        input_length=args.get("max_length"),
     )(categorical_indices)
 
     categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
@@ -198,9 +201,11 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     If id field is absent, a unique whole number id is assigned by default
     resulting in a one-to-one mapping
     """
-    categorical_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
-        feature_info, feature_tensor, file_io
-    )
+    (
+        categorical_indices,
+        vocabulary_keys,
+        num_oov_buckets,
+    ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
     vocabulary_size = len(set(vocabulary_keys))
     feature_info_new = copy.deepcopy(feature_info)
     feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
@@ -210,6 +215,83 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
 
     embedding = categorical_embedding_with_indices(
         feature_tensor=categorical_indices, feature_info=feature_info_new, file_io=file_io
+    )
+
+    return embedding
+
+
+def categorical_embedding_with_vocabulary_file_and_dropout(
+    feature_tensor, feature_info, file_io: FileIO
+):
+    """
+    Converts a string tensor into a categorical embedding representation.
+    Works by using a vocabulary file to convert the string tensor into categorical indices
+    and then converting the categories into embeddings based on the feature_info.
+    Also uses a dropout to convert categorical indices to the OOV index of 0 at a rate of dropout_rate
+
+    Args:
+        feature_tensor: String feature tensor
+        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+
+    Returns:
+        Categorical embedding representation of input feature_tensor
+
+    Args under feature_layer_info:
+        vocabulary_file: str; path to vocabulary CSV file for the input tensor
+        dropout_rate: float; rate at which to convert categorical indices to OOV
+        embedding_size: int; dimension size of categorical embedding
+
+    NOTE:
+    The vocabulary CSV file must contain two columns - key, id,
+    where the key is mapped to one id thereby resulting in a
+    many-to-one vocabulary mapping.
+    If id field is absent, a unique natural number id is assigned by default
+    resulting in a one-to-one mapping
+
+    OOV index will be set to 0
+    num_oov_buckets will be 0
+    """
+    feature_layer_info = feature_info.get("feature_layer_info")
+    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
+    vocabulary_keys = vocabulary_df["key"].values
+    vocabulary_ids = (
+        vocabulary_df["id"].values
+        if "id" in vocabulary_df
+        else list(range(1, len(vocabulary_keys) + 1))
+    )
+    if 0 in vocabulary_ids:
+        raise ValueError(
+            "Can not use ID 0 with dropout. Use categorical_embedding_with_vocabulary_file instead."
+        )
+
+    # Define a lookup table to convert categorical variables to IDs
+    vocabulary_size = len(set(vocabulary_keys)) + 1
+    lookup_table = VocabLookup(
+        vocabulary_keys=vocabulary_keys,
+        vocabulary_ids=vocabulary_ids,
+        default_value=0,  # Setting default value to 0 as we will use dropout to mask keys to this OOV value
+        feature_name=feature_info.get("node_name", feature_info["name"]),
+    )
+    feature_tensor_indices = lookup_table(feature_tensor)
+
+    # Mask indices to OOV key of 0 at dropout_rate
+    dropout_rate = feature_layer_info["args"]["dropout_rate"]
+    feature_tensor_indices = tf.cast(feature_tensor_indices, tf.float32)
+    feature_tensor_indices = layers.Dropout(dropout_rate)(feature_tensor_indices)
+    # If dropout is applied, rescale the values to original
+    feature_tensor_indices = tf.cond(
+        pred=K.learning_phase(),  # 0 = test, 1 = train
+        true_fn=lambda: K.round(feature_tensor_indices * (1 - dropout_rate)),
+        false_fn=lambda: feature_tensor_indices,
+    )
+    feature_tensor_indices = tf.cast(feature_tensor_indices, tf.int64)
+
+    feature_info_new = copy.deepcopy(feature_info)
+    feature_info_new["feature_layer_info"]["args"]["num_buckets"] = vocabulary_size
+    feature_info_new["feature_layer_info"]["args"]["default_value"] = 0
+
+    embedding = categorical_embedding_with_indices(
+        feature_tensor=feature_tensor_indices, feature_info=feature_info_new, file_io=file_io
     )
 
     return embedding
@@ -282,9 +364,11 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     #
     ##########################################################################
     #
-    feature_tensor_indices, vocabulary_keys, num_oov_buckets = categorical_indices_from_vocabulary_file(
-        feature_info, feature_tensor, file_io
-    )
+    (
+        feature_tensor_indices,
+        vocabulary_keys,
+        num_oov_buckets,
+    ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
 
     vocabulary_size = len(set(vocabulary_keys))
 
@@ -336,6 +420,7 @@ class VocabLookup(layers.Layer):
     Attributes:
         vocabulary_list: List of strings that form the vocabulary set of categorical values
         num_oov_buckets: Number of buckets to be used for out of vocabulary strings
+        default_value: Default value to be used for OOV values
         feature_name: Name of the input feature tensor
         lookup_table: Tensorflow look up table that maps strings to integer indices
 
@@ -345,12 +430,20 @@ class VocabLookup(layers.Layer):
     Ref: https://github.com/tensorflow/tensorflow/issues/38305
     """
 
-    def __init__(self, vocabulary_keys, vocabulary_ids, num_oov_buckets, feature_name):
+    def __init__(
+        self,
+        vocabulary_keys,
+        vocabulary_ids,
+        num_oov_buckets: int = None,
+        default_value: int = None,
+        feature_name="categorical_variable",
+    ):
         super(VocabLookup, self).__init__(trainable=False, dtype=tf.int64)
         self.vocabulary_keys = vocabulary_keys
         self.vocabulary_ids = vocabulary_ids
         self.vocabulary_size = len(set(vocabulary_ids))
         self.num_oov_buckets = num_oov_buckets
+        self.default_value = default_value
         self.feature_name = feature_name
 
     def build(self, input_shape):
@@ -360,11 +453,26 @@ class VocabLookup(layers.Layer):
             key_dtype=tf.string,
             value_dtype=tf.int64,
         )
-        self.lookup_table = lookup.StaticVocabularyTable(
-            initializer=table_init,
-            num_oov_buckets=self.num_oov_buckets,
-            name="{}_lookup_table".format(self.feature_name),
-        )
+
+        """
+        NOTE:
+        If num_oov_buckets are specified, use a StaticVocabularyTable
+        otherwise, use a StaticHashTable with the specified default_value
+        """
+        if self.num_oov_buckets is not None:
+            self.lookup_table = lookup.StaticVocabularyTable(
+                initializer=table_init,
+                num_oov_buckets=self.num_oov_buckets,
+                name="{}_lookup_table".format(self.feature_name),
+            )
+        elif self.default_value is not None:
+            self.lookup_table = lookup.StaticHashTable(
+                initializer=table_init,
+                default_value=self.default_value,
+                name="{}_lookup_table".format(self.feature_name),
+            )
+        else:
+            raise KeyError("You must specify either num_oov_buckets or default_value")
         self.built = True
 
     def call(self, input_text):
@@ -406,7 +514,7 @@ def get_vocabulary_info(feature_info, file_io):
     else:
         vocabulary_keys = vocabulary_df.iloc[:, 0]
     if "max_length" in args:
-        vocabulary_keys = vocabulary_keys[:args["max_length"]]
+        vocabulary_keys = vocabulary_keys[: args["max_length"]]
     if "default_value" in feature_info:
         vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"])
     vocabulary_keys = vocabulary_keys.values
