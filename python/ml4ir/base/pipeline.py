@@ -193,7 +193,6 @@ class RelevancePipeline(object):
             Ref: https://docs.wandb.com/library/init#save-logs-offline
             """
             os.environ["WANDB_MODE"] = "dryrun"
-            # os.environ["WANDB_API_KEY"] = ...
 
             # Setup wandb
             self.local_io.make_directory(os.path.join(self.logs_dir_local, "wandb"))
