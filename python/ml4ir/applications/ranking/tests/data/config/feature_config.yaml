@@ -152,10 +152,11 @@ features:
       #   hash_bucket_size: 64
       #   embedding_size: 32
       #   merge_mode: concat
-      fn: categorical_embedding_with_vocabulary_file
+      fn: categorical_embedding_with_vocabulary_file_and_dropout
       args:
         vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv'
         embedding_size: 64
+        dropout_rate: 0.3
         default_value: -1
         num_oov_buckets: 1
     serving_info:
@@ -163,3 +164,4 @@ features:
       required: true
       default_value: ""
     tfrecord_type: context
+  

@@ -79,6 +79,13 @@ class RelevancePipeline(object):
             self.local_io.make_directory(dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
             self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
 
+            # Copy model_file if present from HDFS to local file system
+            if self.args.model_file:
+                self.local_io.make_directory(
+                    dir_path=DefaultDirectoryKey.TEMP_MODELS, clear_dir=True
+                )
+                self.file_io.copy_from_hdfs(self.args.model_file, DefaultDirectoryKey.TEMP_MODELS)
+
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
 
@@ -181,13 +188,22 @@ class RelevancePipeline(object):
             # Add feature config information
             config.update(self.feature_config.get_wandb_config())
 
+            """
+            Set the following environment variables to run wandb in offline mode without server
+            Ref: https://docs.wandb.com/library/init#save-logs-offline
+            """
+            os.environ["WANDB_MODE"] = "dryrun"
+            # os.environ["WANDB_API_KEY"] = ...
+
             # Setup wandb
+            self.local_io.make_directory(os.path.join(self.logs_dir_local, "wandb"))
             wandb.init(
                 project="ml4ir",
                 name=self.run_id,
                 notes=self.args.run_notes,
                 group=self.args.run_group,
                 config=config,
+                dir=os.path.join(self.logs_dir_local, "wandb"),
             )
 
             self.logger.info("Setup weights and biases config")
@@ -197,6 +213,7 @@ class RelevancePipeline(object):
         if self.data_format == DataFormatKey.CSV:
             self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
+        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)
 
         if self.args.file_handler == FileHandlerKey.SPARK:
             # Copy logs and models to HDFS
