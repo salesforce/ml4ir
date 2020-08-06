@@ -111,7 +111,7 @@ def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: Fi
         default_value=feature_layer_info["args"].get("default_value", None),
     )
     embedding_fc = feature_column.embedding_column(
-        categorical_fc, dimension=feature_layer_info["args"]["embedding_size"]
+        categorical_fc, dimension=feature_layer_info["args"]["embedding_size"], trainable=True
     )
 
     embedding = layers.DenseFeatures(

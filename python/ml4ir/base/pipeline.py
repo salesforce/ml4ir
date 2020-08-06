@@ -10,6 +10,7 @@ import sys
 import time
 from argparse import Namespace
 from logging import Logger
+import wandb
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -104,6 +105,9 @@ class RelevancePipeline(object):
             logger=self.logger,
         )
 
+        # Setup wandb config
+        self.setup_wandb_config()
+
         # Finished initialization
         self.logger.info("Relevance Pipeline successfully initialized!")
 
@@ -166,6 +170,27 @@ class RelevancePipeline(object):
             )
 
         return self
+
+    def setup_wandb_config(self):
+        if self.args.use_wandb_tracking:
+            config = dict()
+
+            # Add command line script arguments
+            config.update(vars(self.args))
+
+            # Add feature config information
+            config.update(self.feature_config.get_wandb_config())
+
+            # Setup wandb
+            wandb.init(
+                project="ml4ir",
+                name=self.run_id,
+                notes=self.args.run_notes,
+                group=self.args.run_group,
+                config=config,
+            )
+
+            self.logger.info("Setup weights and biases config")
 
     def finish(self):
         # Delete temp data directories
@@ -247,6 +272,7 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
+                    use_wandb_tracking=self.args.use_wandb_tracking,
                 )
 
             if self.args.execution_mode in {
@@ -264,6 +290,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
+                    use_wandb_tracking=self.args.use_wandb_tracking,
                 )
 
             if self.args.execution_mode in {

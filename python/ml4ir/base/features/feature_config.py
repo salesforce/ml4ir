@@ -283,6 +283,38 @@ class FeatureConfig:
         """
         raise NotImplementedError
 
+    def get_wandb_config(self):
+        """Create hyperparameter configs to track in weights and biases"""
+        config = dict()
+
+        config["num_trainable_features"] = len(self.get_train_features())
+
+        for feature_info in self.get_train_features():
+            feature_name = feature_info.get("node_name", feature_info["name"])
+
+            # Track preprocessing arguments
+            if "preprocessing_info" in feature_info:
+                for preprocessing_info in feature_info["preprocessing_info"]:
+                    config.update(
+                        {
+                            "{}_{}_{}".format(feature_name, preprocessing_info["fn"], k): v
+                            for k, v in preprocessing_info["args"].items()
+                        }
+                    )
+
+            # Track feature layer arguments
+            if "feature_layer_info" in feature_info:
+                feature_layer_info = feature_info["feature_layer_info"]
+                if "args" in feature_layer_info:
+                    config.update(
+                        {
+                            "{}_{}".format(feature_name, k): v
+                            for k, v in feature_layer_info["args"].items()
+                        }
+                    )
+
+        return config
+
 
 class ExampleFeatureConfig(FeatureConfig):
     """Feature config overrides for data containing Example protos"""

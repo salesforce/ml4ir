@@ -152,6 +152,17 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--run_group",
+            type=str,
+            default="general",
+            help="Run group defining a meta grouping for the current training run.",
+        )
+
+        self.add_argument(
+            "--run_notes", type=str, default="", help="Notes for the current training run.",
+        )
+
+        self.add_argument(
             "--models_dir",
             type=str,
             default="models/",
@@ -279,6 +290,13 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="local",
             help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
+        )
+
+        self.add_argument(
+            "--use_wandb_tracking",
+            type=bool,
+            default=False,
+            help="Whether to track model performance and hyperparameters using Weights and Biases.",
         )
 
     def set_default_args(self):
