@@ -6,7 +6,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.applications.ranking.config.keys import LossKey
 
 
-def get_loss(loss_key) -> RelevanceLossBase:
+def get_loss(loss_key) -> losses.Loss:
     """
     Factory to get relevance loss related to classification use-case.
     :param loss_key: LossKey.
@@ -18,18 +18,15 @@ def get_loss(loss_key) -> RelevanceLossBase:
         raise NotImplementedError
 
 
-class CategoricalCrossEntropy(RelevanceLossBase):
-
-    def get_loss_fn(self, **kwargs):
+class CategoricalCrossEntropy(losses.CategoricalCrossentropy, RelevanceLossBase):
+    def __init__(self, reduction=losses.Reduction.SUM_OVER_BATCH_SIZE, **kwargs):
         """
         Define a softmax cross entropy loss
         """
-        cce = losses.CategoricalCrossentropy(reduction=losses.Reduction.SUM_OVER_BATCH_SIZE)
+        super().__init__(reduction=reduction)
 
-        def _loss_fn(y_true, y_pred):
-            return cce(y_true, y_pred)
-
-        return _loss_fn
+    def __call__(self, y_true, y_pred, features):
+        return super().__call__(y_true, y_pred)
 
     def get_final_activation_op(self, output_name):
         return lambda logits, mask: layers.Activation("softmax", name=output_name)(logits)

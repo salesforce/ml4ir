@@ -3,27 +3,26 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras.losses import Reduction
 
-from ml4ir.applications.ranking.model.losses.loss_base import PointwiseLossBase
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 
 
-class SigmoidCrossEntropy(PointwiseLossBase):
-    def get_loss_fn(self, **kwargs):
+class SigmoidCrossEntropy(losses.BinaryCrossentropy, RelevanceLossBase):
+    def __init__(self, reduction=Reduction.SUM_OVER_BATCH_SIZE, **kwargs):
+        super(SigmoidCrossEntropy, self).__init__(reduction=reduction, **kwargs)
+
+    def __call__(self, y_true, y_pred, features, **kwargs):
         """
         Define a sigmoid cross entropy loss
         Additionally can pass in record positions to handle positional bias
 
         """
-        bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
-        mask = kwargs.get("mask")
+        # Mask the predictions to ignore padded records
+        mask = features["mask"]
+        masked_indices = tf.where(tf.equal(tf.cast(mask, tf.float32), tf.constant(1.0)))
+        y_true = tf.gather_nd(y_true, masked_indices)
+        y_pred = tf.gather_nd(y_pred, masked_indices)
 
-        def _loss_fn(y_true, y_pred):
-            # Mask the predictions to ignore padded records
-            y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
-            y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
-
-            return bce(y_true, y_pred)
-
-        return _loss_fn
+        return super().__call__(y_true, y_pred)
 
     def get_final_activation_op(self, output_name):
         # Pointwise sigmoid loss

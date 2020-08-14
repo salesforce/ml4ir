@@ -75,6 +75,9 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Check if the loss and accuracy on the test set is the same
+        import pdb
+
+        pdb.set_trace()
         assert np.isclose(csv_loss, 0.56748, rtol=0.01)
         assert np.isclose(csv_mrr, 0.70396, rtol=0.01)
 

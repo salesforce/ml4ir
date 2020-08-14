@@ -7,8 +7,8 @@ from ml4ir.applications.ranking.config.keys import LossKey
 
 def get_loss(loss_key, scoring_type) -> RelevanceLossBase:
     if loss_key == LossKey.SIGMOID_CROSS_ENTROPY:
-        return pointwise_losses.SigmoidCrossEntropy(loss_key=loss_key, scoring_type=scoring_type)
+        return pointwise_losses.SigmoidCrossEntropy()
     elif loss_key == LossKey.RANK_ONE_LISTNET:
-        return listwise_losses.RankOneListNet(loss_key=loss_key, scoring_type=scoring_type)
+        return listwise_losses.RankOneListNet()
     else:
         raise NotImplementedError

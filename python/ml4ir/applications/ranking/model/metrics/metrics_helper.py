@@ -205,8 +205,11 @@ def summarize_grouped_stats(df_grouped):
         if "failure" in col:
             metric_name = col[len("mean_old_") :]
             df_grouped_metrics["perc_improv_mean_{}".format(metric_name)] = (
-                df_grouped_metrics["mean_old_{}".format(metric_name)]
-                - df_grouped_metrics["mean_new_{}".format(metric_name)]
-            ) / df_grouped_metrics["mean_old_{}".format(metric_name)]
+                (
+                    df_grouped_metrics["mean_old_{}".format(metric_name)]
+                    - df_grouped_metrics["mean_new_{}".format(metric_name)]
+                )
+                / df_grouped_metrics["mean_old_{}".format(metric_name)]
+            ) * 100.0
 
     return df_grouped_metrics

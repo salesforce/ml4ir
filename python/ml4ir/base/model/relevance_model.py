@@ -5,6 +5,7 @@ from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
+from tensorflow import keras
 from wandb.keras import WandbCallback
 import pandas as pd
 
@@ -17,6 +18,7 @@ from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
+from ml4ir.base.model.model_wrapper import KerasModelWrapper
 
 from typing import Dict, Optional, List, Union, Type
 
@@ -78,10 +80,9 @@ class RelevanceModel:
             scores, train_features, metadata_features = scorer(inputs)
 
             # Create model with functional Keras API
-            self.model = Model(inputs=inputs, outputs={self.output_name: scores})
-
-            # Get loss fn
-            loss_fn = scorer.loss.get_loss_fn(**metadata_features)
+            self.model = KerasModelWrapper(
+                inputs=inputs, outputs={self.output_name: scores}, output_name=self.output_name
+            )
 
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
@@ -89,16 +90,8 @@ class RelevanceModel:
             )
 
             # Compile model
-            """
-            NOTE:
-            Related Github issue: https://github.com/tensorflow/probability/issues/519
-            """
-            self.model.compile(
-                optimizer=optimizer,
-                loss=loss_fn,
-                metrics=metrics_impl,
-                experimental_run_tf_function=False,
-            )
+            self.model.compile(optimizer=optimizer, loss=scorer.loss, metrics=metrics_impl)
+            # from IPython import embed; embed()
 
             # Write model summary to logs
             model_summary = list()
@@ -314,6 +307,7 @@ class RelevanceModel:
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        use_wandb_tracking: bool = False,
     ):
         """
         Evaluate the ranking model
