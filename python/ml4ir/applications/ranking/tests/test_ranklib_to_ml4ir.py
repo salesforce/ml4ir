@@ -9,8 +9,6 @@ warnings.filterwarnings("ignore")
 
 INPUT_FILE = "ml4ir/applications/ranking/tests/data/csv/ranklib_sample.txt"
 OUTPUT_FILE = "ml4ir/applications/ranking/tests/data/csv/ranklib_sample_ml4ir.csv"
-#INPUT_FILE = "/Users/mzahran/Documents/myFiles/Salesforce_work_temp/MSLR-WEB10K/Fold1/vali_sample.txt"
-#OUTPUT_FILE = "/Users/mzahran/Documents/myFiles/Salesforce_work_temp/MSLR-WEB10K/Fold1/vali_sample_ml4ir.csv"
 QUERY_ID_NAME = 'qid'
 RELEVANCE_NAME = 'relevance'
 KEEP_ADDITIONAL_INFO = 1
