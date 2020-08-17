@@ -7,8 +7,8 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-INPUT_FILE = "ml4ir/applications/ranking/tests/data/csv/ranklib_sample.txt"
-OUTPUT_FILE = "ml4ir/applications/ranking/tests/data/csv/ranklib_sample_ml4ir.csv"
+INPUT_FILE = "ml4ir/applications/ranking/tests/data/sample.txt"
+OUTPUT_FILE = "ml4ir/applications/ranking/tests/data/sample_ml4ir.csv"
 QUERY_ID_NAME = 'qid'
 RELEVANCE_NAME = 'relevance'
 KEEP_ADDITIONAL_INFO = 1
