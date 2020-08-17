@@ -68,6 +68,7 @@ class RelevancePipeline(object):
         self.logger.debug("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
         self.local_io.set_logger(self.logger)
         self.local_io.make_directory(self.models_dir_local, clear_dir=False)
+        self.model_file = self.args.model_file
 
         # Set the file handlers and respective setup
         if self.args.file_handler == FileHandlerKey.LOCAL:
@@ -80,11 +81,14 @@ class RelevancePipeline(object):
             self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
 
             # Copy model_file if present from HDFS to local file system
-            if self.args.model_file:
+            if self.model_file:
                 self.local_io.make_directory(
                     dir_path=DefaultDirectoryKey.TEMP_MODELS, clear_dir=True
                 )
-                self.file_io.copy_from_hdfs(self.args.model_file, DefaultDirectoryKey.TEMP_MODELS)
+                self.file_io.copy_from_hdfs(self.model_file, DefaultDirectoryKey.TEMP_MODELS)
+                self.model_file = os.path.join(
+                    DefaultDirectoryKey.TEMP_MODELS, os.path.basename(self.model_file)
+                )
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
