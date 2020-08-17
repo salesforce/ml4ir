@@ -48,8 +48,8 @@ if __name__ == "__main__":
 
     # parsing arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_file', type=str, default='ml4ir/applications/ranking/tests/data/csv/ranklib_sample.txt', help='ranklib input file path')
-    parser.add_argument('--output_file', type=str, default='ml4ir/applications/ranking/tests/data/csv/ranklib_sample_ml4ir.csv', help='output converted file path')
+    parser.add_argument('--input_file', type=str, default='ml4ir/applications/ranking/tests/data/sample.txt', help='ranklib input file path')
+    parser.add_argument('--output_file', type=str, default='ml4ir/applications/ranking/tests/data/sample_ml4ir.csv', help='output converted file path')
     parser.add_argument('--keep_additional_info', type=int, default=1,
                         help='Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore')
     parser.add_argument('--gl_2_clicks', type=int, default=1,
