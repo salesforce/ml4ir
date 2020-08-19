@@ -286,7 +286,7 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
-    def categorical_embedding_with_vocabulary_file_and_dropout(self):
+    def test_categorical_embedding_with_vocabulary_file_and_dropout(self):
         """
         Asserts the conversion of a categorical string tensor into an embedding representation
         Works by converting the string into indices using a vocabulary file and then dropping these indices into the OOV index at dropout_rate rate.
@@ -296,7 +296,7 @@ class RankingModelTest(RankingTestBase):
         #####################################################
         # Test for vocabulary file with ids mapping specified
         #####################################################
-        embedding_size = 32
+        embedding_size = 4
         dropout_rate = 0.999
         feature_info = {
             "name": "categorical_variable",
@@ -330,10 +330,10 @@ class RankingModelTest(RankingTestBase):
         ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
 
         categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
-        embedding_tensor = categorical_fns.categorical_embedding_with_vocabulary_file(
+        embedding_tensor = categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
             categorcial_tensor, feature_info, self.file_io
         )
-        model = tf.keras.model(categorcial_tensor, embedding_tensor)
+        model = tf.keras.Model(categorcial_tensor, embedding_tensor)
 
         categorical_embedding = model(string_tensor, training=False)
 
@@ -352,7 +352,6 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
         categorical_embedding = model(string_tensor, training=True)
-
         # Since dropout_rate is set to 0.999, all categorical indices
         # should be masked to OOV index and thus the embeddings should be the same
         assert tf.reduce_all(tf.equal(categorical_embedding, categorical_embedding[0]))
