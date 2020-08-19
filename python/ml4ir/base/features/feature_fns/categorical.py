@@ -220,6 +220,33 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     return embedding
 
 
+class CategoricalDropout(layers.Layer):
+    """Custom Dropout class for categorical indices"""
+
+    def __init__(self, dropout_rate, seed=None, **kwargs):
+        """
+        Args:
+            dropout_rate: fraction of units to drop, i.e., set to OOV token 0
+            seed: random seed for sampling
+        """
+        super(CategoricalDropout, self).__init__(**kwargs)
+        self.dropout_rate = dropout_rate
+        self.seed = seed
+
+    def call(self, inputs, training=None):
+        # At training time, mask indices to 0 at dropout_rate
+        return tf.cond(
+            pred=training,
+            true_fn=lambda: tf.math.multiply(
+                tf.cast(
+                    tf.random.uniform(shape=tf.shape(inputs)) >= self.dropout_rate, dtype=tf.int64
+                ),
+                inputs,
+            ),
+            false_fn=lambda: inputs,
+        )
+
+
 def categorical_embedding_with_vocabulary_file_and_dropout(
     feature_tensor, feature_info, file_io: FileIO
 ):
@@ -275,16 +302,9 @@ def categorical_embedding_with_vocabulary_file_and_dropout(
     feature_tensor_indices = lookup_table(feature_tensor)
 
     # Mask indices to OOV key of 0 at dropout_rate
-    dropout_rate = feature_layer_info["args"]["dropout_rate"]
-    feature_tensor_indices = tf.cast(feature_tensor_indices, tf.float32)
-    feature_tensor_indices = layers.Dropout(dropout_rate)(feature_tensor_indices)
-    # If dropout is applied, rescale the values to original
-    feature_tensor_indices = tf.cond(
-        pred=K.learning_phase(),  # 0 = test, 1 = train
-        true_fn=lambda: K.round(feature_tensor_indices * (1 - dropout_rate)),
-        false_fn=lambda: feature_tensor_indices,
-    )
-    feature_tensor_indices = tf.cast(feature_tensor_indices, tf.int64)
+    feature_tensor_indices = CategoricalDropout(
+        dropout_rate=feature_layer_info["args"]["dropout_rate"]
+    )(feature_tensor_indices)
 
     feature_info_new = copy.deepcopy(feature_info)
     feature_info_new["feature_layer_info"]["args"]["num_buckets"] = vocabulary_size
