@@ -235,16 +235,15 @@ class CategoricalDropout(layers.Layer):
 
     def call(self, inputs, training=None):
         # At training time, mask indices to 0 at dropout_rate
-        return tf.cond(
-            pred=training,
-            true_fn=lambda: tf.math.multiply(
+        if training:
+            return tf.math.multiply(
                 tf.cast(
                     tf.random.uniform(shape=tf.shape(inputs)) >= self.dropout_rate, dtype=tf.int64
                 ),
                 inputs,
-            ),
-            false_fn=lambda: inputs,
-        )
+            )
+        else:
+            return inputs
 
 
 def categorical_embedding_with_vocabulary_file_and_dropout(
