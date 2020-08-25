@@ -233,6 +233,11 @@ class CategoricalDropout(layers.Layer):
         self.dropout_rate = dropout_rate
         self.seed = seed
 
+    def get_config(self):
+        config = super(CategoricalDropout, self).get_config()
+        config.update({"dropout_rate": self.dropout_rate, "seed": self.seed})
+        return config
+
     def call(self, inputs, training=None):
         # At training time, mask indices to 0 at dropout_rate
         if training:
