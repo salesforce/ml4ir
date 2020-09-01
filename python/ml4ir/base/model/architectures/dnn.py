@@ -39,8 +39,9 @@ class DNN:
                         vocabulary_keys, vocabulary_ids = get_vocabulary_info(label_feature_info, self.file_io)
                         layer_args["units"] = len(vocabulary_keys) + OOV
                     except:
-                        raise KeyError("units can only not be specified for the last layer, in which can a vocabulary"
-                                       "file must be provided for the label as part for the feature_config.yaml")
+                        raise KeyError("We were not able to find information for the output layer of your DNN. "
+                                       "Try specifying the number of output units either by passing \"units\" in the "
+                                       "model configuration yaml file or units in the feature configuration file.")
                 return layers.Dense(**layer_args)
             elif layer_type == DNNLayer.BATCH_NORMALIZATION:
                 return layers.BatchNormalization(**layer_args)
