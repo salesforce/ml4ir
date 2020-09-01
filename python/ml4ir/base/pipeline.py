@@ -116,8 +116,8 @@ class RelevancePipeline(object):
             logger=self.logger,
         )
 
-        # Setup wandb config
-        self.setup_wandb_config()
+        # Setup experiment tracking configuration
+        self.setup_experiment_tracking_config()
 
         # Finished initialization
         self.logger.info("Relevance Pipeline successfully initialized!")
@@ -182,8 +182,8 @@ class RelevancePipeline(object):
 
         return self
 
-    def setup_wandb_config(self):
-        if self.args.use_wandb_tracking:
+    def setup_experiment_tracking_config(self):
+        if self.args.track_experiment:
             config = dict()
 
             # Add command line script arguments
@@ -310,7 +310,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
-                    use_wandb_tracking=self.args.use_wandb_tracking,
+                    track_experiment=self.args.track_experiment,
                 )
 
             if self.args.execution_mode in {
