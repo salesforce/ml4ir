@@ -25,7 +25,7 @@ class DNNModelTest(ClassificationTestBase):
         dnn = DNN(model_info, feature_config, self.file_io)
         assert(len(dnn.layer_ops) == 2)
         assert(dnn.layer_ops[0].get_config()['units'] == 256)
-        assert(dnn.layer_ops[4].get_config()['units'] == 9)
+        assert(dnn.layer_ops[1].get_config()['units'] == 9)
 
     def test_num_classes_from_vocabulary_file(self):
         feature_config = FeatureConfig(yaml.safe_load('''
@@ -62,7 +62,7 @@ class DNNModelTest(ClassificationTestBase):
         dnn = DNN(model_info, feature_config, self.file_io)
         assert(len(dnn.layer_ops) == 2)
         assert(dnn.layer_ops[0].get_config()['units'] == 256)
-        assert(dnn.layer_ops[4].get_config()['units'] == 9)
+        assert(dnn.layer_ops[1].get_config()['units'] == 9)
 
     def test_drop_out_layers(self):
         feature_config = FeatureConfig(yaml.safe_load('''
