@@ -16,5 +16,4 @@ layers:
     rate: 0.0
   - type: dense
     name: final_dense
-    units: 9
     activation: null
