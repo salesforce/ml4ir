@@ -16,7 +16,7 @@ class PreprocessingMap:
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
-            signed_log.__name__: signed_log
+            natural_log.__name__: natural_log
             # Add more here
         }
 
@@ -122,8 +122,15 @@ def split_and_pad_string(feature_tensor, split_char=",", max_length=20):
 
 
 @tf.function
-def signed_log(feature_tensor, shift=1.0):
-    """Signed log"""
+def natural_log(feature_tensor, shift=1.0):
+    """
+    Compute the signed log of the feature_tensor
+
+    Args:
+        feature_tensor: input feature tensor of type tf.float32
+        shift: floating point shift that is added to the feature tensor element wise before computing natural log
+            (used to handle 0 values)
+    """
     return tf.math.log(tf.add(feature_tensor, tf.cast(tf.constant(shift), tf.float32)))
 
 

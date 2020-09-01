@@ -190,7 +190,7 @@ class RelevancePipeline(object):
             config.update(vars(self.args))
 
             # Add feature config information
-            config.update(self.feature_config.get_wandb_config())
+            config.update(self.feature_config.get_hyperparameter_dict())
 
             """
             Set the following environment variables to run wandb in offline mode without server
@@ -292,7 +292,7 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
-                    use_wandb_tracking=self.args.use_wandb_tracking,
+                    track_experiment=self.args.track_experiment,
                 )
 
             if self.args.execution_mode in {

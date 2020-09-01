@@ -208,7 +208,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
-        use_wandb_tracking=False,
+        track_experiment=False,
     ):
         """
         Trains model for defined number of epochs
@@ -219,6 +219,10 @@ class RelevanceModel:
             models_dir: directory to save model checkpoints
             logs_dir: directory to save model logs
             logging_frequency: every #batches to log results
+            monitor_metric: name of the metric to monitor for early stopping, checkpointing
+            monitor_mode: whether to maximize or minimize the monitoring metric
+            patience: early stopping patience
+            track_experiment: save results of model training and validation
         """
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -230,7 +234,7 @@ class RelevanceModel:
             monitor_mode=monitor_mode,
             monitor_metric=monitor_metric,
             patience=patience,
-            use_wandb_tracking=use_wandb_tracking,
+            track_experiment=track_experiment,
         )
         if self.is_compiled:
             self.model.fit(
@@ -431,7 +435,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
-        use_wandb_tracking=False,
+        track_experiment=False,
     ):
         """
         Build callback hooks for the training loop
@@ -520,8 +524,8 @@ class RelevanceModel:
 
         callbacks_list.append(DebuggingCallback())
 
-        # Weights and Biases Callback
-        if use_wandb_tracking:
+        # Add Weights and Biases experiment tracking callback
+        if track_experiment:
             callbacks_list.append(WandbCallback())
 
         # Add more here

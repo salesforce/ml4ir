@@ -239,7 +239,19 @@ class CategoricalDropout(layers.Layer):
         return config
 
     def call(self, inputs, training=None):
-        # At training time, mask indices to 0 at dropout_rate
+        """
+        At training time, mask indices to 0 at dropout_rate
+
+        This works similar to tf.keras.layers.Dropout without the scaling
+        Ref: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dropout
+
+        Example:
+        inputs: [[1, 2, 3], [4, 1, 2]]
+        dropout_rate = 0.5
+
+        When training, output: [[0, 0, 3], [0, 1, 2]]
+        When testing, output: [[1, 2, 3], [4, 1, 2]]
+        """
         if training:
             return tf.math.multiply(
                 tf.cast(
@@ -283,27 +295,13 @@ def categorical_embedding_with_vocabulary_file_and_dropout(
     num_oov_buckets will be 0
     """
     feature_layer_info = feature_info.get("feature_layer_info")
-    vocabulary_df = file_io.read_df(feature_layer_info["args"]["vocabulary_file"])
-    vocabulary_keys = vocabulary_df["key"].values
-    vocabulary_ids = (
-        vocabulary_df["id"].values
-        if "id" in vocabulary_df
-        else list(range(1, len(vocabulary_keys) + 1))
-    )
-    if 0 in vocabulary_ids:
-        raise ValueError(
-            "Can not use ID 0 with dropout. Use categorical_embedding_with_vocabulary_file instead."
-        )
+    (
+        feature_tensor_indices,
+        vocabulary_keys,
+        num_oov_buckets,
+    ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
 
-    # Define a lookup table to convert categorical variables to IDs
-    vocabulary_size = len(set(vocabulary_keys)) + 1
-    lookup_table = VocabLookup(
-        vocabulary_keys=vocabulary_keys,
-        vocabulary_ids=vocabulary_ids,
-        default_value=0,  # Setting default value to 0 as we will use dropout to mask keys to this OOV value
-        feature_name=feature_info.get("node_name", feature_info["name"]),
-    )
-    feature_tensor_indices = lookup_table(feature_tensor)
+    vocabulary_size = len(set(vocabulary_keys))
 
     # Mask indices to OOV key of 0 at dropout_rate
     feature_tensor_indices = CategoricalDropout(
@@ -425,11 +423,20 @@ def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_
         vocabulary_keys: values of the vocabulary stated in the vocabulary_file.
     """
     vocabulary_keys, vocabulary_ids = get_vocabulary_info(feature_info, file_io)
-    num_oov_buckets = feature_info.get("feature_layer_info")["args"].get("num_oov_buckets", 1)
+    args = feature_info.get("feature_layer_info")["args"]
+
+    if "dropout_rate" in args:
+        default_value = 0  # Default OOV index when using dropout
+        num_oov_buckets = None
+    else:
+        default_value = None
+        num_oov_buckets = args.get("num_oov_buckets", 1)
+
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
         vocabulary_ids=vocabulary_ids,
         num_oov_buckets=num_oov_buckets,
+        default_value=default_value,
         feature_name=feature_info.get("node_name", feature_info["name"]),
     )
     categorical_indices = lookup_table(feature_tensor)
@@ -471,6 +478,10 @@ class VocabLookup(layers.Layer):
         self.feature_name = feature_name
 
     def build(self, input_shape):
+        """
+        Defines a Lookup Table  using a KeyValueTensorInitializer to map the keys to the IDs.
+        Allows definition of two types of lookup tables based on whether the user specifies num_oov_buckets or the default_value
+        """
         table_init = lookup.KeyValueTensorInitializer(
             keys=self.vocabulary_keys,
             values=self.vocabulary_ids,
@@ -542,7 +553,21 @@ def get_vocabulary_info(feature_info, file_io):
     if "default_value" in feature_info:
         vocabulary_keys = vocabulary_keys.fillna(feature_info["default_value"])
     vocabulary_keys = vocabulary_keys.values
-    vocabulary_ids = (
-        vocabulary_df["id"].values if "id" in vocabulary_df else list(range(len(vocabulary_keys)))
-    )
+    if "dropout_rate" in args:
+        # NOTE: If a dropout_rate is specified, then reserve 0 as the OOV index
+        vocabulary_ids = (
+            vocabulary_df["id"].values
+            if "id" in vocabulary_df
+            else list(range(1, len(vocabulary_keys) + 1))
+        )
+        if 0 in vocabulary_ids:
+            raise ValueError(
+                "Can not use ID 0 with dropout. Use categorical_embedding_with_vocabulary_file instead."
+            )
+    else:
+        vocabulary_ids = (
+            vocabulary_df["id"].values
+            if "id" in vocabulary_df
+            else list(range(len(vocabulary_keys)))
+        )
     return vocabulary_keys, vocabulary_ids

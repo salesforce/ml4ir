@@ -155,11 +155,14 @@ class RelevanceArgParser(ArgumentParser):
             "--run_group",
             type=str,
             default="general",
-            help="Run group defining a meta grouping for the current training run.",
+            help="Run group defining a meta grouping to filter different model training runs for best model selection as a post step.",
         )
 
         self.add_argument(
-            "--run_notes", type=str, default="", help="Notes for the current training run.",
+            "--run_notes",
+            type=str,
+            default="",
+            help="Notes for the current training run. Use this argument to add short description of the model training run that helps in identifying the run later.",
         )
 
         self.add_argument(
@@ -293,10 +296,10 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--use_wandb_tracking",
+            "--track_experiment",
             type=bool,
             default=False,
-            help="Whether to track model performance and hyperparameters using Weights and Biases.",
+            help="Whether to track model performance and hyperparameters.",
         )
 
     def set_default_args(self):

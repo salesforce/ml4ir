@@ -283,8 +283,16 @@ class FeatureConfig:
         """
         raise NotImplementedError
 
-    def get_wandb_config(self):
-        """Create hyperparameter configs to track in weights and biases"""
+    def get_hyperparameter_dict(self):
+        """
+        Create hyperparameter configs to track for best model selection
+        Unwraps the feature config for each of the features to add
+        preprocessing_info and feature_layer_info as key value pairs
+        that can be tracked across the experiment. This can be used to
+        identify the values that were set for the different feature layers
+        in a given experiment. Will be used during best model selection and
+        Hyper Parameter Optimization.
+        """
         config = dict()
 
         config["num_trainable_features"] = len(self.get_train_features())
