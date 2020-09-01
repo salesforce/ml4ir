@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from typing import List
+
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.base.io.file_io import FileIO
 
@@ -17,11 +19,11 @@ class DNNLayer:
 
 
 class DNN:
-    def __init__(self, model_config: dict, feature_config: dict, file_io):
+    def __init__(self, model_config: dict, feature_config: FeatureConfig, file_io):
         self.file_io: FileIO = file_io
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
 
-    def define_architecture(self, model_config: dict, feature_config: dict):
+    def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
         """
         Convert the model from model_config to a List of tensorflow.keras.layer
 
