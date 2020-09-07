@@ -7,17 +7,20 @@ from ml4ir.base.config.keys import OptimizerKey
 def get_optimizer(
     optimizer_key: str,
     learning_rate: float,
-    learning_rate_decay: float,
-    learning_rate_decay_steps: int,
-    gradient_clip_value: float,
+    learning_rate_decay: float = 1.0,
+    learning_rate_decay_steps: int = 1000000,
+    gradient_clip_value: float = 1000000,
 ) -> tf_optimizers.Optimizer:
     # Define an exponential learning rate decay schedule
-    learning_rate_schedule = ExponentialDecay(
-        learning_rate,
-        decay_steps=learning_rate_decay_steps,
-        decay_rate=learning_rate_decay,
-        staircase=True,
-    )
+    if learning_rate_decay <= 1.0:
+        learning_rate_schedule = ExponentialDecay(
+            learning_rate,
+            decay_steps=learning_rate_decay_steps,
+            decay_rate=learning_rate_decay,
+            staircase=True,
+        )
+    else:
+        learning_rate_schedule = learning_rate
 
     if optimizer_key == OptimizerKey.ADAM:
         return tf_optimizers.Adam(

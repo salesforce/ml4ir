@@ -38,6 +38,8 @@ class RelevanceModel:
         metrics: List[Union[Type[kmetrics.Metric], str]] = [],
         optimizer: Optional[Optimizer] = None,
         model_file: Optional[str] = None,
+        initialize_layers_dict: dict = {},
+        freeze_layers_list: list = [],
         compile_keras_model: bool = False,
         output_name: str = "score",
         logger=None,
@@ -114,6 +116,18 @@ class RelevanceModel:
                 be the same as the loaded SavedModel
                 """
                 self.load_weights(model_file)
+
+            # Initialize layer weights
+            for layer_name, layer_file in initialize_layers_dict.items():
+                layer = self.model.get_layer(layer_name)
+                layer.set_weights(self.file_io.load_numpy_array(layer_file))
+                self.logger.info("Setting {} weights from {}".format(layer_name, layer_file))
+
+            # Freeze layer weights
+            for layer_name in freeze_layers_list:
+                layer = self.model.get_layer(layer_name)
+                layer.trainable = False
+                self.logger.info("Freezing {} layer".format(layer_name))
 
             self.is_compiled = True
 
@@ -381,6 +395,15 @@ class RelevanceModel:
                 max_sequence_size=self.max_sequence_size,
             ),
         )
+
+        # Save individual layer weights
+        self.file_io.make_directory(os.path.join(model_file, "layers"), clear_dir=True)
+        for layer in self.model.layers:
+            self.file_io.save_numpy_array(
+                np_array=layer.get_weights(),
+                file_path=os.path.join(model_file, "layers", "{}.npy".format(layer.name)),
+            )
+
         self.logger.info("Final model saved to : {}".format(model_file))
 
     def load(self, model_file: str) -> Model:

@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import pandas as pd
+import numpy as np
 import gzip
 import sys
 import csv
@@ -251,3 +252,24 @@ class LocalIO(FileIO):
         if os.path.isfile(file_path):
             os.remove(file_path)
             self.log("File deleted : {}".format(file_path))
+
+    def save_numpy_array(self, np_array, file_path: str, allow_pickle=True, **kwargs):
+        """
+        Save a numpy array to disk
+
+        Args:
+            np_array: Array like numpy object to be saved
+            file_path: file path to save the object to
+            allow_pickle: Allow pickling of objects while saving
+        """
+        np.save(file_path, arr=np_array, allow_pickle=allow_pickle, **kwargs)
+
+    def load_numpy_array(self, file_path, allow_pickle=True, **kwargs):
+        """
+        Load a numpy array from disk
+
+        Args:
+            file_path: file path to load the numpy object from
+            allow_pickle: Allow pickling of objects while loading
+        """
+        return np.load(file_path, allow_pickle=allow_pickle, **kwargs)
