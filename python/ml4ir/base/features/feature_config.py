@@ -285,7 +285,7 @@ class FeatureConfig:
 
     def get_hyperparameter_dict(self):
         """
-        Create hyperparameter configs to track for best model selection
+        Create hyperparameter configs to track model metadata for best model selection
         Unwraps the feature config for each of the features to add
         preprocessing_info and feature_layer_info as key value pairs
         that can be tracked across the experiment. This can be used to

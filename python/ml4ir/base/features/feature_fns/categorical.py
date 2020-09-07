@@ -227,7 +227,10 @@ class CategoricalDropout(layers.Layer):
         """
         Args:
             dropout_rate: fraction of units to drop, i.e., set to OOV token 0
-            seed: random seed for sampling
+            seed: random seed for sampling to mask/drop categorical labels
+
+        Note:
+        We define OOV index to be 0 for this function and when dropout is applied, it converts p% of the values to 0(which is the OOV index). This allows us to train a good average embedding for the OOV token.
         """
         super(CategoricalDropout, self).__init__(**kwargs)
         self.dropout_rate = dropout_rate
@@ -255,7 +258,8 @@ class CategoricalDropout(layers.Layer):
         if training:
             return tf.math.multiply(
                 tf.cast(
-                    tf.random.uniform(shape=tf.shape(inputs)) >= self.dropout_rate, dtype=tf.int64
+                    tf.random.uniform(shape=tf.shape(inputs), seed=self.seed) >= self.dropout_rate,
+                    dtype=tf.int64,
                 ),
                 inputs,
             )
@@ -493,6 +497,8 @@ class VocabLookup(layers.Layer):
         NOTE:
         If num_oov_buckets are specified, use a StaticVocabularyTable
         otherwise, use a StaticHashTable with the specified default_value
+
+        For most cases, StaticVocabularyTable is sufficient. But when we want to use a custom default_value(like in the case of the dropout function), we need to use StaticHashTable.
         """
         if self.num_oov_buckets is not None:
             self.lookup_table = lookup.StaticVocabularyTable(

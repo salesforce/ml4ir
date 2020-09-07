@@ -213,7 +213,7 @@ class RankingModelTest(RankingTestBase):
         assert tf.reduce_all(tf.equal(categorical_embedding[1], categorical_embedding[3]))
         assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[-1]))
 
-    def test_categorical_embedding_with_vocabulary_file(self):
+    def test_categorical_embedding_with_vocabulary_file_with_ids(self):
         """
         Asserts the conversion of a categorical string tensor into a categorical embedding
         Works by converting the string into indices using a vocabulary file and then
@@ -221,9 +221,6 @@ class RankingModelTest(RankingTestBase):
 
         The embedding dimensions, buckets, etc are controlled by the feature_info
         """
-        #####################################################
-        # Test for vocabulary file with ids mapping specified
-        #####################################################
         embedding_size = 32
         feature_info = {
             "name": "categorical_variable",
@@ -261,12 +258,32 @@ class RankingModelTest(RankingTestBase):
         assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
-        ########################################################
-        # Test for vocabulary file with no ids mapping specified
-        ########################################################
-        feature_info["feature_layer_info"]["args"][
-            "vocabulary_file"
-        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
+    def test_categorical_embedding_with_vocabulary_file_without_ids(self):
+        """
+        Asserts the conversion of a categorical string tensor into a categorical embedding
+        Works by converting the string into indices using a vocabulary file and then
+        converting the indices into categorical embeddings
+
+        The embedding dimensions, buckets, etc are controlled by the feature_info
+        """
+        embedding_size = 32
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "fn": "categorical_embedding_with_vocabulary_file",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "embedding_size": embedding_size,
+                    "default_value": -1,
+                    "num_oov_buckets": 1,
+                },
+            },
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
+        )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
             string_tensor, feature_info, self.file_io
@@ -286,16 +303,13 @@ class RankingModelTest(RankingTestBase):
         assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
         assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
-    def test_categorical_embedding_with_vocabulary_file_and_dropout(self):
+    def test_categorical_embedding_with_vocabulary_file_with_ids_and_dropout(self):
         """
         Asserts the conversion of a categorical string tensor into an embedding representation
         Works by converting the string into indices using a vocabulary file and then dropping these indices into the OOV index at dropout_rate rate.
 
         The embedding size, dropout_rate are controlled by feature_info
         """
-        #####################################################
-        # Test for vocabulary file with ids mapping specified
-        #####################################################
         embedding_size = 4
         dropout_rate = 0.999
         feature_info = {
@@ -314,20 +328,43 @@ class RankingModelTest(RankingTestBase):
         string_tensor = tf.constant(
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
+
+        value_error_raised = False
         try:
-            categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
+            categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
                 string_tensor, feature_info, self.file_io
             )
         except ValueError:
             # Should throw error as method does not work with IDs containing 0
-            assert True
+            value_error_raised = True
 
-        ########################################################
-        # Test for vocabulary file with no ids mapping specified
-        ########################################################
-        feature_info["feature_layer_info"]["args"][
-            "vocabulary_file"
-        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
+        assert value_error_raised
+
+    def test_categorical_embedding_with_vocabulary_file_without_ids_and_dropout(self):
+        """
+        Asserts the conversion of a categorical string tensor into an embedding representation
+        Works by converting the string into indices using a vocabulary file and then dropping these indices into the OOV index at dropout_rate rate.
+
+        The embedding size, dropout_rate are controlled by feature_info
+        """
+        embedding_size = 4
+        dropout_rate = 0.999
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "fn": "categorical_embedding_with_vocabulary_file",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "embedding_size": embedding_size,
+                    "dropout_rate": dropout_rate,
+                },
+            },
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
+        )
 
         categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
         embedding_tensor = categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
@@ -356,7 +393,7 @@ class RankingModelTest(RankingTestBase):
         # should be masked to OOV index and thus the embeddings should be the same
         assert tf.reduce_all(tf.equal(categorical_embedding, categorical_embedding[0]))
 
-    def test_categorical_indicator_with_vocabulary_file(self):
+    def test_categorical_indicator_with_vocabulary_file_with_ids(self):
         """
         Asserts the conversion of a categorical string tensor into a one-hot representation
         Works by converting the string into indices using a vocabulary file and then
@@ -364,9 +401,6 @@ class RankingModelTest(RankingTestBase):
 
         The one-hot vector dimensions, buckets, etc are controlled by the feature_info
         """
-        #####################################################
-        # Test for vocabulary file with ids mapping specified
-        #####################################################
         feature_info = {
             "name": "categorical_variable",
             "feature_layer_info": {
@@ -403,12 +437,30 @@ class RankingModelTest(RankingTestBase):
         assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
         assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
 
-        ########################################################
-        # Test for vocabulary file with no ids mapping specified
-        ########################################################
-        feature_info["feature_layer_info"]["args"][
-            "vocabulary_file"
-        ] = "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv"
+    def test_categorical_indicator_with_vocabulary_file_without_ids(self):
+        """
+        Asserts the conversion of a categorical string tensor into a one-hot representation
+        Works by converting the string into indices using a vocabulary file and then
+        converting the indices into one-hot vectors
+
+        The one-hot vector dimensions, buckets, etc are controlled by the feature_info
+        """
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "fn": "categorical_indicator_with_vocabulary_file",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "num_oov_buckets": 1,
+                },
+            },
+            "default_value": "",
+        }
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
+        )
 
         categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
             string_tensor, feature_info, self.file_io
