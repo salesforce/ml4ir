@@ -102,7 +102,7 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: bytes_sequence_encoding_bigru
+      fn: bytes_sequence_to_encoding_bilstm
       args:
         encoding_type: bilstm
         encoding_size: 128
