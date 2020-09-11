@@ -42,13 +42,12 @@ class TensorFlowInferenceTest extends TestData {
         docScore > maskedScore
       )
     }
-    /*    assertTrue(
-      "second doc should score better than first",
-      scores(1) > scores(0)
-    )*/
-    println(query.toString)
-    println(sequenceExample.toString)
-    println("scores: " + scores.mkString(", "))
+    println("input, as java object:")
+    println("\n" + query.toString)
+    println("as TFRecord:")
+    println("\n" + sequenceExample.toString)
+    println("scores: ")
+    println("\n" + scores.mkString(", "))
   }
 
   @Test
