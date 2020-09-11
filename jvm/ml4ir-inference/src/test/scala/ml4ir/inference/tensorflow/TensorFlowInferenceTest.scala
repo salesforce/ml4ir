@@ -24,7 +24,7 @@ class TensorFlowInferenceTest extends TestData {
 
   def pathFor(name: String) = classLoader.getResource(name).getPath
 
-  def validateScores(scores: Array[Float], numDocs: Int) = {
+  def validateScores(sequenceExample: SequenceExample, scores: Array[Float], numDocs: Int) = {
     val docScores = scores.take(numDocs)
     val maskedScores = scores.drop(numDocs)
     docScores.foreach(
@@ -43,7 +43,8 @@ class TensorFlowInferenceTest extends TestData {
       "second doc should score better than first",
       scores(1) > scores(0)
     )*/
-    println(scores.mkString(", "))
+    println(sequenceExample.toString)
+    println("scores: " + scores.mkString(", "))
   }
 
   @Test
@@ -64,16 +65,16 @@ class TensorFlowInferenceTest extends TestData {
                                                                              ImmutableMap.of(),
                                                                              ImmutableMap.of())
 
-    sampleQueryContexts.foreach { queryContext: Map[String, String] =>
+    sampleQueryContexts.take(1).foreach { queryContext: Map[String, String] =>
       val proto = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
       val scores = bundleExecutor(proto)
-      validateScores(scores, sampleDocumentExamples.length)
+      validateScores(proto, scores, sampleDocumentExamples.length)
     }
   }
 
   @Test
   def testSavedModelBundleWithCSVData(): Unit = {
-    val allScores = runQueriesAgainstDocs(
+    val allScores: Iterable[(SequenceExample, Array[Float])] = runQueriesAgainstDocs(
       pathFor("file_0.csv"),
       pathFor("activate_model_bundle"),
       pathFor("activate_feature_config.yaml"),
@@ -81,7 +82,10 @@ class TensorFlowInferenceTest extends TestData {
       "StatefulPartitionedCall_1"
     )
 
-    allScores.foreach(scores => validateScores(scores, scores.length))
+    allScores.foreach {
+      case (sequenceExample: SequenceExample, scores: Array[Float]) =>
+        validateScores(sequenceExample, scores, scores.length)
+    }
   }
 
   /**
@@ -98,16 +102,18 @@ class TensorFlowInferenceTest extends TestData {
                             modelPath: String,
                             featureConfigPath: String,
                             inputTFNode: String,
-                            scoresTFNode: String): Iterable[Array[Float]] = {
+                            scoresTFNode: String): Iterable[(SequenceExample, Array[Float])] = {
     val featureConfig = ModelFeaturesConfig.load(featureConfigPath)
     val sequenceExampleBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(featureConfig)
     val rankingModelConfig = ModelExecutorConfig(inputTFNode, scoresTFNode)
-    val rankingModelExecutor = new RankingModelExecutor(modelPath, rankingModelConfig, sequenceExampleBuilder)
+    val rankingModel = new SavedModelBundleExecutor(modelPath, rankingModelConfig)
 
     val queryContextsAndDocs = StringMapCSVLoader.loadDataFromCSV(csvDataPath, featureConfig)
     assertTrue("attempting to test empty query set!", queryContextsAndDocs.nonEmpty)
     queryContextsAndDocs.map {
-      case StringMapQueryContextAndDocs(queryContext, docs) => rankingModelExecutor.score(queryContext, docs)
+      case StringMapQueryContextAndDocs(queryContext, docs) =>
+        val sequenceExample = sequenceExampleBuilder.build(queryContext, docs)
+        (sequenceExample, rankingModel(sequenceExample))
     }
   }
 
