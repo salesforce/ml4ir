@@ -42,7 +42,7 @@ object StringMapCSVLoader {
     val data: List[Map[String, String]] = dataLines.map(lineMapper)
 
     def featureSet(featType: String) =
-      featureConfig.features.filter(_.tfRecordType.equalsIgnoreCase(featType)).map(_.nodeName).toSet
+      featureConfig.features.filter(_.tfRecordType.equalsIgnoreCase(featType)).map(_.servingConfig.servingName).toSet
     val contextFeatures = featureSet("context")
     val sequenceFeatures = featureSet("sequence")
 

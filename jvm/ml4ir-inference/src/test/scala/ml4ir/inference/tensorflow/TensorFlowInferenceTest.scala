@@ -73,7 +73,6 @@ class TensorFlowInferenceTest extends TestData {
 
   @Test
   def testSavedModelBundleWithCSVData(): Unit = {
-
     val allScores = runQueriesAgainstDocs(
       pathFor("file_0.csv"),
       pathFor("activate_model_bundle"),
