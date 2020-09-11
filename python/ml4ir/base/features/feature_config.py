@@ -376,6 +376,8 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
         # Feature to capture the rank of the records for a query
         self.rank = None
+        # Feature to track padded records
+        self.mask = None
         # Features that contain information at the query level common to all records
         self.context_features = list()
         # Features that contain information at the record level
@@ -390,9 +392,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             self.rank = None
             if self.logger:
                 self.logger.warning("'rank' key not found in the feature_config specified")
-
-        self.mask = self.generate_mask()
-        self.all_features.append(self.get_mask())
 
     def define_features(self):
         for feature_info in self.all_features:
@@ -421,6 +420,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
             if feature_info.get("is_secondary_label", False):
                 self.secondary_labels.append(feature_info)
+
+        self.mask = self.generate_mask()
+        self.all_features.append(self.get_mask())
 
     def get_context_features(self, key: str = None):
         """
