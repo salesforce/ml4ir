@@ -16,5 +16,4 @@ class RankingModelExecutor[Q, S](modelPath: String,
   }
 
   def score(queryContext: Q, docs: java.util.List[S]): Array[Float] = apply(queryContext, docs.asScala.toList)
-
 }
