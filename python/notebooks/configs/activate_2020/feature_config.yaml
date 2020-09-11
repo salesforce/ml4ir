@@ -85,7 +85,6 @@ features:
     trainable: false
     dtype: float
     log_at_inference: true
-    is_secondary_label: true
     feature_layer_info:
       type: numeric
       shape: null
@@ -117,25 +116,6 @@ features:
       name: q
       required: true
       default_value: ""
-    tfrecord_type: context
-  - name: domain_id
-    node_name: domain_id
-    trainable: true
-    dtype: int64
-    log_at_inference: false
-    is_group_metric_key: true
-    feature_layer_info:
-      type: numeric
-      shape: null
-      fn: categorical_embedding_with_indices
-      args:
-        num_buckets: 8
-        embedding_size: 64
-        default_value: null
-    serving_info:
-      name: domainID
-      required: true
-      default_value: 0
     tfrecord_type: context
   - name: domain_name
     node_name: domain_name
