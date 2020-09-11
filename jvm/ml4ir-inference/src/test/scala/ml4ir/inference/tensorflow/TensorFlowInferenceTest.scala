@@ -43,9 +43,9 @@ class TensorFlowInferenceTest extends TestData {
       )
     }
     println("input, as java object:")
-    println("\n" + query.toString)
+    println("\n" + query.toString + "\n")
     println("as TFRecord:")
-    println("\n" + sequenceExample.toString)
+    println("\n" + sequenceExample.toString + "\n")
     println("scores: ")
     println("\n" + scores.mkString(", "))
   }
