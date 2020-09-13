@@ -1,4 +1,3 @@
-import sys
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer

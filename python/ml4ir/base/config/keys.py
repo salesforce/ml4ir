@@ -37,6 +37,7 @@ class DataFormatKey(Key):
 
     CSV = "csv"
     TFRECORD = "tfrecord"
+    RANKLIB = "ranklib"
 
 
 class DataSplitKey(Key):

@@ -91,6 +91,18 @@ class RelevancePipeline(object):
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type
 
+        if args.data_format == DataFormatKey.RANKLIB:
+            try:
+                self.gl_2_clicks = args.gl_2_clicks
+                self.non_zero_features_only = args.non_zero_features_only
+                self.keep_additional_info = args.keep_additional_info
+            except:
+                self.gl_2_clicks = 1
+                self.non_zero_features_only = 0
+                self.keep_additional_info = 0
+
+
+
         # Validate args
         self.validate_args()
 
@@ -207,7 +219,11 @@ class RelevancePipeline(object):
             parse_tfrecord=True,
             file_io=self.local_io,
             logger=self.logger,
+            gl_2_clicks=self.gl_2_clicks,
+            non_zero_features_only=self.non_zero_features_only,
+            keep_additional_info=self.keep_additional_info,
         )
+
 
         return relevance_dataset
 

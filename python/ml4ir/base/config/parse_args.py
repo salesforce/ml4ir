@@ -281,6 +281,27 @@ class RelevanceArgParser(ArgumentParser):
             help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
         )
 
+        self.add_argument(
+            "--gl_2_clicks",
+            type=int,
+            default=1,
+            help="Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert",
+        )
+
+        self.add_argument(
+            "--non_zero_features_only",
+            type=int,
+            default=0,
+            help="Only non zero features are stored. 1 for yes, 0 otherwise",
+        )
+
+        self.add_argument(
+            "--keep_additional_info",
+            type=int,
+            default=0,
+            help="Option to keep additional info (All info after the '#' in the format [key = val]). 1 to keep, 0 to ignore",
+        )
+
     def set_default_args(self):
         pass
 
