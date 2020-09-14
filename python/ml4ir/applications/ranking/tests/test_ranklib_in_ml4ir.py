@@ -12,7 +12,7 @@ from ml4ir.base.io import file_io, local_io
 
 warnings.filterwarnings("ignore")
 
-INPUT_DIR = "ml4ir/applications/ranking/tests/data/"
+INPUT_DIR = "ml4ir/applications/ranking/tests/data/ranklib_test_data/"
 QUERY_ID_NAME = 'qid'
 RELEVANCE_NAME = 'relevance'
 KEEP_ADDITIONAL_INFO = 0
