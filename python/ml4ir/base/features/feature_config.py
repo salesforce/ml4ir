@@ -283,6 +283,46 @@ class FeatureConfig:
         """
         raise NotImplementedError
 
+    def get_hyperparameter_dict(self):
+        """
+        Create hyperparameter configs to track model metadata for best model selection
+        Unwraps the feature config for each of the features to add
+        preprocessing_info and feature_layer_info as key value pairs
+        that can be tracked across the experiment. This can be used to
+        identify the values that were set for the different feature layers
+        in a given experiment. Will be used during best model selection and
+        Hyper Parameter Optimization.
+        """
+        config = dict()
+
+        config["num_trainable_features"] = len(self.get_train_features())
+
+        for feature_info in self.get_train_features():
+            feature_name = feature_info.get("node_name", feature_info["name"])
+
+            # Track preprocessing arguments
+            if "preprocessing_info" in feature_info:
+                for preprocessing_info in feature_info["preprocessing_info"]:
+                    config.update(
+                        {
+                            "{}_{}_{}".format(feature_name, preprocessing_info["fn"], k): v
+                            for k, v in preprocessing_info["args"].items()
+                        }
+                    )
+
+            # Track feature layer arguments
+            if "feature_layer_info" in feature_info:
+                feature_layer_info = feature_info["feature_layer_info"]
+                if "args" in feature_layer_info:
+                    config.update(
+                        {
+                            "{}_{}".format(feature_name, k): v
+                            for k, v in feature_layer_info["args"].items()
+                        }
+                    )
+
+        return config
+
 
 class ExampleFeatureConfig(FeatureConfig):
     """Feature config overrides for data containing Example protos"""

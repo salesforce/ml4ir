@@ -8,6 +8,9 @@ from ml4ir.base.features.feature_fns.categorical import categorical_embedding_to
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_hash_buckets
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_indices
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_vocabulary_file
+from ml4ir.base.features.feature_fns.categorical import (
+    categorical_embedding_with_vocabulary_file_and_dropout,
+)
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -21,6 +24,7 @@ class FeatureLayerMap:
             categorical_embedding_with_hash_buckets.__name__: categorical_embedding_with_hash_buckets,
             categorical_embedding_with_indices.__name__: categorical_embedding_with_indices,
             categorical_embedding_with_vocabulary_file.__name__: categorical_embedding_with_vocabulary_file,
+            categorical_embedding_with_vocabulary_file_and_dropout.__name__: categorical_embedding_with_vocabulary_file_and_dropout,
         }
 
     def add_fn(self, key, fn):

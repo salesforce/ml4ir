@@ -107,6 +107,7 @@ class DefaultDirectoryKey(Key):
     LOGS = "logs"
     DATA = "data"
     TEMP_DATA = "data/temp"
+    TEMP_MODELS = "models/temp"
 
 
 class FileHandlerKey(Key):

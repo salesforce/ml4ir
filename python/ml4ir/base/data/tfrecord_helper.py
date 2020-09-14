@@ -40,6 +40,9 @@ def get_example_proto(row, features):
     Args:
         - row: pandas DataFrame row
         - features: configuration for all features
+
+    Returns
+        Example object
     """
 
     features_dict = dict()
@@ -68,6 +71,9 @@ def get_sequence_example_proto(group, context_features, sequence_features):
         - group: pandas dataframe group
         - context_features: feature configuration for context
         - sequence_features: feature configuration for sequence
+
+    Returns
+        SequenceExample object
     """
     sequence_features_dict = dict()
     context_features_dict = dict()

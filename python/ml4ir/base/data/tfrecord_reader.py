@@ -206,7 +206,7 @@ def make_sequence_example_parse_fn(
                     )
 
                 mask = tf.cond(
-                    tf.shape(mask)[1] < max_sequence_size,
+                    tf.shape(mask)[1] <= max_sequence_size,
                     # Pad if there are missing sequence
                     lambda: image.pad_to_bounding_box(
                         mask,

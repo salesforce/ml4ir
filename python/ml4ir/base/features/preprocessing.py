@@ -16,6 +16,7 @@ class PreprocessingMap:
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
+            natural_log.__name__: natural_log
             # Add more here
         }
 
@@ -109,14 +110,28 @@ def split_and_pad_string(feature_tensor, split_char=",", max_length=20):
         could returns the padded tokens ['AAA', 'BBB', 'CCC', '', '']
     """
     tokens = tf.strings.split(feature_tensor, sep=split_char).to_tensor()
-    padded_tokens = tf.image.pad_to_bounding_box(tf.expand_dims(tokens[:, :max_length], axis=-1),
-                                              offset_height=0,
-                                              offset_width=0,
-                                              target_height=1,
-                                              target_width=max_length)
+    padded_tokens = tf.image.pad_to_bounding_box(
+        tf.expand_dims(tokens[:, :max_length], axis=-1),
+        offset_height=0,
+        offset_width=0,
+        target_height=1,
+        target_width=max_length,
+    )
     padded_tokens = tf.squeeze(padded_tokens, axis=-1)
     return padded_tokens
 
+
+@tf.function
+def natural_log(feature_tensor, shift=1.0):
+    """
+    Compute the signed log of the feature_tensor
+
+    Args:
+        feature_tensor: input feature tensor of type tf.float32
+        shift: floating point shift that is added to the feature tensor element wise before computing natural log
+            (used to handle 0 values)
+    """
+    return tf.math.log(tf.add(feature_tensor, tf.cast(tf.constant(shift), tf.float32)))
 
 
 ##########################################

@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow import data
 import os
 import pandas as pd
+import wandb
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
@@ -57,6 +58,7 @@ class RankingModel(RelevanceModel):
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        track_experiment: bool = False,
     ):
         """
         Evaluate the ranking model
@@ -64,9 +66,11 @@ class RankingModel(RelevanceModel):
         Args:
             test_dataset: an instance of tf.data.dataset
             inference_signature: If using a SavedModel for prediction, specify the inference signature
+            additional_features: Additional post processing feature functions as key value pairs
+            group_metrics_min_queries: Minimum number of queries per group to be used for group aggregate metrics
+            logs_dir: Directory to log the predictions and metrics
             logging_frequency: integer representing how often(in batches) to log status
-            metric_group_keys: list of fields to compute group based metrics on
-            save_to_file: set to True to save predictions to file like self.predict()
+            track_experiment: Boolean to determine if weights and biases tracking should be used
 
         Returns:
             metrics and groupwise metrics as pandas DataFrames
@@ -128,6 +132,12 @@ class RankingModel(RelevanceModel):
         df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
         self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
 
+        # Log metrics to weights and biases
+        if track_experiment:
+            wandb.run.summary.update(
+                {"test_{}".format(k): v for k, v in df_overall_metrics.to_dict().items()}
+            )
+
         df_group_metrics = None
         df_group_metrics_summary = None
         if group_metrics_keys:
@@ -154,6 +164,15 @@ class RankingModel(RelevanceModel):
                 )
             )
             self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
+
+            # Log metrics to weights and biases
+            if track_experiment:
+                wandb.run.summary.update(
+                    {
+                        "test_group_mean_{}".format(k): v
+                        for k, v in df_group_metrics_summary.T["mean"].to_dict().items()
+                    }
+                )
 
         return df_overall_metrics, df_group_metrics
 

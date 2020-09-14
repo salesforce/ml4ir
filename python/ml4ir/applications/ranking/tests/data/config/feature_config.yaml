@@ -146,15 +146,9 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      # fn: categorical_embedding_with_hash_buckets
-      # args:
-      #   num_hash_buckets: 4
-      #   hash_bucket_size: 64
-      #   embedding_size: 32
-      #   merge_mode: concat
       fn: categorical_embedding_with_vocabulary_file
       args:
-        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/group_name_vocab_no_id.csv'
+        vocabulary_file: 'ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv'
         embedding_size: 64
         default_value: -1
         num_oov_buckets: 1
@@ -163,3 +157,4 @@ features:
       required: true
       default_value: ""
     tfrecord_type: context
+  

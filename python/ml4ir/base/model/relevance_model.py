@@ -5,6 +5,7 @@ from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
+from wandb.keras import WandbCallback
 import pandas as pd
 
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -207,6 +208,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
+        track_experiment=False,
     ):
         """
         Trains model for defined number of epochs
@@ -217,6 +219,10 @@ class RelevanceModel:
             models_dir: directory to save model checkpoints
             logs_dir: directory to save model logs
             logging_frequency: every #batches to log results
+            monitor_metric: name of the metric to monitor for early stopping, checkpointing
+            monitor_mode: whether to maximize or minimize the monitoring metric
+            patience: early stopping patience
+            track_experiment: save results of model training and validation
         """
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -228,6 +234,7 @@ class RelevanceModel:
             monitor_mode=monitor_mode,
             monitor_metric=monitor_metric,
             patience=patience,
+            track_experiment=track_experiment,
         )
         if self.is_compiled:
             self.model.fit(
@@ -428,6 +435,7 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
+        track_experiment=False,
     ):
         """
         Build callback hooks for the training loop
@@ -515,6 +523,10 @@ class RelevanceModel:
                 logger.info(logs)
 
         callbacks_list.append(DebuggingCallback())
+
+        # Add Weights and Biases experiment tracking callback
+        if track_experiment:
+            callbacks_list.append(WandbCallback())
 
         # Add more here
 
