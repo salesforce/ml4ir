@@ -20,9 +20,13 @@ This will install ml4ir-0.0.1 (the current version) from PyPI.
 #### Docker (Recommended)
 We have set up a `docker-compose.yml` file for building and using docker containers to train models.
 
-To run unit tests
+First, change working directory to the python package
 ```
 cd python/
+```
+
+To run unit tests
+```
 docker-compose up
 ```
 
