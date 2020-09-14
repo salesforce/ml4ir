@@ -22,6 +22,7 @@ We have set up a `docker-compose.yml` file for building and using docker contain
 
 To run unit tests
 ```
+cd python/
 docker-compose up
 ```
 
