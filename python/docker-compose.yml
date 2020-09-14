@@ -1,0 +1,15 @@
+version: '2'
+services:
+  ml4ir:
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
+    command: ${ML4IR_CMD}
+    hostname: ml4ir
+    build:
+      context: .
+      dockerfile: ml4ir/build/Dockerfile
+    volumes:
+      - ./logs:/home/ml4ir/python/logs
+      - ./data:/home/ml4ir/python/data
+      - ./models:/home/ml4ir/python/models
+    tty: true # uncomment for python debugging
+    stdin_open: true # uncomment for python debugging

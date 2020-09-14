@@ -20,6 +20,11 @@ This will install ml4ir-0.0.1 (the current version) from PyPI.
 #### Docker (Recommended)
 We have set up a `docker-compose.yml` file for building and using docker containers to train models.
 
+First, change working directory to the python package
+```
+cd python/
+```
+
 To run unit tests
 ```
 docker-compose up
@@ -45,7 +50,7 @@ Check `ml4ir/applications/ranking/scripts/example_run.sh` for a predefined examp
 
 To run example invocation of ranking application with docker,
 ```
-/bin/bash python/ml4ir/applications/ranking/scripts/example_run.sh
+/bin/bash ml4ir/applications/ranking/scripts/example_run.sh
 ```
 
 #### Virtual Environment
