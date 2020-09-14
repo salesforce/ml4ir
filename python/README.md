@@ -50,7 +50,7 @@ Check `ml4ir/applications/ranking/scripts/example_run.sh` for a predefined examp
 
 To run example invocation of ranking application with docker,
 ```
-/bin/bash python/ml4ir/applications/ranking/scripts/example_run.sh
+/bin/bash ml4ir/applications/ranking/scripts/example_run.sh
 ```
 
 #### Virtual Environment
