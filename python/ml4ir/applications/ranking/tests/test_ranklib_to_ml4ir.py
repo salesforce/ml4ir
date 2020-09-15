@@ -1,7 +1,4 @@
 import sys
-#sys.path.append('/Users/mohamed.m/Documents/work/projects/ml4ir/python/ml4ir/')
-sys.path.insert(0, '/Users/mohamed.m/Documents/work/projects/ml4ir/python')
-
 import unittest
 import os
 import warnings
