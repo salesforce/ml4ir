@@ -11,7 +11,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-INPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample.txt"
+INPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample.txt" 
 OUTPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample_ml4ir.csv"
 QUERY_ID_NAME = 'qid'
 RELEVANCE_NAME = 'relevance'
