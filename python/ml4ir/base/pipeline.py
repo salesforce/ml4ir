@@ -100,6 +100,17 @@ class RelevancePipeline(object):
                 self.gl_2_clicks = 1
                 self.non_zero_features_only = 0
                 self.keep_additional_info = 0
+        else:
+            self.gl_2_clicks = 1
+            self.non_zero_features_only = 0
+            self.keep_additional_info = 0
+
+        if args.model_file:
+            self.model_file = args.model_file
+        else:
+            self.model_file = None
+
+
 
 
 
