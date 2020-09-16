@@ -10,7 +10,6 @@ import sys
 import time
 from argparse import Namespace
 from logging import Logger
-import wandb
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -68,7 +67,6 @@ class RelevancePipeline(object):
         self.logger.debug("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
         self.local_io.set_logger(self.logger)
         self.local_io.make_directory(self.models_dir_local, clear_dir=False)
-        self.model_file = self.args.model_file
 
         # Set the file handlers and respective setup
         if self.args.file_handler == FileHandlerKey.LOCAL:
@@ -79,16 +77,6 @@ class RelevancePipeline(object):
             # Copy data dir from HDFS to local file system
             self.local_io.make_directory(dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
             self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
-
-            # Copy model_file if present from HDFS to local file system
-            if self.model_file:
-                self.local_io.make_directory(
-                    dir_path=DefaultDirectoryKey.TEMP_MODELS, clear_dir=True
-                )
-                self.file_io.copy_from_hdfs(self.model_file, DefaultDirectoryKey.TEMP_MODELS)
-                self.model_file = os.path.join(
-                    DefaultDirectoryKey.TEMP_MODELS, os.path.basename(self.model_file)
-                )
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
@@ -103,6 +91,18 @@ class RelevancePipeline(object):
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type
 
+        if args.data_format == DataFormatKey.RANKLIB:
+            try:
+                self.gl_2_clicks = args.gl_2_clicks
+                self.non_zero_features_only = args.non_zero_features_only
+                self.keep_additional_info = args.keep_additional_info
+            except:
+                self.gl_2_clicks = 1
+                self.non_zero_features_only = 0
+                self.keep_additional_info = 0
+
+
+
         # Validate args
         self.validate_args()
 
@@ -115,9 +115,6 @@ class RelevancePipeline(object):
             tfrecord_type=self.tfrecord_type,
             logger=self.logger,
         )
-
-        # Setup experiment tracking configuration
-        self.setup_experiment_tracking_config()
 
         # Finished initialization
         self.logger.info("Relevance Pipeline successfully initialized!")
@@ -182,41 +179,11 @@ class RelevancePipeline(object):
 
         return self
 
-    def setup_experiment_tracking_config(self):
-        if self.args.track_experiment:
-            config = dict()
-
-            # Add command line script arguments
-            config.update(vars(self.args))
-
-            # Add feature config information
-            config.update(self.feature_config.get_hyperparameter_dict())
-
-            """
-            Set the following environment variables to run wandb in offline mode without server
-            Ref: https://docs.wandb.com/library/init#save-logs-offline
-            """
-            os.environ["WANDB_MODE"] = "dryrun"
-
-            # Setup wandb
-            self.local_io.make_directory(os.path.join(self.logs_dir_local, "wandb"))
-            wandb.init(
-                project="ml4ir",
-                name=self.run_id,
-                notes=self.args.run_notes,
-                group=self.args.run_group,
-                config=config,
-                dir=os.path.join(self.logs_dir_local, "wandb"),
-            )
-
-            self.logger.info("Setup weights and biases config")
-
     def finish(self):
         # Delete temp data directories
         if self.data_format == DataFormatKey.CSV:
             self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
-        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)
 
         if self.args.file_handler == FileHandlerKey.SPARK:
             # Copy logs and models to HDFS
@@ -252,7 +219,11 @@ class RelevancePipeline(object):
             parse_tfrecord=True,
             file_io=self.local_io,
             logger=self.logger,
+            gl_2_clicks=self.gl_2_clicks,
+            non_zero_features_only=self.non_zero_features_only,
+            keep_additional_info=self.keep_additional_info,
         )
+
 
         return relevance_dataset
 
@@ -292,7 +263,6 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
-                    track_experiment=self.args.track_experiment,
                 )
 
             if self.args.execution_mode in {
@@ -310,7 +280,6 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
-                    track_experiment=self.args.track_experiment,
                 )
 
             if self.args.execution_mode in {

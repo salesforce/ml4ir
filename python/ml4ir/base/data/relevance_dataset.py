@@ -7,6 +7,7 @@ import tensorflow as tf
 from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectoryKey
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
+from ml4ir.base.data import ranklib_reader
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 
@@ -28,6 +29,9 @@ class RelevanceDataset:
         use_part_files: bool = False,
         parse_tfrecord: bool = True,
         logger: Optional[Logger] = None,
+        keep_additional_info: int = 0,
+        gl_2_clicks: int = 1,
+        non_zero_features_only: int = 0,
     ):
         self.feature_config = feature_config
         self.max_sequence_size = max_sequence_size
@@ -44,6 +48,10 @@ class RelevanceDataset:
         self.test_pcent_split: float = test_pcent_split
         self.use_part_files: bool = use_part_files
 
+        self.keep_additional_info = keep_additional_info
+        self.gl_2_clicks = gl_2_clicks
+        self.non_zero_features_only = non_zero_features_only
+
         self.train: Optional[tf.data.TFRecordDataset] = None
         self.validation: Optional[tf.data.TFRecordDataset] = None
         self.test: Optional[tf.data.TFRecordDataset] = None
@@ -53,17 +61,14 @@ class RelevanceDataset:
         """
         Loads and creates train, validation and test datasets
         """
-        self.logger.info(
-            "Found in {} directory : {}".format(
-                self.data_dir, glob.glob(os.path.join(self.data_dir, "*"))
-            )
-        )
         to_split = len(glob.glob(os.path.join(self.data_dir, DataSplitKey.TEST))) == 0
 
         if self.data_format == DataFormatKey.CSV:
             data_reader = csv_reader
         elif self.data_format == DataFormatKey.TFRECORD:
             data_reader = tfrecord_reader
+        elif self.data_format == DataFormatKey.RANKLIB:
+            data_reader = ranklib_reader
         else:
             raise NotImplementedError
 
@@ -112,6 +117,9 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
+                keep_additional_info=self.keep_additional_info,
+                gl_2_clicks=self.gl_2_clicks,
+                non_zero_features_only=self.non_zero_features_only,
             )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
@@ -125,6 +133,9 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
+                keep_additional_info=self.keep_additional_info,
+                gl_2_clicks=self.gl_2_clicks,
+                non_zero_features_only=self.non_zero_features_only,
             )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
@@ -138,6 +149,9 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
+                keep_additional_info=self.keep_additional_info,
+                gl_2_clicks=self.gl_2_clicks,
+                non_zero_features_only=self.non_zero_features_only,
             )
 
     def balance_classes(self):
