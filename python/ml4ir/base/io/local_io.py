@@ -253,7 +253,7 @@ class LocalIO(FileIO):
             os.remove(file_path)
             self.log("File deleted : {}".format(file_path))
 
-    def save_numpy_array(self, np_array, file_path: str, allow_pickle=True, **kwargs):
+    def save_numpy_array(self, np_array, file_path: str, allow_pickle=True, zip=True, **kwargs):
         """
         Save a numpy array to disk
 
@@ -261,15 +261,30 @@ class LocalIO(FileIO):
             np_array: Array like numpy object to be saved
             file_path: file path to save the object to
             allow_pickle: Allow pickling of objects while saving
+            zip: use np.savez to save the numpy arrays, allows passing in python list
         """
-        np.save(file_path, arr=np_array, allow_pickle=allow_pickle, **kwargs)
+        if zip:
+            # NOTE: In this case, the np_array has to be a python list
+            np.savez(file_path, *np_array)
+        else:
+            np.save(file_path, arr=np_array, allow_pickle=allow_pickle, **kwargs)
 
-    def load_numpy_array(self, file_path, allow_pickle=True, **kwargs):
+    def load_numpy_array(self, file_path, allow_pickle=True, unzip=True, **kwargs):
         """
         Load a numpy array from disk
 
         Args:
             file_path: file path to load the numpy object from
             allow_pickle: Allow pickling of objects while loading
+            unzip: To unzip the numpy array saved as a zip file. Used when saved with zip=True
+                    Returns python list of numpy arrays
         """
-        return np.load(file_path, allow_pickle=allow_pickle, **kwargs)
+        np_array = np.load(file_path, allow_pickle=allow_pickle, **kwargs)
+
+        if unzip:
+            np_array_list = list()
+            for np_file in np_array.files:
+                np_array_list.append(np_array[np_file])
+            return np_array_list
+        else:
+            return np_array

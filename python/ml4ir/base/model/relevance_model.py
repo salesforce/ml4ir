@@ -120,7 +120,7 @@ class RelevanceModel:
             # Initialize layer weights
             for layer_name, layer_file in initialize_layers_dict.items():
                 layer = self.model.get_layer(layer_name)
-                layer.set_weights(self.file_io.load_numpy_array(layer_file))
+                layer.set_weights(self.file_io.load_numpy_array(layer_file, unzip=True))
                 self.logger.info("Setting {} weights from {}".format(layer_name, layer_file))
 
             # Freeze layer weights
@@ -130,6 +130,10 @@ class RelevanceModel:
                 self.logger.info("Freezing {} layer".format(layer_name))
 
             self.is_compiled = True
+
+        from IPython import embed
+
+        embed()
 
     @classmethod
     def from_relevance_scorer(
@@ -402,6 +406,7 @@ class RelevanceModel:
             self.file_io.save_numpy_array(
                 np_array=layer.get_weights(),
                 file_path=os.path.join(model_file, "layers", "{}.npy".format(layer.name)),
+                zip=True,
             )
 
         self.logger.info("Final model saved to : {}".format(model_file))
