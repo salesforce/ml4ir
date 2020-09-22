@@ -295,13 +295,6 @@ class RelevanceArgParser(ArgumentParser):
             help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
         )
 
-        self.add_argument(
-            "--track_experiment",
-            type=bool,
-            default=False,
-            help="Whether to track model performance and hyperparameters.",
-        )
-
     def set_default_args(self):
         pass
 

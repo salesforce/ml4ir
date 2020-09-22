@@ -30,6 +30,3 @@ pytest-html==2.1.1
 
 # Pyspark for spark_io
 pyspark==3.0.0
-
-# Experiment tracking
-wandb==0.8.36

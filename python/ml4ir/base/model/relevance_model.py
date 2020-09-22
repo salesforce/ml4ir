@@ -5,7 +5,6 @@ from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
-from wandb.keras import WandbCallback
 import pandas as pd
 
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -17,6 +16,7 @@ from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
+from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 
 from typing import Dict, Optional, List, Union, Type
 
@@ -131,10 +131,6 @@ class RelevanceModel:
 
             self.is_compiled = True
 
-        from IPython import embed
-
-        embed()
-
     @classmethod
     def from_relevance_scorer(
         cls,
@@ -226,7 +222,6 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
-        track_experiment=False,
     ):
         """
         Trains model for defined number of epochs
@@ -240,7 +235,6 @@ class RelevanceModel:
             monitor_metric: name of the metric to monitor for early stopping, checkpointing
             monitor_mode: whether to maximize or minimize the monitoring metric
             patience: early stopping patience
-            track_experiment: save results of model training and validation
         """
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -252,16 +246,25 @@ class RelevanceModel:
             monitor_mode=monitor_mode,
             monitor_metric=monitor_metric,
             patience=patience,
-            track_experiment=track_experiment,
         )
         if self.is_compiled:
-            self.model.fit(
+            history = self.model.fit(
                 x=dataset.train,
                 validation_data=dataset.validation,
                 epochs=num_epochs,
                 verbose=True,
                 callbacks=callbacks_list,
             )
+
+            # Write metrics for experiment tracking
+            train_metrics = dict()
+            for metric, value in history.history.items():
+                if not metric.startswith("val_"):
+                    train_metrics["train_{}".format(metric)] = value[0]
+                else:
+                    train_metrics[metric] = value[0]
+
+            return train_metrics
         else:
             raise NotImplementedError(
                 "The model could not be trained. Check if the model was compiled correctly. Training loaded SavedModel is not currently supported."
@@ -343,12 +346,13 @@ class RelevanceModel:
         Args:
             test_dataset: an instance of tf.data.dataset
             inference_signature: If using a SavedModel for prediction, specify the inference signature
+            additional_features: Additional post processing feature functions as key value pairs
+            group_metrics_min_queries: Minimum number of queries per group to be used for group aggregate metrics
+            logs_dir: Directory to log the predictions and metrics
             logging_frequency: integer representing how often(in batches) to log status
-            metric_group_keys: list of fields to compute group based metrics on
-            save_to_file: set to True to save predictions to file like self.predict()
 
         Returns:
-            metrics and groupwise metrics as pandas DataFrames
+            metrics and groupwise metrics as pandas DataFrames and flattened metrics as a dictionary
 
         NOTE:
         Only if the keras model is compiled, you can directly do a model.evaluate()
@@ -356,7 +360,8 @@ class RelevanceModel:
         Override this method to implement your own evaluation metrics.
         """
         if self.is_compiled:
-            return self.model.evaluate(test_dataset)
+            metrics = self.model.evaluate(test_dataset)
+            return None, None, dict(zip(self.model.metrics_names, metrics))
         else:
             raise NotImplementedError
 
@@ -463,7 +468,6 @@ class RelevanceModel:
         monitor_metric: str = "",
         monitor_mode: str = "",
         patience=2,
-        track_experiment=False,
     ):
         """
         Build callback hooks for the training loop
@@ -508,53 +512,7 @@ class RelevanceModel:
             callbacks_list.append(tensorboard_callback)
 
         # Debugging/Logging
-        logger = self.logger
-
-        class DebuggingCallback(callbacks.Callback):
-            def __init__(self, patience=0):
-                super(DebuggingCallback, self).__init__()
-
-                self.epoch = 0
-
-            def on_train_batch_end(self, batch, logs=None):
-                if batch % logging_frequency == 0:
-                    logger.info("[epoch: {} | batch: {}] {}".format(self.epoch, batch, logs))
-
-            def on_epoch_end(self, epoch, logs=None):
-                logger.info("End of Epoch {}".format(self.epoch))
-                logger.info(logs)
-
-            def on_epoch_begin(self, epoch, logs=None):
-                self.epoch = epoch + 1
-                logger.info("Starting Epoch : {}".format(self.epoch))
-                logger.info(logs)
-
-            def on_train_begin(self, logs):
-                logger.info("Training Model")
-
-            def on_test_begin(self, logs):
-                logger.info("Evaluating Model")
-
-            def on_predict_begin(self, logs):
-                logger.info("Predicting scores using model")
-
-            def on_train_end(self, logs):
-                logger.info("Completed training model")
-                logger.info(logs)
-
-            def on_test_end(self, logs):
-                logger.info("Completed evaluating model")
-                logger.info(logs)
-
-            def on_predict_end(self, logs):
-                logger.info("Completed Predicting scores using model")
-                logger.info(logs)
-
-        callbacks_list.append(DebuggingCallback())
-
-        # Add Weights and Biases experiment tracking callback
-        if track_experiment:
-            callbacks_list.append(WandbCallback())
+        callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
 
         # Add more here
 
