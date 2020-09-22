@@ -17,22 +17,18 @@ class ClassificationModelTest(ClassificationTestBase):
         # Fix random seed values for repeatability
         self.set_seeds()
 
-        args: Namespace = self.get_overridden_args(data_format)
+        args = self.get_overridden_args(data_format)
 
         classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
         relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
         classification_model: RelevanceModel = classification_pipeline.get_relevance_model()
 
-        classification_model.fit(dataset=relevance_dataset,
-                                 num_epochs=5,
-                                 models_dir=self.output_dir
+        classification_model.fit(
+            dataset=relevance_dataset, num_epochs=5, models_dir=self.output_dir
         )
 
-        metrics = dict(
-            zip(
-                classification_model.model.metrics_names,
-                classification_model.evaluate(test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir)
-            )
+        _, _, metrics = classification_model.evaluate(
+            test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir
         )
 
         return metrics
@@ -48,4 +44,3 @@ class ClassificationModelTest(ClassificationTestBase):
         assert np.isclose(metrics["loss"], 1.966392993927002, rtol=0.01)
         assert np.isclose(metrics["categorical_accuracy"], 0.18229167, rtol=0.01)
         assert np.isclose(metrics["Precision"], 0.2, rtol=0.01)
-
