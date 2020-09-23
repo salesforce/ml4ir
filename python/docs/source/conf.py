@@ -15,6 +15,9 @@
 # sys.path.insert(0, os.path.abspath('.'))
 from typing import List
 
+# The master toctree document
+master_doc = "index"
+
 # -- Project information -----------------------------------------------------
 
 project = "ml4ir"
