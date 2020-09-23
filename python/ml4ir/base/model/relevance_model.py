@@ -128,9 +128,6 @@ class RelevanceModel:
                 layer = self.model.get_layer(layer_name)
                 layer.trainable = False
                 self.logger.info("Freezing {} layer".format(layer_name))
-                import pdb
-
-                pdb.set_trace()
 
             self.is_compiled = True
 
