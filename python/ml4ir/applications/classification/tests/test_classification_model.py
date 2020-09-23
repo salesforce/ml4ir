@@ -1,4 +1,5 @@
 import numpy as np
+from argparse import Namespace
 
 from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
@@ -23,16 +24,12 @@ class ClassificationModelTest(ClassificationTestBase):
         relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
         classification_model: RelevanceModel = classification_pipeline.get_relevance_model()
 
-        classification_model.fit(dataset=relevance_dataset,
-                                 num_epochs=5,
-                                 models_dir=self.output_dir
+        classification_model.fit(
+            dataset=relevance_dataset, num_epochs=5, models_dir=self.output_dir
         )
 
-        metrics = dict(
-            zip(
-                classification_model.model.metrics_names,
-                classification_model.evaluate(test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir)
-            )
+        _, _, metrics = classification_model.evaluate(
+            test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir
         )
 
         return metrics
@@ -48,4 +45,3 @@ class ClassificationModelTest(ClassificationTestBase):
         assert np.isclose(metrics["loss"], 1.966392993927002, rtol=0.01)
         assert np.isclose(metrics["categorical_accuracy"], 0.18229167, rtol=0.01)
         assert np.isclose(metrics["Precision"], 0.2, rtol=0.01)
-

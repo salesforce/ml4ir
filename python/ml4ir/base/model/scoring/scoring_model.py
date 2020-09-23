@@ -18,7 +18,7 @@ class ScorerBase(object):
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
         file_io: FileIO,
-        output_name: str = "score"
+        output_name: str = "score",
     ):
         self.model_config = model_config
         self.feature_config = feature_config
@@ -33,8 +33,8 @@ class ScorerBase(object):
         model_config_file: str,
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
-        output_name: str,
         file_io: FileIO,
+        output_name: str = "score",
         feature_config: Optional[FeatureConfig] = None,
         logger: Optional[Logger] = None,
     ):
@@ -72,11 +72,11 @@ class ScorerBase(object):
 
 class RelevanceScorer(ScorerBase):
     def architecture_op(self, train_features, metadata_features):
-        return architecture_factory.get_architecture(model_config=self.model_config,
-                                                     feature_config=self.feature_config,
-                                                     file_io=self.file_io)(
-            train_features
-        )
+        return architecture_factory.get_architecture(
+            model_config=self.model_config,
+            feature_config=self.feature_config,
+            file_io=self.file_io,
+        )(train_features)
 
     def final_activation_op(self, scores, metadata_features):
         return self.loss.get_final_activation_op(self.output_name)(

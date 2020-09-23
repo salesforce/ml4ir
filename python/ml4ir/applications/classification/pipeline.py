@@ -1,4 +1,5 @@
 import sys
+import ast
 from argparse import Namespace
 
 from tensorflow.keras.metrics import Metric, Precision
@@ -23,6 +24,7 @@ class ClassificationPipeline(RelevancePipeline):
     """
     Pipeline defining the classification models.
     """
+
     def __init__(self, args: Namespace):
         self.loss_key = args.loss_key
         super().__init__(args)
@@ -39,12 +41,11 @@ class ClassificationPipeline(RelevancePipeline):
             feature_config=self.feature_config,
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
             tfrecord_type=self.tfrecord_type,
-            file_io=self.file_io)
+            file_io=self.file_io,
+        )
 
         # Define loss object from loss key
-        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(
-            loss_key=self.loss_key
-        )
+        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer.from_model_config_file(
@@ -79,6 +80,8 @@ class ClassificationPipeline(RelevancePipeline):
             optimizer=optimizer,
             tfrecord_type=self.tfrecord_type,
             model_file=self.args.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             file_io=self.local_io,
@@ -86,7 +89,9 @@ class ClassificationPipeline(RelevancePipeline):
         )
         return relevance_model
 
-    def get_relevance_dataset(self, parse_tfrecord=True, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+    def get_relevance_dataset(
+        self, parse_tfrecord=True, preprocessing_keys_to_fns={}
+    ) -> RelevanceDataset:
         """
         Creates RelevanceDataset
 
@@ -94,7 +99,9 @@ class ClassificationPipeline(RelevancePipeline):
         """
         # Adding one_hot_vectorizer needed for classification.
         preprocessing_keys_to_fns = {
-            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io)
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(
+                self.feature_config.get_label(), self.file_io
+            )
         }
 
         # Prepare Dataset
@@ -116,6 +123,7 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
+
 
 def main(argv):
     # Define args

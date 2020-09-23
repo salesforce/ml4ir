@@ -39,8 +39,8 @@ class UnivariateInteractionModel(InteractionModel):
     def __init__(
         self,
         feature_config: FeatureConfig,
-        feature_layer_keys_to_fns: dict,
         tfrecord_type: str,
+        feature_layer_keys_to_fns: dict = {},
         max_sequence_size: int = 0,
         file_io: FileIO = None,
     ):
