@@ -8,12 +8,15 @@ Installation
 .. toctree::
    :maxdepth: 2
 
+   how to install <installation/index>
+
 Quickstart Guide
 ================
 .. toctree::
    :maxdepth: 2
    :titlesonly:
 
+   starter <quickstart/index>
    Using ml4ir as a script
    Using ml4ir as a library
    ml4ir Arcitecture Design
