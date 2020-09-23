@@ -83,6 +83,8 @@ class RankingTestBase(unittest.TestCase):
         metrics_keys: List,
         feature_config: FeatureConfig,
         feature_layer_keys_to_fns={},
+        initialize_layers_dict={},
+        freeze_layers_list=[],
     ) -> RelevanceModel:
         """
         Creates RankingModel
@@ -135,6 +137,8 @@ class RankingTestBase(unittest.TestCase):
             metrics=metrics,
             optimizer=optimizer,
             model_file=self.args.model_file,
+            initialize_layers_dict=initialize_layers_dict,
+            freeze_layers_list=freeze_layers_list,
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             logger=self.logger,

@@ -128,6 +128,9 @@ class RelevanceModel:
                 layer = self.model.get_layer(layer_name)
                 layer.trainable = False
                 self.logger.info("Freezing {} layer".format(layer_name))
+                import pdb
+
+                pdb.set_trace()
 
             self.is_compiled = True
 
@@ -410,7 +413,7 @@ class RelevanceModel:
         for layer in self.model.layers:
             self.file_io.save_numpy_array(
                 np_array=layer.get_weights(),
-                file_path=os.path.join(model_file, "layers", "{}.npy".format(layer.name)),
+                file_path=os.path.join(model_file, "layers", "{}.npz".format(layer.name)),
                 zip=True,
             )
 

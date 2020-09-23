@@ -12,15 +12,12 @@ def get_optimizer(
     gradient_clip_value: float = 1000000,
 ) -> tf_optimizers.Optimizer:
     # Define an exponential learning rate decay schedule
-    if learning_rate_decay <= 1.0:
-        learning_rate_schedule = ExponentialDecay(
-            learning_rate,
-            decay_steps=learning_rate_decay_steps,
-            decay_rate=learning_rate_decay,
-            staircase=True,
-        )
-    else:
-        learning_rate_schedule = learning_rate
+    learning_rate_schedule = ExponentialDecay(
+        learning_rate,
+        decay_steps=learning_rate_decay_steps,
+        decay_rate=learning_rate_decay,
+        staircase=True,
+    )
 
     if optimizer_key == OptimizerKey.ADAM:
         return tf_optimizers.Adam(
