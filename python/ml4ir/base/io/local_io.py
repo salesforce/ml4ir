@@ -262,6 +262,8 @@ class LocalIO(FileIO):
             file_path: file path to save the object to
             allow_pickle: Allow pickling of objects while saving
             zip: use np.savez to save the numpy arrays, allows passing in python list
+
+        Note: Used to save individual model layer weights for transfer learning
         """
         if zip:
             """
@@ -286,6 +288,8 @@ class LocalIO(FileIO):
             allow_pickle: Allow pickling of objects while loading
             unzip: To unzip the numpy array saved as a zip file. Used when saved with zip=True
                     Returns python list of numpy arrays
+
+        Note: Used to load individual model layer weights for transfer learning
         """
         np_array = np.load(file_path, allow_pickle=allow_pickle, **kwargs)
 
