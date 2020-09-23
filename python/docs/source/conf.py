@@ -22,7 +22,7 @@ master_doc = "index"
 
 project = "ml4ir"
 copyright = "2020, Search Relevance (Salesforce.com, Inc.)"
-author = "Ashish Bharadwaj Srinivasa (Salesforce.com, Inc.)"
+author = "Search Relevance (Salesforce.com, Inc.)"
 
 # The full version, including alpha/beta/rc tags
 release = "0.1.0"
