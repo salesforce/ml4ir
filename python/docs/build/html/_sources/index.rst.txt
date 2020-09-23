@@ -2,13 +2,17 @@ Welcome to ml4ir's documentation!
 =================================
 
 
+
+Installation
+================
+.. toctree::
+   :maxdepth: 2
+
 Quickstart Guide
 ================
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
-   Installation
-   Examples
+   
    Using ml4ir as a script
    Using ml4ir as a library
    ml4ir Arcitecture Design
@@ -21,5 +25,4 @@ API docs
     :members:
 
 .. toctree::
-	:maxdepth: 2
-	:caption: Contents
+   :maxdepth: 2
