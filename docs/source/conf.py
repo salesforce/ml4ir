@@ -15,7 +15,7 @@ import sys
 from typing import List
 
 # Set python project root
-sys.path.insert(0, os.path.abspath("../python/"))
+sys.path.insert(0, os.path.abspath("../../python/"))
 
 # The master toctree document
 master_doc = "index"
