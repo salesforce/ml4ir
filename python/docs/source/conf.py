@@ -21,7 +21,7 @@ master_doc = "index"
 # -- Project information -----------------------------------------------------
 
 project = "ml4ir"
-copyright = "2020, Ashish Bharadwaj Srinivasa (Salesforce.com, Inc.)"
+copyright = "2020, Search Relevance (Salesforce.com, Inc.)"
 author = "Ashish Bharadwaj Srinivasa (Salesforce.com, Inc.)"
 
 # The full version, including alpha/beta/rc tags
