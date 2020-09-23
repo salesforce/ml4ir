@@ -2,7 +2,7 @@ API Documentation
 =================
 
 
-.. automodule:: ml4ir.base.pipeline
+.. autoclass:: ml4ir.base.pipeline.RelevancePipeline
    :members:
    :undoc-members:
    :show-inheritance:
