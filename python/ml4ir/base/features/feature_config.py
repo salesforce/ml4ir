@@ -213,7 +213,14 @@ class FeatureConfig:
 
     def get_feature(self, name: str):
         """
-        Getter method for feature info using feature name
+        Getter method that returns the corresponding feature_info
+        from the FeatureConfig object that matches the name passed.
+
+        Args:
+            name: name of feature to be returned
+
+        Returns:
+            feature_info dictionary from FeatureConfig matching with the name
         """
         for feature_info in self.get_all_features():
             if feature_info["name"] == name:
@@ -223,7 +230,13 @@ class FeatureConfig:
 
     def set_feature(self, name: str, new_feature_info: dict):
         """
-        Setter method for feature info using feature name and dictionary to set
+        Setter method to set the feature_info of a feature in the FeatureConfig
+        as specified by the name argument
+
+        Args:
+            name: name of feature whose feature_info is to be updated
+            new_feature_info: dictionary used to set the feature_info for the
+                              feature with specified name
         """
         feature_found = False
         for feature_info in self.features_dict["features"]:

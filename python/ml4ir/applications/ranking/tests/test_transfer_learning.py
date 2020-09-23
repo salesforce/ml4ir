@@ -13,6 +13,17 @@ from ml4ir.base.features.feature_config import FeatureConfig
 
 
 class RankingTransferLearningTest(RankingTestBase):
+    """
+    This class defines the unit tests around the transfer learning
+    capability of RelevanceModel.
+
+    Transfer learning in ml4ir is enabled by saving individual layer weights
+    at training time. When defining a new RelevanceModel, these pretrained
+    weights can be loaded by passing a mapping of layer name to the path of
+    the pretrained weights(saved previously). Additionally, these weights can
+    be frozen to avoid fine tuning as needed.
+    """
+
     def get_ranking_dataset_and_model(
         self, seed=123, initialize_layers_dict={}, freeze_layers_list=[]
     ):

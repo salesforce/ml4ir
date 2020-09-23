@@ -267,6 +267,12 @@ class RelevanceModel:
             train_metrics = dict()
             for metric, value in history.history.items():
                 if not metric.startswith("val_"):
+                    """
+                    NOTE:
+                    Prepend "train_" to metrics on training dataset
+                    to differentiate from validation and test metrics
+                    in the final experiment results
+                    """
                     train_metrics["train_{}".format(metric)] = value[0]
                 else:
                     train_metrics[metric] = value[0]
