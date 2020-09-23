@@ -112,15 +112,17 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--learning_rate_decay",
             type=float,
-            default=0.90,
-            help="decay rate for the learning rate",
+            default=1.0,
+            help="Decay rate for the learning rate."
+            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
         )
 
         self.add_argument(
             "--learning_rate_decay_steps",
             type=int,
-            default=1000,
-            help="decay rate for the learning rate",
+            default=10000000,
+            help="Decay rate for the learning rate."
+            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
         )
 
         self.add_argument(
@@ -293,6 +295,23 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="local",
             help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
+        )
+
+        self.add_argument(
+            "--initialize_layers_dict",
+            type=str,
+            default="{}",
+            help="Dictionary of pretrained layers to be loaded."
+            "The key is the name of the layer to be assigned the pretrained weights."
+            "The value is the path to the pretrained weights.",
+        )
+
+        self.add_argument(
+            "--freeze_layers_list",
+            type=str,
+            default="[]",
+            help="List of layer names that are to be frozen instead of training."
+            "Usually coupled with initialize_layers_dict to load pretrained weights and freeze them",
         )
 
     def set_default_args(self):

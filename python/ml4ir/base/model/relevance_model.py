@@ -225,6 +225,7 @@ class RelevanceModel:
     ):
         """
         Trains model for defined number of epochs
+        and returns the training and validation metrics as a dictionary
 
         Args:
             dataset: an instance of RankingDataset
@@ -235,6 +236,12 @@ class RelevanceModel:
             monitor_metric: name of the metric to monitor for early stopping, checkpointing
             monitor_mode: whether to maximize or minimize the monitoring metric
             patience: early stopping patience
+
+        Returns:
+            train and validation metrics in a single dictionary
+            where key is metric name and value is floating point metric value
+
+            This dictionary will be used for experiment tracking for each ml4ir run
         """
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -341,7 +348,7 @@ class RelevanceModel:
         logging_frequency: int = 25,
     ):
         """
-        Evaluate the ranking model
+        Evaluate the RelevanceModel
 
         Args:
             test_dataset: an instance of tf.data.dataset
@@ -352,7 +359,10 @@ class RelevanceModel:
             logging_frequency: integer representing how often(in batches) to log status
 
         Returns:
-            metrics and groupwise metrics as pandas DataFrames and flattened metrics as a dictionary
+            metrics: pd.DataFrame containing overall metrics
+            groupwise_metrics: pd.DataFrame containing groupwise metrics if
+                               group_metric_keys are defined in the FeatureConfig
+            metrics_dict: metrics as a dictionary of metric names mapping to values
 
         NOTE:
         Only if the keras model is compiled, you can directly do a model.evaluate()
@@ -360,8 +370,8 @@ class RelevanceModel:
         Override this method to implement your own evaluation metrics.
         """
         if self.is_compiled:
-            metrics = self.model.evaluate(test_dataset)
-            return None, None, dict(zip(self.model.metrics_names, metrics))
+            metrics_dict = self.model.evaluate(test_dataset)
+            return None, None, dict(zip(self.model.metrics_names, metrics_dict))
         else:
             raise NotImplementedError
 
@@ -376,8 +386,25 @@ class RelevanceModel:
         """
         Save tf.keras model to models_dir
 
+        Two different serving signatures currently used to save the model
+            default: default keras model without any pre/post processing wrapper
+            tfrecord: serving signature that allows keras model to be served using TFRecord proto messages.
+                      Allows definition of custom pre/post processing logic
+
+        Additionally, each model layer is also saved as a separate numpy zipped
+        array to enable transfer learning with other ml4ir models.
+
         Args:
             models_dir: path to directory to save the model
+            preprocessing_keys_to_fns: dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+                                       All the functions passed here must be serializable tensor graph operations
+            postprocessing_fn: custom tensorflow compatible postprocessing function to be used at serving time.
+                               Saved as part of the postprocessing layer of the tfrecord serving signature
+            required_fields_only: boolean value defining if only required fields
+                                  need to be added to the tfrecord parsing function
+                                  at serving time
+            pad_sequence: boolean value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+                          Set this to False if you want to not handle padded scores.
         """
 
         model_file = os.path.join(models_dir, "final")
@@ -410,7 +437,7 @@ class RelevanceModel:
         for layer in self.model.layers:
             self.file_io.save_numpy_array(
                 np_array=layer.get_weights(),
-                file_path=os.path.join(model_file, "layers", "{}.npy".format(layer.name)),
+                file_path=os.path.join(model_file, "layers", "{}.npz".format(layer.name)),
                 zip=True,
             )
 

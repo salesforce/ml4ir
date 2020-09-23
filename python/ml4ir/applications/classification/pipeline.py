@@ -1,4 +1,5 @@
 import sys
+import ast
 from argparse import Namespace
 
 from tensorflow.keras.metrics import Metric, Precision
@@ -79,6 +80,8 @@ class ClassificationPipeline(RelevancePipeline):
             optimizer=optimizer,
             tfrecord_type=self.tfrecord_type,
             model_file=self.args.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             file_io=self.local_io,

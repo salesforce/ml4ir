@@ -329,6 +329,12 @@ class RelevancePipeline(object):
 
     def finish(self, job_status, job_info):
         """
+        Method to wrap up the model training pipeline.
+        Performs the following actions
+            - save a job status file as _SUCCESS or _FAILURE to indicate job status.
+            - delete temp data and models directories
+            - if using spark IO, transfers models and logs directories to HDFS location from local directories
+            - log overall run time of ml4ir job
         params:
             job_status: Tuple with first element _SUCCESS or _FAILURE
                         second element

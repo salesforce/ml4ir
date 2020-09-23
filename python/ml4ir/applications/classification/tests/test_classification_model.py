@@ -1,4 +1,5 @@
 import numpy as np
+from argparse import Namespace
 
 from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
@@ -17,7 +18,7 @@ class ClassificationModelTest(ClassificationTestBase):
         # Fix random seed values for repeatability
         self.set_seeds()
 
-        args = self.get_overridden_args(data_format)
+        args: Namespace = self.get_overridden_args(data_format)
 
         classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
         relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
