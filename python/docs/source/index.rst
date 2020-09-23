@@ -1,20 +1,25 @@
-.. ml4ir documentation master file, created by
-   sphinx-quickstart on Tue Sep 22 07:57:59 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to ml4ir's documentation!
 =================================
 
+
+Quickstart Guide
+================
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
+   Installation
+   Examples
+   Using ml4ir as a script
+   Using ml4ir as a library
+   ml4ir Arcitecture Design
+   Using the FeatureConfig
+   Using the ModelConfig
 
+API docs
+========
+.. automodule:: ml4ir.base.pipeline.RelevancePipeline
+    :members:
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+	:maxdepth: 2
+	:caption: Contents
