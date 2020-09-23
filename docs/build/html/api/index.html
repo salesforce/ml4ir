@@ -43,8 +43,78 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-ml4ir">
-<span id="api-documentation"></span><h1>API Documentation<a class="headerlink" href="#module-ml4ir" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-ml4ir.base.pipeline">
+<span id="api-documentation"></span><h1>API Documentation<a class="headerlink" href="#module-ml4ir.base.pipeline" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ml4ir.base.pipeline.RelevancePipeline">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.pipeline.</code><code class="sig-name descname">RelevancePipeline</code><span class="sig-paren">(</span><em class="sig-param">args: argparse.Namespace</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param">job_status</em>, <em class="sig-param">job_info</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to wrap up the model training pipeline.
+Performs the following actions</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>save a job status file as _SUCCESS or _FAILURE to indicate job status.</p></li>
+<li><p>delete temp data and models directories</p></li>
+<li><p>if using spark IO, transfers models and logs directories to HDFS location from local directories</p></li>
+<li><p>log overall run time of ml4ir job</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>params:</dt><dd><dl class="simple">
+<dt>job_status: Tuple with first element _SUCCESS or _FAILURE</dt><dd><p>second element</p>
+</dd>
+<dt>job_info: str</dt><dd><p>for _SUCCESS, is experiment tracking metrics and metadata
+for _FAILURE, is stacktrace of failure</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.get_relevance_dataset">
+<code class="sig-name descname">get_relevance_dataset</code><span class="sig-paren">(</span><em class="sig-param">preprocessing_keys_to_fns={}</em><span class="sig-paren">)</span> &#x2192; ml4ir.base.data.relevance_dataset.RelevanceDataset<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.get_relevance_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates RelevanceDataset</p>
+<p>NOTE: Override this method to create custom dataset objects</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.get_relevance_model">
+<code class="sig-name descname">get_relevance_model</code><span class="sig-paren">(</span><em class="sig-param">feature_layer_keys_to_fns={}</em><span class="sig-paren">)</span> &#x2192; ml4ir.base.model.relevance_model.RelevanceModel<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.get_relevance_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates RelevanceModel</p>
+<p>NOTE: Override this method to create custom loss, scorer, model objects</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.set_seeds">
+<code class="sig-name descname">set_seeds</code><span class="sig-paren">(</span><em class="sig-param">reset_graph=True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.set_seeds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.setup_logging">
+<code class="sig-name descname">setup_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; logging.Logger<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.pipeline.RelevancePipeline.validate_args">
+<code class="sig-name descname">validate_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.validate_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="ml4ir.base.pipeline.main">
+<code class="sig-prename descclassname">ml4ir.base.pipeline.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">argv</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 
 
