@@ -112,15 +112,17 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--learning_rate_decay",
             type=float,
-            default=0.90,
-            help="decay rate for the learning rate",
+            default=1.0,
+            help="Decay rate for the learning rate."
+            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
         )
 
         self.add_argument(
             "--learning_rate_decay_steps",
             type=int,
-            default=1000,
-            help="decay rate for the learning rate",
+            default=10000000,
+            help="Decay rate for the learning rate."
+            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
         )
 
         self.add_argument(

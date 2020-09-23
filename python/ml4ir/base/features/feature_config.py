@@ -109,6 +109,13 @@ class FeatureConfig:
             return SequenceExampleFeatureConfig(feature_config_dict, logger=logger)
 
     def extract_features(self):
+        """
+        Method to extract the features from the input feature config YAML
+        file and assign relevance features to FeatureConfig attributes:
+        - query_key
+        - label
+        - all_features
+        """
         try:
             self.query_key = self.features_dict.get(FeatureConfigKey.QUERY_KEY)
             self.all_features.append(self.query_key)
@@ -137,6 +144,16 @@ class FeatureConfig:
             )
 
     def define_features(self):
+        """
+        Method for defining additional FeatureConfig attributes from
+        the feature config dictionary
+        Defines the following FeatureConfig attributes:
+        - train_features: features that will be used for training
+        - metadata_features: features that will not be used for training
+        - features_to_log: features that will be logged with RelevanceModel.predict()
+        - group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+        - secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user's definition.
+        """
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
                 self.train_features.append(feature_info)
@@ -384,6 +401,14 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         self.sequence_features = list()
 
     def extract_features(self):
+        """
+        Method to extract the features from the input feature config YAML
+        file and assign relevance features to FeatureConfig attributes:
+        - query_key
+        - label
+        - all_features
+        - rank (mandatory feature for SequenceExample datasets)
+        """
         super().extract_features()
         try:
             self.rank = self.features_dict.get(FeatureConfigKey.RANK)
@@ -394,6 +419,18 @@ class SequenceExampleFeatureConfig(FeatureConfig):
                 self.logger.warning("'rank' key not found in the feature_config specified")
 
     def define_features(self):
+        """
+        Method for defining additional FeatureConfig attributes from
+        the feature config dictionary
+        Defines the following FeatureConfig attributes:
+        - train_features: features that will be used for training
+        - metadata_features: features that will not be used for training
+        - context_features: features that are part of the context substructure of TFRecord SequenceExample
+        - sequence_features: features that are part of the feature_lists substructure of TFRecord SequenceExample
+        - features_to_log: features that will be logged with RelevanceModel.predict()
+        - group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+        - secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user's definition.
+        """
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
                 self.train_features.append(feature_info)

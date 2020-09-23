@@ -264,7 +264,15 @@ class LocalIO(FileIO):
             zip: use np.savez to save the numpy arrays, allows passing in python list
         """
         if zip:
-            # NOTE: In this case, the np_array has to be a python list
+            """
+            NOTE: In this case, the np_array has to be a python list
+
+            tensorflow layer weights are lists of arrays.
+            np.save() can not be used for saving list of numpy arrays directly
+            as it tries to manually convert the list into a numpy array, leading
+            to errors with numpy shape.
+            savez allows us to save each list item in separate files and abstracts this step for end user.
+            """
             np.savez(file_path, *np_array)
         else:
             np.save(file_path, arr=np_array, allow_pickle=allow_pickle, **kwargs)
