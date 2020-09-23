@@ -9,6 +9,7 @@ ml4ir is an open source library for end to end training and deployment of deep l
 
    installation/index
    quickstart/index
+   api/index
    misc/faq
    misc/license
    misc/contact

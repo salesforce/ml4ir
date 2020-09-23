@@ -1,12 +1,14 @@
-ml4ir package
-=============
+API Documentation
+=================
 
 Subpackages
 -----------
 
 .. toctree::
 
-   ml4ir.build
+   ml4ir.base
+   ml4ir.applications
+
 
 Module contents
 ---------------
