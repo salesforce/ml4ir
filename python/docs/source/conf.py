@@ -38,6 +38,7 @@ extensions: List = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
+    "recommonmark",
 ]  # noqa: E501
 
 # Add any paths that contain templates here, relative to this directory.

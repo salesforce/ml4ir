@@ -7,6 +7,3 @@ Quickstart
    
    script
    library
-   architecture
-   feature_config
-   model_config
