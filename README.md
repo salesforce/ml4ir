@@ -46,7 +46,7 @@ As ml4ir is a common library for training and serving deep learning models, this
 The goal of ml4ir is to form a common hub for the most popular deep learning layers, losses, metrics, embeddings used in the search domain. We've built ml4ir with a focus on quick prototyping with wide variety of network architectures and optimizations. We encourage contributors to add to ml4ir's arsenal of search deep learning utilities as we continue to do so ourselves.
 
 ## Getting Started
-
+[ml4ir ReadTheDocs](https://ml4ir.readthedocs.io/en/latest/)
 [Model Training Quickstart](python/README.md)
 
 ## Continuous Integration 
