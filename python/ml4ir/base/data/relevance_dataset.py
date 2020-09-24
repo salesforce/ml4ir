@@ -65,7 +65,8 @@ class RelevanceDataset:
         elif self.data_format == DataFormatKey.TFRECORD:
             data_reader = tfrecord_reader
         else:
-            raise NotImplementedError("Unsupported data format: {}".format(self.data_format))
+            raise NotImplementedError("Unsupported data format: {}. We currenty support {} and {}."
+                                      .format(self.data_format, DataFormatKey.CSV, DataFormatKey. TFRECORD))
 
         if to_split:
             """

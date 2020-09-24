@@ -94,8 +94,7 @@ class ClassificationPipeline(RelevancePipeline):
         """
         # Adding one_hot_vectorizer needed for classification
         preprocessing_keys_to_fns = {
-            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io),
-            "split_and_pad_string": split_and_pad_string
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io)
         }
 
         # Prepare Dataset
