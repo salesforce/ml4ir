@@ -57,7 +57,7 @@ Contents
 
    installation/index
    quickstart/index
-   howto/index
+   advanced/index
    api/index
    misc/faq
    misc/license
