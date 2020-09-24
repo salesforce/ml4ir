@@ -12,21 +12,21 @@ pip install ml4ir
 
 This will install **[ml4ir-0.0.2](https://pypi.org/project/ml4ir/)** (the current version) from PyPI.
 
-**Requirements**
+##### Requirements
 
 * python3.7+
 * pip3
 
 ### Using ml4ir as a toolkit or contributing to ml4ir
 
-##### Firstly, clone ml4ir
+#### Firstly, clone ml4ir
 ```
 git clone https://github.com/salesforce/ml4ir
 ```
 
 You can use and develop on ml4ir either using docker or virtualenv
 
-##### Docker (Recommended)
+#### Docker (Recommended)
 We have set up a `docker-compose.yml` file for building and using docker containers to train models.
 
 Change the working directory to the python package
@@ -44,12 +44,12 @@ To only build the ml4ir docker image without running tests
 docker-compose build
 ```
 
-**Requirements**
+##### Requirements
 
 * [docker](https://www.docker.com/) (18.09+ tested)
 * [docker-compose](https://docs.docker.com/compose/)
 
-##### Virtual Environment
+#### Virtual Environment
 
 Change the working directory to the python package
 ```
@@ -83,7 +83,7 @@ Set the PYTHONPATH environment variable to point to the python package
 export PYTHONPATH=$PYTHONPATH:`pwd`
 ```
 
-**Requirements**
+##### Requirements
 * python3.7+
 * pip3
 
