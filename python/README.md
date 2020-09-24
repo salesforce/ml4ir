@@ -1,4 +1,8 @@
 # ml4ir Python Quickstart
+
+For more detailed usage documentation check **[ml4ir.readthedocs.io](https://ml4ir.readthedocs.io/en/latest/)**
+
+
 ## Contents
 * [Installation](#installation)
 * [Usage](#usage)
