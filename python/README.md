@@ -1,8 +1,8 @@
 # ml4ir Python Quickstart
 ## Contents
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Running Tests](#running-tests)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Running Tests](#running-tests)
 
 ## Installation
 
