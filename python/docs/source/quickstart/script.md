@@ -5,8 +5,8 @@
   * [Learning to Rank](#learning-to-rank)
   * [Query Classification](#query-classification)
 * [Usage Examples](#usage-examples)
-  * [Learning to Rank](#learning-to-rank)
-  * [Query Classification](#query-classification)
+  * [Learning to Rank](#learning-to-rank-1)
+  * [Query Classification](#query-classification-1)
   
 ### Pipelines
 
