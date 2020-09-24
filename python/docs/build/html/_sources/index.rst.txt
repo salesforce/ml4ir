@@ -5,13 +5,21 @@ ml4ir is an open source library for training and deploying deep learning models 
 
 ml4ir is designed as modular subcomponents which can each be combined and customized to build a variety of search ML models such as:
 * Learning to Rank
+
 * Query Auto Completion
+
 * Document Classification
+
 * Query Classification
+
 * Named Entity Recognition
+
 * Top Results
+
 * Query2SQL
+
 * *add your application here*
+
   
 .. image:: _static/ml4ir.png
 
@@ -20,12 +28,17 @@ Motivation
 ----------
 Search is a complex data space with lots of different types of ML tasks working on a combination of structured and unstructured data sources. There is no single library that
 * provides an end-to-end training and serving solution for a variety of search applications
+
 * allows training of models with limited coding expertise
-* allows easy customization to build complex models to tackle the search domain
-* focuses on performance and robustness
+
+* allows easy customization to build complex models to tackle a variety of problems in the search domain
+
+* focuses on performance, robustness and offline-online feature parity
+
 * enables fast prototyping
 
-So, we built ml4ir to do all of the above. 
+
+So, we built ml4ir.
 
 Guiding Principles
 ------------------

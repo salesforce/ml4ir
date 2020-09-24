@@ -11,5 +11,5 @@ Quickstart
    feature_config
    model_config
    dataset
-   callbacks
    saving
+   serving

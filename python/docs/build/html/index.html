@@ -40,24 +40,28 @@
 <h1>ml4ir - Machine Learning for Information Retrieval<a class="headerlink" href="#ml4ir-machine-learning-for-information-retrieval" title="Permalink to this headline">¶</a></h1>
 <p>ml4ir is an open source library for training and deploying deep learning models for search applications. ml4ir is built on top of <strong>python3</strong> and <strong>tensorflow 2.x</strong> for training and evaluation. It also comes packaged with scala utilties for <strong>JVM inference</strong>.</p>
 <p>ml4ir is designed as modular subcomponents which can each be combined and customized to build a variety of search ML models such as:
-* Learning to Rank
-* Query Auto Completion
-* Document Classification
-* Query Classification
-* Named Entity Recognition
-* Top Results
-* Query2SQL
-* <em>add your application here</em></p>
+* Learning to Rank</p>
+<ul class="simple">
+<li><p>Query Auto Completion</p></li>
+<li><p>Document Classification</p></li>
+<li><p>Query Classification</p></li>
+<li><p>Named Entity Recognition</p></li>
+<li><p>Top Results</p></li>
+<li><p>Query2SQL</p></li>
+<li><p><em>add your application here</em></p></li>
+</ul>
 <img alt="_images/ml4ir.png" src="_images/ml4ir.png" />
 <div class="section" id="motivation">
 <h2>Motivation<a class="headerlink" href="#motivation" title="Permalink to this headline">¶</a></h2>
 <p>Search is a complex data space with lots of different types of ML tasks working on a combination of structured and unstructured data sources. There is no single library that
-* provides an end-to-end training and serving solution for a variety of search applications
-* allows training of models with limited coding expertise
-* allows easy customization to build complex models to tackle the search domain
-* focuses on performance and robustness
-* enables fast prototyping</p>
-<p>So, we built ml4ir to do all of the above.</p>
+* provides an end-to-end training and serving solution for a variety of search applications</p>
+<ul class="simple">
+<li><p>allows training of models with limited coding expertise</p></li>
+<li><p>allows easy customization to build complex models to tackle a variety of problems in the search domain</p></li>
+<li><p>focuses on performance, robustness and offline-online feature parity</p></li>
+<li><p>enables fast prototyping</p></li>
+</ul>
+<p>So, we built ml4ir.</p>
 </div>
 <div class="section" id="guiding-principles">
 <h2>Guiding Principles<a class="headerlink" href="#guiding-principles" title="Permalink to this headline">¶</a></h2>
@@ -76,7 +80,25 @@
 <h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="installation/index.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation/index.html#using-ml4ir-as-a-library">Using ml4ir as a library</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/index.html#requirements">Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation/index.html#using-ml4ir-as-a-toolkit-or-contributing-to-ml4ir">Using ml4ir as a toolkit or contributing to ml4ir</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/index.html#docker-recommended">Docker (Recommended)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/index.html#id1">Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/index.html#virtual-environment">Virtual Environment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/index.html#id2">Requirements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation/index.html#running-tests">Running Tests</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart/index.html">Quickstart</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/script.html">Script</a></li>
@@ -84,8 +106,8 @@
 <li class="toctree-l2"><a class="reference internal" href="quickstart/feature_config.html">FeatureConfig</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/model_config.html">ModelConfig</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/dataset.html">RelevanceDataset</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart/callbacks.html">Callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/saving.html">Saving</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart/serving.html">JVM Inference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="advanced/index.html">Advanced Guide</a><ul>

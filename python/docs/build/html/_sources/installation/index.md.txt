@@ -1,10 +1,4 @@
-# ml4ir Python Quickstart
-## Contents
-* [Installation](#installation)
-* [Usage](#usage)
-* [Running Tests](#running-tests)
-
-## Installation
+# Installation
 
 ### Using ml4ir as a library
 
@@ -23,7 +17,7 @@ This will install **[ml4ir-0.0.2](https://pypi.org/project/ml4ir/)** (the curren
 
 ### Using ml4ir as a toolkit or contributing to ml4ir
 
-#### Firstly, clone ml4ir
+Firstly, clone ml4ir
 ```
 git clone https://github.com/salesforce/ml4ir
 ```
@@ -95,48 +89,6 @@ export PYTHONPATH=$PYTHONPATH:`pwd`
 
 pre-commit-hooks are required, and installed as a requirement for contributing to ml4ir. 
 If an error results that they didn't install, execute `pre-commit install` to install git hooks in your .git/ directory.
-
-## Usage
-
-##### ml4ir as a toolkit
-The entrypoint into the training or evaluation functionality of ml4ir is through `ml4ir/base/pipeline.py` and for application specific overrides, look at `ml4ir/applications/<eg: ranking>/pipeline.py
-
-Pipelines currently supported:
-
-* `ml4ir/applications/ranking/pipeline.py`
-
-* `ml4ir/applications/classification/pipeline.py`
-
-To run the ml4ir ranking pipeline to train, evaluate and/or test, use
-```
-docker-compose run ml4ir \
-    python3 ml4ir/applications/ranking/pipeline.py \
-    <args>
-```
-
-An example ranking training predict and evaluate pipeline
-```
-docker-compose run ml4ir \
-	python3 ml4ir/applications/ranking/pipeline.py \
-	--data_dir ml4ir/applications/ranking/tests/data/tfrecord \
-	--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
-	--run_id test \
-	--data_format tfrecord \
-	--execution_mode train_inference_evaluate
-```
-
-##### ml4ir as a library
-
-To use ml4ir as a deep learning library to build relevance models, look at the following walkthroughs under `notebooks/`
-
-* **Learning to Rank** : The `PointwiseRankingDemo` notebook walks you through building, training, saving, and the entire life cycle of a `RelevanceModel` from the bottom up. You can also find details regarding the architecture of ml4ir in it.
-
-* **Text Classification** : The `EntityPredictionDemo` notebook walks you through training a model to predict entity type given a user context and query.
-
-Enter the following command to spin up Jupyter notebook on your browser to run the above notebooks
-```
-jupyter-notebook
-```
 
 ## Running Tests
 To run all the python based tests under `ml4ir`
