@@ -5,9 +5,6 @@ How To
 .. toctree::
    :maxdepth: 4
 
-   architecture
-   feature_config
-   model_config
-   dataset
-   callbacks
-   saving
+   transfer_learning
+   preprocessing
+   feature_layer
