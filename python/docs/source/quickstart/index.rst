@@ -6,7 +6,6 @@ Quickstart
    :caption: Contents
 
 
-   architecture
    script
    library
    feature_config
