@@ -13,6 +13,7 @@
 import os
 import sys
 from typing import List
+from recommonmark.transform import AutoStructify
 
 # Set python project root
 sys.path.insert(0, os.path.abspath("../../"))
@@ -61,3 +62,8 @@ html_theme = "default"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+def setup(app):
+    app.add_config_value("recommonmark_config", {"enable_eval_rst": True}, True)
+    app.add_transform(AutoStructify)
