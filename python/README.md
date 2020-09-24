@@ -125,6 +125,10 @@ docker-compose run ml4ir \
 	--execution_mode train_inference_evaluate
 ```
 
+For more examples of usage, check:
+* [Ranking](ml4ir/applications/ranking/README.md)
+* [Query Classification](ml4ir/applications/classification/README.md)
+
 ##### ml4ir as a library
 
 To use ml4ir as a deep learning library to build relevance models, look at the following walkthroughs under `notebooks/`
