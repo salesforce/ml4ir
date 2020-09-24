@@ -20,7 +20,7 @@ ml4ir comes packaged with pre-defined configurable pipelines for popular search 
 
 In the sample ranking data above, each row represents a query-document pair of features. Features like `query_text`, `domain_name` are common across documents. Whereas features like `record_text`, `popularity_score`, `quality_score` are unique to each document. In this example, we learn a ranking function using binary clicks as the label. The state of the art LTR models of today rely on listwise losses and complex groupwise scoring functions. 
 
-To train and evaluate a learning to rank model, use the predefined **[RankingPipeline](../api/pipeline#RankingPipeline)**
+To train and evaluate a learning to rank model, use the predefined `RankingPipeline`
 
 #### Query Classification
 [Query Classification](https://en.wikipedia.org/wiki/Web_query_classification) is the task of classifying a given user query into a set of predefined categories. Additional features such as user context, domain of query can be used to personalize the predictions.
@@ -29,10 +29,10 @@ To train and evaluate a learning to rank model, use the predefined **[RankingPip
 
 In the sample query classification data above, each row represents a user query. We try to predict the `product_group` category using the `query_text`, `domain_name` and `previous_products`. These features define the user's context at the time of querying and also the actual query text made by the user. This type of query classification can be used to further narrow down search results and enhance the user search experiennce.
 
-To train and evaluate a learning to rank model, use the predefined **[ClassificationPipeline](../api/pipeline#ClassificationPipeline)**
+To train and evaluate a learning to rank model, use the predefined `ClassificationPipeline`
 
 #### Custom Pipeline
-To define your own custom ml4ir pipeline, you can override the **[RelevancePipeline](../api/pipeline#RelevancePipeline)** to plug in the `RelevanceModel` you want to train and evaluate.
+To define your own custom ml4ir pipeline, you can override the `RelevancePipeline`** to plug in the `RelevanceModel` you want to train and evaluate.
 
 ### Command Line Arguments
 
