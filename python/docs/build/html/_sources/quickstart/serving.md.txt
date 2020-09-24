@@ -1,2 +1,1 @@
-JVM Inference
-=============
+## Serving ml4ir Models on the JVM

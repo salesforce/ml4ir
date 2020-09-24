@@ -1,2 +1,1 @@
-FeatureConfig
-=============
+## Defining the FeatureConfig
