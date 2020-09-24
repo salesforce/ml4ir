@@ -1,4 +1,7 @@
 # ml4ir: Machine Learning for Information Retrieval
+Quickstart: **[ml4ir Read the Docs](https://ml4ir.readthedocs.io/en/latest/)** | **[ml4ir pypi](https://pypi.org/project/ml4ir/)**
+
+
 ml4ir is an open source library for training and deploying deep learning models for search applications. ml4ir is built on top of **python3** and **tensorflow 2.x** for training and evaluation. It also comes packaged with scala utilties for **JVM inference**.
 
 ml4ir is designed as modular subcomponents which can each be combined and customized to build a variety of search ML models such as:
@@ -44,9 +47,6 @@ As ml4ir is a common library for training and serving deep learning models, this
 **Search Model Hub**
 
 The goal of ml4ir is to form a common hub for the most popular deep learning layers, losses, metrics, embeddings used in the search domain. We've built ml4ir with a focus on quick prototyping with wide variety of network architectures and optimizations. We encourage contributors to add to ml4ir's arsenal of search deep learning utilities as we continue to do so ourselves.
-
-## Getting Started
-**[ml4ir ReadTheDocs](https://ml4ir.readthedocs.io/en/latest/)**
 
 ## Continuous Integration 
 
