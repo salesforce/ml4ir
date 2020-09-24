@@ -44,8 +44,84 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="feature-processing">
-<h1>Feature Processing<a class="headerlink" href="#feature-processing" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-ml4ir.base.features.preprocessing">
+<span id="feature-processing"></span><h1>Feature Processing<a class="headerlink" href="#module-ml4ir.base.features.preprocessing" title="Permalink to this headline">¶</a></h1>
+<dl class="attribute">
+<dt id="ml4ir.base.features.preprocessing.preprocess_text">
+<code class="sig-prename descclassname">ml4ir.base.features.preprocessing.</code><code class="sig-name descname">preprocess_text</code><a class="headerlink" href="#ml4ir.base.features.preprocessing.preprocess_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>String preprocessing function that removes punctuation and converts strings to lower case
+based on the arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_tensor</strong> – input feature tensor of type tf.string</p></li>
+<li><p><strong>remove_punctuation</strong> – bool; whether to remove punctuation characters from strings</p></li>
+<li><p><strong>to_lower</strong> – bool; whether to convert string to lower case</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>processed float tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="ml4ir.base.features.preprocessing.get_one_hot_label_vectorizer">
+<code class="sig-prename descclassname">ml4ir.base.features.preprocessing.</code><code class="sig-name descname">get_one_hot_label_vectorizer</code><span class="sig-paren">(</span><em class="sig-param">feature_info</em>, <em class="sig-param">file_io: ml4ir.base.io.file_io.FileIO</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.preprocessing.get_one_hot_label_vectorizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a tf function to convert categorical string labels to a one hot encoding.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_info</strong> – Dictionary representing the configuration parameters for the specific feature from the FeatureConfig.
+See categorical_indicator_with_vocabulary_file, here it is used to read a vocabulary file to
+create the one hot encoding.</p></li>
+<li><p><strong>file_io</strong> – FileIO required to load the vocabulary file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>processed float tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ml4ir.base.features.preprocessing.split_and_pad_string">
+<code class="sig-prename descclassname">ml4ir.base.features.preprocessing.</code><code class="sig-name descname">split_and_pad_string</code><a class="headerlink" href="#ml4ir.base.features.preprocessing.split_and_pad_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>String preprocessing function that splits and pads a sequence based on the max_length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_tensor</strong> – input feature tensor of type tf.string.</p></li>
+<li><p><strong>split_char</strong> – string; string separator to split the string input.</p></li>
+<li><p><strong>max_length</strong> – int; max length of the sequence produced after padding.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>processed float tensor</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>feature_tensor=”AAA,BBB,CCC”
+split_char=”,”
+max_length=5
+could returns the padded tokens [‘AAA’, ‘BBB’, ‘CCC’, ‘’, ‘’]</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ml4ir.base.features.preprocessing.natural_log">
+<code class="sig-prename descclassname">ml4ir.base.features.preprocessing.</code><code class="sig-name descname">natural_log</code><a class="headerlink" href="#ml4ir.base.features.preprocessing.natural_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the signed log of the feature_tensor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_tensor</strong> – input feature tensor of type tf.float32</p></li>
+<li><p><strong>shift</strong> – floating point shift that is added to the feature tensor element wise before computing natural log
+(used to handle 0 values)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 
 

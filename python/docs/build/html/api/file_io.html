@@ -16,7 +16,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Frequently Asked Questions" href="../misc/faq.html" />
+    <link rel="next" title="&lt;no title&gt;" href="../misc/faq.html" />
     <link rel="prev" title="Scorer" href="scorer.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -29,7 +29,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../misc/faq.html" title="Frequently Asked Questions"
+          <a href="../misc/faq.html" title="&lt;no title&gt;"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="scorer.html" title="Scorer"
@@ -46,170 +46,217 @@
             
   <div class="section" id="file-i-o-utilities">
 <h1>File I/O Utilities<a class="headerlink" href="#file-i-o-utilities" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="fileio">
+<h2>FileIO<a class="headerlink" href="#fileio" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig">
-<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">FeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig" title="Permalink to this definition">¶</a></dt>
+<dt id="ml4ir.base.io.file_io.FileIO">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.io.file_io.</code><code class="sig-name descname">FileIO</code><span class="sig-paren">(</span><em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Class to store features to be used for the Relevance models</p>
+<p>Abstract class defining the file I/O handler methods</p>
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.create_dummy_protobuf">
-<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create an Example protobuffer with dummy values</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.define_features">
-<code class="sig-name descname">define_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.define_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for defining additional FeatureConfig attributes from
-the feature config dictionary
-Defines the following FeatureConfig attributes:
-- train_features: features that will be used for training
-- metadata_features: features that will not be used for training
-- features_to_log: features that will be logged with RelevanceModel.predict()
-- group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
-- secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user’s definition.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.define_inputs">
-<code class="sig-name descname">define_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Dict[str, tensorflow.python.keras.engine.input_layer.Input]<a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.define_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Define the input layer for the tensorflow model</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Dictionary of tensorflow graph input nodes</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.extract_features">
-<code class="sig-name descname">extract_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.extract_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to extract the features from the input feature config YAML
-file and assign relevance features to FeatureConfig attributes:
-- query_key
-- label
-- all_features</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_all_features">
-<code class="sig-name descname">get_all_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em>, <em class="sig-param">include_label: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_all_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for all_features in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_default_value">
-<code class="sig-name descname">get_default_value</code><span class="sig-paren">(</span><em class="sig-param">feature_info</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_default_value" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_dtype">
-<code class="sig-name descname">get_dtype</code><span class="sig-paren">(</span><em class="sig-param">feature_info: dict</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_dtype" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_feature">
-<code class="sig-name descname">get_feature</code><span class="sig-paren">(</span><em class="sig-param">name: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_feature" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method that returns the corresponding feature_info
-from the FeatureConfig object that matches the name passed.</p>
+<dt id="ml4ir.base.io.file_io.FileIO.clear_dir">
+<code class="sig-name descname">clear_dir</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.clear_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear contents of existing directory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>name</strong> – name of feature to be returned</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>feature_info dictionary from FeatureConfig matching with the name</p>
+<dd class="field-odd"><p><strong>dir_path</strong> – path to directory to be cleared</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_features_to_log">
-<code class="sig-name descname">get_features_to_log</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_features_to_log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for features_to_log in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_group_metrics_keys">
-<code class="sig-name descname">get_group_metrics_keys</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_group_metrics_keys" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for group_metrics_keys in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_hyperparameter_dict">
-<code class="sig-name descname">get_hyperparameter_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_hyperparameter_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create hyperparameter configs to track model metadata for best model selection
-Unwraps the feature config for each of the features to add
-preprocessing_info and feature_layer_info as key value pairs
-that can be tracked across the experiment. This can be used to
-identify the values that were set for the different feature layers
-in a given experiment. Will be used during best model selection and
-Hyper Parameter Optimization.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_instance">
-<em class="property">static </em><code class="sig-name descname">get_instance</code><span class="sig-paren">(</span><em class="sig-param">feature_config_dict: dict</em>, <em class="sig-param">tfrecord_type: str</em>, <em class="sig-param">logger: logging.Logger</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_instance" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_label">
-<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_label" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for label in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_metadata_features">
-<code class="sig-name descname">get_metadata_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_metadata_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for metadata_features in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_query_key">
-<code class="sig-name descname">get_query_key</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_query_key" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for query_key in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_secondary_labels">
-<code class="sig-name descname">get_secondary_labels</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_secondary_labels" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for secondary_labels in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_train_features">
-<code class="sig-name descname">get_train_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_train_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for train_features in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.initialize_features">
-<code class="sig-name descname">initialize_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.initialize_features" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.log_initialization">
-<code class="sig-name descname">log_initialization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.log_initialization" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.FeatureConfig.set_feature">
-<code class="sig-name descname">set_feature</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">new_feature_info: dict</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.set_feature" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setter method to set the feature_info of a feature in the FeatureConfig
-as specified by the name argument</p>
+<dt id="ml4ir.base.io.file_io.FileIO.get_files_in_directory">
+<code class="sig-name descname">get_files_in_directory</code><span class="sig-paren">(</span><em class="sig-param">indir: str</em>, <em class="sig-param">extension='.csv'</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.get_files_in_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of files in a directory</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> – name of feature whose feature_info is to be updated</p></li>
-<li><p><strong>new_feature_info</strong> – dictionary used to set the feature_info for the
-feature with specified name</p></li>
+<li><p><strong>indir</strong> – input directory to search for files</p></li>
+<li><p><strong>extension</strong> – extension of the files to search for</p></li>
+<li><p><strong>prefix</strong> – string file name prefix to narrow search</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of file path strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.log">
+<code class="sig-name descname">log</code><span class="sig-paren">(</span><em class="sig-param">string</em>, <em class="sig-param">mode=20</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper method for logging</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>string</strong> – String to be logged</p></li>
+<li><p><strong>mode</strong> – logging mode to use</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.make_directory">
+<code class="sig-name descname">make_directory</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em>, <em class="sig-param">clear_dir: bool = False</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.make_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create directory structure specified recursively</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dir_path</strong> – path for directory to be create</p></li>
+<li><p><strong>clear_dir</strong> – clear contents on existing directory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>directory path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.path_exists">
+<code class="sig-name descname">path_exists</code><span class="sig-paren">(</span><em class="sig-param">path: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.path_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a path exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> – check if path exists</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if path exists; False otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.read_df">
+<code class="sig-name descname">read_df</code><span class="sig-paren">(</span><em class="sig-param">infile: str</em>, <em class="sig-param">sep: str = '</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col: int = None</em><span class="sig-paren">)</span> &#x2192; Optional[pandas.core.frame.DataFrame]<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.read_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> – path to the csv input file</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.read_df_list">
+<code class="sig-name descname">read_df_list</code><span class="sig-paren">(</span><em class="sig-param">infiles</em>, <em class="sig-param">sep='</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col=None</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.read_df_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a list of files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infiles</strong> – paths to the csv input files</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.read_json">
+<code class="sig-name descname">read_json</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.read_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read JSON file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.read_text_file">
+<code class="sig-name descname">read_text_file</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.read_text_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read text file and return as string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the text file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>file contents as a string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.read_yaml">
+<code class="sig-name descname">read_yaml</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.read_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read YAML file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.rm_dir">
+<code class="sig-name descname">rm_dir</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.rm_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete existing directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir_path</strong> – path to directory to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.rm_file">
+<code class="sig-name descname">rm_file</code><span class="sig-paren">(</span><em class="sig-param">file_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.rm_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes existing file_path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file_path</strong> – path to file to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.set_logger">
+<code class="sig-name descname">set_logger</code><span class="sig-paren">(</span><em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.set_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.write_df">
+<code class="sig-name descname">write_df</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">outfile: str = None</em>, <em class="sig-param">sep: str = '</em>, <em class="sig-param">'</em>, <em class="sig-param">index: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.write_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a pandas dataframe to a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – dataframe to be written</p></li>
+<li><p><strong>outfile</strong> – path to the csv output file</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index</strong> – boolean specifying if index should be saved</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.file_io.FileIO.write_json">
+<code class="sig-name descname">write_json</code><span class="sig-paren">(</span><em class="sig-param">json_dict: dict</em>, <em class="sig-param">outfile: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.file_io.FileIO.write_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write dictionary to a JSON file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>json_dict</strong> – dictionary to be dumped to json file</p></li>
+<li><p><strong>outfile</strong> – path to the output file</p></li>
 </ul>
 </dd>
 </dl>
@@ -217,121 +264,398 @@ feature with specified name</p></li>
 
 </dd></dl>
 
+</div>
+<div class="section" id="localio">
+<h2>LocalIO<a class="headerlink" href="#localio" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="ml4ir.base.features.feature_config.ExampleFeatureConfig">
-<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">ExampleFeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.ExampleFeatureConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="scorer.html#ml4ir.base.features.feature_config.FeatureConfig" title="ml4ir.base.features.feature_config.FeatureConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.features.feature_config.FeatureConfig</span></code></a></p>
-<p>Feature config overrides for data containing Example protos</p>
+<dt id="ml4ir.base.io.local_io.LocalIO">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.io.local_io.</code><code class="sig-name descname">LocalIO</code><span class="sig-paren">(</span><em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ml4ir.base.io.file_io.FileIO" title="ml4ir.base.io.file_io.FileIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.io.file_io.FileIO</span></code></a></p>
+<p>Class defining the file I/O handler methods for the local file system</p>
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.ExampleFeatureConfig.create_dummy_protobuf">
-<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.ExampleFeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a SequenceExample protobuffer with dummy values</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig">
-<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">SequenceExampleFeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="scorer.html#ml4ir.base.features.feature_config.FeatureConfig" title="ml4ir.base.features.feature_config.FeatureConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.features.feature_config.FeatureConfig</span></code></a></p>
-<p>Feature config overrides for data containing SequenceExample protos</p>
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.create_dummy_protobuf">
-<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a SequenceExample protobuffer with dummy values</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_features">
-<code class="sig-name descname">define_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method for defining additional FeatureConfig attributes from
-the feature config dictionary
-Defines the following FeatureConfig attributes:
-- train_features: features that will be used for training
-- metadata_features: features that will not be used for training
-- context_features: features that are part of the context substructure of TFRecord SequenceExample
-- sequence_features: features that are part of the feature_lists substructure of TFRecord SequenceExample
-- features_to_log: features that will be logged with RelevanceModel.predict()
-- group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
-- secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user’s definition.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_inputs">
-<code class="sig-name descname">define_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Dict[str, tensorflow.python.keras.engine.input_layer.Input]<a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_inputs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Define the input layer for the tensorflow model</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.clear_dir_contents">
+<code class="sig-name descname">clear_dir_contents</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.clear_dir_contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear contents of existing directory</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Dictionary of tensorflow graph input nodes</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir_path</strong> – path to directory to be cleared</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.extract_features">
-<code class="sig-name descname">extract_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.extract_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to extract the features from the input feature config YAML
-file and assign relevance features to FeatureConfig attributes:
-- query_key
-- label
-- all_features
-- rank (mandatory feature for SequenceExample datasets)</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.get_files_in_directory">
+<code class="sig-name descname">get_files_in_directory</code><span class="sig-paren">(</span><em class="sig-param">indir: str</em>, <em class="sig-param">extension='.csv'</em>, <em class="sig-param">prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.get_files_in_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get list of files in a directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indir</strong> – input directory to search for files</p></li>
+<li><p><strong>extension</strong> – extension of the files to search for</p></li>
+<li><p><strong>prefix</strong> – string file name prefix to narrow search</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of file path strings</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.generate_mask">
-<code class="sig-name descname">generate_mask</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.generate_mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add mask information used to flag padded records.
-In order to create a batch of sequence examples from n TFRecords,
-we need to make sure that they all have the same number of sequences.
-To do this, we pad sequence records to a fixed max_sequence_size.
-Now, we do not want to use these additional padded sequence records
-to compute metrics and losses. Hence we maintain a boolean mask to
-tell ml4ir the sequence records that were originally present.</p>
-<p>In this method, we add the feature_info for the above mask feature as it
-is not implicitly present in the data.</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.load_numpy_array">
+<code class="sig-name descname">load_numpy_array</code><span class="sig-paren">(</span><em class="sig-param">file_path</em>, <em class="sig-param">allow_pickle=True</em>, <em class="sig-param">unzip=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.load_numpy_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a numpy array from disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> – file path to load the numpy object from</p></li>
+<li><p><strong>allow_pickle</strong> – Allow pickling of objects while loading</p></li>
+<li><p><strong>unzip</strong> – To unzip the numpy array saved as a zip file. Used when saved with zip=True
+Returns python list of numpy arrays</p></li>
+</ul>
+</dd>
+</dl>
+<p>Note: Used to load individual model layer weights for transfer learning</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_context_features">
-<code class="sig-name descname">get_context_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_context_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for context_features in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.make_directory">
+<code class="sig-name descname">make_directory</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em>, <em class="sig-param">clear_dir: bool = False</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.make_directory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create directory structure specified recursively</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dir_path</strong> – path for directory to be create</p></li>
+<li><p><strong>clear_dir</strong> – clear contents on existing directory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>directory path</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_mask">
-<code class="sig-name descname">get_mask</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_mask" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for mask in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.path_exists">
+<code class="sig-name descname">path_exists</code><span class="sig-paren">(</span><em class="sig-param">path: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.path_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a path exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> – check if path exists</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if path exists; False otherwise</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_rank">
-<code class="sig-name descname">get_rank</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_rank" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for rank in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.read_df">
+<code class="sig-name descname">read_df</code><span class="sig-paren">(</span><em class="sig-param">infile: str</em>, <em class="sig-param">sep: str = '</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col: int = None</em><span class="sig-paren">)</span> &#x2192; Optional[pandas.core.frame.DataFrame]<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.read_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> – path to the csv input file; can be hdfs path</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_sequence_features">
-<code class="sig-name descname">get_sequence_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_sequence_features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Getter method for sequence_features in FeatureConfig object
-Can additionally be used to only fetch a particular value from the dict</p>
+<dt id="ml4ir.base.io.local_io.LocalIO.read_df_list">
+<code class="sig-name descname">read_df_list</code><span class="sig-paren">(</span><em class="sig-param">infiles</em>, <em class="sig-param">sep='</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col=None</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.read_df_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a list of files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infiles</strong> – paths to the csv input files; can be hdfs paths</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.initialize_features">
-<code class="sig-name descname">initialize_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.initialize_features" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="ml4ir.base.io.local_io.LocalIO.read_json">
+<code class="sig-name descname">read_json</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.read_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read JSON file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file; can be hdfs path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
-<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.log_initialization">
-<code class="sig-name descname">log_initialization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.log_initialization" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="ml4ir.base.io.local_io.LocalIO.read_yaml">
+<code class="sig-name descname">read_yaml</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.read_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read YAML file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file; can be hdfs path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.local_io.LocalIO.rm_dir">
+<code class="sig-name descname">rm_dir</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.rm_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete existing directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir_path</strong> – path to directory to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.local_io.LocalIO.rm_file">
+<code class="sig-name descname">rm_file</code><span class="sig-paren">(</span><em class="sig-param">file_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.rm_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes existing file_path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file_path</strong> – path to file to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.local_io.LocalIO.save_numpy_array">
+<code class="sig-name descname">save_numpy_array</code><span class="sig-paren">(</span><em class="sig-param">np_array</em>, <em class="sig-param">file_path: str</em>, <em class="sig-param">allow_pickle=True</em>, <em class="sig-param">zip=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.save_numpy_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a numpy array to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>np_array</strong> – Array like numpy object to be saved</p></li>
+<li><p><strong>file_path</strong> – file path to save the object to</p></li>
+<li><p><strong>allow_pickle</strong> – Allow pickling of objects while saving</p></li>
+<li><p><strong>zip</strong> – use np.savez to save the numpy arrays, allows passing in python list</p></li>
+</ul>
+</dd>
+</dl>
+<p>Note: Used to save individual model layer weights for transfer learning</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.local_io.LocalIO.write_df">
+<code class="sig-name descname">write_df</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">outfile: str = None</em>, <em class="sig-param">sep: str = '</em>, <em class="sig-param">'</em>, <em class="sig-param">index: bool = True</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.write_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a pandas dataframe to a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> – dataframe to be written</p></li>
+<li><p><strong>outfile</strong> – path to the csv output file; can NOT be hdfs path currently</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index</strong> – boolean specifying if index should be saved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dataframe in csv form if outfile is None</p>
+</dd>
+</dl>
+<p>NOTE: Does not support spark write</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.local_io.LocalIO.write_json">
+<code class="sig-name descname">write_json</code><span class="sig-paren">(</span><em class="sig-param">json_dict: dict</em>, <em class="sig-param">outfile: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.local_io.LocalIO.write_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write dictionary to a JSON file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>json_dict</strong> – dictionary to be dumped to json file</p></li>
+<li><p><strong>outfile</strong> – path to the output file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
+</div>
+<div class="section" id="sparkio">
+<h2>SparkIO<a class="headerlink" href="#sparkio" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ml4ir.base.io.spark_io.SparkIO">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.io.spark_io.</code><code class="sig-name descname">SparkIO</code><span class="sig-paren">(</span><em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ml4ir.base.io.file_io.FileIO" title="ml4ir.base.io.file_io.FileIO"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.io.file_io.FileIO</span></code></a></p>
+<p>Abstract class defining the file I/O handler methods</p>
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.copy_from_hdfs">
+<code class="sig-name descname">copy_from_hdfs</code><span class="sig-paren">(</span><em class="sig-param">src: str</em>, <em class="sig-param">dest: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.copy_from_hdfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy a directory/file from HDFS to local filesystem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>-</em>) – String path to source(on HDFS)</p></li>
+<li><p><strong>dest</strong> (<em>-</em>) – String path to destination(on local file system)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.copy_to_hdfs">
+<code class="sig-name descname">copy_to_hdfs</code><span class="sig-paren">(</span><em class="sig-param">src: str</em>, <em class="sig-param">dest: str</em>, <em class="sig-param">overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.copy_to_hdfs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy a directory/file to HDFS from local filesystem</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>-</em>) – String path to source(on local file system)</p></li>
+<li><p><strong>dest</strong> (<em>-</em>) – String path to destination(on HDFS)</p></li>
+<li><p><strong>overwrite</strong> (<em>-</em>) – Boolean to specify whether existing destination files should be overwritten</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.get_path_from_str">
+<code class="sig-name descname">get_path_from_str</code><span class="sig-paren">(</span><em class="sig-param">file_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.get_path_from_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Path object from string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file_path</strong> – string file path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Hadoop Path object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.path_exists">
+<code class="sig-name descname">path_exists</code><span class="sig-paren">(</span><em class="sig-param">path: str</em><span class="sig-paren">)</span> &#x2192; bool<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.path_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a path exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> – check if path exists</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if path exists; False otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.read_df">
+<code class="sig-name descname">read_df</code><span class="sig-paren">(</span><em class="sig-param">infile: str</em>, <em class="sig-param">sep: str = '</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col: int = None</em><span class="sig-paren">)</span> &#x2192; Optional[pandas.core.frame.DataFrame]<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.read_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> – path to the csv input file; can be hdfs path</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.read_df_list">
+<code class="sig-name descname">read_df_list</code><span class="sig-paren">(</span><em class="sig-param">infiles</em>, <em class="sig-param">sep='</em>, <em class="sig-param">'</em>, <em class="sig-param">index_col=None</em><span class="sig-paren">)</span> &#x2192; pandas.core.frame.DataFrame<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.read_df_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a pandas dataframe from a list of files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infiles</strong> – paths to the csv input files; can be hdfs paths</p></li>
+<li><p><strong>sep</strong> – separator to use for loading file</p></li>
+<li><p><strong>index_col</strong> – column to be used as index</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>pandas dataframe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.read_json">
+<code class="sig-name descname">read_json</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.read_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read JSON file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file; can be hdfs path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.read_text_file">
+<code class="sig-name descname">read_text_file</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; str<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.read_text_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read text file and return as string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the text file</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>file contents as a string</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.read_yaml">
+<code class="sig-name descname">read_yaml</code><span class="sig-paren">(</span><em class="sig-param">infile</em><span class="sig-paren">)</span> &#x2192; dict<a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.read_yaml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read YAML file and return a python dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>infile</strong> – path to the json file; can be hdfs path</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>python dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.rm_dir">
+<code class="sig-name descname">rm_dir</code><span class="sig-paren">(</span><em class="sig-param">dir_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.rm_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete existing directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dir_path</strong> – path to directory to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.io.spark_io.SparkIO.rm_file">
+<code class="sig-name descname">rm_file</code><span class="sig-paren">(</span><em class="sig-param">file_path: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.io.spark_io.SparkIO.rm_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes existing file_path</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>file_path</strong> – path to file to be removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -340,12 +664,22 @@ Can additionally be used to only fetch a particular value from the dict</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">File I/O Utilities</a><ul>
+<li><a class="reference internal" href="#fileio">FileIO</a></li>
+<li><a class="reference internal" href="#localio">LocalIO</a></li>
+<li><a class="reference internal" href="#sparkio">SparkIO</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="scorer.html"
                         title="previous chapter">Scorer</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="../misc/faq.html"
-                        title="next chapter">Frequently Asked Questions</a></p>
+                        title="next chapter">&lt;no title&gt;</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -377,7 +711,7 @@ Can additionally be used to only fetch a particular value from the dict</p>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../misc/faq.html" title="Frequently Asked Questions"
+          <a href="../misc/faq.html" title="&lt;no title&gt;"
              >next</a> |</li>
         <li class="right" >
           <a href="scorer.html" title="Scorer"

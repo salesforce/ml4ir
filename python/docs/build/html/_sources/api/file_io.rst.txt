@@ -1,19 +1,28 @@
 File I/O Utilities
 ==================
 
-.. autoclass:: ml4ir.base.features.feature_config.FeatureConfig
+FileIO
+^^^^^^
+
+.. autoclass:: ml4ir.base.io.file_io.FileIO
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-.. autoclass:: ml4ir.base.features.feature_config.ExampleFeatureConfig
+LocalIO
+^^^^^^^
+
+.. autoclass:: ml4ir.base.io.local_io.LocalIO
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-.. autoclass:: ml4ir.base.features.feature_config.SequenceExampleFeatureConfig
+SparkIO
+^^^^^^^
+
+.. autoclass:: ml4ir.base.io.spark_io.SparkIO
    :members:
    :undoc-members:
    :show-inheritance:

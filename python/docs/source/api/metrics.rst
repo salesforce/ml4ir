@@ -4,16 +4,16 @@ Metrics
 Any keras supported Metric class can be used with ml4ir. ml4ir comes prepackaged with the following popular search metrics.
 
 
-MRR
-^^^
+MeanReciprocalRank
+^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: ml4ir.applications.ranking.model.metrics.metrics_impl.MRR
    :members:
    :undoc-members:
    :show-inheritance:
 
-ACR
-^^^
+AverageClickRank
+^^^^^^^^^^^^^^^^
 
 .. autoclass:: ml4ir.applications.ranking.model.metrics.metrics_impl.ACR
    :members:
