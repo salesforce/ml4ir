@@ -223,8 +223,6 @@ python ml4ir/applications/ranking/pipeline.py \
 
 #### Query Classification
 
-## Classification
-#### Examples
 Using TFRecord
 ```
 python ml4ir/applications/classification/pipeline.py \
