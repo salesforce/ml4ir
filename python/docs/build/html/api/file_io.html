@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>File I/O Utilities &#8212; ml4ir 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Frequently Asked Questions" href="../misc/faq.html" />
+    <link rel="prev" title="Scorer" href="scorer.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../misc/faq.html" title="Frequently Asked Questions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scorer.html" title="Scorer"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ml4ir 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">API Documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="file-i-o-utilities">
+<h1>File I/O Utilities<a class="headerlink" href="#file-i-o-utilities" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">FeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to store features to be used for the Relevance models</p>
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.create_dummy_protobuf">
+<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an Example protobuffer with dummy values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.define_features">
+<code class="sig-name descname">define_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.define_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for defining additional FeatureConfig attributes from
+the feature config dictionary
+Defines the following FeatureConfig attributes:
+- train_features: features that will be used for training
+- metadata_features: features that will not be used for training
+- features_to_log: features that will be logged with RelevanceModel.predict()
+- group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+- secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user’s definition.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.define_inputs">
+<code class="sig-name descname">define_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Dict[str, tensorflow.python.keras.engine.input_layer.Input]<a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.define_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the input layer for the tensorflow model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary of tensorflow graph input nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.extract_features">
+<code class="sig-name descname">extract_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to extract the features from the input feature config YAML
+file and assign relevance features to FeatureConfig attributes:
+- query_key
+- label
+- all_features</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_all_features">
+<code class="sig-name descname">get_all_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em>, <em class="sig-param">include_label: bool = True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_all_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for all_features in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_default_value">
+<code class="sig-name descname">get_default_value</code><span class="sig-paren">(</span><em class="sig-param">feature_info</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_default_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_dtype">
+<code class="sig-name descname">get_dtype</code><span class="sig-paren">(</span><em class="sig-param">feature_info: dict</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_feature">
+<code class="sig-name descname">get_feature</code><span class="sig-paren">(</span><em class="sig-param">name: str</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method that returns the corresponding feature_info
+from the FeatureConfig object that matches the name passed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – name of feature to be returned</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>feature_info dictionary from FeatureConfig matching with the name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_features_to_log">
+<code class="sig-name descname">get_features_to_log</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_features_to_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for features_to_log in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_group_metrics_keys">
+<code class="sig-name descname">get_group_metrics_keys</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_group_metrics_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for group_metrics_keys in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_hyperparameter_dict">
+<code class="sig-name descname">get_hyperparameter_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_hyperparameter_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create hyperparameter configs to track model metadata for best model selection
+Unwraps the feature config for each of the features to add
+preprocessing_info and feature_layer_info as key value pairs
+that can be tracked across the experiment. This can be used to
+identify the values that were set for the different feature layers
+in a given experiment. Will be used during best model selection and
+Hyper Parameter Optimization.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_instance">
+<em class="property">static </em><code class="sig-name descname">get_instance</code><span class="sig-paren">(</span><em class="sig-param">feature_config_dict: dict</em>, <em class="sig-param">tfrecord_type: str</em>, <em class="sig-param">logger: logging.Logger</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_instance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_label">
+<code class="sig-name descname">get_label</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_label" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for label in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_metadata_features">
+<code class="sig-name descname">get_metadata_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_metadata_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for metadata_features in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_query_key">
+<code class="sig-name descname">get_query_key</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_query_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for query_key in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_secondary_labels">
+<code class="sig-name descname">get_secondary_labels</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_secondary_labels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for secondary_labels in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.get_train_features">
+<code class="sig-name descname">get_train_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.get_train_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for train_features in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.initialize_features">
+<code class="sig-name descname">initialize_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.initialize_features" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.log_initialization">
+<code class="sig-name descname">log_initialization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.log_initialization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.FeatureConfig.set_feature">
+<code class="sig-name descname">set_feature</code><span class="sig-paren">(</span><em class="sig-param">name: str</em>, <em class="sig-param">new_feature_info: dict</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.FeatureConfig.set_feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setter method to set the feature_info of a feature in the FeatureConfig
+as specified by the name argument</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – name of feature whose feature_info is to be updated</p></li>
+<li><p><strong>new_feature_info</strong> – dictionary used to set the feature_info for the
+feature with specified name</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ml4ir.base.features.feature_config.ExampleFeatureConfig">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">ExampleFeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger: Optional[logging.Logger] = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.ExampleFeatureConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="scorer.html#ml4ir.base.features.feature_config.FeatureConfig" title="ml4ir.base.features.feature_config.FeatureConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.features.feature_config.FeatureConfig</span></code></a></p>
+<p>Feature config overrides for data containing Example protos</p>
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.ExampleFeatureConfig.create_dummy_protobuf">
+<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.ExampleFeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SequenceExample protobuffer with dummy values</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig">
+<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.features.feature_config.</code><code class="sig-name descname">SequenceExampleFeatureConfig</code><span class="sig-paren">(</span><em class="sig-param">features_dict</em>, <em class="sig-param">logger</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="scorer.html#ml4ir.base.features.feature_config.FeatureConfig" title="ml4ir.base.features.feature_config.FeatureConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">ml4ir.base.features.feature_config.FeatureConfig</span></code></a></p>
+<p>Feature config overrides for data containing SequenceExample protos</p>
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.create_dummy_protobuf">
+<code class="sig-name descname">create_dummy_protobuf</code><span class="sig-paren">(</span><em class="sig-param">num_records=1</em>, <em class="sig-param">required_only=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.create_dummy_protobuf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SequenceExample protobuffer with dummy values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_features">
+<code class="sig-name descname">define_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method for defining additional FeatureConfig attributes from
+the feature config dictionary
+Defines the following FeatureConfig attributes:
+- train_features: features that will be used for training
+- metadata_features: features that will not be used for training
+- context_features: features that are part of the context substructure of TFRecord SequenceExample
+- sequence_features: features that are part of the feature_lists substructure of TFRecord SequenceExample
+- features_to_log: features that will be logged with RelevanceModel.predict()
+- group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+- secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user’s definition.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_inputs">
+<code class="sig-name descname">define_inputs</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; Dict[str, tensorflow.python.keras.engine.input_layer.Input]<a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.define_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the input layer for the tensorflow model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>Dictionary of tensorflow graph input nodes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.extract_features">
+<code class="sig-name descname">extract_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.extract_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to extract the features from the input feature config YAML
+file and assign relevance features to FeatureConfig attributes:
+- query_key
+- label
+- all_features
+- rank (mandatory feature for SequenceExample datasets)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.generate_mask">
+<code class="sig-name descname">generate_mask</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.generate_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add mask information used to flag padded records.
+In order to create a batch of sequence examples from n TFRecords,
+we need to make sure that they all have the same number of sequences.
+To do this, we pad sequence records to a fixed max_sequence_size.
+Now, we do not want to use these additional padded sequence records
+to compute metrics and losses. Hence we maintain a boolean mask to
+tell ml4ir the sequence records that were originally present.</p>
+<p>In this method, we add the feature_info for the above mask feature as it
+is not implicitly present in the data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_context_features">
+<code class="sig-name descname">get_context_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_context_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for context_features in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_mask">
+<code class="sig-name descname">get_mask</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for mask in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_rank">
+<code class="sig-name descname">get_rank</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_rank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for rank in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_sequence_features">
+<code class="sig-name descname">get_sequence_features</code><span class="sig-paren">(</span><em class="sig-param">key: str = None</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.get_sequence_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Getter method for sequence_features in FeatureConfig object
+Can additionally be used to only fetch a particular value from the dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.initialize_features">
+<code class="sig-name descname">initialize_features</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.initialize_features" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.log_initialization">
+<code class="sig-name descname">log_initialization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.features.feature_config.SequenceExampleFeatureConfig.log_initialization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="scorer.html"
+                        title="previous chapter">Scorer</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../misc/faq.html"
+                        title="next chapter">Frequently Asked Questions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/file_io.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../misc/faq.html" title="Frequently Asked Questions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scorer.html" title="Scorer"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">ml4ir 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >API Documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Search Relevance (Salesforce.com, Inc.).
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+  </body>
+</html>

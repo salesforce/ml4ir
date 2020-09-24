@@ -16,8 +16,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Frequently Asked Questions" href="../misc/faq.html" />
-    <link rel="prev" title="Saving" href="../howto/saving.html" /> 
+    <link rel="next" title="Pipelines" href="pipeline.html" />
+    <link rel="prev" title="Transfer Learning with ml4ir" href="../advanced/transfer_learning.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -26,10 +26,13 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../misc/faq.html" title="Frequently Asked Questions"
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../howto/saving.html" title="Saving"
+          <a href="../advanced/transfer_learning.html" title="Transfer Learning with ml4ir"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">ml4ir 0.1.0 documentation</a> &#187;</li> 
       </ul>
@@ -42,71 +45,55 @@
             
   <div class="section" id="api-documentation">
 <h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="ml4ir.base.pipeline.RelevancePipeline">
-<em class="property">class </em><code class="sig-prename descclassname">ml4ir.base.pipeline.</code><code class="sig-name descname">RelevancePipeline</code><span class="sig-paren">(</span><em class="sig-param">args: argparse.Namespace</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.finish">
-<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param">job_status</em>, <em class="sig-param">job_info</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.finish" title="Permalink to this definition">¶</a></dt>
-<dd><p>Method to wrap up the model training pipeline.
-Performs the following actions</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>save a job status file as _SUCCESS or _FAILURE to indicate job status.</p></li>
-<li><p>delete temp data and models directories</p></li>
-<li><p>if using spark IO, transfers models and logs directories to HDFS location from local directories</p></li>
-<li><p>log overall run time of ml4ir job</p></li>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#relevancepipeline">RelevancePipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#rankingpipeline">RankingPipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html#classificationpipeline">ClassificationPipeline</a></li>
 </ul>
-</div></blockquote>
-<dl class="simple">
-<dt>params:</dt><dd><dl class="simple">
-<dt>job_status: Tuple with first element _SUCCESS or _FAILURE</dt><dd><p>second element</p>
-</dd>
-<dt>job_info: str</dt><dd><p>for _SUCCESS, is experiment tracking metrics and metadata
-for _FAILURE, is stacktrace of failure</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.get_relevance_dataset">
-<code class="sig-name descname">get_relevance_dataset</code><span class="sig-paren">(</span><em class="sig-param">preprocessing_keys_to_fns={}</em><span class="sig-paren">)</span> &#x2192; ml4ir.base.data.relevance_dataset.RelevanceDataset<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.get_relevance_dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates RelevanceDataset</p>
-<p>NOTE: Override this method to create custom dataset objects</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.get_relevance_model">
-<code class="sig-name descname">get_relevance_model</code><span class="sig-paren">(</span><em class="sig-param">feature_layer_keys_to_fns={}</em><span class="sig-paren">)</span> &#x2192; ml4ir.base.model.relevance_model.RelevanceModel<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.get_relevance_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates RelevanceModel</p>
-<p>NOTE: Override this method to create custom loss, scorer, model objects</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.run">
-<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.run" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.set_seeds">
-<code class="sig-name descname">set_seeds</code><span class="sig-paren">(</span><em class="sig-param">reset_graph=True</em><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.set_seeds" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.setup_logging">
-<code class="sig-name descname">setup_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; logging.Logger<a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.setup_logging" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="ml4ir.base.pipeline.RelevancePipeline.validate_args">
-<code class="sig-name descname">validate_args</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ml4ir.base.pipeline.RelevancePipeline.validate_args" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+</li>
+<li class="toctree-l1"><a class="reference internal" href="relevance_dataset.html">Data Loaders and Helpers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="relevance_dataset.html#relevancedataset">RelevanceDataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relevance_dataset.html#module-ml4ir.base.data.tfrecord_reader">tfrecord_reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relevance_dataset.html#module-ml4ir.base.data.csv_reader">csv_reader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relevance_dataset.html#module-ml4ir.base.data.tfrecord_writer">tfrecord_writer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="relevance_model.html">Relevance Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="relevance_model.html#relevancemodel">RelevanceModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="relevance_model.html#module-ml4ir.applications.ranking.model.ranking_model.RankingModel">RankingModel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="feature_config.html">Feature Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="feature_config.html#featureconfig">FeatureConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="feature_config.html#examplefeatureconfig">ExampleFeatureConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="feature_config.html#sequenceexamplefeatureconfig">SequenceExampleFeatureConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="losses.html">Losses</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="losses.html#relevancelossbase">RelevanceLossBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="losses.html#sigmoidcrossentropy">SigmoidCrossEntropy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="losses.html#rankonelistnet">RankOneListNet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="losses.html#categoricalcrossentropy">CategoricalCrossEntropy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="metrics.html">Metrics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#mrr">MRR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#acr">ACR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html#categoricalaccuracy">CategoricalAccuracy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="feature_processing.html">Feature Processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="feature_layer.html">Feature Transformation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interaction_model.html">InteractionModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scorer.html">Scorer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="file_io.html">File I/O Utilities</a></li>
+</ul>
+</div>
+</div>
 </div>
 
 
@@ -115,12 +102,20 @@ for _FAILURE, is stacktrace of failure</p>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">API Documentation</a><ul>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../howto/saving.html"
-                        title="previous chapter">Saving</a></p>
+  <p class="topless"><a href="../advanced/transfer_learning.html"
+                        title="previous chapter">Transfer Learning with ml4ir</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="../misc/faq.html"
-                        title="next chapter">Frequently Asked Questions</a></p>
+  <p class="topless"><a href="pipeline.html"
+                        title="next chapter">Pipelines</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -149,10 +144,13 @@ for _FAILURE, is stacktrace of failure</p>
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../misc/faq.html" title="Frequently Asked Questions"
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipeline.html" title="Pipelines"
              >next</a> |</li>
         <li class="right" >
-          <a href="../howto/saving.html" title="Saving"
+          <a href="../advanced/transfer_learning.html" title="Transfer Learning with ml4ir"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">ml4ir 0.1.0 documentation</a> &#187;</li> 
       </ul>

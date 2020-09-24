@@ -25,6 +25,9 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="installation/index.html" title="Installation"
              accesskey="N">next</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">ml4ir 0.1.0 documentation</a> &#187;</li> 
@@ -100,9 +103,21 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart/index.html">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quickstart/architecture.html">Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart/script.html">Script</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart/library.html">Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart/script.html">Using ml4ir as a toolkit</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="quickstart/script.html#contents">Contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart/script.html#pipelines">Pipelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="quickstart/script.html#learning-to-rank">Learning to Rank</a></li>
+<li class="toctree-l4"><a class="reference internal" href="quickstart/script.html#query-classification">Query Classification</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart/script.html#usage-examples">Usage Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="quickstart/script.html#id1">Learning to Rank</a></li>
+<li class="toctree-l4"><a class="reference internal" href="quickstart/script.html#id2">Query Classification</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart/library.html">Understanding ml4ir’s subcomponent architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/feature_config.html">FeatureConfig</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/model_config.html">ModelConfig</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart/dataset.html">RelevanceDataset</a></li>
@@ -116,7 +131,54 @@
 <li class="toctree-l2"><a class="reference internal" href="advanced/transfer_learning.html">Transfer Learning with ml4ir</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#contents">Contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/pipeline.html">Pipelines</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/pipeline.html#relevancepipeline">RelevancePipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/pipeline.html#rankingpipeline">RankingPipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/pipeline.html#classificationpipeline">ClassificationPipeline</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/relevance_dataset.html">Data Loaders and Helpers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_dataset.html#relevancedataset">RelevanceDataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_dataset.html#module-ml4ir.base.data.tfrecord_reader">tfrecord_reader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_dataset.html#module-ml4ir.base.data.csv_reader">csv_reader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_dataset.html#module-ml4ir.base.data.tfrecord_writer">tfrecord_writer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/relevance_model.html">Relevance Models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_model.html#relevancemodel">RelevanceModel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/relevance_model.html#module-ml4ir.applications.ranking.model.ranking_model.RankingModel">RankingModel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/feature_config.html">Feature Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/feature_config.html#featureconfig">FeatureConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/feature_config.html#examplefeatureconfig">ExampleFeatureConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/feature_config.html#sequenceexamplefeatureconfig">SequenceExampleFeatureConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/losses.html">Losses</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/losses.html#relevancelossbase">RelevanceLossBase</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/losses.html#sigmoidcrossentropy">SigmoidCrossEntropy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/losses.html#rankonelistnet">RankOneListNet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/losses.html#categoricalcrossentropy">CategoricalCrossEntropy</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/metrics.html">Metrics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/metrics.html#mrr">MRR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/metrics.html#acr">ACR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/metrics.html#categoricalaccuracy">CategoricalAccuracy</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/feature_processing.html">Feature Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/feature_layer.html">Feature Transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/interaction_model.html">InteractionModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/scorer.html">Scorer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/file_io.html">File I/O Utilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="misc/faq.html">Frequently Asked Questions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="misc/license.html">License</a></li>
 <li class="toctree-l1"><a class="reference internal" href="misc/contact.html">Contact Us</a></li>
@@ -171,6 +233,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="installation/index.html" title="Installation"
              >next</a> |</li>
