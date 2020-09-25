@@ -59,7 +59,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--optimizer_key",
             type=str,
-            default="adam",
+            default="Adam",
             help="Optimizer to use. Has to be one of the optimizers in OptimizerKey under "
             "ml4ir/config/keys.py",
         )

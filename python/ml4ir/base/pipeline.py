@@ -149,13 +149,6 @@ class RelevancePipeline(object):
                 )
             )
 
-        if self.optimizer_key not in OptimizerKey.get_all_keys():
-            raise Exception(
-                "Optimizer specified [{}] is not one of : {}".format(
-                    self.optimizer_key, OptimizerKey.get_all_keys()
-                )
-            )
-
         if self.data_format not in DataFormatKey.get_all_keys():
             raise Exception(
                 "Data format[{}] is not one of : {}".format(
