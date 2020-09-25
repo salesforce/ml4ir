@@ -126,7 +126,7 @@ class RankingTestBase(unittest.TestCase):
             learning_rate=self.args.learning_rate,
             learning_rate_decay=self.args.learning_rate_decay,
             learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            clipvalue=self.args.gradient_clip_value,
         )
 
         # Combine the above to define a RelevanceModel
