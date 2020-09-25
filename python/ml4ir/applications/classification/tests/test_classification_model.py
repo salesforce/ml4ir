@@ -45,7 +45,9 @@ class ClassificationModelTest(ClassificationTestBase):
         metrics = self.run_default_pipeline(data_format="csv")
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(metrics["loss"], 1.966392993927002, rtol=0.01)
-        assert np.isclose(metrics["categorical_accuracy"], 0.18229167, rtol=0.01)
-        assert np.isclose(metrics["Precision"], 0.2, rtol=0.01)
+        # Note that we don't check Precision which is not useful for this test model
+        self.assertTrue(np.isclose(metrics["loss"], 1.7933, rtol=0.01),
+                        msg="loss not in expected range. metrics={}".format(metrics))
+        self.assertTrue(np.isclose(metrics["categorical_accuracy"], 0.1719, rtol=0.01),
+                        msg="categorical_accuracy not in expected range. metrics={}".format(metrics))
 
