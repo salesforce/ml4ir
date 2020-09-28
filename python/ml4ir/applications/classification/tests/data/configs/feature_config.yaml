@@ -69,6 +69,7 @@ features:
         args:
           remove_punctuation: true
           to_lower: true
+          replace_with_whitespace: true
       - fn: split_and_pad_string
         args:
           split_char: " "
