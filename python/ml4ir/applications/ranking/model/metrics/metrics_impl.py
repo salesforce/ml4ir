@@ -218,7 +218,6 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
-        print("name passed to metric", name)
         super(CategoricalAccuracy, self).__init__(name=name)
 
 class Top_K_Categorical_Accuracy(metrics.TopKCategoricalAccuracy):
@@ -237,5 +236,4 @@ class Top_K_Categorical_Accuracy(metrics.TopKCategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
-        print("name passed to metric", name)
         super(Top_K_Categorical_Accuracy, self).__init__(name=name)
