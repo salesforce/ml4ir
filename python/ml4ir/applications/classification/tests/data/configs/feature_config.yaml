@@ -65,6 +65,10 @@ features:
     log_at_inference: true
     is_group_metric_key: true
     preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
       - fn: split_and_pad_string
         args:
           split_char: " "
