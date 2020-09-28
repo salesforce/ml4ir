@@ -218,4 +218,24 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
+        print("name passed to metric", name)
         super(CategoricalAccuracy, self).__init__(name=name)
+
+class Top_K_Categorical_Accuracy(metrics.TopKCategoricalAccuracy):
+    """
+    Custom metric class to compute the Categorical Accuracy.
+
+    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
+    to maintain consistency of arguments to __init__
+    """
+
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="my_top_k_categorical_accuracy",
+        state=MetricState.NEW,
+        **kwargs
+    ):
+        print("name passed to metric", name)
+        super(Top_K_Categorical_Accuracy, self).__init__(name=name)

@@ -26,6 +26,7 @@ class MetricKey(Key):
     NDCG = "NDCG"
     PRECISION = 'Precision'
     CATEGORICAL_ACCURACY = "categorical_accuracy"
+    TOP_K_CATEGORICAL_ACCURACY = 'top_k_categorical_accuracy'
 
 
 class LossTypeKey(Key):
