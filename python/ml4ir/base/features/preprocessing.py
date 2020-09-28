@@ -6,11 +6,6 @@ from ml4ir.base.features.feature_fns.categorical import categorical_indicator_wi
 from ml4ir.base.io.file_io import FileIO
 
 
-# NOTE: We can eventually make this regex configurable through the FeatureConfig
-# Keeping it simple for now
-PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
-
-
 class PreprocessingMap:
     def __init__(self):
         self.key_to_fn = {
@@ -37,7 +32,8 @@ class PreprocessingMap:
 
 
 @tf.function
-def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
+def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False,
+                    punctuation=string.punctuation, replace_with_whitespace=False):
     """
     String preprocessing function that removes punctuation and converts strings to lower case
     based on the arguments.
@@ -46,12 +42,23 @@ def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
         feature_tensor: input feature tensor of type tf.string
         remove_punctuation: bool; whether to remove punctuation characters from strings
         to_lower: bool; whether to convert string to lower case
+        punctuation: punctuation characters to replace (a single string containing the character to remove
+        replace_with_whitespace: if True punctuation will be replaced by whitespace (i.e. used as separator), note that
+                               leading and trailing whitespace will also be removed, as well as consecutive whitespaces.
 
     Returns:
         processed float tensor
     """
     if remove_punctuation:
-        feature_tensor = tf.strings.regex_replace(feature_tensor, PUNCTUATION_REGEX, "")
+        replacement = ""
+        if replace_with_whitespace:
+            replacement = " "
+        punctuation_regex = "[" + "".join([re.escape(c) for c in list(punctuation + replacement)]) + "]+"
+        feature_tensor = tf.strings.regex_replace(feature_tensor, punctuation_regex, replacement)
+
+        if replace_with_whitespace:
+            feature_tensor = tf.strings.strip(feature_tensor)
+
     if to_lower:
         feature_tensor = tf.strings.lower(feature_tensor)
 
