@@ -1,4 +1,5 @@
 import sys
+import ast
 from argparse import Namespace
 
 from tensorflow.keras.metrics import Metric, Precision
@@ -8,7 +9,7 @@ from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
@@ -23,6 +24,7 @@ class ClassificationPipeline(RelevancePipeline):
     """
     Pipeline defining the classification models.
     """
+
     def __init__(self, args: Namespace):
         self.loss_key = args.loss_key
         super().__init__(args)
@@ -39,16 +41,16 @@ class ClassificationPipeline(RelevancePipeline):
             feature_config=self.feature_config,
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
             tfrecord_type=self.tfrecord_type,
-            file_io=self.file_io)
+            file_io=self.file_io,
+        )
 
         # Define loss object from loss key
-        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(
-            loss_key=self.loss_key
-        )
+        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
+            feature_config=self.feature_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
@@ -78,6 +80,8 @@ class ClassificationPipeline(RelevancePipeline):
             optimizer=optimizer,
             tfrecord_type=self.tfrecord_type,
             model_file=self.args.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             file_io=self.local_io,
@@ -85,15 +89,19 @@ class ClassificationPipeline(RelevancePipeline):
         )
         return relevance_model
 
-    def get_relevance_dataset(self, parse_tfrecord=True, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+    def get_relevance_dataset(
+        self, parse_tfrecord=True, preprocessing_keys_to_fns={}
+    ) -> RelevanceDataset:
         """
         Creates RelevanceDataset
 
         NOTE: Override this method to create custom dataset objects
         """
-        # Adding one_hot_vectorizer needed for classification.
+        # Adding one_hot_vectorizer needed for classification
         preprocessing_keys_to_fns = {
-            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io)
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(
+                self.feature_config.get_label(), self.file_io
+            )
         }
 
         # Prepare Dataset
@@ -115,6 +123,7 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
+
 
 def main(argv):
     # Define args

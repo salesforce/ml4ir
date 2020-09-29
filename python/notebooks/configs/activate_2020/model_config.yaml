@@ -11,9 +11,7 @@ layers:
     name: second_dense
     units: 64
     activation: relu
-  - type: dropout
-    name: second_dropout
-    rate: 0.0
   - type: dense
     name: final_dense
+    units: 1
     activation: null

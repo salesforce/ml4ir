@@ -6,16 +6,12 @@ from ml4ir.base.features.feature_fns.categorical import categorical_indicator_wi
 from ml4ir.base.io.file_io import FileIO
 
 
-# NOTE: We can eventually make this regex configurable through the FeatureConfig
-# Keeping it simple for now
-PUNCTUATION_REGEX = "|".join([re.escape(c) for c in list(string.punctuation)])
-
-
 class PreprocessingMap:
     def __init__(self):
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
+            natural_log.__name__: natural_log
             # Add more here
         }
 
@@ -36,7 +32,8 @@ class PreprocessingMap:
 
 
 @tf.function
-def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
+def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False,
+                    punctuation=string.punctuation, replace_with_whitespace=False):
     """
     String preprocessing function that removes punctuation and converts strings to lower case
     based on the arguments.
@@ -45,12 +42,23 @@ def preprocess_text(feature_tensor, remove_punctuation=False, to_lower=False):
         feature_tensor: input feature tensor of type tf.string
         remove_punctuation: bool; whether to remove punctuation characters from strings
         to_lower: bool; whether to convert string to lower case
+        punctuation: punctuation characters to replace (a single string containing the character to remove
+        replace_with_whitespace: if True punctuation will be replaced by whitespace (i.e. used as separator), note that
+                               leading and trailing whitespace will also be removed, as well as consecutive whitespaces.
 
     Returns:
         processed float tensor
     """
     if remove_punctuation:
-        feature_tensor = tf.strings.regex_replace(feature_tensor, PUNCTUATION_REGEX, "")
+        replacement = ""
+        if replace_with_whitespace:
+            replacement = " "
+        punctuation_regex = "[" + "".join([re.escape(c) for c in list(punctuation + replacement)]) + "]+"
+        feature_tensor = tf.strings.regex_replace(feature_tensor, punctuation_regex, replacement)
+
+        if replace_with_whitespace:
+            feature_tensor = tf.strings.strip(feature_tensor)
+
     if to_lower:
         feature_tensor = tf.strings.lower(feature_tensor)
 
@@ -109,14 +117,28 @@ def split_and_pad_string(feature_tensor, split_char=",", max_length=20):
         could returns the padded tokens ['AAA', 'BBB', 'CCC', '', '']
     """
     tokens = tf.strings.split(feature_tensor, sep=split_char).to_tensor()
-    padded_tokens = tf.image.pad_to_bounding_box(tf.expand_dims(tokens[:, :max_length], axis=-1),
-                                              offset_height=0,
-                                              offset_width=0,
-                                              target_height=1,
-                                              target_width=max_length)
+    padded_tokens = tf.image.pad_to_bounding_box(
+        tf.expand_dims(tokens[:, :max_length], axis=-1),
+        offset_height=0,
+        offset_width=0,
+        target_height=1,
+        target_width=max_length,
+    )
     padded_tokens = tf.squeeze(padded_tokens, axis=-1)
     return padded_tokens
 
+
+@tf.function
+def natural_log(feature_tensor, shift=1.0):
+    """
+    Compute the signed log of the feature_tensor
+
+    Args:
+        feature_tensor: input feature tensor of type tf.float32
+        shift: floating point shift that is added to the feature tensor element wise before computing natural log
+            (used to handle 0 values)
+    """
+    return tf.math.log(tf.add(feature_tensor, tf.cast(tf.constant(shift), tf.float32)))
 
 
 ##########################################

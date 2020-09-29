@@ -2,6 +2,7 @@ import socket
 import ast
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 import json
 import random
 import traceback
@@ -67,6 +68,7 @@ class RelevancePipeline(object):
         self.logger.debug("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
         self.local_io.set_logger(self.logger)
         self.local_io.make_directory(self.models_dir_local, clear_dir=False)
+        self.model_file = self.args.model_file
 
         # Set the file handlers and respective setup
         if self.args.file_handler == FileHandlerKey.LOCAL:
@@ -77,6 +79,16 @@ class RelevancePipeline(object):
             # Copy data dir from HDFS to local file system
             self.local_io.make_directory(dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
             self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
+
+            # Copy model_file if present from HDFS to local file system
+            if self.model_file:
+                self.local_io.make_directory(
+                    dir_path=DefaultDirectoryKey.TEMP_MODELS, clear_dir=True
+                )
+                self.file_io.copy_from_hdfs(self.model_file, DefaultDirectoryKey.TEMP_MODELS)
+                self.model_file = os.path.join(
+                    DefaultDirectoryKey.TEMP_MODELS, os.path.basename(self.model_file)
+                )
 
         # Read/Parse model config YAML
         self.model_config_file = self.args.model_config
@@ -167,24 +179,6 @@ class RelevancePipeline(object):
 
         return self
 
-    def finish(self):
-        # Delete temp data directories
-        if self.data_format == DataFormatKey.CSV:
-            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
-        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
-
-        if self.args.file_handler == FileHandlerKey.SPARK:
-            # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
-
-        e = int(time.time() - self.start_time)
-        self.logger.info(
-            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(e // 3600, (e % 3600 // 60), e % 60)
-        )
-
-        return self
-
     def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
         Creates RelevanceDataset
@@ -221,7 +215,10 @@ class RelevancePipeline(object):
 
     def run(self):
         try:
-            job_status = ("_SUCCESS", "")
+            job_status = "_SUCCESS"
+            job_info = ""
+            train_metrics = dict()
+            test_metrics = dict()
 
             # Build dataset
             relevance_dataset = self.get_relevance_dataset()
@@ -238,7 +235,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.TRAIN_ONLY,
             }:
                 # Train
-                relevance_model.fit(
+                train_metrics = relevance_model.fit(
                     dataset=relevance_dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir_local,
@@ -258,7 +255,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
-                relevance_model.evaluate(
+                _, _, test_metrics = relevance_model.evaluate(
                     test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
@@ -304,17 +301,68 @@ class RelevancePipeline(object):
                     pad_sequence=self.args.pad_sequence_at_inference,
                 )
 
-            # Finish
-            self.finish()
-
         except Exception as e:
             self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))
             traceback.print_exc()
-            job_status = ("_FAILURE", "{}\n{}".format(str(e), traceback.format_exc()))
+            job_status = "_FAILURE"
+            job_info = "{}\n{}".format(str(e), traceback.format_exc())
 
+        # Write experiment tracking data in job status file
+        experiment_tracking_dict = dict()
+
+        # Add command line script arguments
+        experiment_tracking_dict.update(vars(self.args))
+
+        # Add feature config information
+        experiment_tracking_dict.update(self.feature_config.get_hyperparameter_dict())
+
+        # Add train and test metrics
+        experiment_tracking_dict.update(train_metrics)
+        experiment_tracking_dict.update(test_metrics)
+
+        job_info = pd.DataFrame.from_dict(
+            experiment_tracking_dict, orient="index", columns=["value"]
+        ).to_csv()
+
+        # Finish
+        self.finish(job_status, job_info)
+
+    def finish(self, job_status, job_info):
+        """
+        Method to wrap up the model training pipeline.
+        Performs the following actions
+            - save a job status file as _SUCCESS or _FAILURE to indicate job status.
+            - delete temp data and models directories
+            - if using spark IO, transfers models and logs directories to HDFS location from local directories
+            - log overall run time of ml4ir job
+        params:
+            job_status: Tuple with first element _SUCCESS or _FAILURE
+                        second element
+            job_info: str
+                        for _SUCCESS, is experiment tracking metrics and metadata
+                        for _FAILURE, is stacktrace of failure
+        """
         # Write job status to file
-        with open(os.path.join(self.logs_dir_local, job_status[0]), "w") as f:
-            f.write(job_status[1])
+        with open(os.path.join(self.logs_dir_local, job_status), "w") as f:
+            f.write(job_info)
+
+        # Delete temp data directories
+        if self.data_format == DataFormatKey.CSV:
+            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
+        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)
+
+        if self.args.file_handler == FileHandlerKey.SPARK:
+            # Copy logs and models to HDFS
+            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
+
+        e = int(time.time() - self.start_time)
+        self.logger.info(
+            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(e // 3600, (e % 3600 // 60), e % 60)
+        )
+
+        return self
 
 
 def main(argv):

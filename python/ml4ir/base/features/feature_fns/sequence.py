@@ -33,14 +33,15 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
 
     # Decode string tensor to bytes
     feature_tensor = io.decode_raw(
-        feature_tensor,
-        out_type=tf.uint8,
-        fixed_length=args.get("max_length", None),
+        feature_tensor, out_type=tf.uint8, fixed_length=args.get("max_length", None),
     )
 
     feature_tensor = tf.squeeze(feature_tensor, axis=1)
     if "embedding_size" in args:
         char_embedding = layers.Embedding(
+            name="{}_bytes_embedding".format(
+                feature_info.get("node_name", feature_info.get("name"))
+            ),
             input_dim=256,
             output_dim=args["embedding_size"],
             mask_zero=True,
@@ -59,10 +60,7 @@ def get_bilstm_encoding(embedding, units):
     Builds a bilstm on to on the embedding passed as input.
     """
     encoding = layers.Bidirectional(
-        layers.LSTM(
-            units=units, return_sequences=False
-        ),
-        merge_mode="concat",
+        layers.LSTM(units=units, return_sequences=False), merge_mode="concat",
     )(embedding)
     encoding = tf.expand_dims(encoding, axis=1)
     return encoding

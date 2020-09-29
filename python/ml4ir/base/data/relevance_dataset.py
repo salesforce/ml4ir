@@ -4,7 +4,7 @@ from typing import Optional
 from logging import Logger
 import tensorflow as tf
 
-from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectoryKey
+from ml4ir.base.config.keys import DataFormatKey, DataSplitKey
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -53,6 +53,11 @@ class RelevanceDataset:
         """
         Loads and creates train, validation and test datasets
         """
+        self.logger.info(
+            "Found in {} directory : {}".format(
+                self.data_dir, glob.glob(os.path.join(self.data_dir, "*"))
+            )
+        )
         to_split = len(glob.glob(os.path.join(self.data_dir, DataSplitKey.TEST))) == 0
 
         if self.data_format == DataFormatKey.CSV:
@@ -60,7 +65,8 @@ class RelevanceDataset:
         elif self.data_format == DataFormatKey.TFRECORD:
             data_reader = tfrecord_reader
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Unsupported data format: {}. We currenty support {} and {}."
+                                      .format(self.data_format, DataFormatKey.CSV, DataFormatKey. TFRECORD))
 
         if to_split:
             """

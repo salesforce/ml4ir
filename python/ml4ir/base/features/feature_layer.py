@@ -8,6 +8,9 @@ from ml4ir.base.features.feature_fns.categorical import categorical_embedding_to
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_hash_buckets
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_indices
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_vocabulary_file
+from ml4ir.base.features.feature_fns.categorical import (
+    categorical_embedding_with_vocabulary_file_and_dropout,
+)
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -21,6 +24,7 @@ class FeatureLayerMap:
             categorical_embedding_with_hash_buckets.__name__: categorical_embedding_with_hash_buckets,
             categorical_embedding_with_indices.__name__: categorical_embedding_with_indices,
             categorical_embedding_with_vocabulary_file.__name__: categorical_embedding_with_vocabulary_file,
+            categorical_embedding_with_vocabulary_file_and_dropout.__name__: categorical_embedding_with_vocabulary_file_and_dropout,
         }
 
     def add_fn(self, key, fn):
@@ -83,9 +87,10 @@ def define_feature_layer(
             feature_tensor = inputs[feature_node_name]
 
             if "fn" in feature_layer_info:
-                feature_tensor = feature_layer_map.get_fn(feature_layer_info["fn"])(
-                    feature_tensor=feature_tensor, feature_info=feature_info, file_io=file_io
-                )
+                feature_fn = feature_layer_map.get_fn(feature_layer_info["fn"])
+                if not feature_fn:
+                    raise RuntimeError("Unsupported feature function: {}".format(feature_layer_info["fn"]))
+                feature_tensor = feature_fn(feature_tensor=feature_tensor, feature_info=feature_info, file_io=file_io)
             elif feature_info["trainable"]:
                 # Default feature layer
                 feature_tensor = tf.expand_dims(feature_tensor, axis=-1)

@@ -74,7 +74,7 @@ def make_example_parse_fn(
 
         features_dict = dict()
 
-        # Process all features
+        # Process all features, including label.
         for feature_info in feature_config.get_all_features():
             feature_node_name = feature_info.get("node_name", feature_info["name"])
 
@@ -206,7 +206,7 @@ def make_sequence_example_parse_fn(
                     )
 
                 mask = tf.cond(
-                    tf.shape(mask)[1] < max_sequence_size,
+                    tf.shape(mask)[1] <= max_sequence_size,
                     # Pad if there are missing sequence
                     lambda: image.pad_to_bounding_box(
                         mask,

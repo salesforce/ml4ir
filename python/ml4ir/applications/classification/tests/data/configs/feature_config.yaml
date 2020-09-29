@@ -55,6 +55,39 @@ features:
       name: query_text
       required: true
     default_value: ""
+  - name: query_text
+    node_name: query_words
+    trainable: true
+    dtype: string
+    shape:
+      - 1
+      - 20
+    log_at_inference: true
+    is_group_metric_key: true
+    preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
+          replace_with_whitespace: true
+      - fn: split_and_pad_string
+        args:
+          split_char: " "
+          max_length: 20
+    feature_layer_info:
+      type: numeric
+      fn: categorical_embedding_to_encoding_bilstm
+      args:
+        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/query_word.csv
+        embedding_size: 32
+        encoding_size: 256
+        dropout_rate: 0.2
+        max_length: 1
+        default_value: -1
+    serving_info:
+      name: query_text
+      required: true
+      default_value: ""
   - name: domain_id
     node_name: domain_id
     trainable: true

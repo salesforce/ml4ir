@@ -1,5 +1,6 @@
 from tensorflow.keras import Input
 
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
@@ -13,13 +14,17 @@ class ScorerBase(object):
     def __init__(
         self,
         model_config: dict,
+        feature_config: FeatureConfig,
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
+        file_io: FileIO,
         output_name: str = "score",
     ):
+        self.model_config = model_config
+        self.feature_config = feature_config
         self.interaction_model = interaction_model
         self.loss = loss
-        self.model_config = model_config
+        self.file_io = file_io
         self.output_name = output_name
 
     @classmethod
@@ -28,16 +33,19 @@ class ScorerBase(object):
         model_config_file: str,
         interaction_model: InteractionModel,
         loss: RelevanceLossBase,
-        output_name: str,
         file_io: FileIO,
+        output_name: str = "score",
+        feature_config: Optional[FeatureConfig] = None,
         logger: Optional[Logger] = None,
     ):
         model_config = file_io.read_yaml(model_config_file)
 
         return cls(
             model_config=model_config,
+            feature_config=feature_config,
             interaction_model=interaction_model,
             loss=loss,
+            file_io=file_io,
             output_name=output_name,
         )
 
@@ -64,9 +72,11 @@ class ScorerBase(object):
 
 class RelevanceScorer(ScorerBase):
     def architecture_op(self, train_features, metadata_features):
-        return architecture_factory.get_architecture(model_config=self.model_config)(
-            train_features
-        )
+        return architecture_factory.get_architecture(
+            model_config=self.model_config,
+            feature_config=self.feature_config,
+            file_io=self.file_io,
+        )(train_features)
 
     def final_activation_op(self, scores, metadata_features):
         return self.loss.get_final_activation_op(self.output_name)(
