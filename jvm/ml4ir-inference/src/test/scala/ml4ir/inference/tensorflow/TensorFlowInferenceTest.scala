@@ -5,7 +5,6 @@ import java.io.InputStream
 import com.google.common.collect.ImmutableMap
 import scala.collection.JavaConverters._
 import ml4ir.inference.tensorflow.data.{
-  Example,
   FeatureProcessors,
   ModelFeaturesConfig,
   MultiFeatures,
@@ -45,7 +44,7 @@ class TensorFlowInferenceTest extends TestData {
   @Test
   def testSavedModelBundle(): Unit = {
     val bundlePath = classLoader.getResource("model_bundle_0_0_2").getPath
-    val bundleExecutor = new SavedModelBundleExecutor(
+    val bundleExecutor = new SequenceExampleExecutor(
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_sequence_example_protos",
@@ -61,8 +60,8 @@ class TensorFlowInferenceTest extends TestData {
                                                                              ImmutableMap.of())
 
     sampleQueryContexts.foreach { queryContext: Map[String, String] =>
-      val proto = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
-      val scores = bundleExecutor(proto)
+      val proto: SequenceExample = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
+      val scores: Array[Float] = bundleExecutor(proto)
       validateScores(scores, sampleDocumentExamples.length)
     }
   }

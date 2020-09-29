@@ -20,7 +20,7 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
                              stringExtractor: String => (T => Option[String]),
                              primitiveProcessors: Map[DataType, Map[String, PrimitiveProcessor]] =
                                Map.empty.withDefaultValue(Map.empty.withDefaultValue(PrimitiveProcessor())))
-    extends (T => Example) {
+    extends (T => MultiFeatures) {
   val processors: Map[DataType, Map[String, PrimitiveProcessor]] = primitiveProcessors
     .mapValues(_.withDefaultValue(PrimitiveProcessor()))
     .withDefaultValue(Map.empty.withDefaultValue(PrimitiveProcessor()))
@@ -30,11 +30,12 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
     * @param t object which will have its features extracted into an Example
     * @return the feature-ized Example object
     */
-  override def apply(t: T): Example =
-    Example.apply(MultiFeatures.apply(extractFloatFeatures(t), extractLongFeatures(t), extractStringFeatures(t)))
+  override def apply(t: T): MultiFeatures =
+    MultiFeatures.apply(extractFloatFeatures(t), extractLongFeatures(t), extractStringFeatures(t))
 
   private[this] def extractFloatFeatures(t: T): Map[String, Float] =
     featuresConfig(DataType.FLOAT)
+    //.map(s => s._2)
       .map {
         case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
           nodeName -> processors(DataType.FLOAT)(servingName)
@@ -50,8 +51,9 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
       }
   private[this] def extractStringFeatures(t: T): Map[String, String] =
     featuresConfig(DataType.STRING)
+    //.map( pair => (pair._1, pair._2.defaultValue)
       .map {
-        case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
+        case (servingName: String, NodeWithDefault(nodeName, defaultValue)) =>
           nodeName -> processors(DataType.STRING)(servingName)
             .processString(stringExtractor(servingName)(t).getOrElse(defaultValue))
       }
