@@ -21,11 +21,25 @@ abstract class SimpleTFRecordExecutor[IN](dirPath: String, config: ModelExecutor
         .fetch(outputNode)
         .run()
         .get(0)
-      // the "batch" of predictions is a length-1 array (containing the array of predictions)
-      val predictions: Array[Array[Float]] =
-        Array.ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt)
-      resultTensor.copyTo(predictions)
-      predictions(0)
+      resultTensor.shape().length match {
+        case 1 =>
+          val predictions: Array[Float] = Array.ofDim[Float](resultTensor.shape()(0).toInt)
+          resultTensor.copyTo(predictions)
+          predictions
+        case 2 =>
+          val predictions: Array[Array[Float]] =
+            Array.ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt)
+          resultTensor.copyTo(predictions)
+          predictions(0)
+        case 3 =>
+          val predictions: Array[Array[Array[Float]]] =
+            Array
+              .ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt, resultTensor.shape()(2).toInt)
+          resultTensor.copyTo(predictions)
+          predictions(0)(0)
+        case _ =>
+          throw new IllegalArgumentException("unsupported result shape: " + resultTensor.shape())
+      }
     } finally {
       inputTensor.close()
     }
