@@ -50,10 +50,10 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
-    if args['lstm_keras_initializer']:
+    if args['lstm_kernel_initializer']:
         encoding = get_bilstm_encoding(embedding=char_embedding,
                                        lstm_units=int(args["encoding_size"] / 2),
-                                       kernel_initializer=args['lstm_keras_initializer'])
+                                       kernel_initializer=args['lstm_kernel_initializer'])
     else:
         encoding = get_bilstm_encoding(embedding=char_embedding,
                                        lstm_units=int(args["encoding_size"] / 2))

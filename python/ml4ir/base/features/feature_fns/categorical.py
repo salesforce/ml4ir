@@ -167,10 +167,10 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     )(categorical_indices)
 
     categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
-    if args['lstm_keras_initializer']:
+    if args['lstm_kernel_initializer']:
         encoding = get_bilstm_encoding(embedding=categorical_embeddings,
                                        lstm_units=int(args["encoding_size"] / 2),
-                                       kernel_initializer=args['lstm_keras_initializer'])
+                                       kernel_initializer=args['lstm_kernel_initializer'])
     else:
         encoding = get_bilstm_encoding(embedding=categorical_embeddings,
                                        lstm_units=int(args["encoding_size"] / 2))
