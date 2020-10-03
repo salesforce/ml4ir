@@ -178,11 +178,11 @@ class MRR(MeanRankMetric):
 
     Examples
     --------
-    `y_true` is [[0, 0, 1], [0, 1, 0]]
-    `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
-    `mask` is [[1, 1, 1], [1, 1, 1]] and
-    `rank` is [[1, 3, 2], [3, 1, 2]]
-    then the MRR is 0.75
+    >>> `y_true` is [[0, 0, 1], [0, 1, 0]]
+    >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
+    >>> `mask` is [[1, 1, 1], [1, 1, 1]] and
+    >>> `rank` is [[1, 3, 2], [3, 1, 2]]
+    >>> then the MRR is 0.75
     """
 
     def __init__(
@@ -243,11 +243,11 @@ class ACR(MeanRankMetric):
 
     Examples
     --------
-    `y_true` is [[0, 0, 1], [0, 1, 0]]
-    `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
-    `mask` is [[1, 1, 1], [1, 1, 1]] and
-    `rank` is [[1, 3, 2], [3, 1, 2]]
-    then the ACR is 1.50
+    >>> `y_true` is [[0, 0, 1], [0, 1, 0]]
+    >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
+    >>> `mask` is [[1, 1, 1], [1, 1, 1]] and
+    >>> `rank` is [[1, 3, 2], [3, 1, 2]]
+    >>> then the ACR is 1.50
     """
 
     def __init__(

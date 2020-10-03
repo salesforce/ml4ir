@@ -123,11 +123,11 @@ def preprocess_text(
     Examples
     --------
     Input:
-        feature_tensor = "ABCabc123,,,"
-        remove_punctuation = True
-        to_lower = True
+        >>> feature_tensor = "ABCabc123,,,"
+        >>> remove_punctuation = True
+        >>> to_lower = True
     Output:
-        "abcabc123"
+        >>> "abcabc123"
     """
     if remove_punctuation:
         replacement = ""
@@ -167,13 +167,13 @@ def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     Examples
     --------
     Input:
-        feature_tensor = ["abc", "xyz", "abc"]
-        vocabulary file
-            abc -> 0
-            xyz -> 1
-            def -> 2
+        >>> feature_tensor = ["abc", "xyz", "abc"]
+        >>> vocabulary file
+        >>>    abc -> 0
+        >>>    xyz -> 1
+        >>>    def -> 2
     Output:
-        [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
+        >>> [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
     """
     label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
     label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
@@ -222,11 +222,11 @@ def split_and_pad_string(feature_tensor, split_char=",", max_length=20):
     Examples
     --------
     Input:
-        feature_tensor = "AAA,BBB,CCC"
-        split_char = ","
-        max_length = 5
+        >>> feature_tensor = "AAA,BBB,CCC"
+        >>> split_char = ","
+        >>> max_length = 5
     Output:
-        ['AAA', 'BBB', 'CCC', '', '']
+        >>> ['AAA', 'BBB', 'CCC', '', '']
     """
     tokens = tf.strings.split(feature_tensor, sep=split_char).to_tensor()
     padded_tokens = tf.image.pad_to_bounding_box(

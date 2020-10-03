@@ -272,11 +272,11 @@ class CategoricalDropout(layers.Layer):
 
     Examples
     --------
-    inputs: [[1, 2, 3], [4, 1, 2]]
-    dropout_rate = 0.5
+    >>> inputs: [[1, 2, 3], [4, 1, 2]]
+    >>> dropout_rate = 0.5
 
-    When training, output: [[0, 0, 3], [0, 1, 2]]
-    When testing, output: [[1, 2, 3], [4, 1, 2]]
+    >>> When training, output: [[0, 0, 3], [0, 1, 2]]
+    >>> When testing, output: [[1, 2, 3], [4, 1, 2]]
 
     Notes
     -----
