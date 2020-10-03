@@ -15,7 +15,7 @@ For more detailed usage documentation check **[ml4ir.readthedocs.io](https://ml4
 ml4ir can be installed as a pip package by using the following command
 
 ```
-pip install ml4ir
+pip3 install ml4ir
 ```
 
 This will install **[ml4ir-0.0.2](https://pypi.org/project/ml4ir/)** (the current version) from PyPI.
