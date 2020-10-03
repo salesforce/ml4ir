@@ -28,7 +28,7 @@ copyright = "2020, Search Relevance (Salesforce.com, Inc.)"
 author = "Search Relevance (Salesforce.com, Inc.)"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
 
@@ -56,12 +56,15 @@ exclude_patterns: List = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "default"
+html_theme: str = "default"
+
+# Title appended to <title> tag of individual pages
+html_title: str = "ml4ir"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path: List = ["_static"]
 
 
 def setup(app):

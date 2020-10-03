@@ -3,7 +3,7 @@
 #### Examples
 Using TFRecord input data
 ```
-python ml4ir/applications/ranking/pipeline.py \
+python3 ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/tfrecord \
 --feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
@@ -13,7 +13,7 @@ python ml4ir/applications/ranking/pipeline.py \
 
 Using CSV input data
 ```
-python ml4ir/applications/ranking/pipeline.py \
+python3 ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/csv \
 --feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
@@ -23,7 +23,7 @@ python ml4ir/applications/ranking/pipeline.py \
 
 Running in inference mode using the default serving signature
 ```
-python ml4ir/applications/ranking/pipeline.py \
+python3 ml4ir/applications/ranking/pipeline.py \
 --data_dir ml4ir/applications/ranking/tests/data/tfrecord \
 --feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
 --run_id test \
