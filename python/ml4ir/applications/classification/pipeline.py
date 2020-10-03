@@ -21,19 +21,46 @@ from typing import Union, List, Type
 
 
 class ClassificationPipeline(RelevancePipeline):
-    """
-    Pipeline defining the classification models.
-    """
+    """Base class that defines a pipeline to train, evaluate and save
+    a RelevanceModel for classification using ml4ir"""
 
     def __init__(self, args: Namespace):
+        """
+        Constructor to create a RelevancePipeline object to train, evaluate
+        and save a model on ml4ir.
+        This method sets up data, logs, models directories, file handlers used.
+        The method also loads and sets up the FeatureConfig for the model training
+        pipeline
+
+        Parameters
+        ----------
+        args: argparse Namespace
+            arguments to be used with the pipeline.
+            Typically, passed from command line arguments
+        """
         self.loss_key = args.loss_key
         super().__init__(args)
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RelevanceModel suited for classification use-case.
+        Creates a RelevanceModel that can be used for training and evaluating
 
-        NOTE: Override this method to create custom loss, scorer, model objects.
+        Parameters
+        ----------
+        feature_layer_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to tensorflow compatible
+            function definitions that can now be used in the InteractionModel
+            as a feature function to transform input features
+
+        Returns
+        -------
+        `RelevanceModel`
+            RelevanceModel that can be used for training and evaluating
+            a classification model
+
+        Notes
+        -----
+        Override this method to create custom loss, scorer, model objects
         """
 
         # Define interaction model
@@ -93,9 +120,26 @@ class ClassificationPipeline(RelevancePipeline):
         self, parse_tfrecord=True, preprocessing_keys_to_fns={}
     ) -> RelevanceDataset:
         """
-        Creates RelevanceDataset
+        Create RelevanceDataset object by loading train, test data as tensorflow datasets
+        Defines a preprocessing feature function to one hot vectorize
+        classification labels
 
-        NOTE: Override this method to create custom dataset objects
+        Parameters
+        ----------
+        preprocessing_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to function definitions
+            that can now be used for preprocessing while loading the
+            TFRecordDataset to create the RelevanceDataset object
+
+        Returns
+        -------
+        `RelevanceDataset` object
+            RelevanceDataset object that can be used for training and evaluating
+            the model
+
+        Notes
+        -----
+        Override this method to create custom dataset objects
         """
         # Adding one_hot_vectorizer needed for classification
         preprocessing_keys_to_fns = {

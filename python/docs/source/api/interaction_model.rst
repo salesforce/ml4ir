@@ -17,3 +17,12 @@ UnivariateInteractionModel
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+feature_layer
+^^^^^^^^^^^^^
+
+.. automodule:: ml4ir.base.features.feature_layer
+	:members:
+	:undoc-members:
+	:show-inheritance:

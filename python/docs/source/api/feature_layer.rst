@@ -13,7 +13,7 @@ Categorical Feature Transformations
 Sequence Feature Transformations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: ml4ir.base.features.feature_fns.categorical
+.. automodule:: ml4ir.base.features.feature_fns.sequence
    :members:
    :undoc-members:
    :show-inheritance:

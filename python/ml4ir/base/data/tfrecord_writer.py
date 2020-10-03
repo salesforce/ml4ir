@@ -59,17 +59,21 @@ def write_from_files(
     logger: Logger = None,
 ):
     """
-    Converts data from CSV files into tfrecord data.
-    Output data protobuf format -> train.SequenceExample
+    Converts data from CSV files into tfrecord files
 
-    Args:
-        csv_files: list of csv file paths to read data from
-        tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to YAML feature config or str YAML feature config
-        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
-        logger: logging object
-
-    NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
+    Parameters
+    ----------
+    csv_files : list of str
+        list of csv file paths to read data from
+    tfrecord_file : str
+        tfrecord file path to write the output
+    feature_config : `FeatureConfig`
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf message to be used for TFRecordDataset
+    logger : `Logger`, optional
+        logging handler for status messages
     """
 
     # Read CSV data into a pandas dataframe
@@ -85,17 +89,20 @@ def write_from_df(
     logger: Logger = None,
 ):
     """
-    Converts data from CSV files into tfrecord data.
-    Output data protobuf format -> train.SequenceExample
+    Converts data from CSV files into tfrecord files
 
-    Args:
-        df: pandas DataFrame
-        tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to YAML feature config or str YAML feature config
-        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
-        logger: logging object
-
-    NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
+    Parameters
+    df : `pd.DataFrame`
+        pandas DataFrame to be converted to TFRecordDataset
+    tfrecord_file : str
+        tfrecord file path to write the output
+    feature_config : `FeatureConfig`
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf message to be used for TFRecordDataset
+    logger : `Logger`, optional
+        logging handler for status messages
     """
 
     if logger:

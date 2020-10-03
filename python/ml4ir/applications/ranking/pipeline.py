@@ -22,7 +22,23 @@ from typing import Union, List, Type
 
 
 class RankingPipeline(RelevancePipeline):
+    """Base class that defines a pipeline to train, evaluate and save
+    a RankingModel using ml4ir"""
+
     def __init__(self, args: Namespace):
+        """
+        Constructor to create a RelevancePipeline object to train, evaluate
+        and save a model on ml4ir.
+        This method sets up data, logs, models directories, file handlers used.
+        The method also loads and sets up the FeatureConfig for the model training
+        pipeline
+
+        Parameters
+        ----------
+        args: argparse Namespace
+            arguments to be used with the pipeline.
+            Typically, passed from command line arguments
+        """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
 
@@ -30,9 +46,24 @@ class RankingPipeline(RelevancePipeline):
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RankingModel
+        Creates a RankingModel that can be used for training and evaluating
 
-        NOTE: Override this method to create custom loss, scorer, model objects
+        Parameters
+        ----------
+        feature_layer_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to tensorflow compatible
+            function definitions that can now be used in the InteractionModel
+            as a feature function to transform input features
+
+        Returns
+        -------
+        `RankingModel`
+            RankingModel that can be used for training and evaluating
+            a ranking model
+
+        Notes
+        -----
+        Override this method to create custom loss, scorer, model objects
         """
 
         # Define interaction model
@@ -92,6 +123,9 @@ class RankingPipeline(RelevancePipeline):
         return relevance_model
 
     def validate_args(self):
+        """
+        Validate the arguments to be used with RelevancePipeline
+        """
         super().validate_args()
 
         if self.loss_key not in LossKey.get_all_keys():

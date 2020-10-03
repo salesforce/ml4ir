@@ -12,22 +12,33 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     a categorical/char embedding for each of the 256 bytes. The char/byte embeddings
     are then combined using a biLSTM
 
-    Args:
-        feature_tensor: String feature tensor that is to be encoded
-        feature_info: Dictionary representing the feature_config for the input feature
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor that is to be encoded
+    feature_info : dict
+        Dictionary representing the feature_config for the input feature
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Encoded feature tensor
 
-    Args under feature_layer_info:
-        max_length: int; max length of bytes sequence
-        embedding_size: int; dimension size of the embedding;
-                        if null, then the tensor is just converted to its one-hot representation
-        encoding_size: int: dimension size of the sequence encoding computed using a biLSTM
+    Notes
+    -----
+    Args under `feature_layer_info`:
+        max_length : int
+            max length of bytes sequence
+        embedding_size : int
+            dimension size of the embedding;
+            if null, then the tensor is just converted to its one-hot representation
+        encoding_size : int
+            dimension size of the sequence encoding computed using a biLSTM
 
-    NOTE:
-        The input dimension for the embedding is fixed to 256 because the string is
-        converted into a bytes sequence.
+    The input dimension for the embedding is fixed to 256 because the string is
+    converted into a bytes sequence.
     """
     args = feature_info["feature_layer_info"]["args"]
 
@@ -55,12 +66,24 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     return encoding
 
 
-def get_bilstm_encoding(embedding, units):
+def get_bilstm_encoding(sequence_tensor, units):
     """
-    Builds a bilstm on to on the embedding passed as input.
+    Convert sequence into encoding by passing through bidirectional LSTM
+
+    Parameters
+    ----------
+    sequence_tensor : Tensor object
+        Sequence tensor with representations for each time step
+    units : int
+        Number of units in the LSTM
+
+    Returns
+    -------
+    Tensor object
+        Encoded feature tensor
     """
     encoding = layers.Bidirectional(
         layers.LSTM(units=units, return_sequences=False), merge_mode="concat",
-    )(embedding)
+    )(sequence_tensor)
     encoding = tf.expand_dims(encoding, axis=1)
     return encoding

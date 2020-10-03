@@ -13,42 +13,59 @@ from typing import Optional, Dict
 
 class MeanMetricWrapper(metrics.Mean):
     """
-    Wraps a stateless metric function with the Mean metric.
+    Class that wraps a stateless metric function with the Mean metric.
 
+    Notes
+    -----
     Original tensorflow implementation ->
     https://github.com/tensorflow/tensorflow/blob/r2.0/tensorflow/python/keras/metrics.py#L541-L590
 
-    NOTE: MeanMetricWrapper is not a public Class on tf.keras.metrics
+    MeanMetricWrapper is not a public Class on tf.keras.metrics
     """
 
     def __init__(self, fn, name=None, dtype=None, **kwargs):
-        """Creates a `MeanMetricWrapper` instance.
+        """
+        Create a `MeanMetricWrapper` instance
 
-        Args:
-          fn: The metric function to wrap, with signature
+        Parameters
+        ----------
+        fn : function
+            The metric function to wrap, with signature
             `fn(y_true, y_pred, **kwargs)`.
-          name: (Optional) string name of the metric instance.
-          dtype: (Optional) data type of the metric result.
-          **kwargs: The keyword arguments that are passed on to `fn`.
+        name : str, optional
+            string name of the metric instance.
+        dtype : str, optional
+            data type of the metric result.
+        **kwargs : dict
+            The keyword arguments that are passed on to `fn`.
         """
         super(MeanMetricWrapper, self).__init__(name=name, dtype=dtype)
         self._fn = fn
         self._fn_kwargs = kwargs
 
     def update_state(self, y_true, y_pred, sample_weight=None):
-        """Accumulates metric statistics.
+        """
+        Accumulates metric statistics by computing the mean of the
+        metric function
 
-        `y_true` and `y_pred` should have the same shape.
-
-        Args:
-          y_true: The ground truth values.
-          y_pred: The predicted values.
-          sample_weight: Optional weighting of each example. Defaults to 1. Can be
+        Parameters
+        ----------
+        y_true : Tensor object
+            The ground truth values.
+        y_pred : Tensor object
+            The predicted values.
+        sample_weight : Tensor object
+            Optional weighting of each example. Defaults to 1. Can be
             a `Tensor` whose rank is either 0, or the same rank as `y_true`,
             and must be broadcastable to `y_true`.
 
-        Returns:
-          Update op.
+        Returns
+        -------
+            Update state of the metric
+
+        Notes
+        -----
+        `y_true` and `y_pred` should have the same shape.
         """
         query_scores: Tensor = self._fn(y_true, y_pred, **self._fn_kwargs)
         return super(MeanMetricWrapper, self).update_state(
@@ -67,15 +84,22 @@ class MeanRankMetric(MeanMetricWrapper):
         **kwargs
     ):
         """
-        Creates a `MeanRankMetric` instance.
+        Creates a `MeanRankMetric` instance to compute mean of rank
 
-        Args:
-            name: string name of the metric instance.
-            dtype: (Optional) data type of the metric result.
-            rank: 2D tensor representing ranks/rankitions of records in a query
-            mask: 2D tensor representing 0/1 mask for padded records
+        Parameters
+        ----------
+        name : str
+            string name of the metric instance.
+        dtype : str, optional
+            data type of the metric result.
+        rank : Tensor object
+            2D tensor representing ranks/rankitions of records in a query
+        mask : Tensor object
+            2D tensor representing 0/1 mask for padded records
 
-        NOTE: rank and mask should be same shape as y_pred and y_true
+        Notes
+        -----
+        rank and mask should be same shape as y_pred and y_true
 
         This metric creates two local variables, `total` and `count` that are used to
         compute the frequency with which `y_pred` matches `y_true`. This frequency is
@@ -97,6 +121,21 @@ class MeanRankMetric(MeanMetricWrapper):
         self.state = state
 
     def _compute(self, y_true, y_pred, rank, mask):
+        """
+        Compute mean rank metric
+
+        Parameters
+        ----------
+        y_true : Tensor object
+            Tensor object that contains the true label values
+        y_pred : Tensor object
+            Tensor object containing the predicted scores
+        rank : Tensor object
+            Tensor object that contains the rank of each record for a query
+        masks : Tensor object
+            Tensor object that contains 0/1 flag to identify which
+            records were padded and thus should be excluded from metric computation
+        """
         if self.state == "new":
             """Rerank using trained model"""
             # Convert y_pred for the masked records to -inf
@@ -137,7 +176,8 @@ class MRR(MeanRankMetric):
     Calculates the mean of the reciprocal ranks of the
     clicked records from a list of queries.
 
-    For example, if
+    Examples
+    --------
     `y_true` is [[0, 0, 1], [0, 1, 0]]
     `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     `mask` is [[1, 1, 1], [1, 1, 1]] and
@@ -153,6 +193,22 @@ class MRR(MeanRankMetric):
         state=MetricState.NEW,
         **kwargs
     ):
+        """
+        Creates a `MRR` instance to compute mean of reciprocal rank
+
+        Parameters
+        ----------
+        feature_config : FeatureConfig object
+            FeatureConfig object that defines the configuration for each model
+            feature
+        metadata_features : dict
+            Dictionary of metadata feature tensors that can be used to compute
+            custom metrics
+        name : str
+            Name of the metric
+        state : {"new", "old"}
+            State of the metric
+        """
         super(MRR, self).__init__(
             feature_config=feature_config,
             metadata_features=metadata_features,
@@ -162,7 +218,19 @@ class MRR(MeanRankMetric):
         )
 
     def _get_matches_hook(self, y_pred_click_ranks):
-        """Return reciprocal click ranks for MRR"""
+        """
+        Return reciprocal click ranks for MRR
+
+        Parameters
+        ----------
+        y_pred_click_ranks: Tensor object
+            Tensor object containing the ranks of the clicked records for each query
+
+        Returns
+        -------
+        Tensor object
+            Reciprocal ranks tensor
+        """
         return math_ops.reciprocal(tf.cast(y_pred_click_ranks, tf.float32))
 
 
@@ -173,7 +241,8 @@ class ACR(MeanRankMetric):
     Calculates the mean of the ranks of the
     clicked records from a list of queries.
 
-    For example, if
+    Examples
+    --------
     `y_true` is [[0, 0, 1], [0, 1, 0]]
     `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     `mask` is [[1, 1, 1], [1, 1, 1]] and
@@ -189,6 +258,22 @@ class ACR(MeanRankMetric):
         state=MetricState.NEW,
         **kwargs
     ):
+        """
+        Creates a `ACR` instance to compute mean of rank
+
+        Parameters
+        ----------
+        feature_config : FeatureConfig object
+            FeatureConfig object that defines the configuration for each model
+            feature
+        metadata_features : dict
+            Dictionary of metadata feature tensors that can be used to compute
+            custom metrics
+        name : str
+            Name of the metric
+        state : {"new", "old"}
+            State of the metric
+        """
         super(ACR, self).__init__(
             feature_config=feature_config,
             metadata_features=metadata_features,
@@ -198,7 +283,19 @@ class ACR(MeanRankMetric):
         )
 
     def _get_matches_hook(self, y_pred_click_ranks):
-        """Return click ranks for MRR"""
+        """
+        Return click ranks for ACR
+
+        Parameters
+        ----------
+        y_pred_click_ranks: Tensor object
+            Tensor object containing the ranks of the clicked records for each query
+
+        Returns
+        -------
+        Tensor object
+            Ranks tensor cast to float
+        """
         return tf.cast(y_pred_click_ranks, tf.float32)
 
 
@@ -218,4 +315,20 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
+        """
+        Creates a CategoricalAccuracy instance
+
+        Parameters
+        ----------
+        feature_config : FeatureConfig object
+            FeatureConfig object that defines the configuration for each model
+            feature
+        metadata_features : dict
+            Dictionary of metadata feature tensors that can be used to compute
+            custom metrics
+        name : str
+            Name of the metric
+        state : {"new", "old"}
+            State of the metric
+        """
         super(CategoricalAccuracy, self).__init__(name=name)

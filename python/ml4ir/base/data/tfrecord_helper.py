@@ -35,14 +35,19 @@ def _get_feature_fn(dtype):
 
 def get_example_proto(row, features):
     """
-    Get an Example protobuf from a dataframe row
+    Get an Example protobuf from a pandas dataframe row
 
-    Args:
-        - row: pandas DataFrame row
-        - features: configuration for all features
+    Parameters
+    ----------
+    row : pandas DataFrame row
+        pandas dataframe row to be converted to an example proto
+    features : dict
+        dictionary containing configuration for all features
 
     Returns
-        Example object
+    -------
+    `Example` protobuffer object
+        Example object loaded from the specified row
     """
 
     features_dict = dict()
@@ -60,20 +65,26 @@ def get_example_proto(row, features):
             if not pd.isna(row[feature_name])
             else [feature_info["default_value"]]
         )
+
     return train.Example(features=train.Features(feature=features_dict))
 
 
 def get_sequence_example_proto(group, context_features, sequence_features):
     """
-    Get a sequence example protobuf from a dataframe group
+    Get a SequenceExample protobuf from a dataframe group
 
-    Args:
-        - group: pandas dataframe group
-        - context_features: feature configuration for context
-        - sequence_features: feature configuration for sequence
+    Parameters
+    ----------
+    group : pandas dataframe group
+    context_features : dict
+        dictionary containing the configuration for all the context features
+    sequence_features : dict
+        dictionary containing the configuration for all the sequence features
 
     Returns
-        SequenceExample object
+    -------
+    `SequenceExample` object
+        SequenceExample object loaded the dataframe group
     """
     sequence_features_dict = dict()
     context_features_dict = dict()
