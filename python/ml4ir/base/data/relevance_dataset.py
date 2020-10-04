@@ -116,7 +116,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
                 feature_config=self.feature_config,
@@ -129,7 +129,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
                 feature_config=self.feature_config,
@@ -142,7 +142,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
 
     def balance_classes(self):
         """
