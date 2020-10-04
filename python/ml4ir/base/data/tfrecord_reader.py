@@ -361,4 +361,7 @@ def read(
             )
         )
 
+    # We apply prefetch as it improved train/test/validation throughput by 30% in some real model training.
+    dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
+
     return dataset
