@@ -100,9 +100,6 @@ class RelevanceDataset:
                 ├── data_file
                 ├── ...
                 └── data_file
-                
-            We also apply prefetch(tf.data.experimental.AUTOTUNE) as it improved train/test/validation throughput 
-            by 30% in some real model training.
             """
             self.train = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
@@ -116,7 +113,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
                 feature_config=self.feature_config,
@@ -129,7 +126,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
                 feature_config=self.feature_config,
@@ -142,7 +139,7 @@ class RelevanceDataset:
                 parse_tfrecord=parse_tfrecord,
                 file_io=self.file_io,
                 logger=self.logger,
-            ).prefetch(tf.data.experimental.AUTOTUNE)
+            )
 
     def balance_classes(self):
         """
