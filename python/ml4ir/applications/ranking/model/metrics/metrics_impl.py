@@ -236,8 +236,8 @@ class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
-        super(MyTopKCategoricalAccuracy, self).__init__(name=name)
+        super(TopKCategoricalAccuracy, self).__init__(name=name)
     def update_state(self, y_true, y_pred, sample_weight=None):
-        return super(MyTopKCategoricalAccuracy, self).update_state(
+        return super(TopKCategoricalAccuracy, self).update_state(
             tf.squeeze(y_true, axis=1), tf.squeeze(y_pred, axis=1), sample_weight=sample_weight
         )
