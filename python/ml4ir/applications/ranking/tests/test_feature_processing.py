@@ -33,6 +33,23 @@ class RankingModelTest(RankingTestBase):
         )
         assert processed_text.replace("\x00", "") == "abcabc123"
 
+    def test_text_preprocesing_with_replace_by_whitespace(self):
+        """
+        Asserts the preprocessing of a string tensor with custom punctuation character and whitespace replacement character
+        """
+        input_text = " # abc. bcd-$#efg@hij ."
+        processed_text = (
+            preprocessing.preprocess_text(input_text,
+                                          remove_punctuation=True,
+                                          to_lower=True,
+                                          punctuation=".-$#",
+                                          replace_with_whitespace=True)
+                .numpy()
+                .decode("utf-8")
+        )
+
+        self.assertEqual("abc bcd efg@hij", processed_text)
+
     def test_get_one_hot_vectorizer(self):
         """
         Asserts ml4ir.base.features.preprocessing.get_one_hot_vectorizer
