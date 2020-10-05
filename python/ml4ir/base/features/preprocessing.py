@@ -256,10 +256,10 @@ def natural_log(feature_tensor, shift=1.0):
     Examples
     --------
     Input:
-        feature_tensor = [10, 0]
-        shift = 1
+        >>> feature_tensor = [10, 0]
+        >>> shift = 1
     Output:
-        [2.39, 0.]
+        >>> [2.39, 0.]
     """
     return tf.math.log(tf.add(feature_tensor, tf.cast(tf.constant(shift), tf.float32)))
 
