@@ -222,10 +222,11 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
 
 class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
-    Custom metric class to compute the Categorical Accuracy.
+    Custom metric class to compute the Top K Categorical Accuracy.
 
-    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
-    to maintain consistency of arguments to __init__
+    Currently a wrapper around tf.keras.metrics.TopKCategoricalAccuracy that
+    squeezes one dimension.
+    It maintains consistency of arguments to __init__
     """
 
     def __init__(
