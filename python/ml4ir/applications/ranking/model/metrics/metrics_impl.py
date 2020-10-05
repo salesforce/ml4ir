@@ -220,6 +220,7 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
     ):
         super(CategoricalAccuracy, self).__init__(name=name)
 
+
 class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
     Custom metric class to compute the Top K Categorical Accuracy.
@@ -233,7 +234,7 @@ class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         self,
         feature_config: FeatureConfig,
         metadata_features: Dict,
-        name="my_top_k_categorical_accuracy",
+        name="top_k_categorical_accuracy",
         state=MetricState.NEW,
         **kwargs
     ):
