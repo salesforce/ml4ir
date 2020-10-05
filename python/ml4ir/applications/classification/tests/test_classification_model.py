@@ -44,4 +44,3 @@ class ClassificationModelTest(ClassificationTestBase):
         # Check if the loss and accuracy on the test set is the same
         assert np.isclose(metrics["loss"], 1.966392993927002, rtol=0.01)
         assert np.isclose(metrics["categorical_accuracy"], 0.18229167, rtol=0.01)
-        assert np.isclose(metrics["Precision"], 0.2, rtol=0.01)
