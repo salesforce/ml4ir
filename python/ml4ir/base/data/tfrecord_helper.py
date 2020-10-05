@@ -60,6 +60,10 @@ def get_example_proto(row, features):
         # that breaks this part of the code. Example:
         # https://stackoverflow.com/questions/47143631/
         # how-do-i-preserve-datatype-when-using-apply-row-wise-in-pandas-dataframe
+        if feature_name not in row:
+            raise Exception(
+                "Could not find column {} in record: {}".format(feature_name, str(row))
+            )
         features_dict[feature_name] = feature_fn(
             [row[feature_name]]
             if not pd.isna(row[feature_name])

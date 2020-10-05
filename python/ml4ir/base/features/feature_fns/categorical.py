@@ -203,7 +203,12 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     )(categorical_indices)
 
     categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
-    encoding = get_bilstm_encoding(categorical_embeddings, int(args["encoding_size"] / 2))
+    kernel_initializer = args.get("lstm_kernel_initializer", "glorot_uniform")
+    encoding = get_bilstm_encoding(
+        embedding=categorical_embeddings,
+        lstm_units=int(args["encoding_size"] / 2),
+        kernel_initializer=kernel_initializer,
+    )
     return encoding
 
 

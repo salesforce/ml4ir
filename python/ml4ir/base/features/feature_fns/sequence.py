@@ -61,12 +61,16 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
-    encoding = get_bilstm_encoding(char_embedding, int(args["encoding_size"] / 2))
-
+    kernel_initializer = args.get("lstm_kernel_initializer", "glorot_uniform")
+    encoding = get_bilstm_encoding(
+        embedding=char_embedding,
+        lstm_units=int(args["encoding_size"] / 2),
+        kernel_initializer=kernel_initializer,
+    )
     return encoding
 
 
-def get_bilstm_encoding(sequence_tensor, units):
+def get_bilstm_encoding(embedding, lstm_units, kernel_initializer="glorot_uniform"):
     """
     Convert sequence into encoding by passing through bidirectional LSTM
 
@@ -74,8 +78,11 @@ def get_bilstm_encoding(sequence_tensor, units):
     ----------
     sequence_tensor : Tensor object
         Sequence tensor with representations for each time step
-    units : int
+    lstm_units : int
         Number of units in the LSTM
+    kernel_initializer : str
+        Any supported tf.keras.initializers
+        e.g., 'ones', 'glorot_uniform', 'lecun_normal' ...
 
     Returns
     -------
@@ -83,7 +90,10 @@ def get_bilstm_encoding(sequence_tensor, units):
         Encoded feature tensor
     """
     encoding = layers.Bidirectional(
-        layers.LSTM(units=units, return_sequences=False), merge_mode="concat",
-    )(sequence_tensor)
+        layers.LSTM(
+            units=lstm_units, return_sequences=False, kernel_initializer=kernel_initializer
+        ),
+        merge_mode="concat",
+    )(embedding)
     encoding = tf.expand_dims(encoding, axis=1)
     return encoding
