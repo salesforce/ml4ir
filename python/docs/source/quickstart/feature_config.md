@@ -53,6 +53,8 @@ preprocessing_info:
       to_lower: true
 ```
 
+For more information on defining custom preprocessing functions and using it with ml4ir, check **[this guide](/advanced/preprocessing)**
+
 **`feature_layer_info | dict`**
 
 Definition of the feature transformation function to be applied to the feature in the model. Use this section to specify predefined or custom transformation functions to the model. Only tensorflow compatible functions can be used here as the transformation functions will be part of the `RelevanceModel` and serialized when the model is saved.
@@ -68,6 +70,8 @@ feature_layer_info:
     embedding_size: 128
     max_length: 20
 ```
+
+For more information on defining custom feature transformation functions and using it with ml4ir, check **[this guide](/advanced/feature_layer)**
 
 **`serving_info | dict`**
 
