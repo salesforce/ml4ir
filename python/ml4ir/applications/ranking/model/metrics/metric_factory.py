@@ -13,7 +13,7 @@ def get_metric(metric_key: str) -> Metric:
         raise NotImplementedError
     elif metric_key == MetricKey.CATEGORICAL_ACCURACY:
         return CategoricalAccuracy
-    elif metric_key == MetricKey.Top5CategoricalAccuracy:
+    elif metric_key == MetricKey.TOP_5_CATEGORICAL_ACCURACY:
         return Top5CategoricalAccuracy
     else:
         return metric_key
