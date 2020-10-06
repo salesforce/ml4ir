@@ -8,8 +8,8 @@ Quickstart
    architecture
    script
    library
+   dataset
    feature_config
    model_config
-   dataset
    saving
    serving

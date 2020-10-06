@@ -20,25 +20,37 @@ The feature config YAML file contains these main keys and their corresponding de
 
 For each of the features in the FeatureConfig, we define a corresponding feature information definition. The main keys that should be specified for each feature are:
 
+-----
+
 **`name | str`**
 
 Name of the feature in the input dataset(CSV, TFRecord, libsvm, etc.)
+
+-----
 
 **`node_name | str | default=name`**
 
 Name of the feature in the tensorflow model. This will be the name of the feature in the input layer. Using the same input feature with multiple name nodes and feature transformations is supported. For example, using query text for character and word embeddings.
 
+-----
+
 **`dtype | str`**
 
 Tensorflow data type of the feature. Can be `string`, `int64` or `float`
+
+-----
 
 **`trainable | bool | default=True`**
 
 Value representing whether the feature is to be used for the scoring function. If set to False, the feature is considered a metadata feature that can be used to compute custom metrics and losses. Setting it to True, will make the transformed feature available for scoring by default.
 
+-----
+
 **`tfrecord_type | str`**
 
 Type of the SequenceExample feature type. Can be one of `sequence` for features unique to each sequence record or `context` for features common to all sequence records.
+
+-----
 
 **`preprocessing_info | list of dicts | default=[]`**
 
@@ -54,6 +66,8 @@ preprocessing_info:
 ```
 
 For more information on defining custom preprocessing functions and using it with ml4ir, check **[this guide](/advanced/preprocessing)**
+
+-----
 
 **`feature_layer_info | dict`**
 
@@ -73,21 +87,33 @@ feature_layer_info:
 
 For more information on defining custom feature transformation functions and using it with ml4ir, check **[this guide](/advanced/feature_layer)**
 
+-----
+
 **`serving_info | dict`**
 
 Definition of serving time feature attributes that will be used for model inference in production. Specifically, three key attributes can be specified in this section - `name`, `default_value` and `required`. `name` captures the name of the feature in production feature store that should be mapped to the model feature while constructing the input TFRecord proto. `default_value` captures the value to be used to fill the input feature tensor if the feature is absent in production. `required` is a boolean value representing if the feature is required at inference; the feature tensor will be set to default value otherwise.
+
+-----
 
 **`log_at_inference | bool | default=False`**
 
 Value representing if the feature should be logged when running `RelevanceModel.predict(...)`. Setting to True, returns the feature value when running inference. This can be used for error analysis on test examples and computing more complex metrics in a post processing job.
 
+-----
+
 **`is_group_metric_key | bool | default=False`**
 
 Value representing if the feature should be used for computing groupwise metrics when running `RelevanceModel.evaluate(...)`. The usage and implementation of the groupwise metrics is left to the user to be customized. The Ranking models come prepackaged with groupwise MRR and ACR metrics.
 
+-----
+
 **`is_secondary_label | bool | default=False`**
 
 Value representing if the feature is used as a secondary label to compute failure metrics. The usage of the feature to compute the failure metrics is left to the user to be customized. The Ranking models come prepackaged with failure metrics computation that can be used, for example, to compute rate of clicks on documents without a match on the subject field.
+
+-----
+
+The `FeatureConfig` can be extended to support additional attributes as necessary.
 
 ##### Example
 
@@ -100,8 +126,6 @@ This is an example configuration for the `query_text` feature, which will first 
     dtype: string
     log_at_inference: true
     feature_layer_info:
-      type: numeric
-      shape: null
       fn: bytes_sequence_to_encoding_bilstm
       args:
         encoding_type: bilstm
