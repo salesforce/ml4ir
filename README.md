@@ -51,3 +51,9 @@ The goal of ml4ir is to form a common hub for the most popular deep learning lay
 ## Continuous Integration 
 
 We use CircleCI for running tests. Both jvm and python tests will run on each commit and pull request. You can find both the CI pipelines **[here](https://app.circleci.com/pipelines/github/salesforce/ml4ir)**
+
+## Documentation
+
+We use **[sphinx](https://www.sphinx-doc.org/en/master/)** for ml4ir documentation. The documentation is hosted using Read the Docs at **[ml4ir.readthedocs.io/en/latest](https://ml4ir.readthedocs.io/en/latest/)**.
+
+For python doc strings, please use the numpy docstring format specified **[here](https://numpydoc.readthedocs.io/en/latest/format.html)**.
