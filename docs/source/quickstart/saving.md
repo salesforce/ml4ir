@@ -22,3 +22,12 @@ This saves
 
 * individual layer weights that can be used for transfer learning with other ml4ir models
 
+#### Saving preprocessing logic
+
+Optionally, we can save preprocessing functions in the SavedModel as part of the serving signature as well. This requires that the preprocessing function is a `tf.function` that can be serialized as a tensorflow layer.
+```
+relevance_model.save(
+    models_dir=MODEL_DIR,
+    preprocessing_keys_to_fns=custom_preprocessing_fns,
+    required_fields_only=True)
+```

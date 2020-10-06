@@ -131,5 +131,4 @@ ranking_model.save(models_dir=MODELS_DIR,
                    required_fields_only=True)
 ```
 
-
 For details on serving this model on the JVM check **[this guide](/quickstart/serving)**

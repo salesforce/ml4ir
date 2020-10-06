@@ -16,7 +16,7 @@ from typing import List
 from recommonmark.transform import AutoStructify
 
 # Set python project root
-sys.path.insert(0, os.path.abspath("../../"))
+sys.path.insert(0, os.path.abspath("../python/"))
 
 # The master toctree document
 master_doc = "index"
@@ -68,9 +68,12 @@ html_static_path: List = ["_static"]
 
 
 def setup(app):
-    app.add_config_value("recommonmark_config", {"enable_eval_rst": True}, True)
+    app.add_config_value(
+        "recommonmark_config", {"enable_eval_rst": True}, True
+    )  # noqa E501
     app.add_transform(AutoStructify)
 
 
-# Use both class definition doc and constructor doc for generating sphinx docs for python classes
+# Use both class definition doc and constructor doc for
+# generating sphinx docs for python classes
 autoclass_content = "both"
