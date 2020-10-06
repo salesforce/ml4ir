@@ -1,13 +1,10 @@
 import tensorflow.keras.optimizers as tf_optimizers
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
-from ml4ir.base.config.keys import OptimizerKey
-
 
 def get_optimizer(
-    optimizer_key: str = "SGD",
-    with_exp_decay: bool = False,
-    initial_learning_rate: float = 0.01,
+    optimizer_key: str = "Adam",
+    learning_rate: float = 0.01,
     learning_rate_decay: float = 1.0,
     learning_rate_decay_steps: int = 1000000,
     **kwargs
@@ -25,10 +22,12 @@ def get_optimizer(
     Arguments:
         optimizer_key: string optimizer name to be used as defined
          under tensorflow.keras.optimizers
-        with_exp_decay: Set to True, to add Exponential Decay schedule
-        learning_rate_decay,learning_rate_decay, learning_rate_decay_steps:
+        learning_rate: learing rate to be used in the optimizer. If the user passes valid arguments
+        for learning rate decay, then this is the initial learning rate
+        learning_rate_decay, learning_rate_decay_steps:
         Params controlling the decay schedule,
          cf. https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
+        If learning_rate_decay < 1.0 we use it as an explicit signal to add decay.
 
     You may pass any other valid arguments to the function to control aspects of the optimizer,
     according to the official tensforflow documentation.
@@ -48,7 +47,7 @@ def get_optimizer(
     """
     # Define an exponential learning rate decay schedule
     learning_rate_schedule = ExponentialDecay(
-        initial_learning_rate,
+        learning_rate,
         decay_steps=learning_rate_decay_steps,
         decay_rate=learning_rate_decay,
         staircase=True,
@@ -60,6 +59,6 @@ def get_optimizer(
         raise AttributeError("ml4ir uses 'tensorflow.keras.optimizers' as a factory of optimizers. "
                              "You provided {}, which does not exist in that module.".format(optimizer_key))
 
-    if with_exp_decay:
-        return optimizer(learning_rate = learning_rate_schedule, **kwargs)
-    return optimizer(**kwargs)
+    if learning_rate_decay < 1.0:  # The user explicitly passed this, so we want decay
+        return optimizer(learning_rate=learning_rate_schedule, **kwargs)
+    return optimizer(learning_rate=learning_rate, **kwargs)

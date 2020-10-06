@@ -19,7 +19,6 @@ from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.spark_io import SparkIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
-from ml4ir.base.config.keys import OptimizerKey
 from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import TFRecordTypeKey

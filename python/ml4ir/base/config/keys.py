@@ -22,16 +22,6 @@ class ArchitectureKey(Key):
     RNN = "rnn"
 
 
-class OptimizerKey(Key):
-    """Model optimizer keys"""
-
-    ADAM = "adam"
-    ADAGRAD = "adagrad"
-    NADAM = "nadam"
-    SGD = "sgd"
-    RMS_PROP = "rms_prop"
-
-
 class DataFormatKey(Key):
     """Data Format keys"""
 
