@@ -30,7 +30,6 @@ class RelevanceDataset:
         parse_tfrecord: bool = True,
         logger: Optional[Logger] = None,
         keep_additional_info: int = 0,
-        gl_2_clicks: int = 1,
         non_zero_features_only: int = 0,
     ):
         self.feature_config = feature_config
@@ -49,7 +48,6 @@ class RelevanceDataset:
         self.use_part_files: bool = use_part_files
 
         self.keep_additional_info = keep_additional_info
-        self.gl_2_clicks = gl_2_clicks
         self.non_zero_features_only = non_zero_features_only
 
         self.train: Optional[tf.data.TFRecordDataset] = None
@@ -118,7 +116,6 @@ class RelevanceDataset:
                 file_io=self.file_io,
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
-                gl_2_clicks=self.gl_2_clicks,
                 non_zero_features_only=self.non_zero_features_only,
             )
             self.validation = data_reader.read(
@@ -134,7 +131,6 @@ class RelevanceDataset:
                 file_io=self.file_io,
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
-                gl_2_clicks=self.gl_2_clicks,
                 non_zero_features_only=self.non_zero_features_only,
             )
             self.test = data_reader.read(
@@ -150,7 +146,6 @@ class RelevanceDataset:
                 file_io=self.file_io,
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
-                gl_2_clicks=self.gl_2_clicks,
                 non_zero_features_only=self.non_zero_features_only,
             )
 

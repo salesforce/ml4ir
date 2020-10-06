@@ -16,7 +16,7 @@ class PreprocessingMap:
         self.key_to_fn = {
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
-            natural_log.__name__: natural_log
+            natural_log.__name__: natural_log,
             # Add more here
         }
 
@@ -133,6 +133,25 @@ def natural_log(feature_tensor, shift=1.0):
     """
     return tf.math.log(tf.add(feature_tensor, tf.cast(tf.constant(shift), tf.float32)))
 
+@tf.function
+def convert_label_to_clicks(label_vector, dtype):
+    """
+    Convert the label vector to binary clicks. Documents with the maximum labels are considered clicked and receive
+    label (1). Any other document is considered not clicked and receive label (0)
+
+    Args:
+        label_vector: input label tensor of type label_dtype
+        dtype: Data type of the input label_vector
+    """
+    #if tf.math.reduce_sum(label_vector).numpy() < 1:
+    #    return label_vector
+    typ = dtype
+    if dtype == 'int':
+        typ = 'int64'
+    maximum = tf.reduce_max(label_vector)
+    cond = tf.math.equal(label_vector, maximum)
+    clicks = tf.dtypes.cast(cond, typ)
+    return clicks
 
 ##########################################
 # Add any new preprocessing functions here

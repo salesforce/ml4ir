@@ -303,13 +303,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--gl_2_clicks",
-            type=int,
-            default=1,
-            help="[Ranklib format only] Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert",
-        )
-
-        self.add_argument(
             "--non_zero_features_only",
             type=int,
             default=0,

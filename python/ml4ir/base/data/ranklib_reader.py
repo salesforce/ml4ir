@@ -23,7 +23,6 @@ def read(
     parse_tfrecord: bool = True,
     logger=None,
     keep_additional_info = 0,
-    gl_2_clicks = 1,
     non_zero_features_only = 1,
     **kwargs
 ) -> tf.data.TFRecordDataset:
@@ -47,7 +46,6 @@ def read(
         - max_sequence_size: int value specifying max number of records per query
         - logger: logging object
         - keep_additional_info: Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore
-        - gl_2_clicks: Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert
         - non_zero_features_only: Only non zero features are stored. 1 for yes, 0 otherwise
 
     Returns:
@@ -58,6 +56,8 @@ def read(
         extension="" if use_part_files else ".txt",
         prefix="part-" if use_part_files else "",
     )
+
+    gl_2_clicks = False
 
     # Create a directory for storing tfrecord files
     file_io.make_directory(tfrecord_dir, clear_dir=True)
@@ -88,5 +88,8 @@ def read(
         file_io=file_io,
         logger=logger,
     )
+    #
+
+
 
     return dataset

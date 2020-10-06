@@ -24,6 +24,10 @@ label:
     required: false
     default_value: 0
   tfrecord_type: sequence
+  preprocessing_info:
+    - fn: convert_label_to_clicks
+      args:
+        dtype: float
 rank:
   name: rank
   node_name: rank

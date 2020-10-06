@@ -55,7 +55,7 @@ def convert(input_file, keep_additional_info, gl_2_clicks, non_zero_features_onl
         df.replace(np.nan, 0, inplace=True)
     else:
         df = pd.DataFrame(rows)
-    if gl_2_clicks == 1:
+    if int(gl_2_clicks) == 1:
         groups = df.groupby(QUERY_ID_NAME)
         for gname, group in groups:
             df.loc[df[QUERY_ID_NAME] == gname, RELEVANCE_NAME] = (

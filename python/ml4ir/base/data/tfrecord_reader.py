@@ -258,7 +258,9 @@ def make_sequence_example_parse_fn(
 
         if not required_fields_only:
             # Check if label is one-hot and correctly masked
-            tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
+            #tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
+            #commeting the previous line as it filters out all queries with non 1-hot label vectors.
+            pass
 
         return features_dict, labels
 
@@ -344,7 +346,9 @@ def read(
 
     # Parse the protobuf data to create a TFRecordDataset
     dataset = data.TFRecordDataset(tfrecord_files)
+
     if parse_tfrecord:
+        #dataset = dataset.map(parse_fn)
         dataset = dataset.map(parse_fn).apply(data.experimental.ignore_errors())
 
     # Create BatchedDataSet

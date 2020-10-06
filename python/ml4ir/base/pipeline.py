@@ -24,6 +24,7 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
+from ml4ir.base.features.preprocessing import convert_label_to_clicks
 
 from typing import List
 
@@ -93,15 +94,12 @@ class RelevancePipeline(object):
 
         if args.data_format == DataFormatKey.RANKLIB:
             try:
-                self.gl_2_clicks = args.gl_2_clicks
                 self.non_zero_features_only = args.non_zero_features_only
                 self.keep_additional_info = args.keep_additional_info
             except:
-                self.gl_2_clicks = 1
                 self.non_zero_features_only = 0
                 self.keep_additional_info = 0
         else:
-            self.gl_2_clicks = 1
             self.non_zero_features_only = 0
             self.keep_additional_info = 0
 
@@ -214,6 +212,11 @@ class RelevancePipeline(object):
 
         NOTE: Override this method to create custom dataset objects
         """
+
+        if 'preprocessing_info' in self.feature_config.get_label():
+            if self.feature_config.get_label()['preprocessing_info'][0]['fn'] == 'convert_label_to_clicks':
+                preprocessing_keys_to_fns['convert_label_to_clicks'] = convert_label_to_clicks
+
         # Prepare Dataset
         relevance_dataset = RelevanceDataset(
             data_dir=self.data_dir_local,
@@ -230,7 +233,6 @@ class RelevancePipeline(object):
             parse_tfrecord=True,
             file_io=self.local_io,
             logger=self.logger,
-            gl_2_clicks=self.gl_2_clicks,
             non_zero_features_only=self.non_zero_features_only,
             keep_additional_info=self.keep_additional_info,
         )
