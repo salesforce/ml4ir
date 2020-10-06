@@ -5,7 +5,8 @@ from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-
+from ml4ir.applications.ranking.model.metrics.metrics_impl import Top5CategoricalAccuracy
+from ml4ir.base.io.local_io import LocalIO
 
 # Constants
 GOLD_METRICS = {
@@ -35,6 +36,8 @@ GOLD_METRICS = {
     "perc_improv_mean_name_match_failure_any_count": -1.04255,
     "perc_improv_mean_name_match_failure_any_fraction": -0.7254,
 }
+
+ROOT_DATA_DIR = "ml4ir/applications/classification/tests/data"
 
 
 class RankingModelTest(RankingTestBase):
@@ -94,3 +97,15 @@ class RankingModelTest(RankingTestBase):
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
             assert np.isclose(metrics[gold_metric_name], gold_metric_val, rtol=0.01)
+
+
+def test_top_5_categorical_accuracy():
+    """Test for calculating top_5_categorical_accuracy metric"""
+    feature_config = os.path.join(ROOT_DATA_DIR, "configs", "feature_config.yaml")
+    feature_config = LocalIO().read_yaml(feature_config)
+    metric = Top5CategoricalAccuracy(feature_config=feature_config, metadata_features={})
+    metric.update_state([[[0, 0, 1, 0, 0, 0]], [[0, 1, 0, 0, 0, 0]]],
+                        [[[0.1, 0.1, 0.4,  0.2, 0.1, 0.1]],
+                         [[0.19, 0.01, 0.4,  0.2, 0.1, 0.1]]])
+    score = metric.result().numpy()
+    assert score == 0.5

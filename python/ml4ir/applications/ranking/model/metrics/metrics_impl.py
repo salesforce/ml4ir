@@ -221,7 +221,7 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         super(CategoricalAccuracy, self).__init__(name=name)
 
 
-class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
+class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
     Custom metric class to compute the Top K Categorical Accuracy.
 
@@ -238,8 +238,9 @@ class TopKCategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         state=MetricState.NEW,
         **kwargs
     ):
-        super(TopKCategoricalAccuracy, self).__init__(name=name)
+        super(Top5CategoricalAccuracy, self).__init__(name=name)
+
     def update_state(self, y_true, y_pred, sample_weight=None):
-        return super(TopKCategoricalAccuracy, self).update_state(
+        return super(Top5CategoricalAccuracy, self).update_state(
             tf.squeeze(y_true, axis=1), tf.squeeze(y_pred, axis=1), sample_weight=sample_weight
         )
