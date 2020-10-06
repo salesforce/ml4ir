@@ -116,32 +116,27 @@ class FeatureConfig:
         - label
         - all_features
         """
-        try:
-            self.query_key = self.features_dict.get(FeatureConfigKey.QUERY_KEY)
-            self.all_features.append(self.query_key)
-        except KeyError:
-            self.query_key = None
+        for mandatory_key in [FeatureConfigKey.LABEL, FeatureConfigKey.FEATURES]:
+            if mandatory_key not in self.features_dict:
+                raise KeyError(
+                    "'%s' key not found in the feature_config specified" % mandatory_key
+                )
+        if FeatureConfigKey.QUERY_KEY not in self.features_dict:
             if self.logger:
                 self.logger.warning(
                     "'%s' key not found in the feature_config specified"
                     % FeatureConfigKey.QUERY_KEY
                 )
+            self.query_key = None
+        else:
+            self.query_key = self.features_dict.get(FeatureConfigKey.QUERY_KEY)
+            self.all_features.append(self.query_key)
 
-        try:
-            self.label = self.features_dict.get(FeatureConfigKey.LABEL)
-            self.all_features.append(self.label)
-        except KeyError:
-            raise KeyError(
-                "'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL
-            )
+        self.label = self.features_dict.get(FeatureConfigKey.LABEL)
+        self.all_features.append(self.label)
 
-        try:
-            self.features = self.features_dict.get(FeatureConfigKey.FEATURES)
-            self.all_features.extend(self.features)
-        except KeyError:
-            raise KeyError(
-                "'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES
-            )
+        self.features = self.features_dict.get(FeatureConfigKey.FEATURES)
+        self.all_features.extend(self.features)
 
     def define_features(self):
         """

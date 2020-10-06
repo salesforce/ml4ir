@@ -50,17 +50,23 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
-    encoding = get_bilstm_encoding(char_embedding, int(args["encoding_size"] / 2))
-
+    kernel_initializer = args.get('lstm_kernel_initializer', 'glorot_uniform')
+    encoding = get_bilstm_encoding(embedding=char_embedding,
+                                   lstm_units=int(args["encoding_size"] / 2),
+                                   kernel_initializer=kernel_initializer)
     return encoding
 
 
-def get_bilstm_encoding(embedding, units):
+def get_bilstm_encoding(embedding, lstm_units, kernel_initializer='glorot_uniform'):
     """
     Builds a bilstm on to on the embedding passed as input.
+    :param embedding: sequence of input embeddings to be passed through the BiLSTM
+    :param lstm_units number of units in each of the LSTMs of the BiLSTM
+    :param kernel_initializer, str any shortcut of the supported tf.keras.initializers
+      e.g., 'ones', 'glorot_uniform', 'lecun_normal' ...
     """
     encoding = layers.Bidirectional(
-        layers.LSTM(units=units, return_sequences=False), merge_mode="concat",
-    )(embedding)
+        layers.LSTM(units=lstm_units, return_sequences=False,
+                    kernel_initializer=kernel_initializer),merge_mode="concat")(embedding)
     encoding = tf.expand_dims(encoding, axis=1)
     return encoding

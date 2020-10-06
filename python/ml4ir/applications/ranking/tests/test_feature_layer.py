@@ -135,6 +135,91 @@ class RankingModelTest(RankingTestBase):
         assert tf.reduce_all(tf.equal(sequence_encoding[3], sequence_encoding[4]))
         assert not tf.reduce_all(tf.equal(sequence_encoding[1], sequence_encoding[4]))
 
+    def test_categorical_embedding_to_encoding_bilstm_sequence_of_words(self):
+        """
+        Check that categorical_embedding_to_encoding_bilstm function does not fail with sequences of word (in a single
+        row).
+        """
+        embedding_size = 32
+        encoding_size = 64
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "type": "numeric",
+                "fn": "categorical_embedding_to_encoding_bilstm",
+                "args": {
+                    "vocabulary_file": "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv",
+                    "encoding_type": "bilstm",
+                    "encoding_size": encoding_size,
+                    "embedding_size": embedding_size,
+                    "dropout_rate": 0.2
+                },
+            },
+            "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
+        }
+
+        string_tensor = tf.constant([[['AAA', 'BBB', 'out_of_vocabulary']]])
+
+        categorical_fns.categorical_embedding_to_encoding_bilstm(
+            string_tensor, feature_info, self.file_io
+        )
+
+    def test_categorical_embedding_to_encoding_bilstm_oov_mapping_with_dropout(self):
+        """
+        Asserts "out of vocabulary" words are mapped to the same value when dropout_rate is used,
+        while word "in vocabulary" are mapped to their own embeddings.
+        """
+        embedding_size = 128
+        encoding_size = 512
+        vocabulary_file = "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv"
+
+        feature_info = {
+            "name": "categorical_variable",
+            "feature_layer_info": {
+                "type": "numeric",
+                "fn": "categorical_embedding_to_encoding_bilstm",
+                "args": {
+                    "vocabulary_file": vocabulary_file,
+                    "encoding_type": "bilstm",
+                    "encoding_size": encoding_size,
+                    "embedding_size": embedding_size,
+                    "dropout_rate": 0.2
+                },
+            },
+            "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
+        }
+
+        df_vocabulary = self.file_io.read_df(vocabulary_file)
+        vocabulary = df_vocabulary.values.flatten().tolist()
+
+        # Define a batch where each row is a single word from the vocabulary (so that we can later compare each word
+        # encoding)
+        words = vocabulary + ['out_of_vocabulary', 'out_of_vocabulary2']
+        string_tensor = tf.constant([[[word]] for word in words])
+
+        # If the embedding lookup input dimension were computed incorrectly, the following call would fail with:
+        # tensorflow.python.framework.errors_impl.InvalidArgumentError: indices[0,0,7] = 8 is not in [0, 8)
+        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
+            string_tensor, feature_info, self.file_io
+        )
+
+        # Strings 1 and 2 should result in the same embedding because they are both OOV
+        # Check that each word, except the OOV ones are mapped to different encodings (actually different embeddings,
+        # but the encoding on top should be equivalent as each row is a single word).
+        for word1_position in range(0, len(vocabulary)):
+            for word2_position in range(word1_position + 1, len(vocabulary) + 1):  # +1 to include one OOV word
+                if tf.reduce_all(tf.equal(sequence_encoding[word1_position],
+                                                        sequence_encoding[word2_position])):
+                    word1, word2 = words[word1_position], words[word2_position]
+                    self.assertFalse(tf.reduce_all(tf.equal(sequence_encoding[word1_position],
+                                                        sequence_encoding[word2_position])),
+                                 msg="Check that non-OOV words map to different encodings, and not also not to OOV:"
+                                     "{} vs. {}".format(word1, word2))
+
+        self.assertTrue(tf.reduce_all(tf.equal(sequence_encoding[-1], sequence_encoding[-2])),
+                        msg="Check that OOV words map to the same encodings")
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
+
     def test_categorical_embedding_with_hash_buckets(self):
         """
         Goal:
