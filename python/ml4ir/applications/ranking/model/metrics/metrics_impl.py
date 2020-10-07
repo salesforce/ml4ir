@@ -219,3 +219,31 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         **kwargs
     ):
         super(CategoricalAccuracy, self).__init__(name=name)
+
+
+class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
+    """
+    Custom metric class to compute the Top K Categorical Accuracy.
+
+    Currently a wrapper around tf.keras.metrics.TopKCategoricalAccuracy that
+    squeezes one dimension.
+    It maintains consistency of arguments to __init__
+    """
+
+    def __init__(
+        self,
+        feature_config: Optional[FeatureConfig]=None,
+        metadata_features: Dict={},
+        name="top_k_categorical_accuracy",
+        state=MetricState.NEW,
+        **kwargs
+    ):
+        super(Top5CategoricalAccuracy, self).__init__(name=name)
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        """Input shape is a 3 dimensional tensor of size
+        (batch_size, 1, num_classes). We are squeezing
+        the second dimension to follow the API of tf.keras.metrics.TopKCategoricalAccuracy"""
+        return super(Top5CategoricalAccuracy, self).update_state(
+            tf.squeeze(y_true, axis=1), tf.squeeze(y_pred, axis=1), sample_weight=sample_weight
+        )
