@@ -16,7 +16,7 @@ ml4ir is designed as modular subcomponents which can each be combined and custom
 * Query2SQL
 * *add your application here*
   
-![ml4ir](python/docs/source/_static/ml4ir.png)
+![ml4ir](docs/source/_static/ml4ir.png)
 
 
 ## Motivation
