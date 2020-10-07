@@ -54,7 +54,7 @@ class CategoricalCrossEntropy(RelevanceLossBase):
 
         Returns
         -------
-        funciton
+        function
             Softmax activation function
         """
         return lambda logits, mask: layers.Activation("softmax", name=output_name)(logits)
