@@ -17,9 +17,8 @@ class ClassificationArgParser(RelevanceArgParser):
         self.set_defaults(
             tfrecord_type=TFRecordTypeKey.EXAMPLE,
             loss_key=LossKey.CATEGORICAL_CROSS_ENTROPY,
-            metrics_keys="['" + MetricKey.CATEGORICAL_ACCURACY + "'"
-                         + ", '" + MetricKey.PRECISION + "'"
-                         + "]",
+            metrics_keys="['{}', '{}']".format(MetricKey.CATEGORICAL_ACCURACY,
+                                               MetricKey.TOP_5_CATEGORICAL_ACCURACY),
             monitor_metric=MetricKey.CATEGORICAL_ACCURACY,
             monitor_mode="max",
             group_metrics_min_queries=25,
