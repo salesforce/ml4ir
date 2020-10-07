@@ -1,7 +1,8 @@
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.ranking.config.keys import MetricKey
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, CategoricalAccuracy
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
+from ml4ir.applications.classification.model.metrics.metrics_impl import CategoricalAccuracy
 
 
 def get_metric(metric_key: str) -> Metric:

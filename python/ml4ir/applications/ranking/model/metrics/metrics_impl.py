@@ -297,38 +297,3 @@ class ACR(MeanRankMetric):
             Ranks tensor cast to float
         """
         return tf.cast(y_pred_click_ranks, tf.float32)
-
-
-class CategoricalAccuracy(metrics.CategoricalAccuracy):
-    """
-    Custom metric class to compute the Categorical Accuracy.
-
-    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
-    to maintain consistency of arguments to __init__
-    """
-
-    def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        name="categorical_accuracy",
-        state=MetricState.NEW,
-        **kwargs
-    ):
-        """
-        Creates a CategoricalAccuracy instance
-
-        Parameters
-        ----------
-        feature_config : FeatureConfig object
-            FeatureConfig object that defines the configuration for each model
-            feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
-        name : str
-            Name of the metric
-        state : {"new", "old"}
-            State of the metric
-        """
-        super(CategoricalAccuracy, self).__init__(name=name)
