@@ -9,8 +9,16 @@ from ml4ir.applications.ranking.config.keys import LossKey
 def get_loss(loss_key) -> RelevanceLossBase:
     """
     Factory to get relevance loss related to classification use-case.
-    :param loss_key: LossKey.
-    :return: RelevanceLossBase: corresponding loss.
+
+    Parameters
+    ----------
+    loss_key : str
+        LossKey name
+
+    Returns
+    -------
+    RelevanceLossBase
+        Corresponding loss object
     """
     if loss_key == LossKey.CATEGORICAL_CROSS_ENTROPY:
         return CategoricalCrossEntropy()
@@ -19,10 +27,14 @@ def get_loss(loss_key) -> RelevanceLossBase:
 
 
 class CategoricalCrossEntropy(RelevanceLossBase):
-
     def get_loss_fn(self, **kwargs):
         """
-        Define a softmax cross entropy loss
+        Define a categorical cross entropy loss
+
+        Returns
+        -------
+        function
+            Categorical cross entropy loss function
         """
         cce = losses.CategoricalCrossentropy(reduction=losses.Reduction.SUM_OVER_BATCH_SIZE)
 
@@ -32,4 +44,17 @@ class CategoricalCrossEntropy(RelevanceLossBase):
         return _loss_fn
 
     def get_final_activation_op(self, output_name):
+        """
+        Define softmax activation function
+
+        Parameters
+        ----------
+        output_name : str
+            Name of the output to use for final activation layer
+
+        Returns
+        -------
+        funciton
+            Softmax activation function
+        """
         return lambda logits, mask: layers.Activation("softmax", name=output_name)(logits)

@@ -12,16 +12,28 @@ def get_optimizer(
     gradient_clip_value: float = 1000000,
 ) -> tf_optimizers.Optimizer:
     """
-    This function defines the optimizer used by ml4ir.
+    Define the optimizer used for training the RelevanceModel
     Users have the option to define an ExponentialDecay learning rate schedule
 
-    Arguments:
-        optimizer_key: string optimizer name to be used as defined under ml4ir.base.config.keys.OptimizerKey
-        learning_rate: floating point learning rate for the optimizer
-        learning_rate_decay: floating point rate at which the learning rate will be decayed every learning_rate_decay_steps
-        learning_rate_decay_steps: int representing number of iterations after which learning rate will be decreased exponentially
-        gradient_clip_value: float value representing the clipvalue for gradient updates. Not setting this to a reasonable value based on the model will lead to gradient explosion and NaN losses.
+    Parameters
+    ----------
+    optimizer_key : str
+        string optimizer name to be used as defined under ml4ir.base.config.keys.OptimizerKey
+    learning_rate : float, optional
+        floating point learning rate for the optimizer
+    learning_rate_decay : float, optional
+        floating point rate at which the learning rate will be decayed every learning_rate_decay_steps
+    learning_rate_decay_steps : int, optional
+        int representing number of iterations after which learning rate will be decreased exponentially
+    gradient_clip_value : float
+        float value representing the clipvalue for gradient updates. Not setting this to a reasonable value based on the model will lead to gradient explosion and NaN losses.
 
+    Returns
+    -------
+    tensorflow keras optimizer
+
+    Notes
+    -----
     References:
         https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/Optimizer
         https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
