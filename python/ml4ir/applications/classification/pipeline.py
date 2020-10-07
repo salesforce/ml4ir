@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
-from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
@@ -87,7 +87,7 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define metrics objects from metrics keys
         metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
         # Define optimizer
