@@ -23,7 +23,15 @@ AverageClickRank
 CategoricalAccuracy
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ml4ir.applications.ranking.model.metrics.metrics_impl.CategoricalAccuracy
+.. autoclass:: ml4ir.applications.classification.model.metrics.metrics_impl.CategoricalAccuracy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Top5CategoricalAccuracy
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ml4ir.applications.classification.model.metrics.metrics_impl.Top5CategoricalAccuracy
    :members:
    :undoc-members:
    :show-inheritance:
