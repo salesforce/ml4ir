@@ -1,7 +1,7 @@
 ml4ir - Machine Learning for Information Retrieval
 ==================================================
 
-ml4ir is an open source library for training and deploying deep learning models for search applications. ml4ir is built on top of **python3** and **tensorflow 2.x** for training and evaluation. It also comes packaged with scala utilties for **JVM inference**.
+ml4ir is an open source library for training and deploying deep learning models for search applications. ml4ir is built on top of **python3** and **tensorflow 2.x** for training and evaluation. It also comes packaged with scala utilities for **JVM inference**.
 
 ml4ir is designed as modular subcomponents which can easily be combined and customized to build a variety of search ML models such as:
 

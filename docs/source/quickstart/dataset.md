@@ -16,6 +16,6 @@ Storing the Ranking data this way helps us achieve two things:
 This allows the storage to be efficient and training process to be fast.
 
 
-![tfrecord](/_static/tfrecord.png)
+![](/_static/tfrecord.png)
 
 The TFRecord data pipeline on ml4ir is configured out of the box for optimized data loading and preprocessing. The batches are lazy loaded and optimized by prefetching into memory for faster model training at scale. The serialized TFRecord messages are parsed and features are extracted based on the configuration specified in the `FeatureConfig`. ml4ir additionally applies preprocessing functions to the extracted features before feeding them as input into the model.

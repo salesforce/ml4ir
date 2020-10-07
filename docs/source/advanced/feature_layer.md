@@ -1,6 +1,6 @@
 ## Using custom feature transformation functions
 
-ml4ir allows users to define custom feature transformation functions. Here, we demonstrate how to define a function to convert text into character embeddings and then encode using a bidirectional GRU.
+ml4ir allows users to define custom feature transformation functions. Here, we demonstrate how to define a function to convert text into character embeddings and then encode using a bidirectional **[GRU](https://www.tensorflow.org/api_docs/python/tf/keras/layers/GRU)**.
 
 ```
 def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: FileIO):

@@ -2,7 +2,7 @@
 
 ml4ir saves individual layer weights as part of the `RelevanceModel.save(...)` call. These layer weights can be used with other ml4ir models for transfer learning. This enables layers like embedding vectors to be shared across search tasks like ranking, classification, etc. with ease.
 
-![serving](/_static/ml4ir_savedmodel.png)
+![](/_static/ml4ir_savedmodel.png)
 
 ml4ir provides support for loading pretrained layers and optionally freezing them. Depending on whether these layers/weights need to be fine tuned or used as is, one can freeze these layers or not.
 

@@ -15,7 +15,7 @@ ml4ir comes packaged with pre-defined configurable pipelines for popular search 
 #### Learning to Rank
 [Learning to Rank(LTR)](https://en.wikipedia.org/wiki/Learning_to_rank) is the task of learning an ranking function that finds the most optimal ordering of a list of documents for a given query to improve relevance. Each document is represented in the dataset as a feature set computed for the query-document pair. The labels for this task can either be graded relevance values defined for the list of records in a query or a binary click/no-click label.
 
-![learning_to_rank](../_static/ranking_data.png)
+![](../_static/ranking_data.png)
 
 In the sample ranking data above, each row represents a query-document pair of features. Features like `query_text`, `domain_name` are common across documents. Whereas features like `record_text`, `popularity_score`, `quality_score` are unique to each document. In this example, we learn a ranking function using binary clicks as the label. The state of the art LTR models of today rely on listwise losses and complex groupwise scoring functions. 
 
@@ -24,7 +24,7 @@ To train and evaluate a learning to rank model, use the predefined `RankingPipel
 #### Query Classification
 [Query Classification](https://en.wikipedia.org/wiki/Web_query_classification) is the task of classifying a given user query into a set of predefined categories. Additional features such as user context, domain of query can be used to personalize the predictions.
 
-![lquery_classification](../_static/query_classification_data.png)
+![](../_static/query_classification_data.png)
 
 In the sample query classification data above, each row represents a user query. We try to predict the `product_group` category using the `query_text`, `domain_name` and `previous_products`. These features define the user's context at the time of querying and also the actual query text made by the user. This type of query classification can be used to further narrow down search results and enhance the user search experiennce.
 

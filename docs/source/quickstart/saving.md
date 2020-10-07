@@ -2,7 +2,7 @@
 
 ml4ir saves `RelevanceModel` in the SavedModel format. Doing so, allows us to add additional serving signatures to the persisted model. Serving signatures are pre and post processing wrappers for the blackbox tensorflow-keras model that is persisted along with the model. This allows us to write feature preprocessing logic at training time and be used at inference time. Additionally, these pre and post processing wrapper functions are persisted as tensorflow graph operations which allows for fast GPU executable serving time code.
 
-![savedmodel](/_static/saved_model.png)
+![](/_static/saved_model.png)
 
 
 Saving the models with serving signatures allows ml4ir models to be served directly on TFRecord protocol buffer messages. The model can be saved with a serving signature that accepts a TFRecord proto message as a string tensor which can then be parsed to extract features. The features can then be preprocessed and fed into the model to compute the scores. These scores can optionally be post processed before sending it back to the serving model call. For example, this can be used for converting ranking scores from each document into ranks or sort documents based on the scores.
