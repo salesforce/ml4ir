@@ -37,8 +37,6 @@ GOLD_METRICS = {
     "perc_improv_mean_name_match_failure_any_fraction": -0.7254,
 }
 
-ROOT_DATA_DIR = "ml4ir/applications/classification/tests/data"
-
 
 class RankingModelTest(RankingTestBase):
     def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str):
@@ -101,9 +99,7 @@ class RankingModelTest(RankingTestBase):
 
 def test_top_5_categorical_accuracy():
     """Test for calculating top_5_categorical_accuracy metric"""
-    feature_config = os.path.join(ROOT_DATA_DIR, "configs", "feature_config.yaml")
-    feature_config = LocalIO().read_yaml(feature_config)
-    metric = Top5CategoricalAccuracy(feature_config=feature_config, metadata_features={})
+    metric = Top5CategoricalAccuracy(feature_config=None, metadata_features={})
     metric.update_state([[[0, 0, 1, 0, 0, 0]], [[0, 1, 0, 0, 0, 0]]],
                         [[[0.1, 0.1, 0.4,  0.2, 0.1, 0.1]],
                          [[0.19, 0.01, 0.4,  0.2, 0.1, 0.1]]])

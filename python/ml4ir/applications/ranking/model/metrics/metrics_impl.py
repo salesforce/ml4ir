@@ -232,8 +232,8 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
     def __init__(
         self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
+        feature_config: Optional[FeatureConfig]=None,
+        metadata_features: Dict={},
         name="top_k_categorical_accuracy",
         state=MetricState.NEW,
         **kwargs
@@ -242,7 +242,7 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         """Input shape is a 3 dimensional tensor of size
-        (batch_size, 1, prediction_cardinality). We are squeezing
+        (batch_size, 1, num_classes). We are squeezing
         the second dimension to follow the API of tf.keras.metrics.TopKCategoricalAccuracy"""
         return super(Top5CategoricalAccuracy, self).update_state(
             tf.squeeze(y_true, axis=1), tf.squeeze(y_pred, axis=1), sample_weight=sample_weight
