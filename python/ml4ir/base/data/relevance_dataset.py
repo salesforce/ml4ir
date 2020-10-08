@@ -4,7 +4,7 @@ from typing import Optional
 from logging import Logger
 import tensorflow as tf
 
-from ml4ir.base.config.keys import DataFormatKey, DataSplitKey, DefaultDirectoryKey
+from ml4ir.base.config.keys import DataFormatKey, DataSplitKey
 from ml4ir.base.data import csv_reader
 from ml4ir.base.data import tfrecord_reader
 from ml4ir.base.data import ranklib_reader
@@ -68,7 +68,8 @@ class RelevanceDataset:
         elif self.data_format == DataFormatKey.RANKLIB:
             data_reader = ranklib_reader
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Unsupported data format: {}. We currenty support {} and {}."
+                                      .format(self.data_format, DataFormatKey.CSV, DataFormatKey. TFRECORD))
 
         if to_split:
             """
@@ -102,6 +103,9 @@ class RelevanceDataset:
                 ├── data_file
                 ├── ...
                 └── data_file
+                
+            We also apply prefetch(tf.data.experimental.AUTOTUNE) as it improved train/test/validation throughput 
+            by 30% in some real model training.
             """
             self.train = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),

@@ -63,6 +63,21 @@ class FeatureConfig:
     """
 
     def __init__(self, features_dict, logger: Optional[Logger] = None):
+        self.features_dict = features_dict
+        self.logger = logger
+
+        self.initialize_features()
+
+        self.extract_features()
+
+        self.define_features()
+
+        self.log_initialization()
+
+        if len(self.train_features) == 0:
+            raise Exception("No trainable features specified in the feature config")
+
+    def initialize_features(self):
         self.all_features: List[Optional[Dict]] = list()
         self.query_key: Optional[Dict] = None
         self.label: Optional[Dict] = None
@@ -85,15 +100,6 @@ class FeatureConfig:
         # NOTE: Implementation is open-ended
         self.secondary_labels: List[Dict] = list()
 
-        self.extract_features(features_dict, logger)
-
-        self.define_features()
-
-        self.log_initialization(logger)
-
-        if len(self.train_features) == 0:
-            raise Exception("No trainable features specified in the feature config")
-
     @staticmethod
     def get_instance(feature_config_dict: dict, tfrecord_type: str, logger: Logger):
         logger.debug(json.dumps(feature_config_dict, indent=4))
@@ -102,36 +108,47 @@ class FeatureConfig:
         else:
             return SequenceExampleFeatureConfig(feature_config_dict, logger=logger)
 
-    def extract_features(self, features_dict, logger: Optional[Logger] = None):
-
-        try:
-            self.query_key = features_dict.get(FeatureConfigKey.QUERY_KEY)
-            self.all_features.append(self.query_key)
-        except KeyError:
-            self.query_key = None
-            if logger:
-                logger.warning(
+    def extract_features(self):
+        """
+        Method to extract the features from the input feature config YAML
+        file and assign relevance features to FeatureConfig attributes:
+        - query_key
+        - label
+        - all_features
+        """
+        for mandatory_key in [FeatureConfigKey.LABEL, FeatureConfigKey.FEATURES]:
+            if mandatory_key not in self.features_dict:
+                raise KeyError(
+                    "'%s' key not found in the feature_config specified" % mandatory_key
+                )
+        if FeatureConfigKey.QUERY_KEY not in self.features_dict:
+            if self.logger:
+                self.logger.warning(
                     "'%s' key not found in the feature_config specified"
                     % FeatureConfigKey.QUERY_KEY
                 )
+            self.query_key = None
+        else:
+            self.query_key = self.features_dict.get(FeatureConfigKey.QUERY_KEY)
+            self.all_features.append(self.query_key)
 
-        try:
-            self.label = features_dict.get(FeatureConfigKey.LABEL)
-            self.all_features.append(self.label)
-        except KeyError:
-            raise KeyError(
-                "'%s' key not found in the feature_config specified" % FeatureConfigKey.LABEL
-            )
+        self.label = self.features_dict.get(FeatureConfigKey.LABEL)
+        self.all_features.append(self.label)
 
-        try:
-            self.features = features_dict.get(FeatureConfigKey.FEATURES)
-            self.all_features.extend(self.features)
-        except KeyError:
-            raise KeyError(
-                "'%s' key not found in the feature_config specified" % FeatureConfigKey.FEATURES
-            )
+        self.features = self.features_dict.get(FeatureConfigKey.FEATURES)
+        self.all_features.extend(self.features)
 
     def define_features(self):
+        """
+        Method for defining additional FeatureConfig attributes from
+        the feature config dictionary
+        Defines the following FeatureConfig attributes:
+        - train_features: features that will be used for training
+        - metadata_features: features that will not be used for training
+        - features_to_log: features that will be logged with RelevanceModel.predict()
+        - group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+        - secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user's definition.
+        """
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
                 self.train_features.append(feature_info)
@@ -147,14 +164,14 @@ class FeatureConfig:
             if feature_info.get("is_secondary_label", False):
                 self.secondary_labels.append(feature_info)
 
-    def log_initialization(self, logger):
-        if logger:
-            logger.info("Feature config loaded successfully")
-            logger.info(
+    def log_initialization(self):
+        if self.logger:
+            self.logger.info("Feature config loaded successfully")
+            self.logger.info(
                 "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
             )
-            logger.info("Label : {}".format(self.get_label("name")))
-            logger.info(
+            self.logger.info("Label : {}".format(self.get_label("name")))
+            self.logger.info(
                 "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
             )
 
@@ -188,6 +205,47 @@ class FeatureConfig:
         Can additionally be used to only fetch a particular value from the dict
         """
         return self._get_key_or_dict(self.label, key=key)
+
+    def get_feature(self, name: str):
+        """
+        Getter method that returns the corresponding feature_info
+        from the FeatureConfig object that matches the name passed.
+
+        Args:
+            name: name of feature to be returned
+
+        Returns:
+            feature_info dictionary from FeatureConfig matching with the name
+        """
+        for feature_info in self.get_all_features():
+            if feature_info["name"] == name:
+                return feature_info
+
+        raise KeyError("No feature named {} in FeatureConfig".format(name))
+
+    def set_feature(self, name: str, new_feature_info: dict):
+        """
+        Setter method to set the feature_info of a feature in the FeatureConfig
+        as specified by the name argument
+
+        Args:
+            name: name of feature whose feature_info is to be updated
+            new_feature_info: dictionary used to set the feature_info for the
+                              feature with specified name
+        """
+        feature_found = False
+        for feature_info in self.features_dict["features"]:
+            if feature_info["name"] == name:
+                feature_found = True
+                self.features_dict["features"].remove(feature_info)
+                self.features_dict["features"].append(new_feature_info)
+
+        if feature_found:
+            self.initialize_features()
+            self.extract_features()
+            self.define_features()
+        else:
+            raise KeyError("No feature named {} in FeatureConfig".format(name))
 
     def get_all_features(self, key: str = None, include_label: bool = True):
         """
@@ -336,28 +394,51 @@ class SequenceExampleFeatureConfig(FeatureConfig):
     """Feature config overrides for data containing SequenceExample protos"""
 
     def __init__(self, features_dict, logger):
+        super(SequenceExampleFeatureConfig, self).__init__(features_dict, logger)
+
+    def initialize_features(self):
+        super().initialize_features()
+
+        # Feature to capture the rank of the records for a query
         self.rank = None
+        # Feature to track padded records
+        self.mask = None
         # Features that contain information at the query level common to all records
         self.context_features = list()
         # Features that contain information at the record level
         self.sequence_features = list()
 
-        super(SequenceExampleFeatureConfig, self).__init__(features_dict, logger)
-
-        self.mask = self.generate_mask()
-        self.all_features.append(self.get_mask())
-
-    def extract_features(self, features_dict, logger: Optional[Logger] = None):
-        super().extract_features(features_dict, logger)
+    def extract_features(self):
+        """
+        Method to extract the features from the input feature config YAML
+        file and assign relevance features to FeatureConfig attributes:
+        - query_key
+        - label
+        - all_features
+        - rank (mandatory feature for SequenceExample datasets)
+        """
+        super().extract_features()
         try:
-            self.rank = features_dict.get(FeatureConfigKey.RANK)
+            self.rank = self.features_dict.get(FeatureConfigKey.RANK)
             self.all_features.append(self.rank)
         except KeyError:
             self.rank = None
-            if logger:
-                logger.warning("'rank' key not found in the feature_config specified")
+            if self.logger:
+                self.logger.warning("'rank' key not found in the feature_config specified")
 
     def define_features(self):
+        """
+        Method for defining additional FeatureConfig attributes from
+        the feature config dictionary
+        Defines the following FeatureConfig attributes:
+        - train_features: features that will be used for training
+        - metadata_features: features that will not be used for training
+        - context_features: features that are part of the context substructure of TFRecord SequenceExample
+        - sequence_features: features that are part of the feature_lists substructure of TFRecord SequenceExample
+        - features_to_log: features that will be logged with RelevanceModel.predict()
+        - group_metric_keys: features to be used for computing groupwise metrics in RelevanceModel.evaluate()
+        - secondary_labels: features to be used as secondary labels to compute additional metrics. Usage is left to the user's definition.
+        """
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
                 self.train_features.append(feature_info)
@@ -385,6 +466,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             if feature_info.get("is_secondary_label", False):
                 self.secondary_labels.append(feature_info)
 
+        self.mask = self.generate_mask()
+        self.all_features.append(self.get_mask())
+
     def get_context_features(self, key: str = None):
         """
         Getter method for context_features in FeatureConfig object
@@ -399,20 +483,20 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         """
         return self._get_list_of_keys_or_dicts(self.sequence_features, key=key)
 
-    def log_initialization(self, logger):
-        if logger:
-            logger.info("Feature config loaded successfully")
-            logger.info(
+    def log_initialization(self):
+        if self.logger:
+            self.logger.info("Feature config loaded successfully")
+            self.logger.info(
                 "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
             )
-            logger.info("Label : {}".format(self.get_label("name")))
-            logger.info(
+            self.logger.info("Label : {}".format(self.get_label("name")))
+            self.logger.info(
                 "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
             )
-            logger.info(
+            self.logger.info(
                 "Context Features : \n{}".format("\n".join(self.get_context_features("name")))
             )
-            logger.info(
+            self.logger.info(
                 "Sequence Features : \n{}".format("\n".join(self.get_sequence_features("name")))
             )
 

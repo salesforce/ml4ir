@@ -71,7 +71,7 @@ class RankingModelTest(RankingTestBase):
             loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
         )
 
-        overall_metrics, _ = ranking_model.evaluate(
+        overall_metrics, _, _ = ranking_model.evaluate(
             test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir,
         )
 

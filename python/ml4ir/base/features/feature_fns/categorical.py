@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import feature_column
 from tensorflow import lookup
-from tensorflow.keras import backend as K
 
 import copy
 
@@ -155,20 +154,23 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
 
     (
         categorical_indices,
-        vocabulary_keys,
+        vocabulary_size,
         num_oov_buckets,
     ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
 
-    vocabulary_size = len(set(vocabulary_keys))
+    input_dim = vocabulary_size + num_oov_buckets if num_oov_buckets else vocabulary_size
     categorical_embeddings = layers.Embedding(
-        input_dim=vocabulary_size + num_oov_buckets,
+        input_dim=input_dim,
         output_dim=args["embedding_size"],
         mask_zero=True,
         input_length=args.get("max_length"),
     )(categorical_indices)
 
     categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
-    encoding = get_bilstm_encoding(categorical_embeddings, int(args["encoding_size"] / 2))
+    kernel_initializer = args.get('lstm_kernel_initializer', 'glorot_uniform')
+    encoding = get_bilstm_encoding(embedding=categorical_embeddings,
+                                   lstm_units=int(args["encoding_size"] / 2),
+                                   kernel_initializer=kernel_initializer)
     return encoding
 
 
@@ -203,10 +205,9 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     """
     (
         categorical_indices,
-        vocabulary_keys,
+        vocabulary_size,
         num_oov_buckets,
     ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
-    vocabulary_size = len(set(vocabulary_keys))
     feature_info_new = copy.deepcopy(feature_info)
     feature_info_new["feature_layer_info"]["args"]["num_buckets"] = (
         vocabulary_size + num_oov_buckets
@@ -301,11 +302,9 @@ def categorical_embedding_with_vocabulary_file_and_dropout(
     feature_layer_info = feature_info.get("feature_layer_info")
     (
         feature_tensor_indices,
-        vocabulary_keys,
+        vocabulary_size,
         num_oov_buckets,
     ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
-
-    vocabulary_size = len(set(vocabulary_keys))
 
     # Mask indices to OOV key of 0 at dropout_rate
     feature_tensor_indices = CategoricalDropout(
@@ -392,11 +391,9 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     #
     (
         feature_tensor_indices,
-        vocabulary_keys,
+        vocabulary_size,
         num_oov_buckets,
     ) = categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_io)
-
-    vocabulary_size = len(set(vocabulary_keys))
 
     categorical_identity_fc = feature_column.categorical_column_with_identity(
         CATEGORICAL_VARIABLE, num_buckets=vocabulary_size + num_oov_buckets
@@ -431,10 +428,15 @@ def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_
 
     if "dropout_rate" in args:
         default_value = 0  # Default OOV index when using dropout
+        if args.get("num_oov_buckets"):
+            raise RuntimeError("Cannot have both dropout_rate and num_oov_buckets set. "
+                               "OOV buckets are not supported with dropout")
         num_oov_buckets = None
+        vocabulary_size = len(set(vocabulary_keys)) + 1  # one more for default value
     else:
         default_value = None
         num_oov_buckets = args.get("num_oov_buckets", 1)
+        vocabulary_size = len(set(vocabulary_keys))
 
     lookup_table = VocabLookup(
         vocabulary_keys=vocabulary_keys,
@@ -444,7 +446,8 @@ def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_
         feature_name=feature_info.get("node_name", feature_info["name"]),
     )
     categorical_indices = lookup_table(feature_tensor)
-    return categorical_indices, vocabulary_keys, num_oov_buckets
+
+    return categorical_indices, vocabulary_size, num_oov_buckets
 
 
 class VocabLookup(layers.Layer):
