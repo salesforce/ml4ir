@@ -24,7 +24,7 @@ For each of the features in the FeatureConfig, we define a corresponding feature
 
 **`name | str`**
 
-Name of the feature in the input dataset(CSV, TFRecord, libsvm, etc.)
+Name of the feature in the input dataset (CSV, TFRecord, libsvm, etc.)
 
 -----
 
