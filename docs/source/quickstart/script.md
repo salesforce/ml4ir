@@ -26,7 +26,7 @@ To train and evaluate a learning to rank model, use the predefined `RankingPipel
 
 ![](../_static/query_classification_data.png)
 
-In the sample query classification data above, each row represents a user query. We try to predict the `product_group` category using the `query_text`, `domain_name` and `previous_products`. These features define the user's context at the time of querying and also the actual query text made by the user. This type of query classification can be used to further narrow down search results and enhance the user search experiennce.
+In the sample query classification data above, each row represents a user query. We try to predict the `product_group` category using the `query_text`, `domain_name` and `previous_products`. These features define the user's context at the time of querying and also the actual query text made by the user. This type of query classification can be used to further narrow down search results and enhance the user search experience.
 
 To train and evaluate a learning to rank model, use the predefined `ClassificationPipeline`
 
