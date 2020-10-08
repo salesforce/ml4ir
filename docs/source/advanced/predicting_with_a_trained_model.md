@@ -125,4 +125,4 @@ relevance_dataset = RelevanceDataset(
 ```
 will result in queries whose size is 3 bytes (as described in `trim_text`).
 
-For more information on these, [please refer to this notebook](../../../ml4ir/notebooks/predicting_with_ml4ir.ipynb).
+For more information on these, [please refer to this notebook](../../../python/notebooks/predicting_with_ml4ir.ipynb).
