@@ -72,7 +72,7 @@ source env/.ml4ir_venv3/bin/activate
 Install all dependencies
 ```
 pip3 install --upgrade setuptools
-pip install --upgrade pip
+pip3 install --upgrade pip
 pip3 install -r requirements.txt
 ```
 
