@@ -564,7 +564,9 @@ class RelevanceModel:
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
 
         There are two different serving signatures currently used to save the model:
+
         * `default`: default keras model without any pre/post processing wrapper
+
         * `tfrecord`: serving signature that allows keras model to be served using TFRecord proto messages.
                   Allows definition of custom pre/post processing logic
 

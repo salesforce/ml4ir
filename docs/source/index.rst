@@ -28,7 +28,7 @@ ml4ir is designed as modular subcomponents which can easily be combined and cust
 
 Motivation
 ----------
-Search is a complex data space with lots of different types of ML tasks working on a combination of structured and unstructured data sources. There is no single library that
+Search is a complex data space with lots of different types of ML tasks working on a combination of structured and unstructured data sources. There existed no single library that
 
 * provides an end-to-end training and serving solution for a variety of search applications
 
@@ -47,11 +47,11 @@ Guiding Principles
 ------------------
 **Customizable Library**
 
-First and foremost, we want ml4ir to be an easy-to-use and highly customizable library so that you can build the search application of your need. ml4ir allows each of its subcomponents to be over-riden, mixed and match with other custom modules to create and deploy models.
+Firstly, we want ml4ir to be an easy-to-use and highly customizable library so that you can build the search application of your need. ml4ir allows each of its subcomponents to be overriden, mixed and match with other custom modules to create and deploy models.
 
 **Configurable Toolkit**
 
-While ml4ir can be used a library, it also comes pre-packaged with all the popular search based losses, metrics, embeddings, layers, etc. to enable someone with limited tensorflow expertise to quickly load their training data and train models for the task of interest. ml4ir achieves this by following a hybrid approach which allow for each subcomponent to be completely controlled through configurations alone. Most search based ML applications can be built this way. 
+While ml4ir can be used as library, it also comes prepackaged with all the popular search based losses, metrics, embeddings, layers, etc. to enable someone with limited tensorflow expertise to quickly load their training data and train models for the task of interest. ml4ir achieves this by following a hybrid approach which allow for each subcomponent to be completely controlled through configurations alone. Most search based ML applications can be built this way. 
 
 **Performance First**
 
