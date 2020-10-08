@@ -141,12 +141,15 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | validation and testing. Remaining data is  |
 |                               |                 |                 | split in half if val_pcent_split or        |
 |                               |                 |                 | test_pcent_split are not specified.        |
+|                               |                 |                 | Note: Currently not supported              |
 +-------------------------------+-----------------+-----------------+--------------------------------------------+
 | --val_pcent_split             | <class 'float'> | -1              | Percentage of all data to be used for      |
 |                               |                 |                 | testing.                                   |
+|                               |                 |                 | Note: Currently not supported              |
 +-------------------------------+-----------------+-----------------+--------------------------------------------+
 | --test_pcent_split            | <class 'float'> | -1              | Percentage of all data to be used for      |
 |                               |                 |                 | testing.                                   |
+|                               |                 |                 | Note: Currently not supported              |
 +-------------------------------+-----------------+-----------------+--------------------------------------------+
 | --max_sequence_size           | <class 'int'>   | 0               | Maximum number of elements per sequence    |
 |                               |                 |                 | feature.                                   |
