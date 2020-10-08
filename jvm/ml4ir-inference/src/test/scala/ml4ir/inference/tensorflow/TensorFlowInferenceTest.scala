@@ -19,6 +19,8 @@ import org.tensorflow.example._
 class TensorFlowInferenceTest extends TestData {
   val classLoader = getClass.getClassLoader
 
+  def pathFor(name: String) = classLoader.getResource("ranking/" + name).getPath
+
   def validateScores(scores: Array[Float], numDocs: Int) = {
     val docScores = scores.take(numDocs)
     val maskedScores = scores.drop(numDocs)
@@ -43,7 +45,7 @@ class TensorFlowInferenceTest extends TestData {
 
   @Test
   def testSavedModelBundle(): Unit = {
-    val bundlePath = classLoader.getResource("model_bundle_0_0_2").getPath
+    val bundlePath = pathFor("model_bundle_0_0_2")
     val bundleExecutor = new SequenceExampleExecutor(
       bundlePath,
       ModelExecutorConfig(
@@ -51,7 +53,7 @@ class TensorFlowInferenceTest extends TestData {
         scoresNodeName = "StatefulPartitionedCall"
       )
     )
-    val configPath = classLoader.getResource("model_features_0_0_2.yaml").getPath
+    val configPath = pathFor("model_features_0_0_2.yaml")
     val modelFeatures = ModelFeaturesConfig.load(configPath)
 
     val protoBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(modelFeatures,
