@@ -73,7 +73,8 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | ml4ir/config/keys.py                               |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --monitor_metric              | <class 'str'>   | None            | Metric name to use for monitoring training loop in |
-|                               |                 |                 | callbacksml4ir/config/keys.py                      |
+|                               |                 |                 | callbacks. Must be one of the MetricKey under      |
+|                               |                 |                 | ml4ir/config/keys.py                               |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --monitor_mode                | <class 'str'>   | None            | Metric mode to use for monitoring training loop in |
 |                               |                 |                 | callbacks                                          |
@@ -129,10 +130,13 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | The remaining is used for validation and testing.  |
 |                               |                 |                 | Remaining data is split in half if val_pcent_split |
 |                               |                 |                 | or test_pcent_split are not specified.             |
+|                               |                 |                 | Not supported currently.                           |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --val_pcent_split             | <class 'float'> | -1              | Percentage of all data to be used for testing.     |
+|                               |                 |                 | Not supported currently.                           |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --test_pcent_split            | <class 'float'> | -1              | Percentage of all data to be used for testing.     |
+|                               |                 |                 | Not supported currently.                           |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --max_sequence_size           | <class 'int'>   | 0               | Maximum number of elements per sequence feature.   |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+

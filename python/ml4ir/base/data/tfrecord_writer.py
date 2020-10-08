@@ -1,37 +1,45 @@
 """
+Notes
+-----
 Writes data in Example or SequenceExample protobuf (tfrecords) format.
 
 To use it as a standalone script, refer to the argument spec
 at the bottom
 
-Syntax to convert a single or several CSVs:
-python ml4ir/base/data/tfrecord_writer.py \
-sequence|example \
---csv-files <SPACE_SEPARATED_PATHS_TO_CSV_FILES> \
---out-dir <PATH_TO_OUTPUT_DIR> \
---feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
---keep-single-files
-
-or to convert all CSV files in a dir
-python ml4ir/base/data/tfrecord_writer.py \
-sequence|example \
---csv-dir <DIR_WITH_CSVs> \
---out-dir <PATH_TO_OUTPUT_DIR> \
---feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
---keep-single-files
-
 Setting --keep-single-files writes one tfrecord file
 for each CSV file (better performance). If not set,
 joins everything to a single tfrecord file.
 
-Example:
-python ml4ir/base/data/tfrecord_writer.py \
-sequence \
- --csv-files /tmp/d.csv /tmp/d2.csv \
- --out-dir /tmp
- --feature-config /tmp/fconfig.yaml \
- --keep-single-files
- """
+Examples
+--------
+Syntax to convert a single or several CSVs:
+
+$ python ml4ir/base/data/tfrecord_writer.py \
+$ sequence_example \
+$ --csv-files <SPACE_SEPARATED_PATHS_TO_CSV_FILES> \
+$ --out-dir <PATH_TO_OUTPUT_DIR> \
+$ --feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
+$ --keep-single-files
+
+
+or to convert all CSV files in a dir:
+
+>>> python ml4ir/base/data/tfrecord_writer.py \
+>>> sequence_example \
+>>> --csv-dir <DIR_WITH_CSVs> \
+>>> --out-dir <PATH_TO_OUTPUT_DIR> \
+>>> --feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
+>>> --keep-single-files
+
+Usage example:
+
+>>> python ml4ir/base/data/tfrecord_writer.py \
+>>> sequence_example \
+>>> --csv-files /tmp/d.csv /tmp/d2.csv \
+>>> --out-dir /tmp
+>>> --feature-config /tmp/fconfig.yaml \
+>>> --keep-single-files
+"""
 
 from tensorflow import io
 from typing import List
@@ -45,9 +53,15 @@ from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.logging_utils import setup_logging
-from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
+from ml4ir.base.data.tfrecord_helper import (
+    get_sequence_example_proto,
+    get_example_proto,
+)
 
-MODES = {"example": TFRecordTypeKey.EXAMPLE, "sequence": TFRecordTypeKey.SEQUENCE_EXAMPLE}
+MODES = {
+    "example": TFRecordTypeKey.EXAMPLE,
+    "sequence_example": TFRecordTypeKey.SEQUENCE_EXAMPLE,
+}
 
 
 def write_from_files(
@@ -110,7 +124,9 @@ def write_from_df(
     with io.TFRecordWriter(tfrecord_file) as tf_writer:
         if tfrecord_type == TFRecordTypeKey.EXAMPLE:
             protos = df.apply(
-                lambda row: get_example_proto(row=row, features=feature_config.get_all_features()),
+                lambda row: get_example_proto(
+                    row=row, features=feature_config.get_all_features()
+                ),
                 axis=1,
             )
         elif tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
@@ -128,7 +144,9 @@ def write_from_df(
             raise Exception(
                 "You have entered {} as tfrecords write mode. "
                 "We only support {} and {}.".format(
-                    tfrecord_type, TFRecordTypeKey.EXAMPLE, TFRecordTypeKey.SEQUENCE_EXAMPLE
+                    tfrecord_type,
+                    TFRecordTypeKey.EXAMPLE,
+                    TFRecordTypeKey.SEQUENCE_EXAMPLE,
                 )
             )
         # Write to disk
@@ -163,7 +181,9 @@ def main(args):
         # Convert each CSV file individually - better performance
         for csv_file in csv_files:
             tfrecord_file: str = os.path.basename(csv_file).replace(".csv", "")
-            tfrecord_file: str = os.path.join(args.out_dir, "{}.tfrecord".format(tfrecord_file))
+            tfrecord_file: str = os.path.join(
+                args.out_dir, "{}.tfrecord".format(tfrecord_file)
+            )
             write_from_files(
                 csv_files=[csv_file],
                 tfrecord_file=tfrecord_file,
@@ -195,7 +215,9 @@ def define_arguments():
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "--csv-dir", type=str, help="Directory with CSV files; every .csv file will be converted."
+        "--csv-dir",
+        type=str,
+        help="Directory with CSV files; every .csv file will be converted.",
     )
     group.add_argument(
         "--csv-files",

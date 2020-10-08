@@ -66,6 +66,11 @@ html_title: str = "ml4ir"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path: List = ["_static"]
 
+# Overriding default theme with custom CSS for text wrapping bug on tables
+html_context = {
+    "css_files": ["_static/theme_overrides.css"],
+}
+
 
 def setup(app):
     app.add_config_value(
