@@ -173,7 +173,7 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | Should be one of FileHandler keys in               |
 |                               |                 |                 | ml4ir/base/config/keys.py                          |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
-| --initialize_layers_dict      | <class 'str'>   | {}              | Dictionary of pretrained layers to be loaded.The   |
+| --initialize_layers_dict      | <class 'str'>   | {}              | Dictionary of pretrained layers to be loaded. The  |
 |                               |                 |                 | key is the name of the layer to be assigned the    |
 |                               |                 |                 | pretrained weights.The value is the path to the    |
 |                               |                 |                 | pretrained weights.                                |
