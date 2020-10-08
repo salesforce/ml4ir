@@ -8,7 +8,7 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-INPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample.txt" 
+INPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample.txt"
 OUTPUT_FILE = "ml4ir/applications/ranking/tests/data/ranklib_test_data/train/sample_ml4ir.csv"
 QUERY_ID_NAME = 'qid'
 RELEVANCE_NAME = 'relevance'
@@ -21,7 +21,7 @@ class TestRanklibConversion(unittest.TestCase):
         pass
 
     def test_conversion(self):
-        ranklib_helper.ranklib_to_csv(INPUT_FILE, OUTPUT_FILE, KEEP_ADDITIONAL_INFO, GL_2_CLICKS, NON_ZERO_FEATURES_ONLY)
+        ranklib_helper.ranklib_to_csv(INPUT_FILE, OUTPUT_FILE, KEEP_ADDITIONAL_INFO, GL_2_CLICKS, NON_ZERO_FEATURES_ONLY, QUERY_ID_NAME, RELEVANCE_NAME)
         df = pd.read_csv(OUTPUT_FILE)
         assert QUERY_ID_NAME in df.columns and RELEVANCE_NAME in df.columns
         assert df[QUERY_ID_NAME].nunique() == 49
