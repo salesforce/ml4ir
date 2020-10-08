@@ -6,8 +6,8 @@
   * [Custom Pipeline](#custom-pipeline)
 * [Command Line Arguments](#command-line-arguments)
 * [Usage Examples](#usage-examples)
-  * [Learning to Rank](#learning-to-rank-1)
-  * [Query Classification](#query-classification-1)
+  * [Learning to Rank](#learning-to-rank-usage)
+  * [Query Classification](#query-classification-usage)
   
 ### Pipelines
 ml4ir comes packaged with pre-defined configurable pipelines for popular search ML tasks. Currently, ml4ir supports the following tasks.
@@ -191,7 +191,7 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 
 ### Usage Examples
 
-#### Learning to Rank
+#### Learning to Rank <a name="learning-to-rank-usage"></a>
 
 Using TFRecord input data
 ```
@@ -224,7 +224,7 @@ python ml4ir/applications/ranking/pipeline.py \
 --execution_mode inference_only
 ```
 
-#### Query Classification
+#### Query Classification <a name="query-classification-usage"></a>
 
 Using TFRecord
 ```
