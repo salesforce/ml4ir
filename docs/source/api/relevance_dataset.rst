@@ -30,6 +30,5 @@ tfrecord_writer
 ^^^^^^^^^^^^^^^
 
 .. automodule:: ml4ir.base.data.tfrecord_writer
-   :members:
-   :undoc-members:
+   :members: write_from_files, write_from_df
    :show-inheritance:
