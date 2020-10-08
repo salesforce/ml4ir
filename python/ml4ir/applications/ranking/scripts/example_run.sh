@@ -1,4 +1,4 @@
-/bin/bash tools/run_docker.sh ml4ir \
+docker-compose run ml4ir \
 	python3 ml4ir/applications/ranking/pipeline.py \
 	--data_dir ml4ir/applications/ranking/tests/data/tfrecord \
 	--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \

@@ -12,6 +12,15 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         Define a sigmoid cross entropy loss
         Additionally can pass in record positions to handle positional bias
 
+        Returns
+        -------
+        function
+            Function to compute sigmoid cross entropy loss
+
+        Notes
+        -----
+            Uses `mask` field to exclude padded records from contributing
+            to the loss
         """
         bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
         mask = kwargs.get("mask")
@@ -26,5 +35,17 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         return _loss_fn
 
     def get_final_activation_op(self, output_name):
-        # Pointwise sigmoid loss
+        """
+        Define a sigmoid activation function
+
+        Parameters
+        ----------
+        output_name : str
+            Name of the output score node in the tensorflow model
+
+        Returns
+        -------
+        function
+            Function to apply sigmoid activation to the output score
+        """
         return lambda logits, mask: layers.Activation("sigmoid", name=output_name)(logits)
