@@ -12,7 +12,7 @@ RelevanceModel
 RankingModel
 ^^^^^^^^^^^^
 
-.. automodule:: ml4ir.applications.ranking.model.ranking_model.RankingModel
+.. autoclass:: ml4ir.applications.ranking.model.ranking_model.RankingModel
    :members:
    :undoc-members:
    :show-inheritance:
