@@ -78,7 +78,7 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 | --monitor_mode                | <class 'str'>   | None            | Metric mode to use for monitoring training loop in |
 |                               |                 |                 | callbacks                                          |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
-| --num_epochs                  | <class 'int'>   | 5               | Max number of training epochs(or full pass over    |
+| --num_epochs                  | <class 'int'>   | 5               | Max number of training epochs (or full pass over   |
 |                               |                 |                 | the data)                                          |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --batch_size                  | <class 'int'>   | 128             | Number of data samples to use per batch.           |
