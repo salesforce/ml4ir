@@ -56,7 +56,7 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | metadata for training.                             |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --model_file                  | <class 'str'>   |                 | Path to a pretrained model to load for either      |
-|                               |                 |                 | resuming training or for running ininference mode. |
+|                               |                 |                 | resuming training or for running in inference mode. |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
 | --model_config                | <class 'str'>   | ml4ir/base/conf | Path to the Model config YAML used to build the    |
 |                               |                 | ig/default_mode | model architecture.                                |
