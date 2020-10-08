@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.data import tfrecord_reader, tfrecord_writer, ranklib_to_ml4ir
+from ml4ir.base.data import tfrecord_reader, tfrecord_writer, ranklib_helper
 
 from typing import List
 
@@ -37,19 +37,31 @@ def read(
         3. Write the protobufs into a .tfrecord file
         4. Load .tfrecord file into a TFRecordDataset and parse the protobufs
 
-    Args:
-        - data_dir: Path to directory containing csv files to read
-        - feature_config: ml4ir.config.features.FeatureConfig object extracted from the feature config
-        - tfrecord_dir: Path to directory where the serialized .tfrecord files will be stored
-        - batch_size: int value specifying the size of the batch
-        - use_part_files: bool value specifying whether to look for part files
-        - max_sequence_size: int value specifying max number of records per query
-        - logger: logging object
-        - keep_additional_info: Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore
-        - non_zero_features_only: Only non zero features are stored. 1 for yes, 0 otherwise
+        Parameters
+        ----------
+            data_dir: str
+                Path to directory containing csv files to read
+            feature_config: ml4ir.config.features.FeatureConfig object
+                FeatureConfig object extracted from the feature config
+            tfrecord_dir: str
+                Path to directory where the serialized .tfrecord files will be stored
+            batch_size: int
+                Value specifying the size of the batch
+            use_part_files: bool
+                Value specifying whether to look for part files
+            max_sequence_size: int
+                Value specifying max number of records per query
+            logger: logging object
+                logging object
+            keep_additional_info: int
+                Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore
+            non_zero_features_only: int
+                Only non zero features are stored. 1 for yes, 0 otherwise
 
-    Returns:
-        tensorflow TFRecordDataset
+        Returns
+        -------
+            tensorflow TFRecordDataset
+                Processed dataset
     """
     ranklib_files: List[str] = file_io.get_files_in_directory(
         data_dir,
@@ -65,7 +77,8 @@ def read(
     #Convert input ranklib file to dataframe
     df = pd.concat(
         [
-            ranklib_to_ml4ir.convert(f, keep_additional_info, gl_2_clicks, non_zero_features_only)
+            ranklib_helper.convert(f, keep_additional_info, gl_2_clicks, non_zero_features_only,
+                                   feature_config.get_query_key()['name'], feature_config.get_label()['name'])
             for f in ranklib_files
         ])
 
@@ -88,8 +101,5 @@ def read(
         file_io=file_io,
         logger=logger,
     )
-    #
-
-
 
     return dataset

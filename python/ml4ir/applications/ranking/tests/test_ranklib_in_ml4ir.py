@@ -1,7 +1,7 @@
 import unittest
 import os
 import warnings
-from ml4ir.base.data import ranklib_to_ml4ir
+from ml4ir.base.data import ranklib_helper
 import pandas as pd
 import yaml
 from ml4ir.base.features.feature_config import ExampleFeatureConfig, SequenceExampleFeatureConfig
@@ -14,8 +14,6 @@ from ml4ir.base.io import file_io, local_io
 warnings.filterwarnings("ignore")
 
 INPUT_DIR = "ml4ir/applications/ranking/tests/data/ranklib_test_data/"
-QUERY_ID_NAME = 'qid'
-RELEVANCE_NAME = 'relevance'
 KEEP_ADDITIONAL_INFO = 0
 NON_ZERO_FEATURES_ONLY = 0
 
@@ -81,6 +79,8 @@ class TestRanklibConversion(unittest.TestCase):
         assert non_one_hot == True
         assert len(chk) == 49
 
+    def test_ranklib_in_ml4ir_click_conversion(self):
+        io = local_io.LocalIO()
         exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml_convert_to_clicks, io)
         preprocessing_keys_to_fns = {}
         if exFeatureConfig.get_label()['preprocessing_info'][0]['fn'] == 'convert_label_to_clicks':
@@ -114,12 +114,8 @@ class TestRanklibConversion(unittest.TestCase):
             assert max(e[1][0]).numpy() == 1
         assert len(chk) == 49
 
-
-
-
     def tearDown(self):
         pass
-
 
 if __name__ == "__main__":
     unittest.main()

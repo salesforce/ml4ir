@@ -142,16 +142,22 @@ def natural_log(feature_tensor, shift=1.0):
 
 @tf.function
 def convert_label_to_clicks(label_vector, dtype):
-    """
-    Convert the label vector to binary clicks. Documents with the maximum labels are considered clicked and receive
-    label (1). Any other document is considered not clicked and receive label (0)
+    """Convert the label vector to binary clicks. Documents with the maximum labels are considered clicked and receive
+        label (1). Any other document is considered not clicked and receive label (0)
+            Parameters
+            ----------
+            label_vector : tf tensor
+                input label tensor of type label_dtype
+            dtype : str
+                Data type of the input label_vector
 
-    Args:
-        label_vector: input label tensor of type label_dtype
-        dtype: Data type of the input label_vector
+
+            Returns
+            -------
+            tf tensor
+                converted clicks
     """
-    #if tf.math.reduce_sum(label_vector).numpy() < 1:
-    #    return label_vector
+
     typ = dtype
     if dtype == 'int':
         typ = 'int64'

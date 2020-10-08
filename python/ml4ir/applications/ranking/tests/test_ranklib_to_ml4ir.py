@@ -2,7 +2,7 @@ import sys
 import unittest
 import os
 import warnings
-from ml4ir.base.data import ranklib_to_ml4ir
+from ml4ir.base.data import ranklib_helper
 import pandas as pd
 
 
@@ -21,7 +21,7 @@ class TestRanklibConversion(unittest.TestCase):
         pass
 
     def test_conversion(self):
-        ranklib_to_ml4ir.ranklib_to_csv(INPUT_FILE, OUTPUT_FILE, KEEP_ADDITIONAL_INFO, GL_2_CLICKS, NON_ZERO_FEATURES_ONLY)
+        ranklib_helper.ranklib_to_csv(INPUT_FILE, OUTPUT_FILE, KEEP_ADDITIONAL_INFO, GL_2_CLICKS, NON_ZERO_FEATURES_ONLY)
         df = pd.read_csv(OUTPUT_FILE)
         assert QUERY_ID_NAME in df.columns and RELEVANCE_NAME in df.columns
         assert df[QUERY_ID_NAME].nunique() == 49
