@@ -5,7 +5,11 @@ from logging import Logger
 import tensorflow as tf
 
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto
-from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
+from ml4ir.base.config.keys import (
+    FeatureTypeKey,
+    TFRecordTypeKey,
+    SequenceExampleTypeKey,
+)
 
 from typing import List, Dict, Optional
 
@@ -194,11 +198,15 @@ class FeatureConfig:
         if self.logger:
             self.logger.info("Feature config loaded successfully")
             self.logger.info(
-                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
+                "Trainable Features : \n{}".format(
+                    "\n".join(self.get_train_features("name"))
+                )
             )
             self.logger.info("Label : {}".format(self.get_label("name")))
             self.logger.info(
-                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
+                "Metadata Features : \n{}".format(
+                    "\n".join(self.get_metadata_features("name"))
+                )
             )
 
     def _get_key_or_dict(self, dict_, key: str = None):
@@ -354,7 +362,11 @@ class FeatureConfig:
             if key:
                 return [f for f in all_features if f != self.get_label(key)]
             else:
-                return [fdict for fdict in all_features if fdict["name"] != self.get_label("name")]
+                return [
+                    fdict
+                    for fdict in all_features
+                    if fdict["name"] != self.get_label("name")
+                ]
 
     def get_train_features(self, key: str = None):
         """
@@ -415,7 +427,7 @@ class FeatureConfig:
 
     def get_group_metrics_keys(self, key: str = None):
         """
-        Getter method for group_metric_keys in FeatureConfig object
+        Getter method for group_metrics_keys in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
 
         Parameters
@@ -511,7 +523,9 @@ class FeatureConfig:
             """
             node_name = feature_info.get("node_name", feature_info["name"])
             inputs[node_name] = Input(
-                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
+                shape=get_shape(feature_info),
+                name=node_name,
+                dtype=self.get_dtype(feature_info),
             )
 
         return inputs
@@ -563,7 +577,9 @@ class FeatureConfig:
                 for preprocessing_info in feature_info["preprocessing_info"]:
                     config.update(
                         {
-                            "{}_{}_{}".format(feature_name, preprocessing_info["fn"], k): v
+                            "{}_{}_{}".format(
+                                feature_name, preprocessing_info["fn"], k
+                            ): v
                             for k, v in preprocessing_info["args"].items()
                         }
                     )
@@ -738,7 +754,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         except KeyError:
             self.rank = None
             if self.logger:
-                self.logger.warning("'rank' key not found in the feature_config specified")
+                self.logger.warning(
+                    "'rank' key not found in the feature_config specified"
+                )
 
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
@@ -816,17 +834,25 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         if self.logger:
             self.logger.info("Feature config loaded successfully")
             self.logger.info(
-                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
+                "Trainable Features : \n{}".format(
+                    "\n".join(self.get_train_features("name"))
+                )
             )
             self.logger.info("Label : {}".format(self.get_label("name")))
             self.logger.info(
-                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
+                "Metadata Features : \n{}".format(
+                    "\n".join(self.get_metadata_features("name"))
+                )
             )
             self.logger.info(
-                "Context Features : \n{}".format("\n".join(self.get_context_features("name")))
+                "Context Features : \n{}".format(
+                    "\n".join(self.get_context_features("name"))
+                )
             )
             self.logger.info(
-                "Sequence Features : \n{}".format("\n".join(self.get_sequence_features("name")))
+                "Sequence Features : \n{}".format(
+                    "\n".join(self.get_sequence_features("name"))
+                )
             )
 
     def generate_mask(self):
@@ -917,7 +943,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             """
             node_name = feature_info.get("node_name", feature_info["name"])
             inputs[node_name] = Input(
-                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info)
+                shape=get_shape(feature_info),
+                name=node_name,
+                dtype=self.get_dtype(feature_info),
             )
 
         return inputs
@@ -962,6 +990,8 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
         return dummy_query_group.apply(
             lambda g: get_sequence_example_proto(
-                group=g, context_features=context_features, sequence_features=sequence_features
+                group=g,
+                context_features=context_features,
+                sequence_features=sequence_features,
             )
         ).values[0]

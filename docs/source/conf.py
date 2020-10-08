@@ -82,3 +82,4 @@ def setup(app):
 # Use both class definition doc and constructor doc for
 # generating sphinx docs for python classes
 autoclass_content = "both"
+autodoc_member_order = "bysource"
