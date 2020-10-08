@@ -89,7 +89,7 @@ To define your own custom ml4ir pipeline, you can override the `RelevancePipelin
 |                               |                 |                 | info -> https://www.tensorflow.org/api_docs/python |
 |                               |                 |                 | /tf/keras/optimizers/schedules/ExponentialDecay    |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
-| --learning_rate_decay_steps   | <class 'int'>   | 10000000        | Decay rate for the learning rate.Check for more    |
+| --learning_rate_decay_steps   | <class 'int'>   | 10000000        | Decay rate for the learning rate. Check for more   |
 |                               |                 |                 | info -> https://www.tensorflow.org/api_docs/python |
 |                               |                 |                 | /tf/keras/optimizers/schedules/ExponentialDecay    |
 +-------------------------------+-----------------+-----------------+----------------------------------------------------+
