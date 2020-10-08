@@ -17,7 +17,31 @@ data in the train.SequenceExample protobuf format
 
 
 def preprocess_feature(feature_tensor, feature_info, preprocessing_map):
-    # Preprocess features
+    """
+    Preprocess feature based on the feature configuration
+
+    Parameters
+    ----------
+    feature_tensor : `tf.Tensor`
+        input feature tensor to be preprocessed
+    feature_info : dict
+        feature configuration for the feature being preprocessed
+    preprocessing_map : `PreprocessingMap` object
+        map of preprocessing feature functions
+
+    Returns
+    -------
+    `tf.Tensor`
+        preprocessed tensor object
+
+    Notes
+    -----
+    Only preprocessing functions part of the `preprocessing_map`
+    can be used in this function for preprocessing at data loading
+
+    Pass custom preprocessing functions while instantiating the
+    RelevanceDataset object with `preprocessing_keys_to_fns` argument
+    """
     preprocessing_info = feature_info.get("preprocessing_info", [])
 
     if preprocessing_info:
@@ -38,11 +62,19 @@ def make_example_parse_fn(
     """
     Create a parse function using the Example features spec
 
-    Args:
-        feature_config: FeatureConfig object defining context and sequence features
-        max_sequence_size: Maximum number of sequence per query. Used for padding.
-        required_fields_only: Whether to only use required fields from the feature_config
-        pad_sequence: Whether to pad sequence
+    Parameters
+    ----------
+    feature_config : `FeatureConfig`
+        FeatureConfig object defining context and sequence feature information
+    preprocessing_map : `PreprocessingMap` object
+        map of preprocessing feature functions
+    required_fields_only : bool, optional
+        Whether to only use required fields from the feature_config
+
+    Returns
+    -------
+    `tf.function`
+        Parsing function that takes in a serialized Example message and extracts a feature dictionary
     """
 
     features_spec = dict()
@@ -63,12 +95,17 @@ def make_example_parse_fn(
         """
         Parse the input `tf.Example` proto using the features_spec
 
-        Args:
-            example_proto: tfrecord Example protobuf data
+        Parameters
+        ----------
+        example_proto : string
+            serialized tfrecord Example protobuf message
 
-        Returns:
-            features: parsed features extracted from the protobuf
-            labels: parsed label extracted from the protobuf
+        Returns
+        -------
+        features : dict
+            parsed features as `tf.Tensor` objects extracted from the protobuf
+        labels : `tf.Tensor`
+            parsed label as a `tf.Tensor` object extracted from the protobuf
         """
         features = io.parse_single_example(serialized=example_proto, features=features_spec)
 
@@ -104,13 +141,26 @@ def make_sequence_example_parse_fn(
     pad_sequence: bool = True,
 ) -> tf.function:
     """
-    Create a parse function using the context and sequence features spec
+    Create a parse function using the SequenceExample features spec
 
-    Args:
-        feature_config: FeatureConfig object defining context and sequence features
-        max_sequence_size: Maximum number of sequence per query. Used for padding.
-        required_fields_only: Whether to only use required fields from the feature_config
-        pad_sequence: Whether to pad sequence
+    Parameters
+    ----------
+    feature_config : `FeatureConfig`
+        FeatureConfig object defining context and sequence feature information
+    preprocessing_map : int
+        map of preprocessing feature functions
+    max_sequence_size : int
+        Maximum number of sequence per query. Used for padding
+    required_fields_only : bool, optional
+        Whether to only use required fields from the feature_config
+    pad_sequence : bool
+        Whether to pad sequence
+
+    Returns
+    -------
+    `tf.function`
+        Parsing function that takes in a serialized SequenceExample message
+        and extracts a feature dictionary for context and sequence features
     """
 
     context_features_spec = dict()
@@ -134,12 +184,17 @@ def make_sequence_example_parse_fn(
         """
         Parse the input `tf.SequenceExample` proto using the features_spec
 
-        Args:
-            sequence_example_proto: tfrecord SequenceExample protobuf data
+        Parameters
+        ----------
+        sequence_example_proto : string
+            serialized tfrecord SequenceExample protobuf message
 
-        Returns:
-            features: parsed features extracted from the protobuf
-            labels: parsed label extracted from the protobuf
+        Returns
+        -------
+        features : dict
+            parsed features as `tf.Tensor` objects extracted from the protobuf
+        labels : `tf.Tensor`
+            parsed label as a `tf.Tensor` object extracted from the protobuf
         """
         context_features, sequence_features = io.parse_single_sequence_example(
             serialized=sequence_example_proto,
@@ -269,6 +324,33 @@ def get_parse_fn(
     required_fields_only: bool = False,
     pad_sequence: bool = True,
 ):
+    """
+    Create a parsing function to extract features from serialized TFRecord data
+    using the definition from the FeatureConfig
+
+    Parameters
+    ----------
+    tfrecord_type : {"example", "sequence_example"}
+        Type of TFRecord data to be loaded into a dataset
+    feature_config : `FeatureConfig` object
+        FeatureConfig object defining the features to be extracted
+    preprocessing_keys_to_fns : dict of (str, function), optional
+        dictionary of function names mapped to function definitions
+        that can now be used for preprocessing while loading the
+        TFRecordDataset to create the RelevanceDataset object
+    max_sequence_size : int
+        Maximum number of sequence per query. Used for padding
+    required_fields_only : bool, optional
+        Whether to only use required fields from the feature_config
+    pad_sequence : bool
+        Whether to pad sequence
+
+    Returns
+    -------
+    `tf.function`
+        Parsing function that takes in a serialized SequenceExample or Example message
+        and extracts a dictionary of feature tensors
+    """
     # Define preprocessing functions
     preprocessing_map = PreprocessingMap()
     preprocessing_map.add_fns(preprocessing_keys_to_fns)
@@ -308,21 +390,41 @@ def read(
     **kwargs
 ) -> data.TFRecordDataset:
     """
-    - reads tfrecord data from an input directory
-    - selects relevant features
-    - creates X and y data
+    Extract features by reading and parsing TFRecord data
+    and converting into a TFRecordDataset using the FeatureConfig
 
-    Args:
-        data_dir: Path to directory containing csv files to read
-        feature_config: ml4ir.config.features.Features object extracted from the feature config
-        tfrecord_type: either example or sequence_example
-        batch_size: int value specifying the size of the batch
-        preprocessing_keys_to_fns: dictionary mapping preprocessing keys in the feature_config to functions
-        parse_tfrecord: whether to parse SequenceExamples into features
-        logger: logging object
+    Parameters
+    ----------
+    data_dir : str
+        path to the directory containing train, validation and test data
+    feature_config : `FeatureConfig` object
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf message to be used for TFRecordDataset
+    file_io : `FileIO` object
+        file I/O handler objects for reading and writing data
+    max_sequence_size : int, optional
+        maximum number of sequence to be used with a single SequenceExample proto message
+        The data will be appropriately padded or clipped to fit the max value specified
+    batch_size : int, optional
+        size of each data batch
+    preprocessing_keys_to_fns : dict of (str, function), optional
+        dictionary of function names mapped to function definitions
+        that can now be used for preprocessing while loading the
+        TFRecordDataset to create the RelevanceDataset object
+    use_part_files : bool, optional
+        load dataset from part files checked using "part-" prefix
+    parse_tfrecord : bool, optional
+        parse the TFRecord string from the dataset;
+        returns strings as is otherwise
+    logger : `Logger`, optional
+        logging handler for status messages
 
-    Returns:
-        tensorflow dataset
+    Returns
+    -------
+    `TFRecordDataset`
+        TFRecordDataset loaded from the `data_dir` specified using the FeatureConfig
     """
     parse_fn = get_parse_fn(
         feature_config=feature_config,
@@ -343,9 +445,9 @@ def read(
 
     if parse_tfrecord:
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
-        dataset = dataset.map(parse_fn,
-                              num_parallel_calls=tf.data.experimental.AUTOTUNE
-                              ).apply(data.experimental.ignore_errors())
+        dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE).apply(
+            data.experimental.ignore_errors()
+        )
 
     # Create BatchedDataSet
     if batch_size:

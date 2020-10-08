@@ -9,9 +9,18 @@ from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 class RankOneListNet(ListwiseLossBase):
     def get_loss_fn(self, **kwargs):
         """
-        Define a rank 1 ListNet loss
+        Define a masked rank 1 ListNet loss
         Additionally can pass in record positions to handle positional bias
 
+        Returns
+        -------
+        function
+            Function to compute top 1 listnet loss
+
+        Notes
+        -----
+            Uses `mask` field to exclude padded records from contributing
+            to the loss
         """
         bce = losses.BinaryCrossentropy(reduction=Reduction.SUM)
         mask = kwargs.get("mask")
@@ -32,6 +41,24 @@ class RankOneListNet(ListwiseLossBase):
         return _loss_fn
 
     def get_final_activation_op(self, output_name):
+        """
+        Define a masked softmax activation function
+
+        Parameters
+        ----------
+        output_name : str
+            Name of the output to apply softmax activation on
+
+        Returns
+        -------
+        function
+            Function to compute masked softmax
+
+        Notes
+        -----
+            Uses `mask` field to exclude padded records from contributing
+            to the softmax activation
+        """
         softmax_op = layers.Softmax(axis=-1, name=output_name)
 
         # Listwise Top 1 RankNet Loss

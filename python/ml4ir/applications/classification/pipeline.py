@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
-from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
@@ -21,19 +21,46 @@ from typing import Union, List, Type
 
 
 class ClassificationPipeline(RelevancePipeline):
-    """
-    Pipeline defining the classification models.
-    """
+    """Base class that defines a pipeline to train, evaluate and save
+    a RelevanceModel for classification using ml4ir"""
 
     def __init__(self, args: Namespace):
+        """
+        Constructor to create a RelevancePipeline object to train, evaluate
+        and save a model on ml4ir.
+        This method sets up data, logs, models directories, file handlers used.
+        The method also loads and sets up the FeatureConfig for the model training
+        pipeline
+
+        Parameters
+        ----------
+        args: argparse Namespace
+            arguments to be used with the pipeline.
+            Typically, passed from command line arguments
+        """
         self.loss_key = args.loss_key
         super().__init__(args)
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RelevanceModel suited for classification use-case.
+        Creates a RelevanceModel that can be used for training and evaluating
 
-        NOTE: Override this method to create custom loss, scorer, model objects.
+        Parameters
+        ----------
+        feature_layer_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to tensorflow compatible
+            function definitions that can now be used in the InteractionModel
+            as a feature function to transform input features
+
+        Returns
+        -------
+        `RelevanceModel`
+            RelevanceModel that can be used for training and evaluating
+            a classification model
+
+        Notes
+        -----
+        Override this method to create custom loss, scorer, model objects
         """
 
         # Define interaction model
@@ -60,7 +87,7 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define metrics objects from metrics keys
         metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
         # Define optimizer
@@ -93,9 +120,26 @@ class ClassificationPipeline(RelevancePipeline):
         self, parse_tfrecord=True, preprocessing_keys_to_fns={}
     ) -> RelevanceDataset:
         """
-        Creates RelevanceDataset
+        Create RelevanceDataset object by loading train, test data as tensorflow datasets
+        Defines a preprocessing feature function to one hot vectorize
+        classification labels
 
-        NOTE: Override this method to create custom dataset objects
+        Parameters
+        ----------
+        preprocessing_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to function definitions
+            that can now be used for preprocessing while loading the
+            TFRecordDataset to create the RelevanceDataset object
+
+        Returns
+        -------
+        `RelevanceDataset` object
+            RelevanceDataset object that can be used for training and evaluating
+            the model
+
+        Notes
+        -----
+        Override this method to create custom dataset objects
         """
         # Adding one_hot_vectorizer needed for classification
         preprocessing_keys_to_fns = {

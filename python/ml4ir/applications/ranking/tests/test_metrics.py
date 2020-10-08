@@ -6,7 +6,6 @@ from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 
-
 # Constants
 GOLD_METRICS = {
     "query_count": 1408.0,
