@@ -44,7 +44,42 @@ class RelevanceModel:
         output_name: str = "score",
         logger=None,
     ):
-        """Use this constructor to define a custom scorer"""
+        """
+        Constructor to instantiate a RelevanceModel that can be used for
+        training and evaluating the search ML task
+
+        Parameters
+        ----------
+        feature_config : `FeatureConfig` object
+            FeatureConfig object that defines the features to be loaded in the dataset
+            and the preprocessing functions to be applied to each of them
+        tfrecord_type : {"example", "sequence_example"}
+            Type of the TFRecord protobuf message used for TFRecordDataset
+        file_io : `FileIO` object
+            file I/O handler objects for reading and writing data
+        scorer : `ScorerBase` object
+            Scorer object that wraps an InteractionModel and converts
+            input features into scores
+        metrics : list
+            List of keras Metric classes that will be used for evaluating the trained model
+        optimizer : `Optimizer`
+            Tensorflow keras optimizer to be used for training the model
+        model_file : str, optional
+            Path to pretrained model file to be loaded for evaluation or retraining
+        initialize_layers_dict : dict, optional
+            Dictionary of tensorflow layer names mapped to the path of pretrained weights
+            Use this for transfer learning with pretrained weights
+        freeze_layers_list : list, optional
+            List of model layer names to be frozen
+            Use this for freezing pretrained weights from other ml4ir models
+        compile_keras_model : bool, optional
+            Whether the keras model loaded from disk should be compiled
+            with loss, metrics and an optimizer
+        output_name : str, optional
+            Name of the output tensorflow node that captures the score
+        logger : `Logger`, optional
+            logging handler for status messages
+        """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
         self.output_name = output_name
@@ -134,20 +169,65 @@ class RelevanceModel:
     @classmethod
     def from_relevance_scorer(
         cls,
+        feature_config: FeatureConfig,
         interaction_model: InteractionModel,
         model_config: dict,
-        feature_config: FeatureConfig,
         loss: RelevanceLossBase,
         metrics: List[Union[kmetrics.Metric, str]],
         optimizer: Optimizer,
         tfrecord_type: str,
         file_io: FileIO,
         model_file: Optional[str] = None,
+        initialize_layers_dict: dict = {},
+        freeze_layers_list: list = [],
         compile_keras_model: bool = False,
         output_name: str = "score",
         logger=None,
     ):
-        """Use this as constructor to define a custom InteractionModel with RelevanceScorer"""
+        """
+        Create a RelevanceModel with default Scorer function
+        constructed from an InteractionModel
+
+        Parameters
+        ----------
+        feature_config : `FeatureConfig` object
+            FeatureConfig object that defines the features to be loaded in the dataset
+            and the preprocessing functions to be applied to each of them
+        tfrecord_type : {"example", "sequence_example"}
+            Type of the TFRecord protobuf message used for TFRecordDataset
+        file_io : `FileIO` object
+            file I/O handler objects for reading and writing data
+        interaction_model : `InteractionModel` object
+            InteractionModel object that converts input features into a
+            dense feature representation
+        loss : `RelevanceLossBase` object
+            Loss object defining the final activation layer and the loss function
+        metrics : list
+            List of keras Metric classes that will be used for evaluating the trained model
+        optimizer : `Optimizer`
+            Tensorflow keras optimizer to be used for training the model
+        model_file : str, optional
+            Path to pretrained model file to be loaded for evaluation or retraining
+        initialize_layers_dict : dict, optional
+            Dictionary of tensorflow layer names mapped to the path of pretrained weights
+            Use this for transfer learning with pretrained weights
+        freeze_layers_list : list, optional
+            List of model layer names to be frozen
+            Use this for freezing pretrained weights from other ml4ir models
+        compile_keras_model : bool, optional
+            Whether the keras model loaded from disk should be compiled
+            with loss, metrics and an optimizer
+        output_name : str, optional
+            Name of the output tensorflow node that captures the score
+        logger : `Logger`, optional
+            logging handler for status messages
+
+        Returns
+        -------
+        RelevanceModel
+            RelevanceModel object with a default scorer build with a custom
+            InteractionModel
+        """
         assert isinstance(interaction_model, InteractionModel)
         assert isinstance(loss, RelevanceLossBase)
 
@@ -165,6 +245,8 @@ class RelevanceModel:
             optimizer=optimizer,
             tfrecord_type=tfrecord_type,
             model_file=model_file,
+            initialize_layers_dict=initialize_layers_dict,
+            freeze_layers_list=freeze_layers_list,
             compile_keras_model=compile_keras_model,
             output_name=output_name,
             file_io=file_io,
@@ -182,13 +264,60 @@ class RelevanceModel:
         optimizer: Optimizer,
         feature_layer_keys_to_fns: dict = {},
         model_file: Optional[str] = None,
+        initialize_layers_dict: dict = {},
+        freeze_layers_list: list = [],
         compile_keras_model: bool = False,
         output_name: str = "score",
         max_sequence_size: int = 0,
         file_io: FileIO = None,
         logger=None,
     ):
-        """Use this as constructor to use UnivariateInteractionModel and RelevanceScorer"""
+        """
+        Create a RelevanceModel with default UnivariateInteractionModel
+
+        Parameters
+        ----------
+        feature_config : `FeatureConfig` object
+            FeatureConfig object that defines the features to be loaded in the dataset
+            and the preprocessing functions to be applied to each of them
+        model_config : dict
+            dictionary defining the dense model architecture
+        tfrecord_type : {"example", "sequence_example"}
+            Type of the TFRecord protobuf message used for TFRecordDataset
+        file_io : `FileIO` object
+            file I/O handler objects for reading and writing data
+        loss : `RelevanceLossBase` object
+            Loss object defining the final activation layer and the loss function
+        metrics : list
+            List of keras Metric classes that will be used for evaluating the trained model
+        optimizer : `Optimizer`
+            Tensorflow keras optimizer to be used for training the model
+        feature_layer_keys_to_fns : dict
+            Dictionary of custom feature transformation functions to be applied
+            on the input features as part of the InteractionModel
+        model_file : str, optional
+            Path to pretrained model file to be loaded for evaluation or retraining
+        initialize_layers_dict : dict, optional
+            Dictionary of tensorflow layer names mapped to the path of pretrained weights
+            Use this for transfer learning with pretrained weights
+        freeze_layers_list : list, optional
+            List of model layer names to be frozen
+            Use this for freezing pretrained weights from other ml4ir models
+        compile_keras_model : bool, optional
+            Whether the keras model loaded from disk should be compiled
+            with loss, metrics and an optimizer
+        output_name : str, optional
+            Name of the output tensorflow node that captures the score
+        max_sequence_size : int, optional
+            Maximum length of the sequence to be used for SequenceExample protobuf objects
+        logger : `Logger`, optional
+            logging handler for status messages
+
+        Returns
+        -------
+        RelevanceModel
+            RelevanceModel object with a UnivariateInteractionModel
+        """
 
         interaction_model: InteractionModel = UnivariateInteractionModel(
             feature_config=feature_config,
@@ -206,6 +335,8 @@ class RelevanceModel:
             optimizer=optimizer,
             tfrecord_type=tfrecord_type,
             model_file=model_file,
+            initialize_layers_dict=initialize_layers_dict,
+            freeze_layers_list=freeze_layers_list,
             compile_keras_model=compile_keras_model,
             output_name=output_name,
             file_io=file_io,
@@ -227,20 +358,31 @@ class RelevanceModel:
         Trains model for defined number of epochs
         and returns the training and validation metrics as a dictionary
 
-        Args:
-            dataset: an instance of RankingDataset
-            num_epochs: int value specifying number of epochs to train for
-            models_dir: directory to save model checkpoints
-            logs_dir: directory to save model logs
-            logging_frequency: every #batches to log results
-            monitor_metric: name of the metric to monitor for early stopping, checkpointing
-            monitor_mode: whether to maximize or minimize the monitoring metric
-            patience: early stopping patience
+        Parameters
+        ----------
+        dataset : `RelevanceDataset` object
+            RelevanceDataset object to be used for training and validation
+        num_epochs : int
+            Value specifying number of epochs to train for
+        models_dir : str
+            Directory to save model checkpoints
+        logs_dir : str, optional
+            Directory to save model logs
+            If set to False, no progress logs will be written
+        logging_frequency : int, optional
+            Every #batches to log results
+        monitor_metric : str, optional
+            Name of the metric to monitor for early stopping, checkpointing
+        monitor_mode : {"max", "min"}
+            Whether to maximize or minimize the monitoring metric
+        patience : int
+            Number of epochs to wait before early stopping
 
-        Returns:
-            train and validation metrics in a single dictionary
-            where key is metric name and value is floating point metric value
-
+        Returns
+        -------
+        train_metrics : dict
+            Train and validation metrics in a single dictionary
+            where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
         if not monitor_metric.startswith("val_"):
@@ -292,15 +434,29 @@ class RelevanceModel:
         logging_frequency: int = 25,
     ):
         """
-        Predict the labels for the trained model
+        Predict the scores on the test dataset using the trained model
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            logging_frequency: integer representing how often(in batches) to log status
+        Parameters
+        ----------
+        test_dataset : `Dataset` object
+            `Dataset` object for which predictions are to be made
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
 
-        Returns:
-            ranking scores or new ranks for each record in a query
+        Returns
+        -------
+        `pd.DataFrame`
+            pandas DataFrame containing the predictions on the test dataset
+            made with the `RelevanceModel`
         """
         if logs_dir:
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
@@ -356,22 +512,37 @@ class RelevanceModel:
         """
         Evaluate the RelevanceModel
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            additional_features: Additional post processing feature functions as key value pairs
-            group_metrics_min_queries: Minimum number of queries per group to be used for group aggregate metrics
-            logs_dir: Directory to log the predictions and metrics
-            logging_frequency: integer representing how often(in batches) to log status
+        Parameters
+        ----------
+        test_dataset: an instance of tf.data.dataset
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        group_metrics_min_queries : int, optional
+            Minimum count threshold per group to be considered for computing
+            groupwise metrics
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
 
-        Returns:
-            metrics: pd.DataFrame containing overall metrics
-            groupwise_metrics: pd.DataFrame containing groupwise metrics if
-                               group_metric_keys are defined in the FeatureConfig
-            metrics_dict: metrics as a dictionary of metric names mapping to values
+        Returns
+        -------
+        df_overall_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing overall metrics
+        df_groupwise_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing groupwise metrics if
+            group_metric_keys are defined in the FeatureConfig
+        metrics_dict : dict
+            metrics as a dictionary of metric names mapping to values
 
-        NOTE:
-        Only if the keras model is compiled, you can directly do a model.evaluate()
+        Notes
+        -----
+        You can directly do a `model.evaluate()` only if the keras model is compiled
 
         Override this method to implement your own evaluation metrics.
         """
@@ -390,27 +561,39 @@ class RelevanceModel:
         pad_sequence: bool = False,
     ):
         """
-        Save tf.keras model to models_dir
+        Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
 
-        Two different serving signatures currently used to save the model
-            default: default keras model without any pre/post processing wrapper
-            tfrecord: serving signature that allows keras model to be served using TFRecord proto messages.
-                      Allows definition of custom pre/post processing logic
+        There are two different serving signatures currently used to save the model:
+
+        * `default`: default keras model without any pre/post processing wrapper
+
+        * `tfrecord`: serving signature that allows keras model to be served using TFRecord proto messages.
+                  Allows definition of custom pre/post processing logic
 
         Additionally, each model layer is also saved as a separate numpy zipped
         array to enable transfer learning with other ml4ir models.
 
-        Args:
-            models_dir: path to directory to save the model
-            preprocessing_keys_to_fns: dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
-                                       All the functions passed here must be serializable tensor graph operations
-            postprocessing_fn: custom tensorflow compatible postprocessing function to be used at serving time.
-                               Saved as part of the postprocessing layer of the tfrecord serving signature
-            required_fields_only: boolean value defining if only required fields
-                                  need to be added to the tfrecord parsing function
-                                  at serving time
-            pad_sequence: boolean value defining if sequences should be padded for SequenceExample proto inputs at serving time.
-                          Set this to False if you want to not handle padded scores.
+        Parameters
+        ----------
+        models_dir : str
+            path to directory to save the model
+        preprocessing_keys_to_fns : dict
+            dictionary mapping function names to tf.functions that should be
+            saved in the preprocessing step of the tfrecord serving signature
+        postprocessing_fn: function
+            custom tensorflow compatible postprocessing function to be used at serving time.
+            Saved as part of the postprocessing layer of the tfrecord serving signature
+        required_fields_only: bool
+            boolean value defining if only required fields
+            need to be added to the tfrecord parsing function at serving time
+        pad_sequence: bool, optional
+            Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+            Set this to False if you want to not handle padded scores.
+
+        Notes
+        -----
+        All the functions passed under `preprocessing_keys_to_fns` here must be
+        serializable tensor graph operations
         """
 
         model_file = os.path.join(models_dir, "final")
@@ -453,13 +636,21 @@ class RelevanceModel:
         """
         Loads model from the SavedModel file specified
 
-        Args:
-            model_file: path to file with saved tf keras model
+        Parameters
+        ----------
+        model_file : str
+            path to file with saved tf keras model
 
-        Returns:
-            loaded tf keras model
+        Returns
+        -------
+        `tf.keras.Model`
+            Tensorflow keras model loaded from file
+
+        Notes
+        -----
+        Retraining currently not supported!
+        Would require compiling the model with the right loss and optimizer states
         """
-
         """
         NOTE:
         There is currently a bug in Keras Model with saving/loading
@@ -467,9 +658,6 @@ class RelevanceModel:
 
         Therefore, we are currently loading the SavedModel with compile=False
         The saved model signatures can be used for inference at serving time
-
-        NOTE: Retraining currently not supported!
-        Would require compiling the model with the right loss and optimizer states
 
         Ref:
         https://github.com/keras-team/keras/issues/5916
@@ -485,7 +673,14 @@ class RelevanceModel:
         return model
 
     def load_weights(self, model_file: str):
-        # Load saved model with compile=False
+        """
+        Load saved model with compile=False
+
+        Parameters
+        ----------
+        model_file : str
+            path to file with saved tf keras model
+        """
         loaded_model = self.load(model_file)
 
         # Set weights of Keras model from the loaded model weights
@@ -503,10 +698,29 @@ class RelevanceModel:
         patience=2,
     ):
         """
-        Build callback hooks for the training loop
+        Build callback hooks for the training and evaluation loop
 
-        Returns:
-            callbacks_list: list of callbacks
+        Parameters
+        ----------
+        models_dir : str
+            Path to directory to save model checkpoints
+        logs_dir : str
+            Path to directory to save tensorboard logs
+        is_training : bool, optional
+            Whether we are building callbacks for training or evaluation
+        logging_frequency : int, optional
+            How often, in number of epochs, to log training and evaluation progress
+        monitor_metric : str, optional
+            Name of metric to be used for ModelCheckpoint and EarlyStopping callbacks
+        monitor_mode : {"max", "min"}, optional
+            Mode for maximizing or minimizing the ModelCheckpoint and EarlyStopping
+        patience : int, optional
+            Number of epochs to wait before early stopping if metric change is below tolerance
+
+        Returns
+        -------
+        callbacks_list : list
+            List of callbacks to be used with the RelevanceModel training and evaluation
         """
         callbacks_list: list = list()
 

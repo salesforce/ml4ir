@@ -83,8 +83,8 @@ class RelevanceArgParser(ArgumentParser):
             "--monitor_metric",
             type=str,
             default=None,
-            help="Metric name to use for monitoring training loop in callbacks"
-            "ml4ir/config/keys.py",
+            help="Metric name to use for monitoring training loop in callbacks. "
+            "Must be one MetricKey under ml4ir/config/keys.py",
         )
 
         self.add_argument(
@@ -102,7 +102,10 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--batch_size", type=int, default=128, help="Number of data samples to use per batch."
+            "--batch_size",
+            type=int,
+            default=128,
+            help="Number of data samples to use per batch.",
         )
 
         self.add_argument(

@@ -5,12 +5,13 @@ import numpy as np
 from tensorflow.keras import backend as K
 
 from ml4ir.base.config.keys import TFRecordTypeKey
+from ml4ir.base.features.feature_config import FeatureConfig
 
 
 def get_predict_fn(
     model: keras.Model,
     tfrecord_type: str,
-    feature_config: Dict,
+    feature_config: FeatureConfig,
     inference_signature: str = "serving_default",
     is_compiled: bool = False,
     output_name: str = "relevance_score",
@@ -18,6 +19,43 @@ def get_predict_fn(
     additional_features: Dict = {},
     max_sequence_size: int = 0,
 ):
+    """
+    Define a prediction function to convert input features into scores.
+
+    Parameters
+    ----------
+    model : `keras.Model`
+        Tensorflow keras model to be used for prediction
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord data we want to run prediction with the model on.
+    feature_config : `FeatureConfig` object
+        FeatureConfig object that defines the input features for the model
+        and their respective configurations
+    inference_signature : str, optional
+        The name of the serving signature to be fetched from the loaded
+        keras model. This will be used only if the model is not compiled into
+        a Keras model.
+    is_compiled : bool, optional
+        Value specifying if the keras model has been compiled or not
+    output_name : str, optional
+        Name of the output score from the dictionary of outputs
+    features_to_return : list, optional
+        List of output features to fetch along with the score
+    additional_features : dict, optional
+        Dictionary of new feature names and corresponding functions to
+        compute them. Use this to compute additional features to compute
+        further metrics.
+    max_sequence_size : int, optional
+        Maximum size of the sequence in a TFRecord SequenceExample protobuf
+        object
+
+    Returns
+    -------
+    `tf.function`
+        Tensorflow function that accepts features as input and returns the scores
+        and other specified outputs as a dictionary
+
+    """
     # Load the forward pass function for the tensorflow model
     if is_compiled:
         infer = model
@@ -44,7 +82,7 @@ def get_predict_fn(
 
     @tf.function
     def _predict_score(features, label):
-        # features = {k: tf.cast(v, tf.float32) for k, v in features.items()}
+        """Predict scores and compute additional output from input features using the input model"""
         if is_compiled:
             scores = infer(features)[output_name]
         else:

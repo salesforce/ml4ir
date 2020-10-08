@@ -12,22 +12,33 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     a categorical/char embedding for each of the 256 bytes. The char/byte embeddings
     are then combined using a biLSTM
 
-    Args:
-        feature_tensor: String feature tensor that is to be encoded
-        feature_info: Dictionary representing the feature_config for the input feature
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor that is to be encoded
+    feature_info : dict
+        Dictionary representing the feature_config for the input feature
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Encoded feature tensor
 
-    Args under feature_layer_info:
-        max_length: int; max length of bytes sequence
-        embedding_size: int; dimension size of the embedding;
-                        if null, then the tensor is just converted to its one-hot representation
-        encoding_size: int: dimension size of the sequence encoding computed using a biLSTM
+    Notes
+    -----
+    Args under `feature_layer_info`:
+        max_length : int
+            max length of bytes sequence
+        embedding_size : int
+            dimension size of the embedding;
+            if null, then the tensor is just converted to its one-hot representation
+        encoding_size : int
+            dimension size of the sequence encoding computed using a biLSTM
 
-    NOTE:
-        The input dimension for the embedding is fixed to 256 because the string is
-        converted into a bytes sequence.
+    The input dimension for the embedding is fixed to 256 because the string is
+    converted into a bytes sequence.
     """
     args = feature_info["feature_layer_info"]["args"]
 
@@ -50,23 +61,39 @@ def bytes_sequence_to_encoding_bilstm(feature_tensor, feature_info, file_io: Fil
     else:
         char_embedding = tf.one_hot(feature_tensor, depth=256)
 
-    kernel_initializer = args.get('lstm_kernel_initializer', 'glorot_uniform')
-    encoding = get_bilstm_encoding(embedding=char_embedding,
-                                   lstm_units=int(args["encoding_size"] / 2),
-                                   kernel_initializer=kernel_initializer)
+    kernel_initializer = args.get("lstm_kernel_initializer", "glorot_uniform")
+    encoding = get_bilstm_encoding(
+        embedding=char_embedding,
+        lstm_units=int(args["encoding_size"] / 2),
+        kernel_initializer=kernel_initializer,
+    )
     return encoding
 
 
-def get_bilstm_encoding(embedding, lstm_units, kernel_initializer='glorot_uniform'):
+def get_bilstm_encoding(embedding, lstm_units, kernel_initializer="glorot_uniform"):
     """
-    Builds a bilstm on to on the embedding passed as input.
-    :param embedding: sequence of input embeddings to be passed through the BiLSTM
-    :param lstm_units number of units in each of the LSTMs of the BiLSTM
-    :param kernel_initializer, str any shortcut of the supported tf.keras.initializers
-      e.g., 'ones', 'glorot_uniform', 'lecun_normal' ...
+    Convert sequence into encoding by passing through bidirectional LSTM
+
+    Parameters
+    ----------
+    sequence_tensor : Tensor object
+        Sequence tensor with representations for each time step
+    lstm_units : int
+        Number of units in the LSTM
+    kernel_initializer : str
+        Any supported tf.keras.initializers
+        e.g., 'ones', 'glorot_uniform', 'lecun_normal' ...
+
+    Returns
+    -------
+    Tensor object
+        Encoded feature tensor
     """
     encoding = layers.Bidirectional(
-        layers.LSTM(units=lstm_units, return_sequences=False,
-                    kernel_initializer=kernel_initializer),merge_mode="concat")(embedding)
+        layers.LSTM(
+            units=lstm_units, return_sequences=False, kernel_initializer=kernel_initializer
+        ),
+        merge_mode="concat",
+    )(embedding)
     encoding = tf.expand_dims(encoding, axis=1)
     return encoding
