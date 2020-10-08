@@ -8,7 +8,7 @@ There are two types of feature configs that are supported in ml4ir - `ExampleFea
 
 The feature config YAML file contains these main keys and their corresponding definitions:
 
-* `query_key` : Feature used to uniquely identify each query(or data point)
+* `query_key` : Feature used to uniquely identify each query (or data point)
 
 * `label` : Feature to be used as the label
 
