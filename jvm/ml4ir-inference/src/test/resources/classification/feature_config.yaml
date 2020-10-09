@@ -11,6 +11,7 @@ query_key:
     name: queryId
     required: false
   default_value: 0
+  tfrecord_type: context
 label:
   name: entity_id
   node_name: entity_id
@@ -31,6 +32,7 @@ label:
     name: entity_id
     required: false
   default_value: ""
+  tfrecord_type: context
 features:
   - name: query_text
     node_name: query_text
@@ -55,6 +57,7 @@ features:
       name: query_text
       required: true
     default_value: ""
+    tfrecord_type: context
   - name: query_text
     node_name: query_words
     trainable: true
@@ -85,9 +88,10 @@ features:
         max_length: 1
         default_value: -1
     serving_info:
-      name: query_text
+      name: query_words
       required: true
       default_value: ""
+    tfrecord_type: context
   - name: domain_id
     node_name: domain_id
     trainable: true
@@ -113,6 +117,7 @@ features:
       name: domain_id
       required: true
     default_value: ""
+    tfrecord_type: context
   - name: user_context
     node_name: user_context
     trainable: true
@@ -147,3 +152,4 @@ features:
       name: user_context
       required: true
     default_value: ""
+    tfrecord_type: context
