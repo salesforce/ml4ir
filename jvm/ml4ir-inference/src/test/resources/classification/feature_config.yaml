@@ -33,7 +33,6 @@ label:
   default_value: ""
 features:
   - name: query_text
-    tfrecord_type: context
     node_name: query_text
     trainable: true
     dtype: string
@@ -57,7 +56,6 @@ features:
       required: true
     default_value: ""
   - name: query_text
-    tfrecord_type: context
     node_name: query_words
     trainable: true
     dtype: string
@@ -91,7 +89,6 @@ features:
       required: true
       default_value: ""
   - name: domain_id
-    tfrecord_type: context
     node_name: domain_id
     trainable: true
     dtype: string
@@ -117,7 +114,6 @@ features:
       required: true
     default_value: ""
   - name: user_context
-    tfrecord_type: context
     node_name: user_context
     trainable: true
     dtype: string
