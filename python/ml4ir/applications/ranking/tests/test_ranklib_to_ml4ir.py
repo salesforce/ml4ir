@@ -21,6 +21,8 @@ class TestRanklibConversion(unittest.TestCase):
         pass
 
     def test_conversion(self):
+        """Convert ranklib dataset to a csv"""
+        
         ranklib_helper.ranklib_to_csv(INPUT_FILE, OUTPUT_FILE, KEEP_ADDITIONAL_INFO, GL_2_CLICKS, NON_ZERO_FEATURES_ONLY, QUERY_ID_NAME, RELEVANCE_NAME)
         df = pd.read_csv(OUTPUT_FILE)
         assert QUERY_ID_NAME in df.columns and RELEVANCE_NAME in df.columns

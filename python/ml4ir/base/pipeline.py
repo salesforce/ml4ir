@@ -271,10 +271,6 @@ class RelevancePipeline(object):
         Override this method to create custom dataset objects
         """
 
-        if 'preprocessing_info' in self.feature_config.get_label():
-            if self.feature_config.get_label()['preprocessing_info'][0]['fn'] == 'convert_label_to_clicks':
-                preprocessing_keys_to_fns['convert_label_to_clicks'] = convert_label_to_clicks
-
         # Prepare Dataset
         relevance_dataset = RelevanceDataset(
             data_dir=self.data_dir_local,
@@ -417,7 +413,7 @@ class RelevancePipeline(object):
                 )
 
             # Finish
-            self.finish()
+            self.finish(job_status, job_info)
 
         except Exception as e:
             self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))

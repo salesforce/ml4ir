@@ -32,6 +32,8 @@ class TestRanklibConversion(unittest.TestCase):
         return SequenceExampleFeatureConfig(feature_config, None)
 
     def test_ranklib_in_ml4ir(self):
+        """Creates a relevance dataset using ranklib format. Labels are graded relevance"""
+
         io = local_io.LocalIO()
         exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml, io)
         preprocessing_keys_to_fns = {}
@@ -80,6 +82,7 @@ class TestRanklibConversion(unittest.TestCase):
         assert len(chk) == 49
 
     def test_ranklib_in_ml4ir_click_conversion(self):
+        """Creates a relevance dataset using ranklib format. Labels are converted to clicks graded relevance"""
         io = local_io.LocalIO()
         exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml_convert_to_clicks, io)
         preprocessing_keys_to_fns = {}

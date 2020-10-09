@@ -19,6 +19,7 @@ class PreprocessingMap:
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
             natural_log.__name__: natural_log,
+            convert_label_to_clicks.__name__: convert_label_to_clicks
             # Add more here
         }
 
