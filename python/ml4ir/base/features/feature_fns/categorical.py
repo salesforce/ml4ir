@@ -21,18 +21,31 @@ def categorical_embedding_with_hash_buckets(feature_tensor, feature_info, file_i
     are combined either through mean, sum or concat operations to generate the final
     embedding based on the feature_info.
 
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor
+        String feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         categorical embedding for the input feature_tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        num_hash_buckets: int; number of different hash buckets to convert the input string into
-        hash_bucket_size: int; the size of each hash bucket
-        embedding_size: int; dimension size of the categorical embedding
-        merge_mode: str; can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
+        num_hash_buckets : int
+            number of different hash buckets to convert the input string into
+        hash_bucket_size : int
+            the size of each hash bucket
+        embedding_size : int
+            dimension size of the categorical embedding
+        merge_mode : str
+            can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
     """
     feature_layer_info = feature_info.get("feature_layer_info")
     embeddings_list = list()
@@ -87,20 +100,31 @@ def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: Fi
     Works by converting the categorical indices in the input feature_tensor,
     represented as integer values, into categorical embeddings based on the feature_info.
 
-    Args:
-        feature_tensor: int feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        int feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         categorical embedding for the input feature_tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        num_buckets: int; Maximum number of categorical values
-        default_value: int; default value to be assigned to indices out of the num_buckets range
-        embedding_size: int; dimension size of the categorical embedding
+        num_buckets : int
+            Maximum number of categorical values
+        default_value : int
+            default value to be assigned to indices out of the num_buckets range
+        embedding_size : int
+            dimension size of the categorical embedding
 
-    NOTE:
-    string based categorical features should already be converted into numeric indices
+    String based categorical features should already be converted into numeric indices
     """
     feature_layer_info = feature_info.get("feature_layer_info")
 
@@ -130,25 +154,37 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     vocabulary_file.
     The char/byte embeddings are then combined using a biLSTM.
 
-    Args:
-        feature_tensor: String feature tensor that is to be encoded
-        feature_info: Dictionary representing the feature_config for the input feature
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor that is to be encoded
+    feature_info : dict
+        Dictionary representing the feature_config for the input feature
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Encoded feature tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
-                        uses the "key" named column as vocabulary of the 1st column if no "key" column present.
-        max_length: int; max number of rows to consider from the vocabulary file.
+        vocabulary_file : string
+            path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+            uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length: int
+            max number of rows to consider from the vocabulary file.
                         if null, considers the entire file vocabulary.
-        embedding_size: int; dimension size of the embedding;
+        embedding_size : int
+            dimension size of the embedding;
                         if null, then the tensor is just converted to its one-hot representation
-        encoding_size: int: dimension size of the sequence encoding computed using a biLSTM
+        encoding_size : int
+            dimension size of the sequence encoding computed using a biLSTM
 
-    NOTE:
-        The input dimension for the embedding is fixed to 256 because the string is
-        converted into a bytes sequence.
+    The input dimension for the embedding is fixed to 256 because the string is
+    converted into a bytes sequence.
     """
     args = feature_info.get("feature_layer_info")["args"]
 
@@ -167,7 +203,12 @@ def categorical_embedding_to_encoding_bilstm(feature_tensor, feature_info, file_
     )(categorical_indices)
 
     categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
-    encoding = get_bilstm_encoding(categorical_embeddings, int(args["encoding_size"] / 2))
+    kernel_initializer = args.get("lstm_kernel_initializer", "glorot_uniform")
+    encoding = get_bilstm_encoding(
+        embedding=categorical_embeddings,
+        lstm_units=int(args["encoding_size"] / 2),
+        kernel_initializer=kernel_initializer,
+    )
     return encoding
 
 
@@ -177,23 +218,35 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then converting the categories into embeddings based on the feature_info.
 
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Categorical embedding representation of input feature_tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+        vocabulary_file : string
+            path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
                         uses the "key" named column as vocabulary of the 1st column if no "key" column present.
-        max_length: int; max number of rows to consider from the vocabulary file.
+        max_length : int
+            max number of rows to consider from the vocabulary file.
                         if null, considers the entire file vocabulary.
-        num_oov_buckets: int; number of out of vocabulary buckets/slots to be used to
+        num_oov_buckets : int
+            number of out of vocabulary buckets/slots to be used to
                          encode strings into categorical indices
-        embedding_size: int; dimension size of categorical embedding
+        embedding_size : int
+            dimension size of categorical embedding
 
-    NOTE:
     The vocabulary CSV file must contain two columns - key, id,
     where the key is mapped to one id thereby resulting in a
     many-to-one vocabulary mapping.
@@ -219,15 +272,36 @@ def categorical_embedding_with_vocabulary_file(feature_tensor, feature_info, fil
 
 
 class CategoricalDropout(layers.Layer):
-    """Custom Dropout class for categorical indices"""
+    """
+    Custom Dropout class for categorical indices
+
+    Examples
+    --------
+    >>> inputs: [[1, 2, 3], [4, 1, 2]]
+    >>> dropout_rate = 0.5
+
+    >>> When training, output: [[0, 0, 3], [0, 1, 2]]
+    >>> When testing, output: [[1, 2, 3], [4, 1, 2]]
+
+    Notes
+    -----
+    At training time, mask indices to 0 at dropout_rate
+
+    This works similar to tf.keras.layers.Dropout without the scaling
+    Ref: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dropout
+    """
 
     def __init__(self, dropout_rate, seed=None, **kwargs):
         """
-        Args:
-            dropout_rate: fraction of units to drop, i.e., set to OOV token 0
-            seed: random seed for sampling to mask/drop categorical labels
+        Parameters
+        ----------
+        dropout_rate : float
+            fraction of units to drop, i.e., set to OOV token 0
+        seed : int
+            random seed for sampling to mask/drop categorical labels
 
-        Note:
+        Notes
+        -----
         We define OOV index to be 0 for this function and when dropout is applied, it converts p% of the values to 0(which is the OOV index). This allows us to train a good average embedding for the OOV token.
         """
         super(CategoricalDropout, self).__init__(**kwargs)
@@ -235,23 +309,34 @@ class CategoricalDropout(layers.Layer):
         self.seed = seed
 
     def get_config(self):
+        """
+        Get config for the CategoricalDropout tensorflow layer
+
+        Returns
+        -------
+        dict
+            Configuration dictionary for the tensorflow layer
+        """
         config = super(CategoricalDropout, self).get_config()
         config.update({"dropout_rate": self.dropout_rate, "seed": self.seed})
         return config
 
     def call(self, inputs, training=None):
         """
-        At training time, mask indices to 0 at dropout_rate
+        Run the CategoricalDropout layer by masking input labels to OOV
+        index 0 at `dropout_rate`
 
-        This works similar to tf.keras.layers.Dropout without the scaling
-        Ref: https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dropout
+        Parameters
+        ----------
+        input : Tensor object
+            int categorical index tensor to be masked
+        training : bool
+            If the layer should be run as training or not
 
-        Example:
-        inputs: [[1, 2, 3], [4, 1, 2]]
-        dropout_rate = 0.5
-
-        When training, output: [[0, 0, 3], [0, 1, 2]]
-        When testing, output: [[1, 2, 3], [4, 1, 2]]
+        Returns
+        -------
+        Tensor object
+            Masked tensor object with values set to 0 at probability of dropout_rate
         """
         if training:
             return tf.math.multiply(
@@ -274,19 +359,30 @@ def categorical_embedding_with_vocabulary_file_and_dropout(
     and then converting the categories into embeddings based on the feature_info.
     Also uses a dropout to convert categorical indices to the OOV index of 0 at a rate of dropout_rate
 
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Categorical embedding representation of input feature_tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        vocabulary_file: str; path to vocabulary CSV file for the input tensor
-        dropout_rate: float; rate at which to convert categorical indices to OOV
-        embedding_size: int; dimension size of categorical embedding
+        vocabulary_file : str
+            path to vocabulary CSV file for the input tensor
+        dropout_rate : float
+            rate at which to convert categorical indices to OOV
+        embedding_size : int
+            dimension size of categorical embedding
 
-    NOTE:
     The vocabulary CSV file must contain two columns - key, id,
     where the key is mapped to one id thereby resulting in a
     many-to-one vocabulary mapping.
@@ -325,22 +421,33 @@ def categorical_indicator_with_vocabulary_file(feature_tensor, feature_info, fil
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then converting the categories into one-hot representation.
 
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
+    Returns
+    -------
+    Tensor object
         Categorical one-hot representation of input feature_tensor
 
+    Notes
+    -----
     Args under feature_layer_info:
-        vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
-                        uses the "key" named column as vocabulary of the 1st column if no "key" column present.
-        max_length: int; max number of rows to consider from the vocabulary file.
-                        if null, considers the entire file vocabulary.
-        num_oov_buckets: int - optional; number of out of vocabulary buckets/slots to be used to
-                         encode strings into categorical indices. If not specified, the default is 1.
+        vocabulary_file : string
+            path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+            uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length : int
+            max number of rows to consider from the vocabulary file.
+            if null, considers the entire file vocabulary.
+        num_oov_buckets : int, optional
+            number of out of vocabulary buckets/slots to be used to
+            encode strings into categorical indices. If not specified, the default is 1.
 
-    NOTE:
     The vocabulary CSV file must contain two columns - key, id,
     where the key is mapped to one id thereby resulting in a
     many-to-one vocabulary mapping.
@@ -411,14 +518,23 @@ def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_
     Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
     And encode the feature_tensor with the vocabulary.
 
-    Args:
-        feature_tensor: String feature tensor
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        String feature tensor
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing
 
-    Returns:
-        categorical_indices: tensor; corresponding to encode of the feature_tensor based on the vocabulary.
-        num_oov_buckets: int; applied num_oov_buckets
-        vocabulary_keys: values of the vocabulary stated in the vocabulary_file.
+    Returns
+    -------
+    categorical_indices : Tensor object
+        corresponding to encode of the feature_tensor based on the vocabulary.
+    num_oov_buckets : int
+        applied num_oov_buckets
+    vocabulary_keys : list
+        values of the vocabulary stated in the vocabulary_file.
     """
     vocabulary_keys, vocabulary_ids = get_vocabulary_info(feature_info, file_io)
     args = feature_info.get("feature_layer_info")["args"]
@@ -426,8 +542,10 @@ def categorical_indices_from_vocabulary_file(feature_info, feature_tensor, file_
     if "dropout_rate" in args:
         default_value = 0  # Default OOV index when using dropout
         if args.get("num_oov_buckets"):
-            raise RuntimeError("Cannot have both dropout_rate and num_oov_buckets set. "
-                               "OOV buckets are not supported with dropout")
+            raise RuntimeError(
+                "Cannot have both dropout_rate and num_oov_buckets set. "
+                "OOV buckets are not supported with dropout"
+            )
         num_oov_buckets = None
         vocabulary_size = len(set(vocabulary_keys)) + 1  # one more for default value
     else:
@@ -452,14 +570,21 @@ class VocabLookup(layers.Layer):
     The class defines a keras layer wrapper around a tf lookup table using the given vocabulary list.
     Maps each entry of a vocabulary list into categorical indices.
 
-    Attributes:
-        vocabulary_list: List of strings that form the vocabulary set of categorical values
-        num_oov_buckets: Number of buckets to be used for out of vocabulary strings
-        default_value: Default value to be used for OOV values
-        feature_name: Name of the input feature tensor
-        lookup_table: Tensorflow look up table that maps strings to integer indices
+    Attributes
+    ----------
+    vocabulary_list : list
+        List of strings that form the vocabulary set of categorical values
+    num_oov_buckets : int
+        Number of buckets to be used for out of vocabulary strings
+    default_value : int
+        Default value to strbe used for OOV values
+    feature_name : str
+        Name of the input feature tensor
+    lookup_table : LookupTable object
+        Tensorflow look up table that maps strings to integer indices
 
-    NOTE:
+    Notes
+    -----
     Issue[1] with using LookupTable with keras symbolic tensors; expects eager tensors.
 
     Ref: https://github.com/tensorflow/tensorflow/issues/38305
@@ -517,9 +642,30 @@ class VocabLookup(layers.Layer):
         self.built = True
 
     def call(self, input_text):
+        """
+        Convert string tensors to numeric indices using lookup table
+
+        Parameters
+        ----------
+        input_text : Tensor object
+            String categorical tensor
+
+        Returns
+        -------
+        Tensor object
+            Numeric tensor object with corresponding lookup indices
+        """
         return self.lookup_table.lookup(input_text)
 
     def get_config(self):
+        """
+        Get tensorflow configuration for the lookup table
+
+        Returns
+        -------
+        dict
+            Configuration dictionary for the lookup table layer
+        """
         config = super(VocabLookup, self).get_config()
         config.update(
             {
@@ -537,16 +683,31 @@ def get_vocabulary_info(feature_info, file_io):
     """
     Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
 
-    Args:
-        feature_info: Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-            vocabulary_file: string; path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
-                    uses the "key" named column as vocabulary of the 1st column if no "key" column present.
-            max_length: int; max number of rows to consider from the vocabulary file.
-                    if null, considers the entire file vocabulary.
-            default_value: default stated value in the configure used to replace missing data points.
-    Returns:
-        vocabulary_keys: values of the vocabulary stated in the vocabulary_file.
-        vocabulary_ids: corresponding encoding ids (values of the vocabulary_keys).
+    Parameters
+    ----------
+    feature_info : dict
+        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+    file_io : FileIO object
+        FileIO handler object for reading and writing files
+
+    Returns
+    -------
+    vocabulary_keys : list
+        values of the vocabulary stated in the vocabulary_file.
+    vocabulary_ids : list
+        corresponding encoding ids (values of the vocabulary_keys).
+
+    Notes
+    -----
+    Args under `feature_layer_info`
+        vocabulary_file : str
+            path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+            uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+        max_length : int
+            max number of rows to consider from the vocabulary file.
+            if null, considers the entire file vocabulary.
+        default_value : int
+            default stated value in the configure used to replace missing data points.
     """
     args = feature_info.get("feature_layer_info")["args"]
     vocabulary_df = file_io.read_df(args["vocabulary_file"])

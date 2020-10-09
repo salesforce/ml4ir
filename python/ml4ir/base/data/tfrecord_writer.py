@@ -4,33 +4,42 @@ Writes data in Example or SequenceExample protobuf (tfrecords) format.
 To use it as a standalone script, refer to the argument spec
 at the bottom
 
-Syntax to convert a single or several CSVs:
-python ml4ir/base/data/tfrecord_writer.py \
-sequence|example \
---csv-files <SPACE_SEPARATED_PATHS_TO_CSV_FILES> \
---out-dir <PATH_TO_OUTPUT_DIR> \
---feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
---keep-single-files
+Notes
+-----
 
-or to convert all CSV files in a dir
-python ml4ir/base/data/tfrecord_writer.py \
-sequence|example \
---csv-dir <DIR_WITH_CSVs> \
---out-dir <PATH_TO_OUTPUT_DIR> \
---feature_config <PATH_TO_YAML_FEATURE_CONFIG> \
---keep-single-files
-
-Setting --keep-single-files writes one tfrecord file
+Setting ``--keep-single-files`` writes one tfrecord file
 for each CSV file (better performance). If not set,
 joins everything to a single tfrecord file.
 
-Example:
-python ml4ir/base/data/tfrecord_writer.py \
-sequence \
- --csv-files /tmp/d.csv /tmp/d2.csv \
- --out-dir /tmp
- --feature-config /tmp/fconfig.yaml \
- --keep-single-files
+Examples
+--------
+
+Syntax to convert a single or several CSVs:
+
+>>> python ml4ir/base/data/tfrecord_writer.py \\
+... sequence_example|example \\
+... --csv-files <SPACE_SEPARATED_PATHS_TO_CSV_FILES> \\
+... --out-dir <PATH_TO_OUTPUT_DIR> \\
+... --feature_config <PATH_TO_YAML_FEATURE_CONFIG> \\
+... --keep-single-files
+
+or to convert all CSV files in a dir
+
+>>> python ml4ir/base/data/tfrecord_writer.py \\
+... sequence_example|example \\
+... --csv-dir <DIR_WITH_CSVs> \\
+... --out-dir <PATH_TO_OUTPUT_DIR> \\
+... --feature_config <PATH_TO_YAML_FEATURE_CONFIG> \\
+... --keep-single-files
+
+Usage example:
+
+>>> python ml4ir/base/data/tfrecord_writer.py \\
+... sequence_example \\
+... --csv-files /tmp/d.csv /tmp/d2.csv \\
+... --out-dir /tmp \\
+... --feature-config /tmp/fconfig.yaml \\
+... --keep-single-files
  """
 
 from tensorflow import io
@@ -47,7 +56,7 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
 
-MODES = {"example": TFRecordTypeKey.EXAMPLE, "sequence": TFRecordTypeKey.SEQUENCE_EXAMPLE}
+MODES = {"example": TFRecordTypeKey.EXAMPLE, "sequence_example": TFRecordTypeKey.SEQUENCE_EXAMPLE}
 
 
 def write_from_files(
@@ -59,17 +68,21 @@ def write_from_files(
     logger: Logger = None,
 ):
     """
-    Converts data from CSV files into tfrecord data.
-    Output data protobuf format -> train.SequenceExample
+    Converts data from CSV files into tfrecord files
 
-    Args:
-        csv_files: list of csv file paths to read data from
-        tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to YAML feature config or str YAML feature config
-        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
-        logger: logging object
-
-    NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
+    Parameters
+    ----------
+    csv_files : list of str
+        list of csv file paths to read data from
+    tfrecord_file : str
+        tfrecord file path to write the output
+    feature_config : `FeatureConfig`
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf message to be used for TFRecordDataset
+    logger : `Logger`, optional
+        logging handler for status messages
     """
 
     # Read CSV data into a pandas dataframe
@@ -85,17 +98,20 @@ def write_from_df(
     logger: Logger = None,
 ):
     """
-    Converts data from CSV files into tfrecord data.
-    Output data protobuf format -> train.SequenceExample
+    Converts data from CSV files into tfrecord files
 
-    Args:
-        df: pandas DataFrame
-        tfrecord_file: tfrecord file path to write the output
-        feature_config: str path to YAML feature config or str YAML feature config
-        tfrecord_type: TFRecordTypeKey.EXAMPLE or TFRecordTypeKey.SEQUENCE_EXAMPLE
-        logger: logging object
-
-    NOTE: This method should be moved out of ml4ir and into the preprocessing pipeline
+    Parameters
+    df : `pd.DataFrame`
+        pandas DataFrame to be converted to TFRecordDataset
+    tfrecord_file : str
+        tfrecord file path to write the output
+    feature_config : `FeatureConfig`
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf message to be used for TFRecordDataset
+    logger : `Logger`, optional
+        logging handler for status messages
     """
 
     if logger:

@@ -28,16 +28,31 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
     ):
+
         """
-        Predict the labels for the trained model
+        Predict the scores on the test dataset using the trained model
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            logging_frequency: integer representing how often(in batches) to log status
+        Parameters
+        ----------
+        test_dataset : `Dataset` object
+            `Dataset` object for which predictions are to be made
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
 
-        Returns:
-            ranking scores or new ranks for each record in a query
+        Returns
+        -------
+        `pd.DataFrame`
+            pandas DataFrame containing the predictions on the test dataset
+            made with the `RelevanceModel`
         """
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
@@ -59,18 +74,41 @@ class RankingModel(RelevanceModel):
         logging_frequency: int = 25,
     ):
         """
-        Evaluate the ranking model
+        Evaluate the RelevanceModel
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            additional_features: Additional post processing feature functions as key value pairs
-            group_metrics_min_queries: Minimum number of queries per group to be used for group aggregate metrics
-            logs_dir: Directory to log the predictions and metrics
-            logging_frequency: integer representing how often(in batches) to log status
+        Parameters
+        ----------
+        test_dataset: an instance of tf.data.dataset
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        group_metrics_min_queries : int, optional
+            Minimum count threshold per group to be considered for computing
+            groupwise metrics
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
 
-        Returns:
-            metrics, groupwise metrics as pandas DataFrames and metrics as dictionary
+        Returns
+        -------
+        df_overall_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing overall metrics
+        df_groupwise_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing groupwise metrics if
+            group_metric_keys are defined in the FeatureConfig
+        metrics_dict : dict
+            metrics as a dictionary of metric names mapping to values
+
+        Notes
+        -----
+        You can directly do a `model.evaluate()` only if the keras model is compiled
+
+        Override this method to implement your own evaluation metrics.
         """
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
@@ -181,10 +219,37 @@ class RankingModel(RelevanceModel):
         pad_sequence: bool = False,
     ):
         """
-        Save tf.keras model to models_dir
+        Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
+        Additionally, sets the score for the padded records to 0
 
-        Args:
-            models_dir: path to directory to save the model
+        There are two different serving signatures currently used to save the model
+            `default`: default keras model without any pre/post processing wrapper
+            `tfrecord`: serving signature that allows keras model to be served using TFRecord proto messages.
+                      Allows definition of custom pre/post processing logic
+
+        Additionally, each model layer is also saved as a separate numpy zipped
+        array to enable transfer learning with other ml4ir models.
+
+        Parameters
+        ----------
+        models_dir : str
+            path to directory to save the model
+        preprocessing_keys_to_fns : dict
+            dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+        postprocessing_fn: function
+            custom tensorflow compatible postprocessing function to be used at serving time.
+            Saved as part of the postprocessing layer of the tfrecord serving signature
+        required_fields_only: bool
+            boolean value defining if only required fields
+            need to be added to the tfrecord parsing function at serving time
+        pad_sequence: bool, optional
+            Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+            Set this to False if you want to not handle padded scores.
+
+        Notes
+        -----
+        All the functions passed under `preprocessing_keys_to_fns` here must be
+        serializable tensor graph operations
         """
 
         def mask_padded_records(predictions, features_dict):

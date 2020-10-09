@@ -26,9 +26,7 @@ def read(
     **kwargs
 ) -> tf.data.TFRecordDataset:
     """
-    - reads csv-formatted data from an input directory
-    - selects relevant features
-    - creates Dataset X and y
+    Create a TFRecordDataset from directory of CSV files using the FeatureConfig
 
     Current execution plan:
         1. Load CSVs as pandas dataframes
@@ -36,17 +34,27 @@ def read(
         3. Write the protobufs into a .tfrecord file
         4. Load .tfrecord file into a TFRecordDataset and parse the protobufs
 
-    Args:
-        - data_dir: Path to directory containing csv files to read
-        - feature_config: ml4ir.config.features.FeatureConfig object extracted from the feature config
-        - tfrecord_dir: Path to directory where the serialized .tfrecord files will be stored
-        - batch_size: int value specifying the size of the batch
-        - use_part_files: bool value specifying whether to look for part files
-        - max_sequence_size: int value specifying max number of records per query
-        - logger: logging object
+    Parameters
+    data_dir : str
+        Path to directory containing csv files to read
+    feature_config : FeatureConfig object
+        FeatureConfig object that defines the features to be loaded in the dataset
+        and the preprocessing functions to be applied to each of them
+    tfrecord_dir : str
+        Path to directory where the serialized .tfrecord files will be stored
+    batch_size : int
+        value specifying the size of the data batch
+    use_part_files : bool
+        load dataset from part files checked using "part-" prefix
+    max_sequence_size : int
+        value specifying max number of records per query
+    logger : Logger object
+        logging handler to print and save status messages
 
-    Returns:
-        tensorflow TFRecordDataset
+    Returns
+    -------
+    `TFRecordDataset` object
+        tensorflow TFRecordDataset loaded from the CSV file
     """
     csv_files: List[str] = file_io.get_files_in_directory(
         data_dir,

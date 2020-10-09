@@ -26,6 +26,7 @@ class ClassificationTestBase(unittest.TestCase):
     """
     Setting default arguments and context for tests .../classification/tests folder.
     """
+
     def setUp(
         self,
         output_dir: str = OUTPUT_DIR,
@@ -57,11 +58,15 @@ class ClassificationTestBase(unittest.TestCase):
         self.args.batch_size = 32
 
         # Load feature config
-        self.args.feature_config = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
+        self.args.feature_config = os.path.join(
+            self.root_data_dir, "configs", self.feature_config_fname
+        )
         self.feature_config = self.file_io.read_yaml(self.args.feature_config)
 
         # Load model_config
-        self.args.model_config = os.path.join(self.root_data_dir, "configs", self.model_config_fname)
+        self.args.model_config = os.path.join(
+            self.root_data_dir, "configs", self.model_config_fname
+        )
         self.model_config = self.file_io.read_yaml(self.args.model_config)
 
         # Setup logging
@@ -80,7 +85,7 @@ class ClassificationTestBase(unittest.TestCase):
         tf.keras.backend.clear_session()
         gc.collect()
 
-    def get_overridden_args(self, data_format:str = "tfrecord"):
+    def get_overridden_args(self, data_format: str = "tfrecord"):
         """Overriding test default setup args from parameters."""
         data_dir = os.path.join(self.root_data_dir, data_format)
         # Fix random seed values for repeatability
@@ -90,7 +95,6 @@ class ClassificationTestBase(unittest.TestCase):
         args.data_dir = data_dir
         args.data_format = data_format
         return args
-
 
     @staticmethod
     def set_seeds():
