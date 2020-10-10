@@ -8,13 +8,13 @@ import org.tensorflow.example.SequenceExample;
 import java.util.List;
 import java.util.Map;
 
-public class SimpleSequenceExampleExecutor {
+public class StringMapSequenceExampleExecutor {
     private final SequenceExampleExecutor executor;
     private final StringMapSequenceExampleBuilder protoBuilder;
-    public SimpleSequenceExampleExecutor(String modelBundlePath,
-                                         String inputNodeName,
-                                         String outputNodeName,
-                                         String featureConfigPath) {
+    public StringMapSequenceExampleExecutor(String modelBundlePath,
+                                            String inputNodeName,
+                                            String outputNodeName,
+                                            String featureConfigPath) {
         executor = new SequenceExampleExecutor(
                 modelBundlePath,
                 ModelExecutorConfig.apply(inputNodeName, outputNodeName)
