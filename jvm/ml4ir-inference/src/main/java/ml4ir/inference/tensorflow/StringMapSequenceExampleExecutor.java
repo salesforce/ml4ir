@@ -18,11 +18,11 @@ public class StringMapSequenceExampleExecutor {
     private final StringMapSequenceExampleBuilder protoBuilder;
 
     /**
-     * @param modelBundlePath /path/to/savedmodel/tfrecord - location on local disk of the Tensorflow
+     * @param modelBundlePath location on local disk of the Tensorflow
      *                       {@code SavedModelBundle} (in particular the "tfrecord" subdirectory) used for inference
-     * @param inputNodeName name of the Tensorflow graph node for the TFRecord-based serving signature.
-     *                      This can be found by using: {@code saved_model_cli show --dir tfrecord/ --all }.  You'll see
-     *                      something like the following:
+     * @param inputNodeName name of the Tensorflow graph node for the TFRecord-based serving signature.  This can be
+     *                      found by using: {@code saved_model_cli show --dir /path/to/savedmodel/tfrecord --all }.
+     *                      You'll see something like the following:
      *                      <pre>
      *                      saved_model_cli show --dir tfrecord/ --all
      * MetaGraphDef with tag-set: 'serve' contains the following SignatureDefs:
