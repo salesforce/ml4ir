@@ -12,6 +12,7 @@ import java.util.Map;
 /**
  * Helper java class to encapsulate re-ranking (of e.g. search results, recommendations, ad candidates)
  * model inference.
+ * TODO: add unit test for this class
  */
 public class StringMapSequenceExampleExecutor {
     private final TFRecordExecutor executor;

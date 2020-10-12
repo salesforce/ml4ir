@@ -8,6 +8,7 @@ import java.util.Map;
 
 /**
  * Helper java class to encapsulate multi-class classification and regression model inference.
+ * TODO: add unit test for this class
  */
 public class StringMapExampleExecutor {
     private final TFRecordExecutor executor;
