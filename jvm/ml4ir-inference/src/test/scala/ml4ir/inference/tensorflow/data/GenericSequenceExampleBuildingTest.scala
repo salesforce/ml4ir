@@ -15,9 +15,11 @@ case class SimpleDocument(floatFeat0: Float, floatFeat1: Float, floatFeat2: Floa
 class GenericSequenceExampleBuildingTest extends TestData {
   val classLoader = getClass.getClassLoader
 
+  def pathFor(name: String) = classLoader.getResource("ranking/" + name).getPath
+
   @Test
   def testCaseClassSeqExampleBuilding() = {
-    val modelFeatures = ModelFeaturesConfig.load(classLoader.getResource(baseConfigFile).getPath)
+    val modelFeatures = ModelFeaturesConfig.load(pathFor(baseConfigFile))
 
     val ctxProcessor = new FeaturePreprocessor[SimpleQueryContext](
       modelFeatures.toFeaturesConfig("context"),
