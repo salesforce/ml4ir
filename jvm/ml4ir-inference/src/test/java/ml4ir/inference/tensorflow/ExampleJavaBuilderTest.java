@@ -12,6 +12,10 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
+/**
+ * Test for the scala class {@see StringMapExampleBuilder}, which has "java-friendly" methods we need to test from
+ * java-land.
+ */
 public class ExampleJavaBuilderTest {
     private final ClassLoader classLoader = getClass().getClassLoader();
 
@@ -21,6 +25,11 @@ public class ExampleJavaBuilderTest {
 
     private final String configFile = "feature_config.yaml";
 
+    /**
+     * Verify that {@see Example}-building applies the correct in-jvm feature-preprocessing (lowercasing, in this
+     * example) in the correctly-formed protobuf
+     * @throws Exception
+     */
     @Test
     public void buildProtoFromStringMap() throws Exception {
         String configPath = pathFor(configFile);

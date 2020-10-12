@@ -35,7 +35,6 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
 
   private[this] def extractFloatFeatures(t: T): Map[String, Float] =
     featuresConfig(DataType.FLOAT)
-    //.map(s => s._2)
       .map {
         case (servingName, NodeWithDefault(nodeName, defaultValue)) =>
           nodeName -> processors(DataType.FLOAT)(servingName)
@@ -51,7 +50,6 @@ class FeaturePreprocessor[T](featuresConfig: FeaturesConfig,
       }
   private[this] def extractStringFeatures(t: T): Map[String, String] =
     featuresConfig(DataType.STRING)
-    //.map( pair => (pair._1, pair._2.defaultValue)
       .map {
         case (servingName: String, NodeWithDefault(nodeName, defaultValue)) =>
           nodeName -> processors(DataType.STRING)(servingName)

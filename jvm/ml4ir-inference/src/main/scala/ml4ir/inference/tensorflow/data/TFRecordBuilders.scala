@@ -8,9 +8,14 @@ import java.lang.{Float => JFloat, Long => JLong}
 import scala.collection.JavaConverters._
 import scala.reflect.ClassTag
 
+/**
+  * For converting a concrete class of type T into an {@see Example} TFRecord to perform inference
+  * @param featuresPreprocessor for any JVM-only preprocessing on the input before protobuf construction
+  * @tparam T only constrained by the type of the featuresPreprocessor supplied
+  */
 class ExampleBuilder[T](featuresPreprocessor: FeaturePreprocessor[T]) extends TFRecordBuilderUtils {
   def apply(rawInput: T): Example = {
-    val example = featuresPreprocessor(rawInput)
+    val example: MultiFeatures = featuresPreprocessor(rawInput)
     val features = buildMultiFeatures(example)
     Example
       .newBuilder()
@@ -19,6 +24,14 @@ class ExampleBuilder[T](featuresPreprocessor: FeaturePreprocessor[T]) extends TF
   }
 }
 
+/**
+  * For converting a concrete class of type T into an {@see SequenceExample} TFRecord to perform inference
+  * @param contextFeaturesPreprocessor for any JVM-only preprocessing on the input context before protobuf construction
+  * @param sequenceFeaturesPreprocessor for any JVM-only preprocessing on the input sequence records before protobuf
+  *                                     construction
+  * @tparam C whatever type the contextFeaturesPreprocessor knows how to preprocess
+  * @tparam S whatever type the sequenceFeaturesPreprocessor knows how to preprocess
+  */
 class SequenceExampleBuilder[C, S](contextFeaturesPreprocessor: FeaturePreprocessor[C],
                                    sequenceFeaturesPreprocessor: FeaturePreprocessor[S])
     extends TFRecordBuilderUtils {
@@ -28,15 +41,15 @@ class SequenceExampleBuilder[C, S](contextFeaturesPreprocessor: FeaturePreproces
 
   /**
     * Java-friendly API
-    * @param context
-    * @param sequence
-    * @return
+    * @param context struct primarily containing e.g. query text, userId or cookie, other document-indepenent features
+    * @param sequence list of document-feature structs
+    * @return TensorFlow's protobuf structure containing the raw features in one SequenceExample packet
     */
   def build(context: C, sequence: java.util.List[S]): SequenceExample = apply(context, sequence.asScala.toList)
 
   /**
     * Functional API allowing the builder to act like a function to transform query/documents into a scorable protobuf
-    * @param context struct primarily containing the query text
+    * @param context struct primarily containing e.g. query text, userId or cookie, other document-indepenent features
     * @param docs array of document-feature structs
     * @return TensorFlow's protobuf structure containing the raw features in one SequenceExample packet
     */
@@ -51,23 +64,27 @@ class SequenceExampleBuilder[C, S](contextFeaturesPreprocessor: FeaturePreproces
   }
 }
 
+/**
+  * Functionality shared between both {@see Example} and {@see SequenceExample} instantiation.  Primarily just packing
+  * primitives from the {@code MultiFeatures} into {@see Features} and {@see FeatureLists} protobuf structures
+  */
 trait TFRecordBuilderUtils {
 
   protected def buildMultiFeatures(features: MultiFeatures): Features = {
     val withStringFeatures = features.stringFeatures
       .foldLeft(Features.newBuilder()) {
-        case (bldr, (nodeName: String, stringFeature: String)) =>
-          bldr.putFeature(nodeName, toFeature(stringFeature))
+        case (builder, (nodeName: String, stringFeature: String)) =>
+          builder.putFeature(nodeName, toFeature(stringFeature))
       }
     val withStringAndFloatFeatures = features.floatFeatures
       .foldLeft(withStringFeatures) {
-        case (bldr, (nodeName: String, floatFeature: Float)) =>
-          bldr.putFeature(nodeName, toFeature(floatFeature))
+        case (builder, (nodeName: String, floatFeature: Float)) =>
+          builder.putFeature(nodeName, toFeature(floatFeature))
       }
     val withFloatsAndIntsAndStrings = features.int64Features
       .foldLeft(withStringAndFloatFeatures) {
-        case (bldr, (nodeName: String, longFeature: Long)) =>
-          bldr.putFeature(nodeName, toFeature(longFeature))
+        case (builder, (nodeName: String, longFeature: Long)) =>
+          builder.putFeature(nodeName, toFeature(longFeature))
       }
     withFloatsAndIntsAndStrings.build()
   }
@@ -75,20 +92,20 @@ trait TFRecordBuilderUtils {
   protected def buildMultiFeatureLists(features: Array[MultiFeatures]): FeatureLists = {
     val withFloats = transpose(features.map(_.floatFeatures))
       .foldLeft(FeatureLists.newBuilder()) {
-        case (bldr, (name: String, featureValues: Array[Float])) =>
-          bldr.putFeatureList(name, floats(featureValues.map(JFloat.valueOf)))
+        case (builder, (name: String, featureValues: Array[Float])) =>
+          builder.putFeatureList(name, floats(featureValues.map(JFloat.valueOf)))
       }
     val withFloatsAndInts =
       transpose(features.map(_.int64Features))
         .foldLeft(withFloats) {
-          case (bldr, (name: String, featureValues: Array[Long])) =>
-            bldr.putFeatureList(name, longs(featureValues.map(JLong.valueOf)))
+          case (builder, (name: String, featureValues: Array[Long])) =>
+            builder.putFeatureList(name, longs(featureValues.map(JLong.valueOf)))
         }
     val withFloatsAndIntsAndStrings =
       transpose(features.map(_.stringFeatures))
         .foldLeft(withFloatsAndInts) {
-          case (bldr, (name: String, featureValues: Array[String])) =>
-            bldr.putFeatureList(name, strings(featureValues))
+          case (builder, (name: String, featureValues: Array[String])) =>
+            builder.putFeatureList(name, strings(featureValues))
         }
     withFloatsAndIntsAndStrings.build()
   }
@@ -96,7 +113,7 @@ trait TFRecordBuilderUtils {
   /**
     * Effectively transforms an array of maps of features into a map of arrays of features: the "transpose" operation
     * @param docFeatures to have their features extracted out into one dense array per feature
-    * @return map of feature-name -> padded dense vector of numeric features
+    * @return map of feature-name -> dense vector of numeric features
     */
   protected def transpose[T: ClassTag](
       docFeatures: Array[Map[String, T]]
@@ -104,7 +121,7 @@ trait TFRecordBuilderUtils {
     case class FeatureVal(name: String, value: T, docIdx: Int)
     val featureSet: Set[String] = docFeatures.map(_.keySet).reduce(_ union _)
     docFeatures
-      .slice(0, docFeatures.length) // math.min(docFeatures.length, numDocsPerQuery)) // this was for padding
+      .slice(0, docFeatures.length)
       .zipWithIndex
       .flatMap {
         case (doc: Map[String, T], idx: Int) =>
