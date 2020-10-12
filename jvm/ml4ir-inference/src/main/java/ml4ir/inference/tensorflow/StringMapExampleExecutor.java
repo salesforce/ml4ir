@@ -10,7 +10,7 @@ import java.util.Map;
  * Helper java class to encapsulate multi-class classification and regression model inference.
  */
 public class StringMapExampleExecutor {
-    private final ExampleExecutor executor;
+    private final TFRecordExecutor executor;
     private final StringMapExampleBuilder protoBuilder;
 
     /**
@@ -53,7 +53,7 @@ public class StringMapExampleExecutor {
                                     String inputNodeName,
                                     String outputNodeName,
                                     String featureConfigPath) {
-        executor = new ExampleExecutor(
+        executor = new TFRecordExecutor(
                 modelBundlePath,
                 ModelExecutorConfig.apply(inputNodeName, outputNodeName)
         );

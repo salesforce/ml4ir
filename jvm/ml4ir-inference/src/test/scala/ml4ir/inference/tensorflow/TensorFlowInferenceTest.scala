@@ -44,7 +44,7 @@ class TensorFlowInferenceTest extends TestData {
   @Test
   def testRankingSavedModelBundle(): Unit = {
     val bundlePath = resourceFor("ranking/model_bundle_0_0_2")
-    val bundleExecutor = new SequenceExampleExecutor(
+    val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_sequence_example_protos",
@@ -69,7 +69,7 @@ class TensorFlowInferenceTest extends TestData {
   @Test
   def testClassificationSavedModelBundle(): Unit = {
     val bundlePath = resourceFor("classification/simple_classification_model")
-    val bundleExecutor = new ExampleExecutor(
+    val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_protos",
