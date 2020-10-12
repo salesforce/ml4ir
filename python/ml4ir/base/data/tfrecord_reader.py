@@ -311,10 +311,6 @@ def make_sequence_example_parse_fn(
 
         labels = features_dict.pop(feature_config.get_label(key="name"))
 
-        if not required_fields_only:
-            # Check if label is one-hot and correctly masked
-            tf.debugging.assert_equal(tf.cast(tf.reduce_sum(labels), tf.float32), tf.constant(1.0))
-
         return features_dict, labels
 
     return _parse_sequence_example_fn
@@ -446,6 +442,7 @@ def read(
 
     # Parse the protobuf data to create a TFRecordDataset
     dataset = data.TFRecordDataset(tfrecord_files)
+
     if parse_tfrecord:
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
         dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE).apply(
