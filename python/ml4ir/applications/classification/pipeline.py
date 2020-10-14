@@ -1,5 +1,6 @@
 import sys
 import ast
+import shutil
 from argparse import Namespace
 
 from tensorflow.keras.metrics import Metric, Precision
@@ -16,7 +17,7 @@ from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
-
+from ml4ir.base.config.keys import FileHandlerKey
 from typing import Union, List, Type
 
 
@@ -167,6 +168,25 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
+
+    def finish(self, job_status, job_info):
+        # This will write the _SUCCESS/_FAILURE files
+        super().finish(job_status, job_info)
+
+        # Create model_bundle.zip
+        if self.args.file_handler == FileHandlerKey.SPARK:
+            # Copy files in model_files
+            self.local_io.make_directory('model_files', clear_dir=True)
+            shutil.copytree(self.models_dir_local+"/final/tfrecord/", "model_files")
+            # Zip model_files to model_bundle.zip
+            shutil.make_archive("model_bundle", "zip", "model_files")
+            # Put them to HDFS
+            self.file_io.copy_to_hdfs("model_bundle.zip", self.models_dir, overwrite=True)
+
+        # Create org_id_to_key_prefix.csv.zip
+        shutil.make_archive("org_id_to_key_prefix.csv", "zip", dir_name)
+
+        # Create parameters/key_prefix_labels.csv
 
 
 def main(argv):
