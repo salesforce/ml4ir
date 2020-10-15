@@ -10,7 +10,7 @@ The current supported learning rate schedules are: `exponential` and `cyclic`.
 The `exponential` learning rate schedule requires defining the following hyper-parameters: `initial_learning_rate`, `decay_steps`, `decay_rate`. For more information, see: https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
 
 The `cyclic` learning rate schedule has three different type of policies: `triangular`, `triangular2`, `exponential`. All three types require defining the following hyper-parameters: `initial_learning_rate`, `maximal_learning_rate`, `step_size`. The `exponential` type requires and additional hyper-parameter: `gamma`. 
-For more information, see: https://www.tensorflow.org/addons/api_docs/python/tfa/optimizers/ExponentialCyclicalLearningRate and https://arxiv.org/pdf/1506.01186.pdf.
+For more information, see: https://www.tensorflow.org/addons/api_docs/python/tfa/optimizers/CyclicalLearningRate and https://arxiv.org/pdf/1506.01186.pdf.
 
 Below you can see an example model config YAML using a DNN architecture to stack a bunch of dense layers with ReLU activation layers. Additionally, there are also a few dropout layers for regularization in between. A triangular2 cyclic learning rate schedule is used with adam optimizer.
 
