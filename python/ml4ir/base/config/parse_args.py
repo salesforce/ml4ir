@@ -109,26 +109,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--learning_rate", type=float, default=0.01, help="Step size (e.g.: 0.01)"
-        )
-
-        self.add_argument(
-            "--learning_rate_decay",
-            type=float,
-            default=1.0,
-            help="Decay rate for the learning rate."
-            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
-        )
-
-        self.add_argument(
-            "--learning_rate_decay_steps",
-            type=int,
-            default=10000000,
-            help="Decay rate for the learning rate."
-            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
-        )
-
-        self.add_argument(
             "--compute_intermediate_stats",
             type=bool,
             default=True,
@@ -249,12 +229,12 @@ class RelevanceArgParser(ArgumentParser):
             help="Minimum number of queries per group to be used to computed groupwise metrics.",
         )
 
-        self.add_argument(
-            "--gradient_clip_value",
-            type=float,
-            default=5.0,
-            help="Gradient clipping value/threshold for the optimizer.",
-        )
+        # self.add_argument(
+        #     "--gradient_clip_value",
+        #     type=float,
+        #     default=5.0,
+        #     help="Gradient clipping value/threshold for the optimizer.",
+        # )
 
         self.add_argument(
             "--compile_keras_model",

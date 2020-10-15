@@ -31,6 +31,19 @@ class OptimizerKey(Key):
     SGD = "sgd"
     RMS_PROP = "rms_prop"
 
+class LearningRateScheduleKey(Key):
+    """Learning rate schedule keys"""
+
+    EXPONENTIAL = "exponential"
+    CYCLIC = "cyclic"
+
+class CyclicLearningRateType(Key):
+    """Cyclic learning rate schedule type keys"""
+
+    TRIANGULAR = "triangular"
+    TRIANGULAR2 = "triangular2"
+    EXPONENTIAL = "exponential"
+
 
 class DataFormatKey(Key):
     """Data Format keys"""
