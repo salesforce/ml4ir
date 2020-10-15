@@ -122,11 +122,7 @@ class RankingTestBase(unittest.TestCase):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.args.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            file_io=self.file_io, model_config_file=self.args.model_config,
         )
 
         # Combine the above to define a RelevanceModel

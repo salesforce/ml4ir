@@ -92,11 +92,7 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            model_config_file=self.model_config_file, file_io=self.file_io,
         )
 
         # Combine the above to define a RelevanceModel
