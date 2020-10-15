@@ -1,0 +1,19 @@
+architecture_key: dnn
+layers:
+  - type: dense
+    name: first_dense
+    units: 256
+    activation: relu
+  - type: dropout
+    name: first_dropout
+    rate: 0.3
+  - type: dense
+    name: second_dense
+    units: 64
+    activation: relu
+  - type: dropout
+    name: second_dropout
+    rate: 0.0
+  - type: dense
+    name: final_dense
+    activation: null

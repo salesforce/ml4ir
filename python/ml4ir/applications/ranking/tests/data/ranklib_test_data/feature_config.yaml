@@ -1,0 +1,76 @@
+query_key:
+  name: qid
+  node_name: qid
+  trainable: false
+  dtype: string
+  log_at_inference: true
+  feature_layer_info:
+    type: string
+    shape: null
+  serving_info:
+    required: false
+    default_value: ''
+  tfrecord_type: context
+label:
+  name: relevance
+  node_name: relevance
+  trainable: false
+  dtype: float
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+rank:
+  name: rank
+  node_name: rank
+  trainable: false
+  dtype: float
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+features:
+- name: f_1
+  node_name: f_1
+  trainable: true
+  dtype: float
+  log_at_inference: false
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    required: true
+    default_value: 0.0
+  tfrecord_type: sequence
+- name: f_2
+  node_name: f_2
+  trainable: true
+  dtype: float
+  log_at_inference: false
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    required: true
+    default_value: 0.0
+  tfrecord_type: sequence
+- name: f_3
+  node_name: f_3
+  trainable: true
+  dtype: float
+  log_at_inference: false
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    required: true
+    default_value: 0.0
+  tfrecord_type: sequence

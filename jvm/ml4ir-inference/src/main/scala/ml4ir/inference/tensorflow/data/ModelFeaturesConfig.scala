@@ -33,6 +33,13 @@ object ModelFeaturesConfig {
 case class ModelFeaturesConfig(@JsonProperty("rank") initialRank: FeatureConfig,
                                @JsonProperty("features") features: List[FeatureConfig])
 
+/**
+  * At inference-time, ml4ir's FeatureConfig needs to know only the following properties per feature:
+  * @param nodeName the Tensorflow input graph node name to wire this feature into
+  * @param dTypeString string | int64 | float
+  * @param servingConfig {@see ServingConfig} below
+  * @param tfRecordType context | sequence (latter only for {@see SequenceExample} features)
+  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class FeatureConfig(@JsonProperty("node_name") nodeName: String,
                          @JsonProperty("dtype") dTypeString: String,
@@ -41,5 +48,14 @@ case class FeatureConfig(@JsonProperty("node_name") nodeName: String,
   def dType: DataType = DataType.valueOf(dTypeString.toUpperCase)
 }
 
+/**
+  * {@see FeatureConfig} parameters only used / relevant at serving/inference time - can be ignored during training, and
+  * in fact added onto the config later or changed at any time, without retraining
+  * @param servingName The key to look up the feature's value in an e.g. input {@code HashMap}.  This name is not
+  *      referenced in the serialized model, instead this config specifies the serving time -> training time mapping of
+  *      serving_info.name -> node_name
+  * @param defaultValue if this feature is not present in the input, a String form of this value will be supplied to
+  *                     the TF model.
+  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 case class ServingConfig(@JsonProperty("name") servingName: String, @JsonProperty("default_value") defaultValue: String)

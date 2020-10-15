@@ -18,6 +18,9 @@ import static org.junit.Assert.*;
 
 public class SequenceExampleJavaBuilderTest {
     private final ClassLoader classLoader = getClass().getClassLoader();
+
+    private final String pathFor(String name) { return classLoader.getResource("ranking/" + name).getPath(); }
+
     private String configFile = "model_features_0_0_2.yaml";
 
     @Test
@@ -39,7 +42,7 @@ public class SequenceExampleJavaBuilderTest {
                 ImmutableMap.of("fake", "blah", "ff2", "0.3"),
                 ImmutableMap.of()
         );
-        String configPath = classLoader.getResource(configFile).getPath();
+        String configPath = pathFor(configFile);
         ModelFeaturesConfig modelFeatures = ModelFeaturesConfig.load(configPath);
 
         Function<Float, Float> log1p = (Float count) -> (float)Math.log(1.0 + count);

@@ -317,6 +317,20 @@ class RelevanceArgParser(ArgumentParser):
             "Usually coupled with initialize_layers_dict to load pretrained weights and freeze them",
         )
 
+        self.add_argument(
+            "--non_zero_features_only",
+            type=int,
+            default=0,
+            help="[Ranklib format only] Only non zero features are stored. 1 for yes, 0 otherwise",
+        )
+
+        self.add_argument(
+            "--keep_additional_info",
+            type=int,
+            default=0,
+            help="[Ranklib format only] Option to keep additional info (All info after the '#' in the format [key = val]). 1 to keep, 0 to ignore",
+        )
+
     def set_default_args(self):
         pass
 

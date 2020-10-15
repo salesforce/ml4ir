@@ -4,7 +4,7 @@ from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.base.features import preprocessing
 
 import tensorflow as tf
-
+import numpy as np
 
 class RankingModelTest(RankingTestBase):
     def test_text_preprocesing(self):
@@ -93,3 +93,25 @@ class RankingModelTest(RankingTestBase):
         expected_split_text = tf.constant(["", "A", "BC", "ab", "c1", "23!@", "#"] + [""]*18)
 
         assert tf.reduce_all(tf.equal(split_text, expected_split_text))
+
+    def testing_click_conversion(self):
+        typ = 'int'
+        label_vector = np.ones(10, dtype=typ)
+        label_vector = tf.convert_to_tensor(label_vector)
+        clicks = preprocessing.convert_label_to_clicks(label_vector, typ)
+        comp = tf.equal(label_vector, clicks)
+        assert sum(tf.dtypes.cast(comp, 'int8')) == 10
+
+        typ = 'float'
+        label_vector = np.ones(10, dtype=typ)
+        label_vector[0] = 5
+        label_vector[-1] = 5
+        label_vector = tf.convert_to_tensor(label_vector)
+        clicks = preprocessing.convert_label_to_clicks(label_vector, typ)
+        assert clicks[0] == 1 and clicks[-1] == 1 and sum(clicks[1:-1]) == 0
+
+        typ = 'int'
+        label_vector = np.zeros(10, dtype=typ)
+        label_vector = tf.convert_to_tensor(label_vector)
+        clicks = preprocessing.convert_label_to_clicks(label_vector, typ)
+        assert sum(tf.dtypes.cast(comp, 'int8')) == 10
