@@ -231,24 +231,6 @@ class RelevancePipeline(object):
 
         return self
 
-    def finish(self):
-        # Delete temp data directories
-        if self.data_format == DataFormatKey.CSV:
-            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
-        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
-
-        if self.args.file_handler == FileHandlerKey.SPARK:
-            # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
-
-        e = int(time.time() - self.start_time)
-        self.logger.info(
-            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(e // 3600, (e % 3600 // 60), e % 60)
-        )
-
-        return self
-
     def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
         Create RelevanceDataset object by loading train, test data as tensorflow datasets
@@ -290,7 +272,6 @@ class RelevancePipeline(object):
             non_zero_features_only=self.non_zero_features_only,
             keep_additional_info=self.keep_additional_info,
         )
-
 
         return relevance_dataset
 
@@ -413,13 +394,15 @@ class RelevancePipeline(object):
                 )
 
             # Finish
-            self.finish(job_status, job_info)
+            # self.finish(job_status, job_info)
 
         except Exception as e:
             self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))
             traceback.print_exc()
             job_status = "_FAILURE"
             job_info = "{}\n{}".format(str(e), traceback.format_exc())
+            self.finish(job_status, job_info)
+            return self
 
         # Write experiment tracking data in job status file
         experiment_tracking_dict = dict()
@@ -471,8 +454,8 @@ class RelevancePipeline(object):
 
         if self.args.file_handler == FileHandlerKey.SPARK:
             # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=False)
+            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=False)
 
         e = int(time.time() - self.start_time)
         self.logger.info(

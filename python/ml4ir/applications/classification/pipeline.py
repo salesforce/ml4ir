@@ -1,5 +1,6 @@
 import sys
 import ast
+import os
 import shutil
 from argparse import Namespace
 
@@ -175,18 +176,26 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Create model_bundle.zip
         if self.args.file_handler == FileHandlerKey.SPARK:
-            # Copy files in model_files
-            self.local_io.make_directory('model_files', clear_dir=True)
-            shutil.copytree(self.models_dir_local+"/final/tfrecord/", "model_files")
-            # Zip model_files to model_bundle.zip
-            shutil.make_archive("model_bundle", "zip", "model_files")
-            # Put them to HDFS
-            self.file_io.copy_to_hdfs("model_bundle.zip", self.models_dir, overwrite=True)
+            # Copy tfrecord files in model_files
+            os.makedirs("epmm")
+            shutil.copytree(os.path.join(self.models_dir_local, "final/tfrecord/"), "model_files")
+            shutil.make_archive("./epmm/model_bundle", "zip", "model_files")
+
+            (self.file_io
+             .read_df(self.feature_config.get_label()['feature_layer_info']['args']['vocabulary_file'])
+             .to_csv("key_prefix_labels.csv"))
+            shutil.make_archive("./epmm/key_prefix_labels.csv", "zip", ".", "key_prefix_labels.csv")
 
         # Create org_id_to_key_prefix.csv.zip
-        shutil.make_archive("org_id_to_key_prefix.csv", "zip", dir_name)
+            org_id = [x for x in self.feature_config.get_all_features() if x['name'] == 'organization_id'][0]
+            org_mapping = org_id['feature_layer_info']['args']['vocabulary_file']
+            (self.file_io
+             .read_df(org_mapping)
+             .to_csv("org_id_to_key_prefix.csv"))
+            shutil.make_archive("./epmm/org_id_to_key_prefix.csv", "zip", ".", "org_id_to_key_prefix.csv" )
+            self.file_io.copy_to_hdfs("epmm", self.models_dir, overwrite=False)
 
-        # Create parameters/key_prefix_labels.csv
+        # This will write the _SUCCESS/_FAILURE files
 
 
 def main(argv):
