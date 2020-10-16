@@ -22,8 +22,8 @@ def read(
     max_sequence_size: int = 25,
     parse_tfrecord: bool = True,
     logger=None,
-    keep_additional_info = 0,
-    non_zero_features_only = 1,
+    keep_additional_info: bool = False,
+    non_zero_features_only: bool = True,
     **kwargs
 ) -> tf.data.TFRecordDataset:
     """

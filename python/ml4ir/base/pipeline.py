@@ -113,10 +113,7 @@ class RelevancePipeline(object):
         # Setup other arguments
         self.loss_key: str = self.args.loss_key
         self.optimizer_key: str = self.args.optimizer_key
-        if self.args.metrics_keys[0] == "[":
-            self.metrics_keys: List[str] = ast.literal_eval(self.args.metrics_keys)
-        else:
-            self.metrics_keys = [self.args.metrics_keys]
+        self.metrics_keys: List[str] = self.args.metrics_keys
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type
 
@@ -131,17 +128,7 @@ class RelevancePipeline(object):
             self.non_zero_features_only = 0
             self.keep_additional_info = 0
 
-        if args.model_file:
-            self.model_file = args.model_file
-        else:
-            self.model_file = None
-
-
-
-
-
-        # Validate args
-        self.validate_args()
+        self.model_file = args.model_file
 
         # Set random seeds
         self.set_seeds()
@@ -188,48 +175,6 @@ class RelevancePipeline(object):
         tf.random.set_seed(self.args.random_state)
         random.seed(self.args.random_state)
 
-    def validate_args(self):
-        """
-        Validate the arguments to be used with RelevancePipeline
-        """
-        unset_arguments = {key: value for (key, value) in vars(self.args).items() if value is None}
-
-        if len(unset_arguments) > 0:
-            raise Exception(
-                "Unset arguments (check usage): \n{}".format(
-                    json.dumps(unset_arguments).replace(",", "\n")
-                )
-            )
-
-        if self.optimizer_key not in OptimizerKey.get_all_keys():
-            raise Exception(
-                "Optimizer specified [{}] is not one of : {}".format(
-                    self.optimizer_key, OptimizerKey.get_all_keys()
-                )
-            )
-
-        if self.data_format not in DataFormatKey.get_all_keys():
-            raise Exception(
-                "Data format[{}] is not one of : {}".format(
-                    self.data_format, DataFormatKey.get_all_keys()
-                )
-            )
-
-        if self.tfrecord_type not in TFRecordTypeKey.get_all_keys():
-            raise Exception(
-                "TFRecord type [{}] is not one of : {}".format(
-                    self.data_format, TFRecordTypeKey.get_all_keys()
-                )
-            )
-
-        if self.args.file_handler not in FileHandlerKey.get_all_keys():
-            raise Exception(
-                "FileHandler [{}] is not one of : {}".format(
-                    self.args.file_handler, FileHandlerKey.get_all_keys()
-                )
-            )
-
-        return self
 
     def finish(self):
         # Delete temp data directories

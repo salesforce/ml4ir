@@ -1,5 +1,6 @@
-import pandas as pd
+import ast
 import argparse
+import pandas as pd
 import numpy as np
 
 max_f_id = 0
@@ -10,8 +11,8 @@ def process_line(line, keep_additional_info, query_id_name, relevance_name):
         ----------
         line : str
             a line from ranklib format data
-        keep_additional_info : int
-            Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore.
+        keep_additional_info : bool
+            Option to keep additional info (All info after the "#") True to keep, False to ignore.
         query_id_name : str
             The name of the query id column.
         relevance_name : str
@@ -24,7 +25,7 @@ def process_line(line, keep_additional_info, query_id_name, relevance_name):
             Keys are the column names values are the parsed values.
     """
 
-    if keep_additional_info == 1:
+    if keep_additional_info:
         feature_values = line.replace('#', '').replace(' = ', ':').strip().split()
     else:
         feature_values = line.split('#')[0].strip().split()
@@ -49,15 +50,18 @@ def process_line(line, keep_additional_info, query_id_name, relevance_name):
                 max_f_id = int(feat)
     return r
 
-def convert(input_file, keep_additional_info, gl_2_clicks, non_zero_features_only, query_id_name, relevance_name, add_dummy_rank_column = True):
+
+def convert(input_file, keep_additional_info, gl_2_clicks,
+            non_zero_features_only, query_id_name, relevance_name,
+            add_dummy_rank_column = True):
     """Convert the input file with the specified parameters into ml4ir format. returns a dataframe
 
             Parameters
             ----------
             input_file : str
                 ranklib input file path
-            keep_additional_info : int
-                Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore.
+            keep_additional_info : bool
+                Option to keep additional info (All info after the "#") True to keep, False to ignore.
             gl_2_clicks : int
                 Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert
             query_id_name : str
@@ -105,8 +109,8 @@ def ranklib_to_csv(input_file, output_file, keep_additional_info, gl_2_clicks, n
                 ranklib input file path
             output_file : str
                 output converted file path
-            keep_additional_info : int
-                Option to keep additional info (All info after `#`) 1 to keep, 0 to ignore.
+            keep_additional_info : bool
+                Option to keep additional info (All info after `#`) True to keep, False to ignore.
             gl_2_clicks : int
                 Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert
             query_id_name : str
@@ -126,8 +130,8 @@ def ranklib_directory_to_csvs(input_dir, keep_additional_info, gl_2_clicks, non_
             ----------
             input_dir : str
                 ranklib input directory path. All files within the directory will be converted.
-            keep_additional_info : int
-                Option to keep additional info (All info after `#`) 1 to keep, 0 to ignore.
+            keep_additional_info : bool
+                Option to keep additional info (All info after `#`) True to keep, False to ignore.
             gl_2_clicks : int
                 Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert
             query_id_name : str
@@ -152,12 +156,12 @@ if __name__ == "__main__":
     parser.add_argument('--input_dir', type=str, default='ml4ir/applications/ranking/tests/data/test',
                         help='ranklib input directory path. All files within the directory will be converted.')
     parser.add_argument('--output_file', type=str, default='ml4ir/applications/ranking/tests/data/train/sample_ml4ir.csv', help='output converted file path')
-    parser.add_argument('--keep_additional_info', type=int, default=1,
-                        help='Option to keep additional info (All info after the "#") 1 to keep, 0 to ignore')
+    parser.add_argument('--keep_additional_info', type=ast.literal_eval, default=True,
+                        help='Option to keep additional info (All info after the "#") True to keep, False to ignore')
     parser.add_argument('--gl_2_clicks', type=int, default=1,
                         help='Convert graded relevance to clicks (only max relevant document is considered clicked) 1 to convert')
-    parser.add_argument('--non_zero_features_only', type=int, default=1,
-                        help='Only non zero features are stored. 1 for yes, 0 otherwise')
+    parser.add_argument('--non_zero_features_only', type=int, default=True,
+                        help='Only non zero features are stored. True for yes, False otherwise')
     parser.add_argument('--query_id_name', type=str, default='qid',
                         help='The name of the query id column.')
     parser.add_argument('--relevance_name', type=str, default='relevance',

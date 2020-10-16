@@ -49,7 +49,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--model_file",
             type=str,
-            default="",
+            default=None,
             help="Path to a pretrained model to load for either resuming training or for running in"
             "inference mode.",
         )
@@ -115,7 +115,8 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--learning_rate", type=float, default=0.01, help="Learning rate value (e.g.: 0.01)"
+            "--learning_rate", type=float,
+            default=0.01, help="Learning rate value (e.g.: 0.01)"
         )
 
         self.add_argument(
@@ -136,7 +137,7 @@ class RelevanceArgParser(ArgumentParser):
 
         self.add_argument(
             "--compute_intermediate_stats",
-            type=bool,
+            type=ast.literal_eval,
             default=True,
             help="Whether to compute intermediate stats on test set (mrr, acr, etc) (slow)",
         )
