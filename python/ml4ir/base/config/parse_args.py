@@ -345,7 +345,7 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             nargs="+",
             required=False,
-            default='vocabulary_file',
+            default="vocabulary_file",
             help="Given a key, that is associated with CSV files in the config, "
                  "recursively looks in the config for its values"
                  "and copies these CSVs to write_tf_model_dir",
