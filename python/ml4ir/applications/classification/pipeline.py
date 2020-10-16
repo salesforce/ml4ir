@@ -3,7 +3,7 @@ import ast
 import os
 import shutil
 from argparse import Namespace
-
+from pathlib import Path
 from tensorflow.keras.metrics import Metric, Precision
 from tensorflow.keras.optimizers import Optimizer
 
@@ -174,28 +174,26 @@ class ClassificationPipeline(RelevancePipeline):
         # This will write the _SUCCESS/_FAILURE files
         super().finish(job_status, job_info)
 
-        # Create model_bundle.zip
-        if self.args.file_handler == FileHandlerKey.SPARK:
-            # Copy tfrecord files in model_files
-            os.makedirs("epmm")
-            shutil.copytree(os.path.join(self.models_dir_local, "final/tfrecord/"), "model_files")
-            shutil.make_archive("./epmm/model_bundle", "zip", "model_files")
+        # Create model_bundle.zip depending on user args
+        if self.args.write_tf_model_dir:
+            os.makedirs(self.args.write_tf_model_dir)
+            shutil.copytree(os.path.join(self.models_dir_local,
+                                         "final/tfrecord/"), "model_files")
+            shutil.make_archive("{}/model_bundle".format(self.args.write_tf_model_dir),
+                                "zip", "model_files")
 
-            (self.file_io
-             .read_df(self.feature_config.get_label()['feature_layer_info']['args']['vocabulary_file'])
-             .to_csv("key_prefix_labels.csv"))
-            shutil.make_archive("./epmm/key_prefix_labels.csv", "zip", ".", "key_prefix_labels.csv")
-
-        # Create org_id_to_key_prefix.csv.zip
-            org_id = [x for x in self.feature_config.get_all_features() if x['name'] == 'organization_id'][0]
-            org_mapping = org_id['feature_layer_info']['args']['vocabulary_file']
-            (self.file_io
-             .read_df(org_mapping)
-             .to_csv("org_id_to_key_prefix.csv"))
-            shutil.make_archive("./epmm/org_id_to_key_prefix.csv", "zip", ".", "org_id_to_key_prefix.csv" )
-            self.file_io.copy_to_hdfs("epmm", self.models_dir, overwrite=False)
-
-        # This will write the _SUCCESS/_FAILURE files
+            if self.args.write_config_csvs_by_name:
+                for config_key in self.args.write_config_csvs_by_name:  # a list can be provided
+                    for lookup_file in self.feature_config.get_all_values(key=config_key):
+                        out_path = Path(lookup_file).stem + ".csv"
+                        (self.file_io
+                         .read_df(lookup_file)  # needs a str here, not a Path object
+                         .to_csv(out_path))
+                        shutil.make_archive("{}/parameters/{}".format(self.args.write_tf_model_dir,
+                                                                      out_path), "zip", ".", out_path)
+            if self.args.file_handler == FileHandlerKey.SPARK:
+                self.file_io.copy_to_hdfs(self.args.write_tf_model_dir,
+                                          self.models_dir, overwrite=False)
 
 
 def main(argv):

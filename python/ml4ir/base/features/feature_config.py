@@ -368,6 +368,40 @@ class FeatureConfig:
                     if fdict["name"] != self.get_label("name")
                 ]
 
+    def get_all_values(self, key: str = None, include_label: bool = True):
+        """
+        Getter method for getting all values of a given key. The method
+        iterates the nested structure and returns all values (if any) for a given
+        key.
+
+        Parameters
+        ----------
+        key : str, optional
+            Name of the configuration key to be fetched.
+            If None, then entire dictionary for the feature is returned
+
+        include_label : bool, optional
+            Include label in list of features returned
+        Returns
+        -------
+        list
+            Lift of all values of a given key for
+            trainable features in FeatureConfig
+        """
+
+        result = []
+        for item in self.get_all_features(include_label=include_label):
+            result.append(self._extract_from_dict(key, item))
+        return [item for outer in result for item in outer if item]
+
+    def _extract_from_dict(self, key: str, item: dict):
+        for key_, value_ in item.items():
+            if key == key_:
+                yield value_
+            if isinstance(value_, dict):
+                for result in self._extract_from_dict(key, value_):
+                    yield result
+
     def get_train_features(self, key: str = None):
         """
         Getter method for train_features in FeatureConfig object

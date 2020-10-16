@@ -331,6 +331,27 @@ class RelevanceArgParser(ArgumentParser):
             help="[Ranklib format only] Option to keep additional info (All info after the '#' in the format [key = val]). 1 to keep, 0 to ignore",
         )
 
+        self.add_argument(
+            "--write_tf_model_dir",
+            type=str,
+            default=".",
+            required=False,
+            help="When specified zips the Tensorflow Record Signature of the model"
+                 " to model_bundle.zip and writes it to the specified directory.",
+        )
+
+        self.add_argument(
+            "--write_config_csvs_by_name",
+            type=str,
+            nargs='+',
+            required=False,
+            default='vocabulary_file',
+            help="Given a key, that is associated with CSV files in the config, "
+                 "recursively looks in the config for its values"
+                 "and copies these CSVs to write_tf_model_dir",
+        )
+
+
     def set_default_args(self):
         pass
 
