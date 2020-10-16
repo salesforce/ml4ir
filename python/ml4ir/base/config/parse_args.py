@@ -1,5 +1,9 @@
+import ast
 from argparse import ArgumentParser, Namespace
 from typing import List
+from ml4ir.base.config.keys import OptimizerKey, DataFormatKey, TFRecordTypeKey, ExecutionModeKey, ServingSignatureKey, FileHandlerKey
+from ml4ir.applications.ranking.config.keys import LossKey as RankingLoss, MetricKey as RankingMetricKey
+from ml4ir.applications.classification.config import LossKey as ClassificationLoss, MetricKey as ClassificationMetricKey
 
 
 class RelevanceArgParser(ArgumentParser):
@@ -8,11 +12,11 @@ class RelevanceArgParser(ArgumentParser):
         self.define_args()
         self.set_default_args()
 
+
     def define_args(self):
         self.add_argument(
             "--data_dir",
             type=str,
-            default=None,
             help="Path to the data directory to be used for training and inference. "
             "Can optionally include train/ val/ and test/ subdirectories. "
             "If subdirectories are not present, data will be split based on train_pcent_split",
@@ -21,23 +25,24 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--data_format",
             type=str,
+            choices=DataFormatKey.get_all_keys(),
             default="tfrecord",
             help="Format of the data to be used. "
-            "Should be one of the Data format keys in ml4ir/config/keys.py",
+            "Supported Data Formats  are specified in ml4ir/base/config/keys.py",
         )
 
         self.add_argument(
             "--tfrecord_type",
             type=str,
+            choices=TFRecordTypeKey.get_all_keys(),
             default="example",
             help="TFRecord type of the data to be used. "
-            "Should be one of the TFRecord type keys in ml4ir/config/keys.py",
+            "Supported TFRecord type are specified in ml4ir/base/config/keys.py",
         )
 
         self.add_argument(
             "--feature_config",
             type=str,
-            default=None,
             help="Path to YAML file or YAML string with feature metadata for training.",
         )
 
@@ -52,39 +57,40 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--model_config",
             type=str,
-            default="ml4ir/base/config/default_model_config.yaml",
             help="Path to the Model config YAML used to build the model architecture.",
         )
 
         self.add_argument(
             "--optimizer_key",
             type=str,
+            choices=OptimizerKey.get_all_keys(),
             default="adam",
             help="Optimizer to use. Has to be one of the optimizers in OptimizerKey under "
-            "ml4ir/config/keys.py",
+            "ml4ir/base/config/keys.py",
         )
 
         self.add_argument(
             "--loss_key",
             type=str,
-            default=None,
-            help="Loss to optimize. Has to be one of the losses in LossKey under ml4ir/config/keys.py",
+            choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
+            help="Loss to optimize."
         )
 
         self.add_argument(
             "--metrics_keys",
             type=str,
+            nargs="+",
             default=None,
-            help="Metric to compute. Can be a list. Has to be one of the metrics in MetricKey under "
-            "ml4ir/config/keys.py",
+            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            help="A space separated list of metrics to compute.",
         )
 
         self.add_argument(
             "--monitor_metric",
             type=str,
             default=None,
-            help="Metric name to use for monitoring training loop in callbacks. "
-            "Must be one MetricKey under ml4ir/config/keys.py",
+            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            help="Metric name to use for monitoring training loop in callbacks.",
         )
 
         self.add_argument(
@@ -109,7 +115,7 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--learning_rate", type=float, default=0.01, help="Step size (e.g.: 0.01)"
+            "--learning_rate", type=float, default=0.01, help="Learning rate value (e.g.: 0.01)"
         )
 
         self.add_argument(
@@ -138,8 +144,9 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--execution_mode",
             type=str,
+            choices=ExecutionModeKey.get_all_keys(),
             default="train_inference_evaluate",
-            help="Execution mode for the pipeline. Should be one of ExecutionModeKey",
+            help="Execution mode for the pipeline.",
         )
 
         self.add_argument(
@@ -153,21 +160,27 @@ class RelevanceArgParser(ArgumentParser):
             "--run_id",
             type=str,
             default="",
-            help="Unique string identifier for the current training run. Used to identify logs and models directories. Autogenerated if not specified.",
+            help="Unique string identifier for the current training run. "
+                 "Used to identify logs and models directories. "
+                 "Autogenerated if not specified.",
         )
 
         self.add_argument(
             "--run_group",
             type=str,
             default="general",
-            help="Unique string identifier to group multiple model training runs. Allows for defining a meta grouping to filter different model training runs for best model selection as a post step.",
+            help="Unique string identifier to group multiple model training runs."
+                 " Allows for defining a meta grouping to filter different model "
+                 "training runs for best model selection as a post step.",
         )
 
         self.add_argument(
             "--run_notes",
             type=str,
             default="",
-            help="Notes for the current training run. Use this argument to add short description of the model training run that helps in identifying the run later.",
+            help="Notes for the current training run. Use this argument "
+                 "to add short description of the model training run that "
+                 "helps in identifying the run later.",
         )
 
         self.add_argument(
@@ -181,12 +194,13 @@ class RelevanceArgParser(ArgumentParser):
             "--logs_dir",
             type=str,
             default="logs/",
-            help="Path to save the training/inference logs. Will be expanded to logs_dir/run_id",
+            help="Path to save the training/inference logs. "
+                 "Will be expanded to logs_dir/run_id",
         )
 
         self.add_argument(
             "--checkpoint_model",
-            type=bool,
+            type=ast.literal_eval,
             default=True,
             help="Whether to save model checkpoints at the end of each epoch. Recommended - set to True",
         )
@@ -224,13 +238,14 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--inference_signature",
             type=str,
+            choices=ServingSignatureKey.get_all_keys(),
             default="serving_default",
             help="SavedModel signature to be used for inference",
         )
 
         self.add_argument(
             "--use_part_files",
-            type=bool,
+            type=ast.literal_eval,
             default=False,
             help="Whether to look for part files while loading data",
         )
@@ -258,7 +273,7 @@ class RelevanceArgParser(ArgumentParser):
 
         self.add_argument(
             "--compile_keras_model",
-            type=bool,
+            type=ast.literal_eval,
             default=False,
             help="Whether to compile a loaded SavedModel into a Keras model. "
             "NOTE: This requires that the SavedModel's architecture, loss, metrics, etc are the same as the RankingModel"
@@ -267,16 +282,18 @@ class RelevanceArgParser(ArgumentParser):
 
         self.add_argument(
             "--use_all_fields_at_inference",
-            type=bool,
+            type=ast.literal_eval,
             default=False,
-            help="Whether to require all fields in the serving signature of the SavedModel. If set to False, only requires fields with required_only=True",
+            help="Whether to require all fields in the serving signature of the SavedModel."
+                 " If set to False, only requires fields with required_only=True",
         )
 
         self.add_argument(
             "--pad_sequence_at_inference",
-            type=bool,
+            type=ast.literal_eval,
             default=False,
-            help="Whether to pad sequence at inference time. Used to define the TFRecord serving signature in the SavedModel",
+            help="Whether to pad sequence at inference time. "
+                 "Used to define the TFRecord serving signature in the SavedModel",
         )
 
         self.add_argument(
@@ -297,7 +314,8 @@ class RelevanceArgParser(ArgumentParser):
             "--file_handler",
             type=str,
             default="local",
-            help="String specifying the file handler to be used. Should be one of FileHandler keys in ml4ir/base/config/keys.py",
+            choices=FileHandlerKey.get_all_keys(),
+            help="String specifying the file handler to be used.",
         )
 
         self.add_argument(
@@ -319,16 +337,17 @@ class RelevanceArgParser(ArgumentParser):
 
         self.add_argument(
             "--non_zero_features_only",
-            type=int,
-            default=0,
-            help="[Ranklib format only] Only non zero features are stored. 1 for yes, 0 otherwise",
+            type=ast.literal_eval,
+            default=False,
+            help="[Ranklib format only] Only non zero features are stored.",
         )
 
         self.add_argument(
             "--keep_additional_info",
-            type=int,
-            default=0,
-            help="[Ranklib format only] Option to keep additional info (All info after the '#' in the format [key = val]). 1 to keep, 0 to ignore",
+            type=ast.literal_eval,
+            default=False,
+            help="[Ranklib format only] Option to keep additional info "
+                 "(All info after the '#' in the format [key = val]).",
         )
 
     def set_default_args(self):
