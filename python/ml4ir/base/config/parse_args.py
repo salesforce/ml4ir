@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from typing import List
 from ml4ir.base.config.keys import OptimizerKey, DataFormatKey, TFRecordTypeKey, ExecutionModeKey, ServingSignatureKey, FileHandlerKey
 from ml4ir.applications.ranking.config.keys import LossKey as RankingLoss, MetricKey as RankingMetricKey
-from ml4ir.applications.classification.config import LossKey as ClassificationLoss, MetricKey as ClassificationMetricKey
+from ml4ir.applications.classification.config.keys import LossKey as ClassificationLoss, MetricKey as ClassificationMetricKey
 
 
 class RelevanceArgParser(ArgumentParser):
@@ -57,6 +57,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--model_config",
             type=str,
+            default="ml4ir/base/config/default_model_config.yaml",
             help="Path to the Model config YAML used to build the model architecture.",
         )
 
