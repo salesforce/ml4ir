@@ -9,6 +9,8 @@ import traceback
 import os
 import sys
 import time
+import shutil
+from pathlib import Path
 from argparse import Namespace
 from logging import Logger
 
@@ -454,8 +456,28 @@ class RelevancePipeline(object):
 
         if self.args.file_handler == FileHandlerKey.SPARK:
             # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=False)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=False)
+            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
+
+        if self.args.write_tf_model_dir:
+            os.makedirs(self.args.write_tf_model_dir)
+            shutil.copytree(os.path.join(self.models_dir_local,
+                                         "final/tfrecord/"), "model_files")
+            shutil.make_archive("{}/model_bundle".format(self.args.write_tf_model_dir),
+                                "zip", "model_files")
+
+            if self.args.write_config_csvs_by_name:
+                for config_key in self.args.write_config_csvs_by_name:  # a list can be provided
+                    for lookup_file in self.feature_config.get_all_values(key=config_key):
+                        out_path = Path(lookup_file).stem + ".csv"
+                        (self.file_io
+                         .read_df(lookup_file)  # needs a str here, not a Path object
+                         .to_csv(out_path))
+                        shutil.make_archive("{}/parameters/{}".format(self.args.write_tf_model_dir,
+                                                                      out_path), "zip", ".", out_path)
+            if self.args.file_handler == FileHandlerKey.SPARK:
+                self.file_io.copy_to_hdfs(self.args.write_tf_model_dir,
+                                          self.models_dir, overwrite=False)
 
         e = int(time.time() - self.start_time)
         self.logger.info(

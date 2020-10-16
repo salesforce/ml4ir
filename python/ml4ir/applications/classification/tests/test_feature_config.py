@@ -7,6 +7,7 @@ from ml4ir.base.config.keys import TFRecordTypeKey
 
 FEAT_CONFIG = "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
+
 class FeatureConfigTest(unittest.TestCase):
     """Test for Feature Config"""
     def setUp(self,):
@@ -24,7 +25,7 @@ class FeatureConfigTest(unittest.TestCase):
                                     'ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv']
 
         vocabulary_files = self.feature_config.get_all_values('vocabulary_file_na')
-        assert len(vocabulary_files) == 0
+        self.assertFalse(vocabulary_files)  # Empty dicts/lists assert to False
 
     def test_get_feature(self):
         feature = self.feature_config.get_feature('query_text')

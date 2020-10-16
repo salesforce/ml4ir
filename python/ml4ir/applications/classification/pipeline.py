@@ -1,24 +1,20 @@
 import sys
 import ast
-import os
-import shutil
 from argparse import Namespace
-from pathlib import Path
-from tensorflow.keras.metrics import Metric, Precision
+from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
-from ml4ir.base.config.keys import FileHandlerKey
 from typing import Union, List, Type
 
 
@@ -169,31 +165,6 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
-
-    def finish(self, job_status, job_info):
-        # This will write the _SUCCESS/_FAILURE files
-        super().finish(job_status, job_info)
-
-        # Create model_bundle.zip depending on user args
-        if self.args.write_tf_model_dir:
-            os.makedirs(self.args.write_tf_model_dir)
-            shutil.copytree(os.path.join(self.models_dir_local,
-                                         "final/tfrecord/"), "model_files")
-            shutil.make_archive("{}/model_bundle".format(self.args.write_tf_model_dir),
-                                "zip", "model_files")
-
-            if self.args.write_config_csvs_by_name:
-                for config_key in self.args.write_config_csvs_by_name:  # a list can be provided
-                    for lookup_file in self.feature_config.get_all_values(key=config_key):
-                        out_path = Path(lookup_file).stem + ".csv"
-                        (self.file_io
-                         .read_df(lookup_file)  # needs a str here, not a Path object
-                         .to_csv(out_path))
-                        shutil.make_archive("{}/parameters/{}".format(self.args.write_tf_model_dir,
-                                                                      out_path), "zip", ".", out_path)
-            if self.args.file_handler == FileHandlerKey.SPARK:
-                self.file_io.copy_to_hdfs(self.args.write_tf_model_dir,
-                                          self.models_dir, overwrite=False)
 
 
 def main(argv):
