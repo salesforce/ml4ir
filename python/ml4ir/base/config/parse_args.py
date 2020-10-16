@@ -343,7 +343,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--write_config_csvs_by_name",
             type=str,
-            nargs='+',
+            nargs="+",
             required=False,
             default='vocabulary_file',
             help="Given a key, that is associated with CSV files in the config, "
