@@ -434,6 +434,19 @@ class RelevancePipeline(object):
             - delete temp data and models directories
             - if using spark IO, transfers models and logs directories to HDFS location from local directories
             - log overall run time of ml4ir job
+        Depending on the arguments passed by the user, the function can also:
+        Create a model_bundle.zip with the TF Record signature of the model under the user defined
+        `write_tf_model_dir`. In the same dir, it can zip CSV files that were potentially indicated
+        in the feature_config. These CSV files should be the values of `write_config_csvs_by_name` argument.
+        Example
+        A user as part of the feature_config passed a path to a CSV, to be used for vocabulary lookups:
+          feature_layer_info:
+            type: numeric
+            fn: categorical_indicator_with_vocabulary_file
+            args:
+              vocabulary_file: ml4ir/entity_id.csv
+        Passing `--write_config_csvs_by_name vocabulary_file` will look for all values of the key
+        `vocabulary_file` in the nested dict of feature_config and write them to `write_config_csvs_by_name`
 
         Parameters
         ----------
