@@ -50,6 +50,7 @@ class RelevanceArgParser(ArgumentParser):
             "--model_file",
             type=str,
             default=None,
+            required=False,
             help="Path to a pretrained model to load for either resuming training or for running in"
             "inference mode.",
         )
