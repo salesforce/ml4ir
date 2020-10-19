@@ -122,9 +122,9 @@ class RelevancePipeline(object):
 
         if args.data_format == DataFormatKey.RANKLIB:
             try:
-                self.non_zero_features_only = args.non_zero_features_only
-                self.keep_additional_info = args.keep_additional_info
-            except:
+                self.non_zero_features_only = self.args.non_zero_features_only
+                self.keep_additional_info = self.args.keep_additional_info
+            except KeyError:
                 self.non_zero_features_only = 0
                 self.keep_additional_info = 0
         else:
@@ -135,10 +135,6 @@ class RelevancePipeline(object):
             self.model_file = args.model_file
         else:
             self.model_file = None
-
-
-
-
 
         # Validate args
         self.validate_args()
