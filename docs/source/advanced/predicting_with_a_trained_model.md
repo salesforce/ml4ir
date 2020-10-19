@@ -1,8 +1,9 @@
-## Predicting with an ml4ir trained model
+## Predicting with a model trained on ml4ir
 
-We explore here how to get predictions from a model trained.
-For the sake of example, we assume that we train a classification model.
-The model artifacts are as follows:
+This sections explores how to get predictions from a model that is trained with `ml4ir`.
+For the sake of example, we assume that we have already trained a classification model. To train such a model, see [this notebook](https://github.com/salesforce/ml4ir/blob/master/python/notebooks/EntityPredictionDemo.ipynb).
+
+The model artifacts are as follows in the `models-dir`:
 ```bash
 ├── checkpoint.tf
 │   ├── assets
@@ -125,4 +126,4 @@ relevance_dataset = RelevanceDataset(
 ```
 will result in queries whose size is 3 bytes (as described in `trim_text`).
 
-For more information on these, [please refer to this notebook](../../../python/notebooks/predicting_with_ml4ir.ipynb).
+For more information on these, [please refer to this notebook](https://github.com/salesforce/ml4ir/blob/master/python/notebooks/predicting_with_ml4ir.ipynb)
