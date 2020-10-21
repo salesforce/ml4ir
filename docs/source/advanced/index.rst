@@ -8,4 +8,5 @@ Advanced Guide
 
    preprocessing
    feature_layer
+   predicting_with_a_trained_model
    transfer_learning

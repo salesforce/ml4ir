@@ -121,9 +121,9 @@ class RelevancePipeline(object):
 
         if args.data_format == DataFormatKey.RANKLIB:
             try:
-                self.non_zero_features_only = args.non_zero_features_only
-                self.keep_additional_info = args.keep_additional_info
-            except:
+                self.non_zero_features_only = self.args.non_zero_features_only
+                self.keep_additional_info = self.args.keep_additional_info
+            except KeyError:
                 self.non_zero_features_only = 0
                 self.keep_additional_info = 0
         else:
@@ -134,10 +134,6 @@ class RelevancePipeline(object):
             self.model_file = args.model_file
         else:
             self.model_file = None
-
-
-
-
 
         # Validate args
         self.validate_args()
@@ -223,24 +219,6 @@ class RelevancePipeline(object):
 
         return self
 
-    def finish(self):
-        # Delete temp data directories
-        if self.data_format == DataFormatKey.CSV:
-            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
-        self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
-
-        if self.args.file_handler == FileHandlerKey.SPARK:
-            # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
-
-        e = int(time.time() - self.start_time)
-        self.logger.info(
-            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(e // 3600, (e % 3600 // 60), e % 60)
-        )
-
-        return self
-
     def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
         Create RelevanceDataset object by loading train, test data as tensorflow datasets
@@ -282,7 +260,6 @@ class RelevancePipeline(object):
             non_zero_features_only=self.non_zero_features_only,
             keep_additional_info=self.keep_additional_info,
         )
-
 
         return relevance_dataset
 
@@ -403,9 +380,6 @@ class RelevancePipeline(object):
                     required_fields_only=not self.args.use_all_fields_at_inference,
                     pad_sequence=self.args.pad_sequence_at_inference,
                 )
-
-            # Finish
-            self.finish(job_status, job_info)
 
         except Exception as e:
             self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))

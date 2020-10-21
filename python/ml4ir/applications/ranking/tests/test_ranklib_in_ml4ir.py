@@ -1,5 +1,6 @@
 import unittest
 import os
+import shutil
 import warnings
 from ml4ir.base.data import ranklib_helper
 import pandas as pd
@@ -21,7 +22,12 @@ NON_ZERO_FEATURES_ONLY = 0
 class TestRanklibConversion(unittest.TestCase):
     def setUp(self):
         self.feature_config_yaml = INPUT_DIR + 'feature_config.yaml'
-        self.feature_config_yaml_convert_to_clicks = INPUT_DIR + 'feature_config_convert_to_clicks.yaml'
+        self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
+            'feature_config_convert_to_clicks.yaml'
+
+    def tearDown(self):
+        if os.path.exists(os.path.join(INPUT_DIR, "tfrecord")):
+            shutil.rmtree(os.path.join(INPUT_DIR, "tfrecord"))
 
     def parse_config(self, tfrecord_type: str, feature_config, io) -> SequenceExampleFeatureConfig:
         if feature_config.endswith(".yaml"):
@@ -35,7 +41,8 @@ class TestRanklibConversion(unittest.TestCase):
         """Creates a relevance dataset using ranklib format. Labels are graded relevance"""
 
         io = local_io.LocalIO()
-        exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml, io)
+        exFeatureConfig = self.parse_config(
+            TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml, io)
         preprocessing_keys_to_fns = {}
         if 'preprocessing_info' in exFeatureConfig.get_label():
             if exFeatureConfig.get_label()['preprocessing_info'][0]['fn'] == 'convert_label_to_clicks':
@@ -84,7 +91,8 @@ class TestRanklibConversion(unittest.TestCase):
     def test_ranklib_in_ml4ir_click_conversion(self):
         """Creates a relevance dataset using ranklib format. Labels are converted to clicks graded relevance"""
         io = local_io.LocalIO()
-        exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml_convert_to_clicks, io)
+        exFeatureConfig = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE,
+                                            self.feature_config_yaml_convert_to_clicks, io)
         preprocessing_keys_to_fns = {}
         if exFeatureConfig.get_label()['preprocessing_info'][0]['fn'] == 'convert_label_to_clicks':
             preprocessing_keys_to_fns['convert_label_to_clicks'] = convert_label_to_clicks
@@ -117,8 +125,6 @@ class TestRanklibConversion(unittest.TestCase):
             assert max(e[1][0]).numpy() == 1
         assert len(chk) == 49
 
-    def tearDown(self):
-        pass
 
 if __name__ == "__main__":
     unittest.main()
