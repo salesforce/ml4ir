@@ -57,14 +57,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--optimizer_key",
-            type=str,
-            default="adam",
-            help="Optimizer to use. Has to be one of the optimizers in OptimizerKey under "
-            "ml4ir/config/keys.py",
-        )
-
-        self.add_argument(
             "--loss_key",
             type=str,
             default=None,
@@ -228,13 +220,6 @@ class RelevanceArgParser(ArgumentParser):
             default=None,
             help="Minimum number of queries per group to be used to computed groupwise metrics.",
         )
-
-        # self.add_argument(
-        #     "--gradient_clip_value",
-        #     type=float,
-        #     default=5.0,
-        #     help="Gradient clipping value/threshold for the optimizer.",
-        # )
 
         self.add_argument(
             "--compile_keras_model",

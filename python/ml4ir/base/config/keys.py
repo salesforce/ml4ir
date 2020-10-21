@@ -36,6 +36,7 @@ class LearningRateScheduleKey(Key):
 
     EXPONENTIAL = "exponential"
     CYCLIC = "cyclic"
+    CONSTANT = 'constant'
 
 class CyclicLearningRateType(Key):
     """Cyclic learning rate schedule type keys"""
