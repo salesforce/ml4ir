@@ -4,8 +4,8 @@ The `ModelConfig` is created from a YAML file and defines the scoring layers of 
 
 Currently, ml4ir supports a dense neural network architecture (multi layer perceptron like). Users can define the type of scoring architecture using the `architecture_key`. The layers of the neural network can be defined as a list of configurations using the `layers` attribute. For each layer, define the `type` of tensorflow-keras layer. Then for each layer, we can specify arguments to be passed to the instantiation of the layer. Finally, for each layer, we can specify a name using the `name` attribute.
 
-This file is also used to define the optimizer and the learning rate schedule. The current supported optimizers are: `adam`, `adagrad`, `nadam`, `sgd`, `rms_prop`. Each of these optimizers need so set the following hyper-parameter: `gradient_clip_value`. 
-The current supported learning rate schedules are: `exponential`, `cyclic` and `constant`. 
+This file is also used to define the optimizer and the learning rate schedule. The current supported optimizers are: `adam`, `adagrad`, `nadam`, `sgd`, `rms_prop`. Each of these optimizers need so set the following hyper-parameter: `gradient_clip_value`. `adam` is the default optimizer if non was specified.
+The current supported learning rate schedules are: `exponential`, `cyclic` and `constant`. `constant` is the default schedule if non was specified with learning rate = 0.01
 
 The `exponential` learning rate schedule requires defining the following hyper-parameters: `initial_learning_rate`, `decay_steps`, `decay_rate`. For more information, see: https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
 
