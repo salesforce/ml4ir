@@ -6,25 +6,25 @@ from ml4ir.base.config.keys import OptimizerKey, LearningRateScheduleKey, Cyclic
 
 def choose_optimizer(model_config, learning_rate_schedule):
     """
-            Define the optimizer used for training the RelevanceModel
-            Users have the option to define an ExponentialDecay learning rate schedule
+        Define the optimizer used for training the RelevanceModel
+        Users have the option to define an ExponentialDecay learning rate schedule
 
-            Parameters
-            ----------
+        Parameters
+        ----------
             model_config : dict
                 model configuration doctionary
 
-            Returns
-            -------
+        Returns
+        -------
             tensorflow optimizer
 
-            Notes
-            -----
-            References:
-                https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/Optimizer
-                https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
-                https://arxiv.org/pdf/1506.01186.pdf
-            """
+        Notes
+        -----
+        References:
+            https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/Optimizer
+            https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
+            https://arxiv.org/pdf/1506.01186.pdf
+    """
 
     if 'optimizer' not in model_config:
         return tf_optimizers.Adam(learning_rate=learning_rate_schedule, clipvalue=5.0)
@@ -61,12 +61,12 @@ def choose_scheduler(model_config):
 
         Parameters
         ----------
-        model_config : dict
-            model configuration doctionary
+            model_config : dict
+                model configuration doctionary
 
         Returns
         -------
-        tensorflow learning rate scheduler
+            tensorflow learning rate scheduler
 
         Notes
         -----
@@ -83,7 +83,6 @@ def choose_scheduler(model_config):
             decay_steps=10000000,
             decay_rate=1.0,
         )
-        #learning_rate_schedule = None
 
     else:
         lr_schedule = model_config['lr_schedule']

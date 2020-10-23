@@ -18,3 +18,9 @@ layers:
     name: final_dense
     units: 1
     activation: null
+optimizer:
+  key: sgd
+  gradient_clip_value: 5.0
+lr_schedule:
+  key: constant
+  learning_rate: 0.1
