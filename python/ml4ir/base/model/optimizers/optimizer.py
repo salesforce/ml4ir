@@ -91,8 +91,8 @@ def choose_scheduler(model_config):
         if lr_schedule_key == LearningRateScheduleKey.EXPONENTIAL:
             learning_rate_schedule = ExponentialDecay(
                 initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else 0.01,
-                decay_steps=lr_schedule['learning_rate_decay_steps'] if 'learning_rate_decay_steps' in lr_schedule else 10000000,
-                decay_rate=lr_schedule['learning_rate_decay'] if 'learning_rate_decay' in lr_schedule else 1.0,
+                decay_steps=lr_schedule['learning_rate_decay_steps'] if 'learning_rate_decay_steps' in lr_schedule else 100000,
+                decay_rate=lr_schedule['learning_rate_decay'] if 'learning_rate_decay' in lr_schedule else 0.96,
                 staircase=True,
             )
 
