@@ -6,7 +6,6 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
-
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -140,7 +139,8 @@ class RelevanceModel:
             # Write model summary to logs
             model_summary = list()
             self.model.summary(print_fn=lambda x: model_summary.append(x))
-            self.logger.info("\n".join(model_summary))
+            if self.logger:
+                self.logger.info("\n".join(model_summary))
 
             if model_file:
                 """
@@ -396,6 +396,7 @@ class RelevanceModel:
             monitor_metric=monitor_metric,
             patience=patience,
         )
+
         if self.is_compiled:
             history = self.model.fit(
                 x=dataset.train,

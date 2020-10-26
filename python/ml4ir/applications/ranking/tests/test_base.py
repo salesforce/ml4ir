@@ -12,7 +12,7 @@ from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.optimizer import get_optimizer
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -122,11 +122,7 @@ class RankingTestBase(unittest.TestCase):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.args.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            file_io=self.file_io, model_config_file=self.args.model_config,
         )
 
         # Combine the above to define a RelevanceModel

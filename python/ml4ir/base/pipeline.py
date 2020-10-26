@@ -112,7 +112,6 @@ class RelevancePipeline(object):
 
         # Setup other arguments
         self.loss_key: str = self.args.loss_key
-        self.optimizer_key: str = self.args.optimizer_key
         if self.args.metrics_keys[0] == "[":
             self.metrics_keys: List[str] = ast.literal_eval(self.args.metrics_keys)
         else:
@@ -194,13 +193,6 @@ class RelevancePipeline(object):
             raise Exception(
                 "Unset arguments (check usage): \n{}".format(
                     json.dumps(unset_arguments).replace(",", "\n")
-                )
-            )
-
-        if self.optimizer_key not in OptimizerKey.get_all_keys():
-            raise Exception(
-                "Optimizer specified [{}] is not one of : {}".format(
-                    self.optimizer_key, OptimizerKey.get_all_keys()
                 )
             )
 
