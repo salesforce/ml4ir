@@ -1,15 +1,16 @@
 import sys
 import ast
 from argparse import Namespace
-
-from tensorflow.keras.metrics import Metric, Precision
+import pandas as pd
+from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
+from tensorflow import data
 
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
@@ -17,7 +18,7 @@ from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
 
-from typing import Union, List, Type
+from typing import Union, List, Type, Optional
 
 
 class ClassificationPipeline(RelevancePipeline):
@@ -163,6 +164,85 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
+
+    def evaluate(
+        self,
+        test_dataset: data.TFRecordDataset,
+        inference_signature: str = None,
+        additional_features: dict = {},
+        group_metrics_min_queries: int = 50,
+        logs_dir: Optional[str] = None,
+        logging_frequency: int = 25,
+    ):
+        """
+        Evaluate the Classification Model
+
+        Parameters
+        ----------
+        test_dataset: an instance of tf.data.dataset
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        group_metrics_min_queries : int, optional
+            Minimum count threshold per group to be considered for computing
+            groupwise metrics
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
+
+        Returns
+        -------
+        df_overall_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing overall metrics
+        df_groupwise_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing groupwise metrics if
+            group_metric_keys are defined in the FeatureConfig
+        metrics_dict : dict
+            metrics as a dictionary of metric names mapping to values
+
+        Notes
+        -----
+        You can directly do a `model.evaluate()` only if the keras model is compiled
+        """
+        group_metrics_keys = self.feature_config.get_group_metrics_keys()
+        relevance_model = self.get_relevance_model()
+        if not relevance_model.is_compiled:
+            return NotImplementedError
+
+        metrics_dict = relevance_model.model.evaluate(test_dataset)
+        metrics_dict = dict(zip(relevance_model.model.metrics_names, metrics_dict))
+        predictions = relevance_model.predict(test_dataset,
+                                              inference_signature=inference_signature,
+                                              additional_features=additional_features,
+                                              logs_dir=None,  # Return pd.DataFrame of predictions
+                                              logging_frequency=logging_frequency)
+        # Need to convert predictions from tuples of tf.Tensor to lists of int/float
+        # so that we are compatible with tf.keras.metrics
+        label_name = self.feature_config.get_label()['name']
+        output_name = relevance_model.output_name
+        predictions[label_name] = predictions[label_name].apply(lambda l: [item.numpy() for item in l])
+        predictions[output_name] = predictions[output_name].apply(lambda l: [item.numpy() for item in l])
+
+        results = []  # group_name, metric, value
+        for metric in relevance_model.model.metrics:
+            metric.reset_states()
+            metric.update_state(predictions[label_name].values.tolist(), predictions[output_name].values.tolist())
+            results.append({"group_key": "all", "metric": metric.name, "value": metric.result().numpy()})
+            for group_ in group_metrics_keys:
+                for name, group in predictions.groupby(group_['name']):
+                    metric.reset_states()
+                    metric.update_state(group[label_name].values.tolist(),
+                                        group[output_name].values.tolist())
+                    results.append({"group_name": group_['name'],
+                                    "group_key": name,
+                                    "metric": metric.name,
+                                    "value": metric.result().numpy()})
+        return pd.DataFrame(results), metrics_dict
 
 
 def main(argv):
