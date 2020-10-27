@@ -112,7 +112,6 @@ class RelevancePipeline(object):
 
         # Setup other arguments
         self.loss_key: str = self.args.loss_key
-        self.optimizer_key: str = self.args.optimizer_key
         self.metrics_keys: List[str] = self.args.metrics_keys
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type

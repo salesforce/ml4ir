@@ -11,7 +11,7 @@ from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.optimizer import get_optimizer
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
@@ -92,11 +92,7 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            model_config_file=self.model_config_file, file_io=self.file_io,
         )
 
         # Combine the above to define a RelevanceModel

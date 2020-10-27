@@ -63,15 +63,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--optimizer_key",
-            type=str,
-            choices=OptimizerKey.get_all_keys(),
-            default="adam",
-            help="Optimizer to use. Has to be one of the optimizers in OptimizerKey under "
-            "ml4ir/base/config/keys.py",
-        )
-
-        self.add_argument(
             "--loss_key",
             type=str,
             choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
@@ -114,27 +105,6 @@ class RelevanceArgParser(ArgumentParser):
             type=int,
             default=128,
             help="Number of data samples to use per batch.",
-        )
-
-        self.add_argument(
-            "--learning_rate", type=float,
-            default=0.01, help="Learning rate value (e.g.: 0.01)"
-        )
-
-        self.add_argument(
-            "--learning_rate_decay",
-            type=float,
-            default=1.0,
-            help="Decay rate for the learning rate."
-            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
-        )
-
-        self.add_argument(
-            "--learning_rate_decay_steps",
-            type=int,
-            default=10000000,
-            help="Decay rate for the learning rate."
-            "Check for more info -> https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay",
         )
 
         self.add_argument(
@@ -265,13 +235,6 @@ class RelevanceArgParser(ArgumentParser):
             type=int,
             default=None,
             help="Minimum number of queries per group to be used to computed groupwise metrics.",
-        )
-
-        self.add_argument(
-            "--gradient_clip_value",
-            type=float,
-            default=5.0,
-            help="Gradient clipping value/threshold for the optimizer.",
         )
 
         self.add_argument(
