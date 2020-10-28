@@ -10,7 +10,7 @@ class ClassificationModel(RelevanceModel):
     """Inherits from a Relevance model
     to create a classification model to
     create classification evaluate and predict
-    metrods."""
+    methods."""
     def evaluate(
         self,
         test_dataset: data.TFRecordDataset,
@@ -57,12 +57,10 @@ class ClassificationModel(RelevanceModel):
         """
         if not self.is_compiled:
             return NotImplementedError
-
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
 
         metrics_dict = self.model.evaluate(test_dataset)
         metrics_dict = dict(zip(self.model.metrics_names, metrics_dict))
-
         predictions = self.predict(test_dataset,
                                    inference_signature=inference_signature,
                                    additional_features=additional_features,
@@ -94,15 +92,17 @@ class ClassificationModel(RelevanceModel):
                                                 "value": metric.result().numpy(),
                                                 "size": group.shape[0]})
         global_metrics = pd.DataFrame(global_metrics)
-        grouped_metrics = pd.DataFrame(grouped_metrics)
+        grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
         if logs_dir:
             self.file_io.write_df(
                 grouped_metrics,
                 outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                index=False
                 )
             self.file_io.write_df(
                 global_metrics,
-                outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE)
+                outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE),
+                index=False
             )
             self.logger.info(f"Evaluation Results written at: {logs_dir}")
         return global_metrics, grouped_metrics, metrics_dict
