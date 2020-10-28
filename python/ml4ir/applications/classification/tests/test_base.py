@@ -95,9 +95,9 @@ class ClassificationTestBase(unittest.TestCase):
                                                            models_dir=self.output_dir)
 
         self.global_metrics, self.grouped_metrics, self.metrics_dict = \
-            self.classification_pipeline.evaluate(test_dataset=self.relevance_dataset.test,
-                                                  logs_dir=self.args.logs_dir,
-                                                  group_metrics_min_queries=0)
+            self.classification_model.evaluate(test_dataset=self.relevance_dataset.test,
+                                               logs_dir=self.args.logs_dir,
+                                               group_metrics_min_queries=0)
 
     def tearDown(self):
         # Delete output directory

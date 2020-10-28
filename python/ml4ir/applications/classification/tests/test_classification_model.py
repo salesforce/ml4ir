@@ -15,8 +15,8 @@ class ClassificationModelTest(ClassificationTestBase):
         # Check if the loss and accuracy on the test set is the same
         # Note that we don't check Precision which is not useful for this test model
         # Note that these numbers are different if you run it directly vs with docker-compose up
-        expected_loss = 2.205
-        expected_acc = 0.083
+        expected_loss = 1.793
+        expected_acc = 0.171
         tol = 0.01
         self.assertTrue(np.isclose(self.metrics_dict["loss"], expected_loss, rtol=tol),
                         msg=f"Loss not in expected range."
