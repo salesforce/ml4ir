@@ -1,3 +1,4 @@
+import os
 import sys
 import ast
 from argparse import Namespace
@@ -5,7 +6,7 @@ import pandas as pd
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
-
+from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.classification.model.metrics import metrics_factory
@@ -209,13 +210,15 @@ class ClassificationPipeline(RelevancePipeline):
         -----
         You can directly do a `model.evaluate()` only if the keras model is compiled
         """
-        group_metrics_keys = self.feature_config.get_group_metrics_keys()
         relevance_model = self.get_relevance_model()
         if not relevance_model.is_compiled:
             return NotImplementedError
 
+        group_metrics_keys = self.feature_config.get_group_metrics_keys()
+
         metrics_dict = relevance_model.model.evaluate(test_dataset)
         metrics_dict = dict(zip(relevance_model.model.metrics_names, metrics_dict))
+
         predictions = relevance_model.predict(test_dataset,
                                               inference_signature=inference_signature,
                                               additional_features=additional_features,
@@ -228,21 +231,36 @@ class ClassificationPipeline(RelevancePipeline):
         predictions[label_name] = predictions[label_name].apply(lambda l: [item.numpy() for item in l])
         predictions[output_name] = predictions[output_name].apply(lambda l: [item.numpy() for item in l])
 
-        results = []  # group_name, metric, value
+        global_metrics = []  # group_name, metric, value
+        grouped_metrics = []
         for metric in relevance_model.model.metrics:
             metric.reset_states()
             metric.update_state(predictions[label_name].values.tolist(), predictions[output_name].values.tolist())
-            results.append({"group_key": "all", "metric": metric.name, "value": metric.result().numpy()})
+            global_metrics.append({"metric": metric.name,
+                                   "value": metric.result().numpy()})
             for group_ in group_metrics_keys:
                 for name, group in predictions.groupby(group_['name']):
-                    metric.reset_states()
-                    metric.update_state(group[label_name].values.tolist(),
-                                        group[output_name].values.tolist())
-                    results.append({"group_name": group_['name'],
-                                    "group_key": name,
-                                    "metric": metric.name,
-                                    "value": metric.result().numpy()})
-        return pd.DataFrame(results), metrics_dict
+                    if group.shape[0] >= group_metrics_min_queries:
+                        metric.reset_states()
+                        metric.update_state(group[label_name].values.tolist(),
+                                            group[output_name].values.tolist())
+                        grouped_metrics.append({"group_name": group_['name'],
+                                                "group_key": name,
+                                                "metric": metric.name,
+                                                "value": metric.result().numpy(),
+                                                "size": group.shape[0]})
+        global_metrics = pd.DataFrame(global_metrics)
+        grouped_metrics = pd.DataFrame(grouped_metrics)
+        if logs_dir:
+            self.file_io.write_df(
+                grouped_metrics,
+                outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                )
+            self.file_io.write_df(
+                global_metrics,
+                outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE)
+            )
+        return global_metrics, grouped_metrics, metrics_dict
 
 
 def main(argv):

@@ -1,10 +1,5 @@
 import numpy as np
-from argparse import Namespace
-
-from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
-from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.model.relevance_model import RelevanceModel
 
 
 class ClassificationModelTest(ClassificationTestBase):
@@ -13,38 +8,30 @@ class ClassificationModelTest(ClassificationTestBase):
     :func:`~ml4ir.applications.classification.pipeline.ClassificationPipeline.get_relevance_model`
     """
 
-    def run_default_pipeline(self, data_format: str):
-        """Train a model with the default set of args"""
-        # Fix random seed values for repeatability
-        self.set_seeds()
-
-        args: Namespace = self.get_overridden_args(data_format)
-
-        classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
-        relevance_dataset: RelevanceDataset = classification_pipeline.get_relevance_dataset()
-        classification_model: RelevanceModel = classification_pipeline.get_relevance_model()
-
-        classification_model.fit(
-            dataset=relevance_dataset, num_epochs=5, models_dir=self.output_dir
-        )
-
-        _, _, metrics = classification_model.evaluate(
-            test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir
-        )
-
-        return metrics
-
-    def test_csv(self):
+    def test_csv_metrics(self):
         """
-        Test model training and evaluate the performance metrics from CSV data
+        Test the performance metrics from CSV data
         """
-        # Test model training on CSV data
-        metrics = self.run_default_pipeline(data_format="csv")
-
         # Check if the loss and accuracy on the test set is the same
         # Note that we don't check Precision which is not useful for this test model
-        # Note that these numbers are different if you run it directly or if you run it within docker-compose up
-        self.assertTrue(np.isclose(metrics["loss"], 1.816300054391225, rtol=0.01),
-                        msg="loss not in expected range. metrics={}".format(metrics))
-        self.assertTrue(np.isclose(metrics["categorical_accuracy"], 0.140625, rtol=0.01),
-                        msg="categorical_accuracy not in expected range. metrics={}".format(metrics))
+        # Note that these numbers are different if you run it directly vs with docker-compose up
+        expected_loss = 2.205
+        expected_acc = 0.083
+        tol = 0.01
+        self.assertTrue(np.isclose(self.metrics_dict["loss"], expected_loss, rtol=tol),
+                        msg=f"Loss not in expected range."
+                            f" Expected: {expected_loss} ± {tol}, Found: {self.metrics_dict['loss']}")
+        self.assertTrue(np.isclose(self.metrics_dict["categorical_accuracy"], expected_acc, rtol=tol),
+                        msg=f"Categorical_accuracy not in expected range."
+                            f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict['categorical_accuracy']}")
+
+    def test_group_metrics_df(self):
+        """
+        Test the dimensions of the grouped metrics
+        """
+        metrics = self.classification_pipeline.metrics_keys  # Metrics during training
+        self.assertTrue(self.grouped_metrics.metric.nunique() == len(metrics))  # number of metrics
+        self.assertTrue(set(self.grouped_metrics.metric.unique()) == set(metrics))  # metrics per se
+        group_keys = self.classification_pipeline.feature_config.get_group_metrics_keys()
+        group_names = [key['name'] for key in group_keys]
+        self.assertTrue(set(self.grouped_metrics.group_name.unique()) == set(group_names))  # group_names

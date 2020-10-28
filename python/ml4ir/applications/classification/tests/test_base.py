@@ -10,6 +10,9 @@ from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 
 from ml4ir.applications.classification.config.parse_args import get_args
+from ml4ir.applications.classification.pipeline import ClassificationPipeline
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.base.model.relevance_model import RelevanceModel
 
 import warnings
 
@@ -72,7 +75,29 @@ class ClassificationTestBase(unittest.TestCase):
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
 
-        self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
+        self.logger = setup_logging(reset=True,
+                                    file_name=outfile,
+                                    log_to_file=True)
+        self.run_default_pipeline(data_format="csv")
+
+    def run_default_pipeline(self, data_format: str):
+        """Train a model with the default set of args"""
+        # Fix random seed values for repeatability
+        self.set_seeds()
+        args: Namespace = self.get_overridden_args(data_format)
+
+        self.classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
+        self.relevance_dataset: RelevanceDataset = self.classification_pipeline.get_relevance_dataset()
+        self.classification_model: RelevanceModel = self.classification_pipeline.get_relevance_model()
+
+        self.train_metrics = self.classification_model.fit(dataset=self.relevance_dataset,
+                                                           num_epochs=5,
+                                                           models_dir=self.output_dir)
+
+        self.global_metrics, self.grouped_metrics, self.metrics_dict = \
+            self.classification_pipeline.evaluate(test_dataset=self.relevance_dataset.test,
+                                                  logs_dir=self.args.logs_dir,
+                                                  group_metrics_min_queries=0)
 
     def tearDown(self):
         # Delete output directory
