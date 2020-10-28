@@ -260,6 +260,7 @@ class ClassificationPipeline(RelevancePipeline):
                 global_metrics,
                 outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE)
             )
+            self.logger.info(f"Evaluation Results written at: {logs_dir}")
         return global_metrics, grouped_metrics, metrics_dict
 
 
