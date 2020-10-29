@@ -336,7 +336,9 @@ class FeatureConfig:
         else:
             raise KeyError("No feature named {} in FeatureConfig".format(name))
 
-    def get_all_features(self, key: str = None, include_label: bool = True):
+    def get_all_features(self, key: str = None,
+                         include_label: bool = True,
+                         include_mask: bool = True):
         """
         Getter method for all_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
@@ -348,6 +350,9 @@ class FeatureConfig:
             If None, then entire dictionary for the feature is returned
         include_label : bool, optional
             Include label in list of features returned
+        include_mask : bool, optional
+            Include mask in the list of features returned.
+            Only applicable with SequenceExampleFeatureConfig currently
 
         Returns
         -------
@@ -356,17 +361,15 @@ class FeatureConfig:
             all features in FeatureConfig
         """
         all_features = self._get_list_of_keys_or_dicts(self.all_features, key=key)
-        if include_label:
-            return all_features
-        else:
-            if key:
-                return [f for f in all_features if f != self.get_label(key)]
-            else:
-                return [
-                    fdict
-                    for fdict in all_features
-                    if fdict["name"] != self.get_label("name")
-                ]
+
+        # Populate features to skip
+        features_to_skip = []
+        if not include_label:
+            features_to_skip.append(self.get_label(key=key))
+        if not include_mask:
+            features_to_skip.append(self.get_mask(key=key))
+
+        return [f for f in all_features if f not in features_to_skip]
 
     def get_train_features(self, key: str = None):
         """

@@ -385,6 +385,7 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+        from IPython import embed; embed()
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
