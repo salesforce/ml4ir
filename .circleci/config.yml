@@ -54,7 +54,7 @@ jobs:
             . venv/bin/activate
             cd python
             python3 -m pytest --html=pytest_report.html
-          no_output_timeout: 30m  # Time for running the tests before we timeout
+          no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
           path: python/pytest_report.html
       - store_test_results:
