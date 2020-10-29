@@ -426,7 +426,7 @@ class ExampleParser(TFRecordParser):
         """
         return tf.expand_dims(feature_tensor, axis=0)
 
-    def pad_feature(self, feature_tensor, feature_info, mask):
+    def pad_feature(self, feature_tensor, feature_info):
         """
         Pad the feature to the `max_sequence_size` in order to create
         uniform data batches for training
