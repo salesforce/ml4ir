@@ -53,7 +53,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest  ml4ir/applications/classification/tests/test_classification_model.py --html=pytest_report.html
+            python3 -m pytest --html=pytest_report.html
           no_output_timeout: 30m  # Time for running the tests before we timeout
       - store_artifacts:
           path: python/pytest_report.html
