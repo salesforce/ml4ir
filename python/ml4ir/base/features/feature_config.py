@@ -40,6 +40,9 @@ class FeatureConfig:
     label : dict
         Dictionary containing the feature configuration for the label field
         for training and evaluating the model
+    mask : dict
+        Dictionary containing the feature configuration for the computed mask
+        field which is used to identify padded values
     features : list of dict
         List of dictionaries containing configurations for all the features
         excluding query_key and label
@@ -101,6 +104,7 @@ class FeatureConfig:
         self.all_features: List[Optional[Dict]] = list()
         self.query_key: Optional[Dict] = None
         self.label: Optional[Dict] = None
+        self.mask: Optional[Dict] = None
         self.features: List[Optional[Dict]] = list()
 
         # Features that can be used for training the model
@@ -289,6 +293,23 @@ class FeatureConfig:
             Label value or entire config dictionary based on if the key is passed
         """
         return self._get_key_or_dict(self.label, key=key)
+
+    def get_mask(self, key: str = None):
+        """
+        Getter method for mask in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+
+        Parameters
+        ----------
+        key : str
+            Value from the mask feature configuration to be fetched
+
+        Returns
+        -------
+        str or int or bool or dict
+            Label value or entire config dictionary based on if the key is passed
+        """
+        return self._get_key_or_dict(self.mask, key=key)
 
     def get_feature(self, name: str):
         """
