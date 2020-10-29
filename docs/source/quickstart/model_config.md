@@ -46,16 +46,27 @@ lr_schedule:
   step_size: 10                  #default value is 10
 ```
 
-#Below is an example of defining other learning rate schedules.
-#lr_schedule:
-#  key: cyclic
-#  type: triangular
-#  initial_learning_rate: 0.001   #default value is 0.001
-#  maximal_learning_rate: 0.01    #default value is 0.01
-#  step_size: 10                  #default value is 10
-#
-#lr_schedule:
-#  key: exponential
-#  learning_rate: 0.01                   #default value is 0.01
-#  learning_rate_decay_steps: 100000   #default value is 100000
-#  learning_rate_decay: 0.96              #default value is 0.96
+'''
+Below is an example of defining other learning rate schedules.
+
+Cyclic Learning Rate Schedule
+optimizer:
+  key: sgd
+  gradient_clip_value: 5.0       #default value is 5.0
+lr_schedule:
+  key: cyclic
+  type: triangular
+  initial_learning_rate: 0.001   #default value is 0.001
+  maximal_learning_rate: 0.01    #default value is 0.01
+  step_size: 10                  #default value is 10
+
+Exponential Decayed Learning Rate Schedule
+optimizer:
+  key: sgd
+  gradient_clip_value: 5.0       #default value is 5.0
+lr_schedule:
+  key: exponential
+  learning_rate: 0.01                   #default value is 0.01
+  learning_rate_decay_steps: 100000   #default value is 100000
+  learning_rate_decay: 0.96              #default value is 0.96
+'''

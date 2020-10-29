@@ -397,6 +397,8 @@ class RelevanceModel:
             patience=patience,
         )
 
+        #callbacks_list.append(on_epoch_end())
+
         if self.is_compiled:
             history = self.model.fit(
                 x=dataset.train,
@@ -739,7 +741,6 @@ class RelevanceModel:
                     mode=monitor_mode,
                     monitor=monitor_metric,
                 )
-                callbacks_list.append(cp_callback)
 
             # Early Stopping
             if monitor_metric:

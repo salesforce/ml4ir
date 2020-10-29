@@ -2,6 +2,19 @@ import tensorflow.keras.optimizers as tf_optimizers
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 from ml4ir.base.model.optimizers import cyclic_learning_rate
 from ml4ir.base.config.keys import OptimizerKey, LearningRateScheduleKey, CyclicLearningRateType
+import tensorflow as tf
+
+class DefaultValues(object):
+  """Default values for unspecified parameters of the optimizer and learning rate schedule."""
+  GRADIENT_CLIP_VALUE = 5.0
+  CONSTANT_LR = 0.01
+  EXP_DECAY_STEPS = 100000
+  EXP_DECAY_RATE = 0.96
+  CYCLIC_INITIAL_LEARNING_RATE = 0.001
+  CYCLIC_MAXIMAL_LEARNING_RATE = 0.01
+  CYCLIC_STEP_SIZE = 10
+  CYCLIC_GAMMA = 1.0
+
 
 
 def choose_optimizer(model_config, learning_rate_schedule):
@@ -31,28 +44,8 @@ def choose_optimizer(model_config, learning_rate_schedule):
     else:
         optimizer_key = model_config['optimizer']['key']
         gradient_clip_value = model_config['optimizer']['gradient_clip_value']
-        if optimizer_key == OptimizerKey.ADAM:
-            return tf_optimizers.Adam(
-                learning_rate=learning_rate_schedule, clipvalue=gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else 5.0
-            )
-        elif optimizer_key == OptimizerKey.NADAM:
-            return tf_optimizers.Nadam(
-                learning_rate=learning_rate_schedule, clipvalue=gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else 5.0
-            )
-        elif optimizer_key == OptimizerKey.ADAGRAD:
-            return tf_optimizers.Adagrad(
-                learning_rate=learning_rate_schedule, clipvalue=gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else 5.0
-            )
-        elif optimizer_key == OptimizerKey.SGD:
-            return tf_optimizers.SGD(
-                learning_rate=learning_rate_schedule, clipvalue=gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else 5.0
-            )
-        elif optimizer_key == OptimizerKey.RMS_PROP:
-            return tf_optimizers.RMSprop(
-                learning_rate=learning_rate_schedule, clipvalue=gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else 5.0
-            )
-        else:
-            raise ValueError("Unsupported Optimizer: " + optimizer_key)
+        config = {'learning_rate':learning_rate_schedule, 'clipvalue': gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else DefaultValues.GRADIENT_CLIP_VALUE}
+        return tf.keras.optimizers.get({'class_name':optimizer_key, 'config':config})
 
 def choose_scheduler(model_config):
     """
@@ -79,7 +72,7 @@ def choose_scheduler(model_config):
     if 'lr_schedule' not in model_config:
         #use constant lr schedule
         learning_rate_schedule = ExponentialDecay(
-            initial_learning_rate=0.01,
+            initial_learning_rate=DefaultValues.CONSTANT_LR,
             decay_steps=10000000,
             decay_rate=1.0,
         )
@@ -90,15 +83,15 @@ def choose_scheduler(model_config):
 
         if lr_schedule_key == LearningRateScheduleKey.EXPONENTIAL:
             learning_rate_schedule = ExponentialDecay(
-                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else 0.01,
-                decay_steps=lr_schedule['learning_rate_decay_steps'] if 'learning_rate_decay_steps' in lr_schedule else 100000,
-                decay_rate=lr_schedule['learning_rate_decay'] if 'learning_rate_decay' in lr_schedule else 0.96,
+                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else DefaultValues.CONSTANT_LR,
+                decay_steps=lr_schedule['learning_rate_decay_steps'] if 'learning_rate_decay_steps' in lr_schedule else DefaultValues.EXP_DECAY_STEPS,
+                decay_rate=lr_schedule['learning_rate_decay'] if 'learning_rate_decay' in lr_schedule else DefaultValues.EXP_DECAY_RATE,
                 staircase=True,
             )
 
         elif lr_schedule_key == LearningRateScheduleKey.CONSTANT:
             learning_rate_schedule = ExponentialDecay(
-                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else 0.01,
+                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else DefaultValues.CONSTANT_LR,
                 decay_steps=10000000,
                 decay_rate=1.0,
             )
@@ -107,22 +100,22 @@ def choose_scheduler(model_config):
             lr_schedule_type = lr_schedule['type']
             if lr_schedule_type == CyclicLearningRateType.TRIANGULAR:
                 learning_rate_schedule = cyclic_learning_rate.TriangularCyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else 0.001,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else 0.01,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else 10,
+                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
+                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
+                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
                 )
             elif lr_schedule_type == CyclicLearningRateType.TRIANGULAR2:
                 learning_rate_schedule = cyclic_learning_rate.Triangular2CyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else 0.001,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else 0.01,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else 10,
+                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
+                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
+                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
                 )
             elif lr_schedule_type == CyclicLearningRateType.EXPONENTIAL:
                 learning_rate_schedule = cyclic_learning_rate.ExponentialCyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else 0.001,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else 0.01,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else 10,
-                    gamma=lr_schedule['gamma'] if 'gamma' in lr_schedule else 1.0,
+                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
+                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
+                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
+                    gamma=lr_schedule['gamma'] if 'gamma' in lr_schedule else DefaultValues.CYCLIC_GAMMA,
                 )
             else:
                 raise ValueError("Unsupported cyclic learning rate schedule type key: " + lr_schedule_type)
