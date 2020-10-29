@@ -13,7 +13,7 @@ class ClassificationModelTest(ClassificationTestBase):
         # Check if the loss and accuracy on the test set is the same
         # Note that we don't check Precision which is not useful for this test model
         # Note that these numbers are different if you run it directly vs with docker-compose up
-        expected_loss = 1.678  # 1.816 for 5 epochs in CircleCI
+        expected_loss = 1.705
         tol = 0.01
         self.assertTrue(np.isclose(self.metrics_dict["loss"], expected_loss, rtol=tol),
                         msg=f"Loss not in expected range."
@@ -21,7 +21,7 @@ class ClassificationModelTest(ClassificationTestBase):
 
     def test_csv_accuracy(self):
         """Test the accuracy from CSV data"""
-        expected_acc = 0.229  # 0.140 for 5 epochs in CircleCI
+        expected_acc = 0.203
         tol = 0.01
         self.assertTrue(np.isclose(self.metrics_dict["categorical_accuracy"], expected_acc, rtol=tol),
                         msg=f"Categorical_accuracy not in expected range."

@@ -135,3 +135,17 @@ features:
       name: user_context
       required: true
     default_value: ""
+  - name: code
+    node_name: code
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: code
+      required: false
+      default_value: ""
+
