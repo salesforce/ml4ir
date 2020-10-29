@@ -28,15 +28,15 @@ class ExampleParserTest(unittest.TestCase):
             feature_config_dict=file_io.read_yaml(FEATURE_CONFIG_PATH),
             logger=logger
         )
-        self.se_parser = ExampleParser(feature_config=self.feature_config,
-                                       preprocessing_map=PreprocessingMap(),
-                                       required_fields_only=False)
+        self.parser = ExampleParser(feature_config=self.feature_config,
+                                    preprocessing_map=PreprocessingMap(),
+                                    required_fields_only=False)
 
     def test_features_spec(self):
         """
         Test the feature specification constructed and used to parse the Example proto
         """
-        features_spec = self.se_parser.features_spec
+        features_spec = self.parser.features_spec
 
         assert isinstance(features_spec, dict)
 
@@ -50,7 +50,7 @@ class ExampleParserTest(unittest.TestCase):
         """
         Test extraction of features from serialized proto
         """
-        features = self.se_parser.extract_features_from_proto(
+        features = self.parser.extract_features_from_proto(
             self.proto)
 
         for feature, feature_tensor in features.items():
@@ -67,11 +67,11 @@ class ExampleParserTest(unittest.TestCase):
         """
         Test the default tensor used for missing features
         """
-        default_tensor = self.se_parser.get_default_tensor(
+        default_tensor = self.parser.get_default_tensor(
             self.feature_config.get_feature("query_text"))
         assert default_tensor.shape == ()
 
-        default_tensor = self.se_parser.get_default_tensor(
+        default_tensor = self.parser.get_default_tensor(
             self.feature_config.get_feature("user_context"))
         assert default_tensor.shape == ()
 
@@ -79,40 +79,51 @@ class ExampleParserTest(unittest.TestCase):
         """
         Test fetching feature tensor from extracted feature dictionary
         """
-        feature_tensor = self.se_parser.get_feature(self.feature_config.get_feature("query_text"),
-                                                    {"query_text": tf.zeros((3, 4, 6))})
-        assert feature_tensor.shape == (3, 4, 6)
+        feature_tensor = self.parser.get_feature(self.feature_config.get_feature("query_text"),
+                                                 {"query_text": tf.zeros((3, 4, 6))})
+        assert feature_tensor.shape == (1, 3, 4, 6)
 
         # Check missing feature being replaced with default tensor
-        feature_tensor = self.se_parser.get_feature(self.feature_config.get_feature("query_text"),
-                                                    {})
-        assert feature_tensor.shape == ()
+        feature_tensor = self.parser.get_feature(
+            self.feature_config.get_feature("query_text"), {})
+        assert feature_tensor.shape == (1,)
 
     def test_generate_and_add_mask(self):
         """
         Test mask generation and addition
         """
-        features_dict, sequence_size = self.se_parser.generate_and_add_mask({}, {
+        features_dict, sequence_size = self.parser.generate_and_add_mask({}, {
         })
 
         assert "mask" not in features_dict
         assert sequence_size == tf.constant(0)
 
-    def test_adjust_shape(self):
-        """
-        Test adjusting the shape of the feature tensor
-        """
-        feature_tensor = self.se_parser.adjust_shape(tf.zeros((9, 4, 2)),
-                                                     self.feature_config.get_feature("query_text"))
-
-        assert feature_tensor.shape == (1, 9, 4, 2)
-
-    def pad_feature(self):
+    def test_pad_feature(self):
         """
         Test feature padding to max sequence size
         """
-        feature_tensor = self.se_parser.pad_feature(tf.zeros((10)),
-                                                    self.feature_config.get_feature("query_text"))
+        feature_tensor = self.parser.pad_feature(tf.zeros((10)),
+                                                 self.feature_config.get_feature("query_text"))
 
         # Check that there was no padding done
         assert feature_tensor.shape == (10,)
+
+    def test_parse_fn(self):
+        """
+        Test the Example parsing function
+        """
+        features, labels = self.parser.get_parse_fn()(self.proto)
+
+        assert isinstance(features, dict)
+        assert isinstance(labels, tf.Tensor)
+
+        for feature in self.feature_config.get_all_features(key="node_name", include_label=False):
+            assert feature in features
+
+        # Check tensor shapes
+        assert features["query_key"].shape == (1,)
+        assert features["query_text"].shape == (1,)
+        assert features["query_words"].shape == (1, 20)
+        assert features["domain_id"].shape == (1,)
+        assert features["user_context"].shape == (1, 20)
+        assert labels.shape == (1,)

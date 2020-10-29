@@ -118,24 +118,6 @@ class TFRecordParser(object):
         """
         raise NotImplementedError
 
-    def adjust_shape(self, feature_tensor, feature_info):
-        """
-        Adjust the shape of the feature_tensor if necessary
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor whose shape is to be adjusted
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor after adjusting the shape appropriately
-        """
-        raise NotImplementedError
-
     def generate_and_add_mask(self, extracted_features, features_dict):
         """
         Create a mask to identify padded values
@@ -266,13 +248,9 @@ class TFRecordParser(object):
                 feature_tensor = self.get_feature(
                     feature_info, extracted_features, sequence_size)
 
-                # Adjust the shape of the extracted feature if necessary
-                feature_tensor = self.adjust_shape(
-                    feature_tensor, feature_info)
-
                 # Pad the extracted feature to the max_sequence_size for training
                 feature_tensor = self.pad_feature(
-                    feature_tensor, feature_info, sequence_size)
+                    feature_tensor, feature_info)
 
                 # Preprocess the extracted feature using the specification from
                 # the FeatureConfig and functions from PreprocessingMap
@@ -384,6 +362,9 @@ class ExampleParser(TFRecordParser):
         feature_tensor = extracted_features.get(
             feature_info["name"], default_tensor)
 
+        # Adjust shape
+        feature_tensor = tf.expand_dims(feature_tensor, axis=0)
+
         return feature_tensor
 
     def generate_and_add_mask(self, extracted_features, features_dict):
@@ -407,24 +388,6 @@ class ExampleParser(TFRecordParser):
             Number of elements in the sequence of the TFRecord
         """
         return features_dict, tf.constant(0)
-
-    def adjust_shape(self, feature_tensor, feature_info):
-        """
-        Adjust the shape of the feature_tensor if necessary
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor whose shape is to be adjusted
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor after adjusting the shape appropriately
-        """
-        return tf.expand_dims(feature_tensor, axis=0)
 
     def pad_feature(self, feature_tensor, feature_info):
         """
@@ -496,6 +459,8 @@ class SequenceExampleParser(TFRecordParser):
         sequence_features_spec = dict()
 
         for feature_info in self.feature_config.get_all_features():
+            if feature_info.get("name") == self.feature_config.get_mask("name"):
+                continue
             serving_info = feature_info["serving_info"]
             if not self.required_fields_only or serving_info.get("required", feature_info["trainable"]):
                 feature_name = feature_info["name"]
@@ -563,7 +528,7 @@ class SequenceExampleParser(TFRecordParser):
                     value=self.feature_config.get_default_value(feature_info),
                     dtype=feature_info["dtype"],
                 ),
-                dims=[self.max_sequence_size if self.pad_sequence else sequence_size],
+                dims=[sequence_size],
             )
 
     def get_feature(self, feature_info, extracted_features, sequence_size):
@@ -592,9 +557,15 @@ class SequenceExampleParser(TFRecordParser):
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
             feature_tensor = extracted_context_features.get(
                 feature_info["name"], default_tensor)
+            # Adjust shape
+            feature_tensor = tf.expand_dims(feature_tensor, axis=0)
         else:
             feature_tensor = extracted_sequence_features.get(
                 feature_info["name"], default_tensor)
+            if isinstance(feature_tensor, sparse.SparseTensor):
+                feature_tensor = sparse.reset_shape(feature_tensor)
+                feature_tensor = sparse.to_dense(feature_tensor)
+                feature_tensor = tf.squeeze(feature_tensor, axis=0)
 
         return feature_tensor
 
@@ -646,35 +617,22 @@ class SequenceExampleParser(TFRecordParser):
                 sparse.reset_shape(reference_tensor)))
 
             if self.pad_sequence:
-                mask = tf.expand_dims(mask, axis=-1)
+                mask = tf.squeeze(mask, axis=0)
 
                 def crop_fn():
-                    # NOTE: We currently ignore these cases as there is no way to
-                    # select max_sequence_size from all the sequence features
+                    # NOTE: We currently ignore these cases as there is no clear
+                    # way to select max_sequence_size from all the sequence features
                     tf.print(
-                        "\n[WARN] Bad query found. Number of sequence : ", tf.shape(mask)[1])
-                    return image.crop_to_bounding_box(
-                        mask,
-                        offset_height=0,
-                        offset_width=0,
-                        target_height=1,
-                        target_width=self.max_sequence_size,
-                    )
+                        "\n[WARN] Bad query found. Number of sequence : ", tf.shape(mask)[0])
+                    return mask
 
                 mask = tf.cond(
-                    tf.shape(mask)[1] <= self.max_sequence_size,
+                    tf.shape(mask)[0] <= self.max_sequence_size,
                     # Pad if there are missing sequence
-                    lambda: image.pad_to_bounding_box(
-                        mask,
-                        offset_height=0,
-                        offset_width=0,
-                        target_height=1,
-                        target_width=self.max_sequence_size,
-                    ),
+                    lambda: tf.pad(mask, [[0, self.max_sequence_size - tf.shape(mask)[0]]]),
                     # Crop if there are extra sequence
                     crop_fn,
                 )
-                mask = tf.squeeze(mask)
                 sequence_size = tf.constant(
                     self.max_sequence_size, dtype=tf.int64)
             else:
@@ -690,29 +648,7 @@ class SequenceExampleParser(TFRecordParser):
 
         return features_dict, sequence_size
 
-    def adjust_shape(self, feature_tensor, feature_info):
-        """
-        Adjust the shape of the feature_tensor if necessary
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor whose shape is to be adjusted
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor after adjusting the shape appropriately
-        """
-        if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
-            return tf.expand_dims(feature_tensor, axis=0)
-        else:
-            # Since the sequence features are already shape [sequence_size, n] tensors, do nothing
-            return feature_tensor
-
-    def pad_feature(self, feature_tensor, feature_info, sequence_size):
+    def pad_feature(self, feature_tensor, feature_info):
         """
         Pad the feature to the `max_sequence_size` in order to create
         uniform data batches for training
@@ -729,15 +665,9 @@ class SequenceExampleParser(TFRecordParser):
         tf.Tensor
             Feature tensor padded to the `max_sequence_size`
         """
-        if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-            if isinstance(feature_tensor, sparse.SparseTensor):
-                feature_tensor = sparse.reset_shape(
-                    feature_tensor,
-                    new_shape=[
-                        1, self.max_sequence_size if self.pad_sequence else sequence_size],
-                )
-                feature_tensor = sparse.to_dense(feature_tensor)
-                feature_tensor = tf.squeeze(feature_tensor, axis=0)
+        if self.pad_sequence and feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
+            pad_len = self.max_sequence_size - tf.shape(feature_tensor)[0]
+            feature_tensor = tf.pad(feature_tensor, [[0, pad_len]])
 
         return feature_tensor
 
