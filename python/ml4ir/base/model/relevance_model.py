@@ -408,7 +408,7 @@ class RelevanceModel:
             )
 
             # Write metrics for experiment tracking
-            # Returns
+            # Returns a dictionary
             train_metrics = dict()
             for metric, value in history.history.items():
                 if not metric.startswith("val_"):

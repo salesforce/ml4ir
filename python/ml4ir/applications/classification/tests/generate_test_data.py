@@ -30,6 +30,7 @@ VOCABULARY_QUERY = [
 ]
 VOCABULARY_FEATURE_DOMAIN_ID = [char for char in string.ascii_lowercase.upper()]
 VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
+# toy feature (untrainable); used for grouped metric calculation:
 VOCABULARY_FEATURE_CODE = ["local", "production", "canary"]
 VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
 
