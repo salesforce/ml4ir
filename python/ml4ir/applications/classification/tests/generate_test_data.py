@@ -14,7 +14,7 @@ CSV_VOCABULARY_QUERY_FILE_PATH = "data/configs/vocabulary/query_word.csv"
 CSV_VOCABULARY_DOMAIN_ID_FILE_PATH = "data/configs/vocabulary/domain_id.csv"
 CSV_VOCABULARY_ENTITY_FILE_PATH = "data/configs/vocabulary/entity_id.csv"
 
-CSV_DATA_COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "entity_id"]
+CSV_DATA_COLUMNS_HEADER = ["query_key", "query_text", "domain_id", "user_context", "code", "entity_id"]
 CSV_VOCABULARY_QUERY_COLUMNS_HEADER = ["word"]
 CSV_VOCABULARY_DOMAIN_ID_COLUMNS_HEADER = ["domain_id"]
 CSV_VOCABULARY_ENTITY_COLUMNS_HEADER = ["entity"]
@@ -30,6 +30,7 @@ VOCABULARY_QUERY = [
 ]
 VOCABULARY_FEATURE_DOMAIN_ID = [char for char in string.ascii_lowercase.upper()]
 VOCABULARY_FEATURE_ENTITY = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"]
+VOCABULARY_FEATURE_CODE = ["local", "production", "canary"]
 VOCABULARY_LABEL = VOCABULARY_FEATURE_ENTITY[:5]
 
 VOCABULARY_PATH_HEADER_DATA = [
@@ -64,11 +65,13 @@ def generate_csv_test_data():
     feature_query_text_generator = FeatureGenerator(VOCABULARY_QUERY, 7)
     feature_domain_id_generator = FeatureGenerator(VOCABULARY_FEATURE_DOMAIN_ID, 1)
     feature_user_context_generator = FeatureGenerator(VOCABULARY_FEATURE_ENTITY, 20, sequence_joiner=",")
+    feature_code_generator = FeatureGenerator(VOCABULARY_FEATURE_CODE, 1)
     label_generator = FeatureGenerator(VOCABULARY_LABEL, 1)
     generators = [
         feature_query_text_generator,
         feature_domain_id_generator,
         feature_user_context_generator,
+        feature_code_generator,
         label_generator
     ]
 
@@ -99,6 +102,7 @@ def main():
 
 if __name__ == "__main__":
     """
-    Generates data under classification/tests folder used to train and assess classification model in tests.
+    Generates data under classification/tests folder used
+     to train and assess classification model in tests.
     """
     main()

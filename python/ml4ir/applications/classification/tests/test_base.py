@@ -91,7 +91,7 @@ class ClassificationTestBase(unittest.TestCase):
         self.classification_model: RelevanceModel = self.classification_pipeline.get_relevance_model()
 
         self.train_metrics = self.classification_model.fit(dataset=self.relevance_dataset,
-                                                           num_epochs=5,
+                                                           num_epochs=3,
                                                            models_dir=self.output_dir)
 
         self.global_metrics, self.grouped_metrics, self.metrics_dict = \
