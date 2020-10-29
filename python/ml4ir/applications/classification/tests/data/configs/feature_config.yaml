@@ -63,7 +63,7 @@ features:
       - 1
       - 20
     log_at_inference: true
-    is_group_metric_key: true
+    is_group_metric_key: false
     preprocessing_info:
       - fn: preprocess_text
         args:
@@ -97,12 +97,6 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      # fn: categorical_embedding_with_hash_buckets
-      # args:
-      #   num_hash_buckets: 4
-      #   hash_bucket_size: 64
-      #   embedding_size: 32
-      #   merge_mode: concat
       fn: categorical_embedding_with_vocabulary_file
       args:
         vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/domain_id.csv
@@ -121,7 +115,7 @@ features:
       - 1
       - 20
     log_at_inference: true
-    is_group_metric_key: true
+    is_group_metric_key: false
     preprocessing_info:
       - fn: split_and_pad_string
         args:
@@ -130,12 +124,6 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      # fn: categorical_embedding_to_encoding_bilstm
-      # args:
-      #   num_hash_buckets: 4
-      #   hash_bucket_size: 64
-      #   embedding_size: 32
-      #   merge_mode: concat
       fn: categorical_embedding_to_encoding_bilstm
       args:
         vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
@@ -147,3 +135,17 @@ features:
       name: user_context
       required: true
     default_value: ""
+  - name: code
+    node_name: code
+    trainable: false
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: code
+      required: false
+      default_value: ""
+
