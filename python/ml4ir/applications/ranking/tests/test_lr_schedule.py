@@ -1,4 +1,3 @@
-import sys; sys.path.insert(0, '/Users/mohamed.m/Documents/work/projects/ml4ir/python/')
 import unittest
 import warnings
 import os
