@@ -31,7 +31,7 @@ lr_schedule:
 #Cyclic Learning Rate Schedule
 #optimizer:
 #  key: sgd
-#  gradient_clip_value: 5.0       #default value is 5.0
+#  gradient_clip_value: 5.0
 #lr_schedule:
 #  key: cyclic
 #  type: triangular
@@ -42,7 +42,7 @@ lr_schedule:
 #Exponential Decayed Learning Rate Schedule
 #optimizer:
 #  key: sgd
-#  gradient_clip_value: 5.0       #default value is 5.0
+#  gradient_clip_value: 5.0
 #lr_schedule:
 #  key: exponential
 #  learning_rate: 0.01                   #default value is 0.01

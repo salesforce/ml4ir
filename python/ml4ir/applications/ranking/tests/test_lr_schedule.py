@@ -37,15 +37,18 @@ class lr_callback(keras.callbacks.Callback):
     def on_train_batch_begin(self, batch, logs=None):
         self.lr_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
 
-    def on_train_batch_end(self, batch, logs=None):
-        pass
-
-class TestCyclicLr(unittest.TestCase):
+class TestLrSchedules(unittest.TestCase):
 
     def setUp(self):
         self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
             'ranklib_test_data/feature_config_convert_to_clicks.yaml'
         self.model_config_file = MODEL_CONFIG
+
+    def compare_lr_values(self, scheduler, expected_values):
+        """Expects a learning rate scheduler `scheduler` and
+        a list of values. Compares ...."""
+        actual_values = [scheduler[i].numpy() for i in range(len(expected_values))]
+        return np.all(np.isclose(actual_values, expected_values, rtol=0.001))
 
     def parse_config(self, tfrecord_type: str, feature_config, io) -> SequenceExampleFeatureConfig:
         if feature_config.endswith(".yaml"):
@@ -65,8 +68,8 @@ class TestCyclicLr(unittest.TestCase):
             maximal_learning_rate=1.0,
             step_size=5,
         )
-        for i in range(25):
-            assert round(float(lrs(i).numpy()), 5) == round(gold[i], 5)
+        scheduler = [lrs(i) for i in range(25)]
+        self.assertTrue(self.compare_lr_values(scheduler, gold))
 
     def test_cyclic_tri2_lr(self):
         """Test a triangular2 cyclic learning rate"""
@@ -78,8 +81,8 @@ class TestCyclicLr(unittest.TestCase):
             maximal_learning_rate=1.0,
             step_size=5,
         )
-        for i in range(25):
-            assert round(float(lrs(i).numpy()), 5) == round(gold[i], 5)
+        scheduler = [lrs(i) for i in range(25)]
+        self.assertTrue(self.compare_lr_values(scheduler, gold))
 
     def test_cyclic_exp_lr(self):
         """Test a exponential cyclic learning rate"""
@@ -95,10 +98,8 @@ class TestCyclicLr(unittest.TestCase):
             step_size=5,
             gamma=0.9,
         )
-        for i in range(25):
-            #print(float(lrs(i).numpy()))
-            assert round(float(lrs(i).numpy()), 5) == round(gold[i], 5)
-        #print('')
+        scheduler = [lrs(i) for i in range(25)]
+        self.assertTrue(self.compare_lr_values(scheduler, gold))
 
     def test_exp_lr(self):
         """Test a exponential learning rate"""
@@ -113,8 +114,8 @@ class TestCyclicLr(unittest.TestCase):
             decay_steps=2,
             decay_rate=0.9,
         )
-        for i in range(25):
-            assert round(float(lrs(i).numpy()), 5) == round(gold[i], 5)
+        scheduler = [lrs(i) for i in range(25)]
+        self.assertTrue(self.compare_lr_values(scheduler, gold))
 
     def test_constant_lr(self):
         """Test a constant learning rate"""

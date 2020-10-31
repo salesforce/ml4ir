@@ -6,7 +6,6 @@ import tensorflow as tf
 
 class DefaultValues(object):
   """Default values for unspecified parameters of the optimizer and learning rate schedule."""
-  GRADIENT_CLIP_VALUE = 5.0
   CONSTANT_LR = 0.01
   EXP_DECAY_STEPS = 100000
   EXP_DECAY_RATE = 0.96
@@ -43,8 +42,10 @@ def choose_optimizer(model_config, learning_rate_schedule):
         return tf_optimizers.Adam(learning_rate=learning_rate_schedule, clipvalue=5.0)
     else:
         optimizer_key = model_config['optimizer']['key']
-        gradient_clip_value = model_config['optimizer']['gradient_clip_value']
-        config = {'learning_rate':learning_rate_schedule, 'clipvalue': gradient_clip_value if 'gradient_clip_value' in model_config['optimizer'] else DefaultValues.GRADIENT_CLIP_VALUE}
+        if 'gradient_clip_value' in model_config['optimizer']:
+            config = {'learning_rate': learning_rate_schedule, 'clipvalue': model_config['optimizer']['gradient_clip_value']}
+        else:
+            config = {'learning_rate': learning_rate_schedule}
         return tf.keras.optimizers.get({'class_name':optimizer_key, 'config':config})
 
 def choose_scheduler(model_config):
