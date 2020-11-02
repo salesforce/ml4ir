@@ -2,7 +2,7 @@ import unittest
 import tensorflow as tf
 import logging
 
-from ml4ir.base.data.tfrecord_reader import SequenceExampleParser
+from ml4ir.base.data.tfrecord_reader import TFRecordSequenceExampleParser
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.io.local_io import LocalIO
@@ -15,7 +15,7 @@ MAX_SEQUENCE_SIZE = 25
 
 class SequenceExampleParserTest(unittest.TestCase):
     """
-    Test class for ml4ir.base.data.tfrecord_reader.SequenceExampleParser
+    Test class for ml4ir.base.data.tfrecord_reader.TFRecordSequenceExampleParser
     """
 
     def setUp(self):
@@ -29,11 +29,11 @@ class SequenceExampleParserTest(unittest.TestCase):
             feature_config_dict=file_io.read_yaml(FEATURE_CONFIG_PATH),
             logger=logger
         )
-        self.parser = SequenceExampleParser(feature_config=self.feature_config,
-                                            preprocessing_map=PreprocessingMap(),
-                                            required_fields_only=False,
-                                            pad_sequence=True,
-                                            max_sequence_size=25)
+        self.parser = TFRecordSequenceExampleParser(feature_config=self.feature_config,
+                                                    preprocessing_map=PreprocessingMap(),
+                                                    required_fields_only=False,
+                                                    pad_sequence=True,
+                                                    max_sequence_size=25)
 
     def test_features_spec(self):
         """

@@ -2,7 +2,7 @@ import unittest
 import tensorflow as tf
 import logging
 
-from ml4ir.base.data.tfrecord_reader import ExampleParser
+from ml4ir.base.data.tfrecord_reader import TFRecordExampleParser
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.io.local_io import LocalIO
@@ -12,9 +12,9 @@ DATASET_PATH = "ml4ir/applications/classification/tests/data/tfrecord/train/file
 FEATURE_CONFIG_PATH = "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
 
-class ExampleParserTest(unittest.TestCase):
+class TFRecordExampleParserTest(unittest.TestCase):
     """
-    Test class for ml4ir.base.data.tfrecord_reader.ExampleParser
+    Test class for ml4ir.base.data.tfrecord_reader.TFRecordExampleParser
     """
 
     def setUp(self):
@@ -28,9 +28,9 @@ class ExampleParserTest(unittest.TestCase):
             feature_config_dict=file_io.read_yaml(FEATURE_CONFIG_PATH),
             logger=logger
         )
-        self.parser = ExampleParser(feature_config=self.feature_config,
-                                    preprocessing_map=PreprocessingMap(),
-                                    required_fields_only=False)
+        self.parser = TFRecordExampleParser(feature_config=self.feature_config,
+                                            preprocessing_map=PreprocessingMap(),
+                                            required_fields_only=False)
 
     def test_features_spec(self):
         """

@@ -10,6 +10,8 @@ from ml4ir.base.features.preprocessing import PreprocessingMap
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import SequenceExampleTypeKey, TFRecordTypeKey
 
+from typing import Optional
+
 
 class TFRecordParser(object):
     """
@@ -21,7 +23,7 @@ class TFRecordParser(object):
     def __init__(self,
                  feature_config: FeatureConfig,
                  preprocessing_map: PreprocessingMap,
-                 required_fields_only: bool = False):
+                 required_fields_only: Optional[bool] = False):
         """
         Constructor method for instantiating a TFRecordParser object
 
@@ -42,7 +44,7 @@ class TFRecordParser(object):
     def get_features_spec(self):
         """
         Define the features spec from the feature_config.
-        This will be used to parse the serialized TFRecord
+        The features spec will be used to parse the serialized TFRecord
 
         Returns
         -------
@@ -73,7 +75,7 @@ class TFRecordParser(object):
         Notes
         -----
         For SequenceExample proto messages, this function returns two dictionaries,
-        one each for context and sequence feature tensors.
+        one for context and another for sequence feature tensors.
         For Example proto messages, this function returns a single dictionary of feature tensors.
         """
         raise NotImplementedError
@@ -184,7 +186,7 @@ class TFRecordParser(object):
         Pass custom preprocessing functions while instantiating the
         RelevanceDataset object with `preprocessing_keys_to_fns` argument
         """
-        preprocessing_info = feature_info.get("preprocessing_info", [])
+        preprocessing_info = feature_info.get("preprocessing_info")
 
         if preprocessing_info:
             for preprocessing_step in preprocessing_info:
@@ -270,7 +272,7 @@ class TFRecordParser(object):
         return _parse_fn
 
 
-class ExampleParser(TFRecordParser):
+class TFRecordExampleParser(TFRecordParser):
     """
     Class for parsing Example TFRecord protobuf messages
     """
@@ -409,14 +411,14 @@ class ExampleParser(TFRecordParser):
         return feature_tensor
 
 
-class SequenceExampleParser(TFRecordParser):
+class TFRecordSequenceExampleParser(TFRecordParser):
 
     def __init__(self,
                  feature_config: FeatureConfig,
                  preprocessing_map: PreprocessingMap,
-                 required_fields_only: bool = False,
-                 pad_sequence: bool = True,
-                 max_sequence_size: int = 25):
+                 required_fields_only: Optional[bool] = False,
+                 pad_sequence: Optional[bool] = True,
+                 max_sequence_size: Optional[int] = 25):
         """
         Constructor method for instantiating a TFRecordParser object
 
@@ -428,14 +430,14 @@ class SequenceExampleParser(TFRecordParser):
             Object mapping preprocessing feature function names to their definitons
         required_fields_only : bool, optional
             Whether to only use required fields from the feature_config
-        pad_sequence: bool
+        pad_sequence: bool, optional
             Whether to pad sequence
-        max_sequence_size: int
+        max_sequence_size: int, optional
             Maximum number of sequence per query. Used for padding
         """
         self.pad_sequence = pad_sequence
         self.max_sequence_size = max_sequence_size
-        super(SequenceExampleParser, self).__init__(
+        super(TFRecordSequenceExampleParser, self).__init__(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
             required_fields_only=required_fields_only)
@@ -474,6 +476,9 @@ class SequenceExampleParser(TFRecordParser):
                 elif feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
                     sequence_features_spec[feature_name] = io.VarLenFeature(
                         dtype=dtype)
+                else:
+                    raise KeyError("Invalid SequenceExample type: {}".format(
+                        feature_info["tfrecord_type"]))
 
         return context_features_spec, sequence_features_spec
 
@@ -629,7 +634,8 @@ class SequenceExampleParser(TFRecordParser):
                 mask = tf.cond(
                     tf.shape(mask)[0] <= self.max_sequence_size,
                     # Pad if there are missing sequence
-                    lambda: tf.pad(mask, [[0, self.max_sequence_size - tf.shape(mask)[0]]]),
+                    lambda: tf.pad(
+                        mask, [[0, self.max_sequence_size - tf.shape(mask)[0]]]),
                     # Crop if there are extra sequence
                     crop_fn,
                 )
@@ -713,13 +719,13 @@ def get_parse_fn(
 
     # Generate parsing function
     if tfrecord_type == TFRecordTypeKey.EXAMPLE:
-        parser = ExampleParser(
+        parser = TFRecordExampleParser(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
             required_fields_only=required_fields_only,
         )
     elif tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-        parser = SequenceExampleParser(
+        parser = TFRecordSequenceExampleParser(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
             max_sequence_size=max_sequence_size,
