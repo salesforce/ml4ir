@@ -312,7 +312,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab.csv",
                     "embedding_size": embedding_size,
                     "default_value": -1,
                     "num_oov_buckets": 1,
@@ -357,7 +357,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
                     "embedding_size": embedding_size,
                     "default_value": -1,
                     "num_oov_buckets": 1,
@@ -402,7 +402,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab.csv",
                     "embedding_size": embedding_size,
                     "dropout_rate": dropout_rate,
                 },
@@ -439,7 +439,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_embedding_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
                     "embedding_size": embedding_size,
                     "dropout_rate": dropout_rate,
                 },
@@ -491,7 +491,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_indicator_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab.csv",
                     "num_oov_buckets": 1,
                 },
             },
@@ -535,7 +535,7 @@ class RankingModelTest(RankingTestBase):
             "feature_layer_info": {
                 "fn": "categorical_indicator_with_vocabulary_file",
                 "args": {
-                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/config/domain_name_vocab_no_id.csv",
+                    "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
                     "num_oov_buckets": 1,
                 },
             },
