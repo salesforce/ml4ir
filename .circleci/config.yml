@@ -29,7 +29,7 @@ jobs:
       - store_test_results:
           path: jvm/ml4ir-inference/target/site/surefire-report.html
 
-  build_test_python:
+  build_test_python_classification:
     docker:
       - image: circleci/python:3.7.7
     resource_class: xlarge
@@ -53,16 +53,48 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest --html=pytest_report.html
-          no_output_timeout: 30m  # Time for running the tests before we timeout
+            python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
+          no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
-          path: python/pytest_report.html
+          path: python/classification/pytest_report.html
       - store_test_results:
-          path: python/pytest_report.html
+          path: python/classification/pytest_report.html
 
+  build_test_python_ranking:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+          paths:
+            - "venv"
+      - run:
+          name: Run Python tests
+          command: |
+            . venv/bin/activate
+            cd python
+            python3 -m pytest ml4ir/applications/ranking/tests --html=pytest_report.html
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - store_artifacts:
+          path: python/ranking/pytest_report.html
+      - store_test_results:
+          path: python/ranking/pytest_report.html
+ 
 workflows:
   version: 2.1
   build_and_test:
     jobs:
       - build_test_jvm
-      - build_test_python
+      - build_test_python_ranking
+      - build_test_python_classification
