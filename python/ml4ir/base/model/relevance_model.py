@@ -6,7 +6,6 @@ from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
-
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -24,6 +23,7 @@ from typing import Dict, Optional, List, Union, Type
 class RelevanceModelConstants:
 
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
+    METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
     CHECKPOINT_FNAME = "checkpoint.tf"
 
@@ -140,7 +140,8 @@ class RelevanceModel:
             # Write model summary to logs
             model_summary = list()
             self.model.summary(print_fn=lambda x: model_summary.append(x))
-            self.logger.info("\n".join(model_summary))
+            if self.logger:
+                self.logger.info("\n".join(model_summary))
 
             if model_file:
                 """
@@ -396,6 +397,7 @@ class RelevanceModel:
             monitor_metric=monitor_metric,
             patience=patience,
         )
+
         if self.is_compiled:
             history = self.model.fit(
                 x=dataset.train,
@@ -406,6 +408,7 @@ class RelevanceModel:
             )
 
             # Write metrics for experiment tracking
+            # Returns a dictionary
             train_metrics = dict()
             for metric, value in history.history.items():
                 if not metric.startswith("val_"):
@@ -415,14 +418,18 @@ class RelevanceModel:
                     to differentiate from validation and test metrics
                     in the final experiment results
                     """
-                    train_metrics["train_{}".format(metric)] = value[0]
+                    # History is a dict of key: list(values per epoch)
+                    # We are capturing the metrics of the last epoch (-1)
+                    train_metrics["train_{}".format(metric)] = value[-1]
                 else:
-                    train_metrics[metric] = value[0]
+                    train_metrics[metric] = value[-1]
 
             return train_metrics
         else:
             raise NotImplementedError(
-                "The model could not be trained. Check if the model was compiled correctly. Training loaded SavedModel is not currently supported."
+                "The model could not be trained. "
+                "Check if the model was compiled correctly."
+                " Training loaded SavedModel is not currently supported."
             )
 
     def predict(

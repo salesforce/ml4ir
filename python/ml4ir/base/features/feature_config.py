@@ -40,6 +40,9 @@ class FeatureConfig:
     label : dict
         Dictionary containing the feature configuration for the label field
         for training and evaluating the model
+    mask : dict
+        Dictionary containing the feature configuration for the computed mask
+        field which is used to identify padded values
     features : list of dict
         List of dictionaries containing configurations for all the features
         excluding query_key and label
@@ -101,6 +104,7 @@ class FeatureConfig:
         self.all_features: List[Optional[Dict]] = list()
         self.query_key: Optional[Dict] = None
         self.label: Optional[Dict] = None
+        self.mask: Optional[Dict] = None
         self.features: List[Optional[Dict]] = list()
 
         # Features that can be used for training the model
@@ -290,6 +294,23 @@ class FeatureConfig:
         """
         return self._get_key_or_dict(self.label, key=key)
 
+    def get_mask(self, key: str = None):
+        """
+        Getter method for mask in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+
+        Parameters
+        ----------
+        key : str
+            Value from the mask feature configuration to be fetched
+
+        Returns
+        -------
+        str or int or bool or dict
+            Label value or entire config dictionary based on if the key is passed
+        """
+        return self._get_key_or_dict(self.mask, key=key)
+
     def get_feature(self, name: str):
         """
         Getter method for feature in FeatureConfig object
@@ -336,7 +357,9 @@ class FeatureConfig:
         else:
             raise KeyError("No feature named {} in FeatureConfig".format(name))
 
-    def get_all_features(self, key: str = None, include_label: bool = True):
+    def get_all_features(self, key: str = None,
+                         include_label: bool = True,
+                         include_mask: bool = True):
         """
         Getter method for all_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
@@ -348,6 +371,9 @@ class FeatureConfig:
             If None, then entire dictionary for the feature is returned
         include_label : bool, optional
             Include label in list of features returned
+        include_mask : bool, optional
+            Include mask in the list of features returned.
+            Only applicable with SequenceExampleFeatureConfig currently
 
         Returns
         -------
@@ -356,17 +382,15 @@ class FeatureConfig:
             all features in FeatureConfig
         """
         all_features = self._get_list_of_keys_or_dicts(self.all_features, key=key)
-        if include_label:
-            return all_features
-        else:
-            if key:
-                return [f for f in all_features if f != self.get_label(key)]
-            else:
-                return [
-                    fdict
-                    for fdict in all_features
-                    if fdict["name"] != self.get_label("name")
-                ]
+
+        # Populate features to skip
+        features_to_skip = []
+        if not include_label:
+            features_to_skip.append(self.get_label(key=key))
+        if not include_mask:
+            features_to_skip.append(self.get_mask(key=key))
+
+        return [f for f in all_features if f not in features_to_skip]
 
     def get_train_features(self, key: str = None):
         """

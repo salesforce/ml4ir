@@ -35,6 +35,7 @@ def read(
         4. Load .tfrecord file into a TFRecordDataset and parse the protobufs
 
     Parameters
+    ----------
     data_dir : str
         Path to directory containing csv files to read
     feature_config : FeatureConfig object

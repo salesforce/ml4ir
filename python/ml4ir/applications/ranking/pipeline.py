@@ -9,7 +9,7 @@ from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.optimizer import get_optimizer
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import MetricKey
@@ -95,14 +95,7 @@ class RankingPipeline(RelevancePipeline):
             metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
-        # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
-        )
+        optimizer: Optimizer = get_optimizer(file_io=self.file_io, model_config_file=self.model_config_file)
 
         # Combine the above to define a RelevanceModel
         relevance_model: RelevanceModel = RankingModel(

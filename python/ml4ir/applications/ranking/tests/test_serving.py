@@ -129,7 +129,7 @@ class RankingModelTest(RankingTestBase):
         ).all()
 
     def get_feature_config(self):
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
@@ -165,7 +165,7 @@ class RankingModelTest(RankingTestBase):
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)
 
-        for num_records in range(1, 250):
+        for num_records in range(1, 120):
             proto = tf.constant(
                 [feature_config.create_dummy_protobuf(num_records=num_records).SerializeToString()]
             )

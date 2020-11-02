@@ -55,7 +55,7 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         self,
         feature_config: Optional[FeatureConfig] = None,
         metadata_features: Dict = {},
-        name="top_k_categorical_accuracy",
+        name="top_5_categorical_accuracy",
         state=MetricState.NEW,
         **kwargs
     ):
@@ -107,5 +107,5 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         will throw error.
         """
         return super(Top5CategoricalAccuracy, self).update_state(
-            tf.squeeze(y_true, axis=1), tf.squeeze(y_pred, axis=1), sample_weight=sample_weight
+            tf.squeeze(y_true), tf.squeeze(y_pred), sample_weight=sample_weight
         )
