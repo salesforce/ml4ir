@@ -26,17 +26,16 @@ class RankOneListNet(ListwiseLossBase):
         mask = kwargs.get("mask")
 
         def _loss_fn(y_true, y_pred):
-            batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
+            """
+            Shapes
+            ------
+            y_true : [batch_size, num_classes, 1]
+            y_pred : [batch_size, num_classes]
+            mask : [batch_size, num_classes]
+            """
+            y_true = tf.squeeze(y_true, axis=-1)
 
-            # Mask the padded records
-            y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
-            y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
-
-            # Reshape the tensors
-            y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
-            y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
-
-            return tf.math.divide(bce(y_true, y_pred), batch_size)
+            return bce(y_true, y_pred, sample_weight=mask)
 
         return _loss_fn
 

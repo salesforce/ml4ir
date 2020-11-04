@@ -163,7 +163,6 @@ class ClassificationPipeline(RelevancePipeline):
         return relevance_dataset
 
 
-
 def main(argv):
     # Define args
     args: Namespace = get_args(argv)

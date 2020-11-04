@@ -23,14 +23,19 @@ class SigmoidCrossEntropy(PointwiseLossBase):
             to the loss
         """
         bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
-        mask = kwargs.get("mask")
+        mask = tf.squeeze(kwargs.get("mask"), axis=-1)
 
         def _loss_fn(y_true, y_pred):
-            # Mask the predictions to ignore padded records
-            y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
-            y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
+            """
+            Shapes
+            ------
+            y_true : [batch_size, num_classes, 1]
+            y_pred : [batch_size, num_classes]
+            mask : [batch_size, num_classes]
+            """
+            y_true = tf.squeeze(y_true, axis=-1)
 
-            return bce(y_true, y_pred)
+            return bce(y_true, y_pred, sample_weight=mask)
 
         return _loss_fn
 

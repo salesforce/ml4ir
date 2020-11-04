@@ -20,10 +20,12 @@ class TFRecordParser(object):
     protobuf messages
     """
 
-    def __init__(self,
-                 feature_config: FeatureConfig,
-                 preprocessing_map: PreprocessingMap,
-                 required_fields_only: Optional[bool] = False):
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        preprocessing_map: PreprocessingMap,
+        required_fields_only: Optional[bool] = False,
+    ):
         """
         Constructor method for instantiating a TFRecordParser object
 
@@ -190,8 +192,7 @@ class TFRecordParser(object):
 
         if preprocessing_info:
             for preprocessing_step in preprocessing_info:
-                preprocessing_fn = self.preprocessing_map.get_fn(
-                    preprocessing_step["fn"])
+                preprocessing_fn = self.preprocessing_map.get_fn(preprocessing_step["fn"])
                 if preprocessing_fn:
                     feature_tensor = preprocessing_fn(
                         feature_tensor, **preprocessing_step.get("args", {})
@@ -239,32 +240,28 @@ class TFRecordParser(object):
 
             # Create a mask tensor and add to the features dictionary
             features_dict, sequence_size = self.generate_and_add_mask(
-                extracted_features, features_dict)
+                extracted_features, features_dict
+            )
 
             # Process all features, including label to construct the feature tensor dictionary
             for feature_info in self.feature_config.get_all_features(include_mask=False):
-                feature_node_name = feature_info.get(
-                    "node_name", feature_info["name"])
+                feature_node_name = feature_info.get("node_name", feature_info["name"])
 
                 # Fetch the feature corresponding to the feature_info from the extracted features
-                feature_tensor = self.get_feature(
-                    feature_info, extracted_features, sequence_size)
+                feature_tensor = self.get_feature(feature_info, extracted_features, sequence_size)
 
                 # Pad the extracted feature to the max_sequence_size for training
-                feature_tensor = self.pad_feature(
-                    feature_tensor, feature_info)
+                feature_tensor = self.pad_feature(feature_tensor, feature_info)
 
                 # Preprocess the extracted feature using the specification from
                 # the FeatureConfig and functions from PreprocessingMap
-                feature_tensor = self.preprocess_feature(
-                    feature_tensor, feature_info)
+                feature_tensor = self.preprocess_feature(feature_tensor, feature_info)
 
                 # Add the processed feature tensor to the features dictionary
                 features_dict[feature_node_name] = feature_tensor
 
             # Extract the label feature to return separately
-            labels = features_dict.pop(
-                self.feature_config.get_label(key="name"))
+            labels = features_dict.pop(self.feature_config.get_label(key="name"))
 
             # return X and y which can be used with fit(), predict() and evaluate()
             return features_dict, labels
@@ -291,14 +288,12 @@ class TFRecordExampleParser(TFRecordParser):
 
         for feature_info in self.feature_config.get_all_features():
             serving_info = feature_info["serving_info"]
-            if not self.required_fields_only or serving_info.get("required", feature_info["trainable"]):
+            if not self.required_fields_only or serving_info.get(
+                "required", feature_info["trainable"]
+            ):
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
-                default_value = self.feature_config.get_default_value(
-                    feature_info)
-                features_spec[feature_name] = io.FixedLenFeature(
-                    [], dtype, default_value=default_value
-                )
+                features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
 
         return features_spec
 
@@ -316,8 +311,7 @@ class TFRecordExampleParser(TFRecordParser):
         dict of Tensors
             Dictionary of features extracted from the proto as per the features_spec
         """
-        return io.parse_single_example(
-            serialized=serialized, features=self.features_spec)
+        return io.parse_single_example(serialized=serialized, features=self.features_spec)
 
     def get_default_tensor(self, feature_info, sequence_size=0):
         """
@@ -336,9 +330,12 @@ class TFRecordExampleParser(TFRecordParser):
             Tensor object that can be used as a default tensor if the expected feature
             is missing from the TFRecord
         """
-        return tf.constant(
-            value=self.feature_config.get_default_value(feature_info), dtype=feature_info["dtype"],
+        default_tensor = tf.constant(
+            value=self.feature_config.get_default_value(feature_info), dtype=feature_info["dtype"]
         )
+        default_tensor = tf.expand_dims(default_tensor, axis=0)
+
+        return default_tensor
 
     def get_feature(self, feature_info, extracted_features, sequence_size=0):
         """
@@ -361,11 +358,9 @@ class TFRecordExampleParser(TFRecordParser):
         """
         default_tensor = self.get_default_tensor(feature_info, sequence_size)
 
-        feature_tensor = extracted_features.get(
-            feature_info["name"], default_tensor)
-
-        # Adjust shape
-        feature_tensor = tf.expand_dims(feature_tensor, axis=0)
+        feature_tensor = extracted_features.get(feature_info["name"], default_tensor)
+        if isinstance(feature_tensor, tf.sparse.SparseTensor):
+            feature_tensor = sparse.to_dense(sparse.reset_shape(feature_tensor))
 
         return feature_tensor
 
@@ -412,13 +407,14 @@ class TFRecordExampleParser(TFRecordParser):
 
 
 class TFRecordSequenceExampleParser(TFRecordParser):
-
-    def __init__(self,
-                 feature_config: FeatureConfig,
-                 preprocessing_map: PreprocessingMap,
-                 required_fields_only: Optional[bool] = False,
-                 pad_sequence: Optional[bool] = True,
-                 max_sequence_size: Optional[int] = 25):
+    def __init__(
+        self,
+        feature_config: FeatureConfig,
+        preprocessing_map: PreprocessingMap,
+        required_fields_only: Optional[bool] = False,
+        pad_sequence: Optional[bool] = True,
+        max_sequence_size: Optional[int] = 25,
+    ):
         """
         Constructor method for instantiating a TFRecordParser object
 
@@ -440,7 +436,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         super(TFRecordSequenceExampleParser, self).__init__(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
-            required_fields_only=required_fields_only)
+            required_fields_only=required_fields_only,
+        )
 
     def get_features_spec(self):
         """
@@ -464,21 +461,19 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if feature_info.get("name") == self.feature_config.get_mask("name"):
                 continue
             serving_info = feature_info["serving_info"]
-            if not self.required_fields_only or serving_info.get("required", feature_info["trainable"]):
+            if not self.required_fields_only or serving_info.get(
+                "required", feature_info["trainable"]
+            ):
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
-                default_value = self.feature_config.get_default_value(
-                    feature_info)
                 if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
-                    context_features_spec[feature_name] = io.FixedLenFeature(
-                        [], dtype, default_value=default_value
-                    )
+                    context_features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
                 elif feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-                    sequence_features_spec[feature_name] = io.VarLenFeature(
-                        dtype=dtype)
+                    sequence_features_spec[feature_name] = io.VarLenFeature(dtype=dtype)
                 else:
-                    raise KeyError("Invalid SequenceExample type: {}".format(
-                        feature_info["tfrecord_type"]))
+                    raise KeyError(
+                        "Invalid SequenceExample type: {}".format(feature_info["tfrecord_type"])
+                    )
 
         return context_features_spec, sequence_features_spec
 
@@ -523,18 +518,24 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Tensor object that can be used as a default tensor if the expected feature
             is missing from the TFRecord
         """
-        if feature_info.get("tfrecord_type", SequenceExampleTypeKey.CONTEXT) == SequenceExampleTypeKey.CONTEXT:
-            return tf.constant(
-                value=self.feature_config.get_default_value(feature_info), dtype=feature_info["dtype"],
+        if (
+            feature_info.get("tfrecord_type", SequenceExampleTypeKey.CONTEXT)
+            == SequenceExampleTypeKey.CONTEXT
+        ):
+            default_tensor = tf.constant(
+                value=self.feature_config.get_default_value(feature_info),
+                dtype=feature_info["dtype"],
             )
+            default_tensor = tf.expand_dims(default_tensor, axis=0)
         else:
-            return tf.fill(
+            default_tensor = tf.fill(
                 value=tf.constant(
                     value=self.feature_config.get_default_value(feature_info),
                     dtype=feature_info["dtype"],
                 ),
-                dims=[sequence_size],
+                dims=[sequence_size, 1],
             )
+        return default_tensor
 
     def get_feature(self, feature_info, extracted_features, sequence_size):
         """
@@ -560,17 +561,13 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         default_tensor = self.get_default_tensor(feature_info, sequence_size)
 
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
-            feature_tensor = extracted_context_features.get(
-                feature_info["name"], default_tensor)
-            # Adjust shape
-            feature_tensor = tf.expand_dims(feature_tensor, axis=0)
+            feature_tensor = extracted_context_features.get(feature_info["name"], default_tensor)
         else:
-            feature_tensor = extracted_sequence_features.get(
-                feature_info["name"], default_tensor)
-            if isinstance(feature_tensor, sparse.SparseTensor):
-                feature_tensor = sparse.reset_shape(feature_tensor)
-                feature_tensor = sparse.to_dense(feature_tensor)
-                feature_tensor = tf.squeeze(feature_tensor, axis=0)
+            feature_tensor = extracted_sequence_features.get(feature_info["name"], default_tensor)
+
+        if isinstance(feature_tensor, sparse.SparseTensor):
+            feature_tensor = sparse.reset_shape(feature_tensor)
+            feature_tensor = sparse.to_dense(feature_tensor)
 
         return feature_tensor
 
@@ -595,7 +592,10 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Number of elements in the sequence of the TFRecord
         """
         context_features, sequence_features = extracted_features
-        if self.required_fields_only and not self.feature_config.get_rank("serving_info")["required"]:
+        if (
+            self.required_fields_only
+            and not self.feature_config.get_rank("serving_info")["required"]
+        ):
             """
             Define dummy mask if the rank field is not a required field for serving
             NOTE:
@@ -607,47 +607,42 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             """
             mask = tf.constant(
                 value=1,
-                shape=[self.max_sequence_size],
-                dtype=self.feature_config.get_rank("dtype"))
+                shape=[self.max_sequence_size, 1],
+                dtype=self.feature_config.get_rank("dtype"),
+            )
             sequence_size = tf.constant(self.max_sequence_size, dtype=tf.int64)
         else:
             # Typically used at training time, to pad/clip to a fixed number of sequence per query
 
             # Use rank as a reference tensor to infer shape/sequence_size in query
-            reference_tensor = sequence_features.get(
-                self.feature_config.get_rank(key="node_name"))
+            reference_tensor = sequence_features.get(self.feature_config.get_rank(key="node_name"))
 
             # Add mask for identifying padded sequence
-            mask = tf.ones_like(sparse.to_dense(
-                sparse.reset_shape(reference_tensor)))
+            mask = tf.ones_like(sparse.to_dense(sparse.reset_shape(reference_tensor)))
 
             if self.pad_sequence:
-                mask = tf.squeeze(mask, axis=0)
 
                 def crop_fn():
                     # NOTE: We currently ignore these cases as there is no clear
                     # way to select max_sequence_size from all the sequence features
-                    tf.print(
-                        "\n[WARN] Bad query found. Number of sequence : ", tf.shape(mask)[0])
+                    tf.print("\n[WARN] Bad query found. Number of sequence : ", tf.shape(mask)[0])
                     return mask
 
                 mask = tf.cond(
                     tf.shape(mask)[0] <= self.max_sequence_size,
                     # Pad if there are missing sequence
                     lambda: tf.pad(
-                        mask, [[0, self.max_sequence_size - tf.shape(mask)[0]]]),
+                        mask, [[0, self.max_sequence_size - tf.shape(mask)[0]], [0, 0]]
+                    ),
                     # Crop if there are extra sequence
                     crop_fn,
                 )
-                sequence_size = tf.constant(
-                    self.max_sequence_size, dtype=tf.int64)
+                sequence_size = tf.constant(self.max_sequence_size, dtype=tf.int64)
             else:
-                mask = tf.squeeze(mask, axis=0)
                 sequence_size = tf.cast(tf.reduce_sum(mask), tf.int64)
 
         # Check validity of mask
-        tf.debugging.assert_greater(
-            sequence_size, tf.constant(0, dtype=tf.int64))
+        tf.debugging.assert_greater(sequence_size, tf.constant(0, dtype=tf.int64))
 
         # Update features dictionary with the computed mask tensor
         features_dict["mask"] = mask
@@ -673,7 +668,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         """
         if self.pad_sequence and feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
             pad_len = self.max_sequence_size - tf.shape(feature_tensor)[0]
-            feature_tensor = tf.pad(feature_tensor, [[0, pad_len]])
+            feature_tensor = tf.pad(feature_tensor, [[0, pad_len], [0, 0]])
 
         return feature_tensor
 
@@ -719,7 +714,7 @@ def get_parse_fn(
 
     # Generate parsing function
     if tfrecord_type == TFRecordTypeKey.EXAMPLE:
-        parser = TFRecordExampleParser(
+        parser: TFRecordParser = TFRecordExampleParser(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
             required_fields_only=required_fields_only,
@@ -733,8 +728,7 @@ def get_parse_fn(
             pad_sequence=pad_sequence,
         )
     else:
-        raise KeyError(
-            "Invalid TFRecord type specified: {}".format(tfrecord_type))
+        raise KeyError("Invalid TFRecord type specified: {}".format(tfrecord_type))
 
     return parser.get_parse_fn()
 
@@ -808,8 +802,9 @@ def read(
 
     if parse_tfrecord:
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
-        dataset = dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE).apply(
-            data.experimental.ignore_errors()
+        dataset = (
+            dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+            # .apply(data.experimental.ignore_errors())
         )
 
     # Create BatchedDataSet
