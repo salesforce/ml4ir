@@ -26,7 +26,7 @@ from tensorflow.keras.optimizers.schedules import ExponentialDecay
 warnings.filterwarnings("ignore")
 
 INPUT_DIR = "ml4ir/applications/ranking/tests/data/"
-MODEL_CONFIG = "ml4ir/applications/ranking/tests/data/config/model_config_cyclic_lr.yaml"
+MODEL_CONFIG = "ml4ir/applications/ranking/tests/data/configs/model_config_cyclic_lr.yaml"
 KEEP_ADDITIONAL_INFO = 0
 NON_ZERO_FEATURES_ONLY = 0
 
