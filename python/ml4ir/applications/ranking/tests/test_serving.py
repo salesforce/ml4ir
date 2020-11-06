@@ -129,7 +129,7 @@ class RankingModelTest(RankingTestBase):
         ).all()
 
     def get_feature_config(self):
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,

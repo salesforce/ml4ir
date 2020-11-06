@@ -14,7 +14,7 @@ from ml4ir.base.io import file_io, local_io
 
 warnings.filterwarnings("ignore")
 
-INPUT_DIR = "ml4ir/applications/ranking/tests/data/ranklib_test_data/"
+INPUT_DIR = "ml4ir/applications/ranking/tests/data/ranklib/"
 KEEP_ADDITIONAL_INFO = 0
 NON_ZERO_FEATURES_ONLY = 0
 

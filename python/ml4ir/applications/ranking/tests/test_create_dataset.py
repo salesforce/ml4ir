@@ -10,7 +10,7 @@ from ml4ir.applications.ranking.data.scripts.create_dataset import run_dataset_c
 warnings.filterwarnings("ignore")
 
 ROOT_DATA_DIR = "ml4ir/applications/ranking/tests/data/csv/train"
-FEATURE_CONFIG = "ml4ir/applications/ranking/tests/data/config/feature_config.yaml"
+FEATURE_CONFIG = "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
 OUTPUT_DIR = "ml4ir/applications/ranking/tests/test_output/synthetic"
 LOG_DIR = "ml4ir/applications/ranking/tests/test_output_log/"
 

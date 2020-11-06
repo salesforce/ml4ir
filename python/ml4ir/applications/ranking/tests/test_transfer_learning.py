@@ -29,7 +29,7 @@ class RankingTransferLearningTest(RankingTestBase):
     ):
         """Helper method to get a RankingModel and Dataset with some default args"""
         data_dir = os.path.join(self.root_data_dir, DataFormatKey.TFRECORD)
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
         data_format = DataFormatKey.TFRECORD
         metrics_keys = [MetricKey.MRR]
 
