@@ -47,7 +47,7 @@ class TestLrSchedules(unittest.TestCase):
 
     def setUp(self):
         self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
-            'ranklib_test_data/feature_config_convert_to_clicks.yaml'
+            'ranklib/feature_config_convert_to_clicks.yaml'
         self.model_config_file = MODEL_CONFIG
 
     def compare_lr_values(self, scheduler, expected_values):
@@ -137,7 +137,7 @@ class TestLrSchedules(unittest.TestCase):
         """Test a cyclic learning rate in model training"""
         Logger = logging_utils.setup_logging(
             reset=True,
-            file_name=os.path.join(INPUT_DIR + 'ranklib_test_data', "output_log.csv"),
+            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv"),
             log_to_file=True,
         )
 
@@ -146,7 +146,7 @@ class TestLrSchedules(unittest.TestCase):
                                            io)
 
         dataset = RelevanceDataset(
-            data_dir=INPUT_DIR + '/ranklib_test_data',
+            data_dir=INPUT_DIR + '/ranklib',
             data_format=DataFormatKey.RANKLIB,
             feature_config=feature_config,
             tfrecord_type=TFRecordTypeKey.SEQUENCE_EXAMPLE,
