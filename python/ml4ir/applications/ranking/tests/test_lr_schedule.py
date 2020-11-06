@@ -30,14 +30,20 @@ MODEL_CONFIG = "ml4ir/applications/ranking/tests/data/config/model_config_cyclic
 KEEP_ADDITIONAL_INFO = 0
 NON_ZERO_FEATURES_ONLY = 0
 
-class lr_callback(keras.callbacks.Callback):
-    def __init__(self, lr_list):
-        self.lr_list = lr_list
+class LrCallback(keras.callbacks.Callback):
+    """Defining a callback to keep track of changing learning rate during training."""
+
+    def __init__(self):
+        self.lr_list = []
 
     def on_train_batch_begin(self, batch, logs=None):
         self.lr_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
 
+    def get_lr_list(self):
+        return self.lr_list
+
 class TestLrSchedules(unittest.TestCase):
+    """Testing different learning rate schedules"""
 
     def setUp(self):
         self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
@@ -189,9 +195,8 @@ class TestLrSchedules(unittest.TestCase):
             logger=Logger,
         )
         callbacks_list = []
-        lr_list = []
-        my_calback_object = lr_callback(lr_list)
-        callbacks_list.append(my_calback_object)
+        my_callback_object = LrCallback()
+        callbacks_list.append(my_callback_object)
 
         history = relevance_model.model.fit(
             x=dataset.train,
@@ -200,6 +205,7 @@ class TestLrSchedules(unittest.TestCase):
             verbose=True,
             callbacks=callbacks_list,
         )
+        lr_list = my_callback_object.get_lr_list()
         lr_gold = [0.001,0.020800006,0.040599994,0.0604,0.080199994,0.1,0.080199994,0.0604,0.040599994,0.020800006,0.001,
                    0.010900003,0.020800006,0.030699994,0.040599994,0.050499998,0.040599994,0.030699994,0.020800006,
                    0.010900003,0.001,0.0059499955,0.010900003,0.015849996,0.020800006,0.02575,0.020800006,0.015849996,

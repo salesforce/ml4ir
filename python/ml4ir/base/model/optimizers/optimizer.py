@@ -4,8 +4,9 @@ from ml4ir.base.model.optimizers import cyclic_learning_rate
 from ml4ir.base.config.keys import OptimizerKey, LearningRateScheduleKey, CyclicLearningRateType
 import tensorflow as tf
 
-class DefaultValues(object):
+class OptimizerDefaultValues(object):
   """Default values for unspecified parameters of the optimizer and learning rate schedule."""
+
   CONSTANT_LR = 0.01
   EXP_DECAY_STEPS = 100000
   EXP_DECAY_RATE = 0.96
@@ -73,7 +74,7 @@ def choose_scheduler(model_config):
     if 'lr_schedule' not in model_config:
         #use constant lr schedule
         learning_rate_schedule = ExponentialDecay(
-            initial_learning_rate=DefaultValues.CONSTANT_LR,
+            initial_learning_rate=OptimizerDefaultValues.CONSTANT_LR,
             decay_steps=10000000,
             decay_rate=1.0,
         )
@@ -84,15 +85,15 @@ def choose_scheduler(model_config):
 
         if lr_schedule_key == LearningRateScheduleKey.EXPONENTIAL:
             learning_rate_schedule = ExponentialDecay(
-                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else DefaultValues.CONSTANT_LR,
-                decay_steps=lr_schedule['learning_rate_decay_steps'] if 'learning_rate_decay_steps' in lr_schedule else DefaultValues.EXP_DECAY_STEPS,
-                decay_rate=lr_schedule['learning_rate_decay'] if 'learning_rate_decay' in lr_schedule else DefaultValues.EXP_DECAY_RATE,
+                initial_learning_rate=lr_schedule.get('learning_rate', OptimizerDefaultValues.CONSTANT_LR),
+                decay_steps=lr_schedule.get('learning_rate_decay_steps', OptimizerDefaultValues.EXP_DECAY_STEPS),
+                decay_rate=lr_schedule.get('learning_rate_decay', OptimizerDefaultValues.EXP_DECAY_RATE),
                 staircase=True,
             )
 
         elif lr_schedule_key == LearningRateScheduleKey.CONSTANT:
             learning_rate_schedule = ExponentialDecay(
-                initial_learning_rate=lr_schedule['learning_rate'] if 'learning_rate' in lr_schedule else DefaultValues.CONSTANT_LR,
+                initial_learning_rate=lr_schedule.get('learning_rate', OptimizerDefaultValues.CONSTANT_LR),
                 decay_steps=10000000,
                 decay_rate=1.0,
             )
@@ -101,22 +102,22 @@ def choose_scheduler(model_config):
             lr_schedule_type = lr_schedule['type']
             if lr_schedule_type == CyclicLearningRateType.TRIANGULAR:
                 learning_rate_schedule = cyclic_learning_rate.TriangularCyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
+                    initial_learning_rate=lr_schedule.get('initial_learning_rate', OptimizerDefaultValues.CYCLIC_INITIAL_LEARNING_RATE),
+                    maximal_learning_rate=lr_schedule.get('maximal_learning_rate', OptimizerDefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE),
+                    step_size=lr_schedule.get('step_size', OptimizerDefaultValues.CYCLIC_STEP_SIZE),
                 )
             elif lr_schedule_type == CyclicLearningRateType.TRIANGULAR2:
                 learning_rate_schedule = cyclic_learning_rate.Triangular2CyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
+                    initial_learning_rate=lr_schedule.get('initial_learning_rate',OptimizerDefaultValues.CYCLIC_INITIAL_LEARNING_RATE),
+                    maximal_learning_rate=lr_schedule.get('maximal_learning_rate',OptimizerDefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE),
+                    step_size=lr_schedule.get('step_size', OptimizerDefaultValues.CYCLIC_STEP_SIZE),
                 )
             elif lr_schedule_type == CyclicLearningRateType.EXPONENTIAL:
                 learning_rate_schedule = cyclic_learning_rate.ExponentialCyclicalLearningRate(
-                    initial_learning_rate=lr_schedule['initial_learning_rate'] if 'initial_learning_rate' in lr_schedule else DefaultValues.CYCLIC_INITIAL_LEARNING_RATE,
-                    maximal_learning_rate=lr_schedule['maximal_learning_rate'] if 'maximal_learning_rate' in lr_schedule else DefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE,
-                    step_size=lr_schedule['step_size'] if 'step_size' in lr_schedule else DefaultValues.CYCLIC_STEP_SIZE,
-                    gamma=lr_schedule['gamma'] if 'gamma' in lr_schedule else DefaultValues.CYCLIC_GAMMA,
+                    initial_learning_rate=lr_schedule.get('initial_learning_rate', OptimizerDefaultValues.CYCLIC_INITIAL_LEARNING_RATE),
+                    maximal_learning_rate=lr_schedule.get('maximal_learning_rate', OptimizerDefaultValues.CYCLIC_MAXIMAL_LEARNING_RATE),
+                    step_size=lr_schedule.get('step_size', OptimizerDefaultValues.CYCLIC_STEP_SIZE),
+                    gamma=lr_schedule.get('gamma', OptimizerDefaultValues.CYCLIC_GAMMA),
                 )
             else:
                 raise ValueError("Unsupported cyclic learning rate schedule type key: " + lr_schedule_type)
