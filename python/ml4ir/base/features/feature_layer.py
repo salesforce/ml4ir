@@ -146,14 +146,8 @@ def define_feature_layer(
         NOTE: Can not be hardcoded as we allow for varying sequence_size at inference time
         """
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-            # # Train tiling shape -> [1, max_sequence_size, 1]
-            # train_tile_shape = tf.slice(inputs["mask"], [0, 0, 0], [1, -1, 1]).shape
-
-            # # Metadata tiling shape -> [1, max_sequence_size]
-            # metadata_tile_shape = tf.squeeze(
-            #     tf.slice(inputs["mask"], [0, 0, 0], [1, -1, 1]), axis=-1).shape
-
             sequence_size = tf.size(tf.gather(inputs["mask"], 0))
+
             # Train tiling shape -> [1, max_sequence_size, 1]
             train_tile_shape = [1, sequence_size, 1]
 
