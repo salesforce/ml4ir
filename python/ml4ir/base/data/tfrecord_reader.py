@@ -362,6 +362,13 @@ class TFRecordExampleParser(TFRecordParser):
         if isinstance(feature_tensor, tf.sparse.SparseTensor):
             feature_tensor = sparse.to_dense(sparse.reset_shape(feature_tensor))
 
+            """
+            NOTE: If a feature is in the features_spec, then it gets retrieved
+            as an empty sparse tensor. So we need to replace with default tensor
+            """
+            if tf.size(feature_tensor) == tf.constant(0):
+                feature_tensor = default_tensor
+
         return feature_tensor
 
     def generate_and_add_mask(self, extracted_features, features_dict):
@@ -568,6 +575,13 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         if isinstance(feature_tensor, sparse.SparseTensor):
             feature_tensor = sparse.reset_shape(feature_tensor)
             feature_tensor = sparse.to_dense(feature_tensor)
+
+            """
+            NOTE: If a feature is in the features_spec, then it gets retrieved
+            as an empty sparse tensor. So we need to replace with default tensor
+            """
+            if tf.size(feature_tensor) == tf.constant(0):
+                feature_tensor = default_tensor
 
         return feature_tensor
 
