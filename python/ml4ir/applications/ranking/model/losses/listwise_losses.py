@@ -22,8 +22,8 @@ class RankOneListNet(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the loss
         """
-        bce = losses.BinaryCrossentropy(reduction=Reduction.SUM)
-        mask = kwargs.get("mask")
+        bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
+        mask = tf.squeeze(kwargs.get("mask"), axis=-1)
 
         def _loss_fn(y_true, y_pred):
             """
