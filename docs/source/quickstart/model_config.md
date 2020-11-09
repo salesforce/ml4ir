@@ -37,7 +37,7 @@ layers:
     activation: null
 optimizer: 
   key: adam
-  gradient_clip_value: 5.0       #default value is 5.0
+  gradient_clip_value: 5.0
 lr_schedule:
   key: cyclic
   type: triangular2
