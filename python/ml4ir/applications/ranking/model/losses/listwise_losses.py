@@ -69,7 +69,7 @@ class RankOneListNet(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the softmax activation
         """
-        softmax_op = layers.Softmax(axis=-1, name=output_name)
+        softmax_op = layers.Softmax(axis=-1)
 
         def masked_softmax(logits, mask):
             """
@@ -83,6 +83,6 @@ class RankOneListNet(ListwiseLossBase):
                 tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
             )
 
-            return tf.expand_dims(softmax_op(logits), axis=-1)
+            return tf.expand_dims(softmax_op(logits), axis=-1, name=output_name)
 
         return masked_softmax
