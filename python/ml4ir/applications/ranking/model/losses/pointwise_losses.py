@@ -23,19 +23,21 @@ class SigmoidCrossEntropy(PointwiseLossBase):
             to the loss
         """
         bce = losses.BinaryCrossentropy(reduction=Reduction.SUM_OVER_BATCH_SIZE)
-        mask = tf.squeeze(kwargs.get("mask"), axis=-1)
+        mask = kwargs.get("mask")
 
         def _loss_fn(y_true, y_pred):
             """
             Shapes
             ------
             y_true : [batch_size, num_classes, 1]
-            y_pred : [batch_size, num_classes]
-            mask : [batch_size, num_classes]
+            y_pred : [batch_size, num_classes, 1]
+            mask : [batch_size, num_classes, 1]
             """
-            y_true = tf.squeeze(y_true, axis=-1)
+            # Mask the padded records
+            y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
+            y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
 
-            return bce(y_true, y_pred, sample_weight=mask)
+            return bce(y_true, y_pred)
 
         return _loss_fn
 
@@ -53,4 +55,17 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         function
             Function to apply sigmoid activation to the output score
         """
-        return lambda logits, mask: layers.Activation("sigmoid", name=output_name)(logits)
+        sigmoid_op = layers.Activation("sigmoid", name=output_name)
+
+        def masked_sigmoid(logits, mask):
+            """
+            Sigmoid with masked/padded values set to 0
+            """
+            mask = tf.squeeze(mask, axis=-1)
+            logits = tf.where(
+                tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
+            )
+
+            return tf.expand_dims(sigmoid_op(logits), axis=-1)
+
+        return masked_sigmoid

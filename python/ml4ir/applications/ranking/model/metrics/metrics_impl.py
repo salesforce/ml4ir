@@ -51,9 +51,9 @@ class MeanMetricWrapper(metrics.Mean):
         Parameters
         ----------
         y_true : Tensor object
-            The ground truth values.
+            The ground truth values. Shape : [batch_size, max_sequence_size, 1]
         y_pred : Tensor object
-            The predicted values.
+            The predicted values. Shape : [batch_size, max_sequence_size, 1]
         sample_weight : Tensor object
             Optional weighting of each example. Defaults to 1. Can be
             a `Tensor` whose rank is either 0, or the same rank as `y_true`,
@@ -68,6 +68,7 @@ class MeanMetricWrapper(metrics.Mean):
         `y_true` and `y_pred` should have the same shape.
         """
         y_true = tf.squeeze(y_true, axis=-1)
+        y_pred = tf.squeeze(y_pred, axis=-1)
         query_scores: Tensor = self._fn(y_true, y_pred, **self._fn_kwargs)
         return super(MeanMetricWrapper, self).update_state(
             query_scores, sample_weight=sample_weight

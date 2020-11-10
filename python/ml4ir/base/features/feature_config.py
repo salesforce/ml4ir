@@ -533,7 +533,7 @@ class FeatureConfig:
         """
 
         def get_shape(feature_info: dict):
-            return feature_info.get("shape", (None,))
+            return feature_info.get("shape", (feature_info.get("max_len", 1),))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):
@@ -937,9 +937,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         def get_shape(feature_info: dict):
             # Setting size to None for sequence features as the num_records is variable
             if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-                return feature_info.get("shape", (None, None))
+                return feature_info.get("shape", (None, feature_info.get("max_len", 1)))
             else:
-                return feature_info.get("shape", (None,))
+                return feature_info.get("shape", (feature_info.get("max_len", 1),))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):

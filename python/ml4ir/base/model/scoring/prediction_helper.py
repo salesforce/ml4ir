@@ -8,6 +8,81 @@ from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 
 
+@tf.function
+def flatten_query(feat):
+    """
+    Collapse first two dimensions of features
+
+    Parameters
+    ----------
+    feat: Tensor
+        Feature tensor to be flattened.
+        Shape: [batch_size, max_sequence_size, max_len]
+
+    Returns
+    -------
+    Tensor
+        Flattened tensor with shape [batch_size * max_sequence_size, max_len]
+    """
+    return tf.reshape(feat, tf.concat([[-1], tf.shape(feat)[2:]], axis=0))
+
+
+@tf.function
+def filter_records(feat, mask):
+    """
+    Filter records that were padded in each query
+
+    Parameters
+    ----------
+    feat: Tensor
+        Flat feature tensor to be filtered
+        Shape: [batch_size * max_sequence_size, max_len]
+    mask: Tensor
+        Mask indicator to identify padded records
+        Shape: [batch_size * max_sequence_size, 1]
+
+    Returns
+    -------
+    Tensor
+        Tensor object with masked records removed
+        Shape: [unknown, max_len]
+    """
+    return tf.gather_nd(
+        feat,
+        tf.where(
+            tf.equal(tf.cast(tf.squeeze(mask, axis=-1), tf.int64), tf.constant(1, dtype=tf.int64))
+        ),
+    )
+
+
+@tf.function
+def tile_context_feature(feat, max_sequence_size):
+    """
+    Tile context features to max_sequence_size. Do nothing if sequence feature
+
+    Parameters
+    ----------
+    feat: Tensor
+        Feature tensor to be tiled
+        Shape: [batch_size, max_len] or [batch_size, sequence_size, max_len]
+    max_sequence_size: int
+        Maximum number of records per query
+
+    Returns
+    -------
+    Tensor
+        Tiled tensor of shape [batch_size, max_sequence_size, max_len]
+
+    """
+    return tf.cond(
+        tf.equal(tf.rank(feat), tf.constant(2)),
+        true_fn=lambda: K.repeat_elements(
+            tf.expand_dims(feat, axis=1), rep=max_sequence_size, axis=1
+        ),
+        false_fn=lambda: feat,
+    )
+
+
 def get_predict_fn(
     model: keras.Model,
     tfrecord_type: str,
@@ -67,20 +142,6 @@ def get_predict_fn(
     features_to_log = [f.get("node_name", f["name"]) for f in features_to_return] + [output_name]
 
     @tf.function
-    def _flatten_records(x):
-        """Collapse first two dimensions -> [batch_size, max_sequence_size]"""
-        return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
-
-    @tf.function
-    def _filter_records(x, mask):
-        """Filter records that were padded in each query"""
-        return tf.squeeze(
-            tf.gather_nd(
-                x, tf.where(tf.not_equal(tf.cast(mask, tf.int64), tf.constant(0, dtype="int64"))),
-            )
-        )
-
-    @tf.function
     def _predict_score(features, label):
         """Predict scores and compute additional output from input features using the input model"""
         if is_compiled:
@@ -92,7 +153,7 @@ def get_predict_fn(
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
 
-            mask = _flatten_records(features["mask"])
+            mask = flatten_query(features["mask"])
 
         predictions_dict = dict()
         for feature_name in features_to_log:
@@ -117,15 +178,13 @@ def get_predict_fn(
         for feature_name in predictions_dict.keys():
             feat_ = predictions_dict[feature_name]
             if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-                feat_ = tf.cond(
-                    tf.equal(tf.shape(feat_)[1], tf.constant(1)),
-                    true_fn=lambda: K.repeat_elements(feat_, rep=max_sequence_size, axis=1),
-                    false_fn=lambda: feat_,
-                )
+                # If context feature, convert shape
+                # [batch_size, max_len] -> [batch_size, max_sequence_size, max_len]
+                feat_ = tile_context_feature(feat_, max_sequence_size)
 
                 # Collapse from one query per data point to one record per data point
                 # and remove padded dummy records
-                feat_ = _filter_records(_flatten_records(feat_), mask)
+                feat_ = filter_records(flatten_query(feat_), mask)
 
             predictions_dict[feature_name] = tf.squeeze(feat_)
 

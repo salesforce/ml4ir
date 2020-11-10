@@ -172,7 +172,6 @@ class UnivariateInteractionModel(InteractionModel):
             Dictionary of feature tensors that can be used for
             computing custom metrics and losses
         """
-
         # Sorting the train features dictionary so that we control the order
         train_features_list = [train_features[k] for k in sorted(train_features)]
 

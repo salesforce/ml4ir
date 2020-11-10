@@ -330,10 +330,13 @@ class TFRecordExampleParser(TFRecordParser):
             Tensor object that can be used as a default tensor if the expected feature
             is missing from the TFRecord
         """
-        default_tensor = tf.constant(
-            value=self.feature_config.get_default_value(feature_info), dtype=feature_info["dtype"]
+        default_tensor = tf.fill(
+            value=tf.constant(
+                value=self.feature_config.get_default_value(feature_info),
+                dtype=feature_info["dtype"],
+            ),
+            dims=[feature_info.get("max_len", 1)],
         )
-        default_tensor = tf.expand_dims(default_tensor, axis=0)
 
         return default_tensor
 
@@ -529,19 +532,18 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             feature_info.get("tfrecord_type", SequenceExampleTypeKey.CONTEXT)
             == SequenceExampleTypeKey.CONTEXT
         ):
-            default_tensor = tf.constant(
+            default_shape = [feature_info.get("max_len", 1)]
+        else:
+            default_shape = [sequence_size, feature_info.get("max_len", 1)]
+
+        default_tensor = tf.fill(
+            value=tf.constant(
                 value=self.feature_config.get_default_value(feature_info),
                 dtype=feature_info["dtype"],
-            )
-            default_tensor = tf.expand_dims(default_tensor, axis=0)
-        else:
-            default_tensor = tf.fill(
-                value=tf.constant(
-                    value=self.feature_config.get_default_value(feature_info),
-                    dtype=feature_info["dtype"],
-                ),
-                dims=[sequence_size, 1],
-            )
+            ),
+            dims=default_shape,
+        )
+
         return default_tensor
 
     def get_feature(self, feature_info, extracted_features, sequence_size):
@@ -569,19 +571,21 @@ class TFRecordSequenceExampleParser(TFRecordParser):
 
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
             feature_tensor = extracted_context_features.get(feature_info["name"], default_tensor)
+            default_shape = [feature_info.get("max_len", 1)]
         else:
             feature_tensor = extracted_sequence_features.get(feature_info["name"], default_tensor)
+            default_shape = [sequence_size, feature_info.get("max_len", 1)]
 
         if isinstance(feature_tensor, sparse.SparseTensor):
-            feature_tensor = sparse.reset_shape(feature_tensor)
-            feature_tensor = sparse.to_dense(feature_tensor)
-
             """
-            NOTE: If a feature is in the features_spec, then it gets retrieved
-            as an empty sparse tensor. So we need to replace with default tensor
+            NOTE: Since we define the features as VarLenFeature in
+            features spec, the extracted feature tensors will be sparse.
+            Here, we convert them into dense tensors and also pad accordingly.
             """
-            if tf.size(feature_tensor) == tf.constant(0):
-                feature_tensor = default_tensor
+            feature_tensor = sparse.reset_shape(feature_tensor, new_shape=default_shape)
+            feature_tensor = sparse.to_dense(
+                feature_tensor, default_value=self.feature_config.get_default_value(feature_info)
+            )
 
         return feature_tensor
 
