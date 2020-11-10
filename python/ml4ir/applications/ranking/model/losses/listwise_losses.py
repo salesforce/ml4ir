@@ -33,10 +33,6 @@ class RankOneListNet(ListwiseLossBase):
             y_pred : [batch_size, num_classes, 1]
             mask : [batch_size, num_classes, 1]
             """
-            # # Reshape the tensors
-            # y_true = tf.squeeze(y_true, axis=-1)
-            # y_pred = tf.squeeze(y_pred, axis=-1)
-
             batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 
             # Mask the padded records
