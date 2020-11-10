@@ -400,6 +400,9 @@ class RelevancePipeline(object):
         experiment_tracking_dict.update(train_metrics)
         experiment_tracking_dict.update(test_metrics)
 
+        # Add optimizer and lr schedule
+        experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
+
         job_info = pd.DataFrame.from_dict(
             experiment_tracking_dict, orient="index", columns=["value"]
         ).to_csv()
