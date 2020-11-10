@@ -144,15 +144,14 @@ def define_feature_layer(
         We do this so that we can concatenate the training features into a dense tensor later
 
         NOTE: Can not be hardcoded as we allow for varying sequence_size at inference time
+        Has to be a dynamic tensor.
         """
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-            sequence_size = tf.size(tf.gather(inputs["mask"], 0))
-
             # Train tiling shape -> [1, max_sequence_size, 1]
-            train_tile_shape = [1, sequence_size, 1]
+            train_tile_shape = tf.shape(tf.expand_dims(tf.gather(inputs["mask"], 0), axis=0))
 
             # Metadata tiling shape -> [1, max_sequence_size]
-            metadata_tile_shape = [1, sequence_size]
+            metadata_tile_shape = tf.shape(tf.transpose(tf.gather(inputs["mask"], 0)))
 
         for feature_info in feature_config.get_all_features(include_label=False):
             feature_node_name = feature_info.get("node_name", feature_info["name"])

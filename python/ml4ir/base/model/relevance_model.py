@@ -636,7 +636,6 @@ class RelevanceModel:
                 file_path=os.path.join(model_file, "layers", "{}.npz".format(layer.name)),
                 zip=True,
             )
-            print(layer)
 
         self.logger.info("Final model saved to : {}".format(model_file))
 

@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow import io
 from tensorflow import data
 from tensorflow import sparse
-from tensorflow import image
 from logging import Logger
 
 from ml4ir.base.io.file_io import FileIO
