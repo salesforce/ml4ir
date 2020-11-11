@@ -13,6 +13,7 @@ from argparse import Namespace
 from logging import Logger
 
 from ml4ir.base.config.parse_args import get_args
+from ml4ir.base.config.dynamic_args import override_with_dynamic_args
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io import logging_utils
 from ml4ir.base.io.local_io import LocalIO
@@ -145,11 +146,11 @@ class RelevancePipeline(object):
 
         # Customize feature_config and model_config dictionaries
         if "feature_config_custom" in args:
-            feature_config_dict = customize_with_dynamic_args(
+            feature_config_dict = override_with_dynamic_args(
                 base_dict=feature_config_dict,
                 dynamic_args=args.feature_config_custom)
         if "model_config_custom" in args:
-            model_config_dict = customize_with_dynamic_args(
+            model_config_dict = override_with_dynamic_args(
                 base_dict=model_config_dict,
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
