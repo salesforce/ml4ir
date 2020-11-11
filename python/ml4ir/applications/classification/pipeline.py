@@ -73,8 +73,8 @@ class ClassificationPipeline(RelevancePipeline):
         loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.model_config_file,
+        scorer: ScorerBase = RelevanceScorer(
+            model_config_file=self.model_config,
             feature_config=self.feature_config,
             interaction_model=interaction_model,
             loss=loss,
@@ -89,9 +89,7 @@ class ClassificationPipeline(RelevancePipeline):
         ]
 
         # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            model_config_file=self.model_config_file, file_io=self.file_io,
-        )
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
         relevance_model: RelevanceModel = ClassificationModel(

@@ -1,10 +1,47 @@
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, Namespace, Action
 from typing import List
 
 
+class CustomFeatureDictUpdater(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        """
+        Add a value to a custom argument dictionary.
+        If dictionary does not exist a new one is created.
+        If dictionary already exists, it is updated with new key-value pair.
+
+        Can be used to collect all custom arguments for feature_config
+        by specifying as feature_config.custom_arg 128. This will update the
+        dictionary for feature_config custom args with the new key "custom_arg"
+        and corresponding value "128".
+
+        Parameters
+        ----------
+        parser: ArgumentParser
+            ArgumentParser to use this action with
+        namespace: Namespace
+            The namespace object that will be updated with the parsed value
+        values: str
+            Value to be added to dictionary
+        option_string: str
+            Name of command line argument the action is used with
+
+        Returns
+        -------
+        dict
+            Dictionary with the updated key value pair
+        """
+        old_custom_args = getattr(namespace, self.dest)
+        new_custom_args = {".".join(option_string.split(".")[1:]): values}
+        if isinstance(old_custom_args, dict):
+            new_custom_args.update(old_custom_args)
+        setattr(namespace, self.dest, new_custom_args)
+
+
 class RelevanceArgParser(ArgumentParser):
-    def __init__(self):
-        super().__init__()
+    """Defines the parser for the command line arguments for RelevancePipeline"""
+
+    def __init__(self, allow_abbrev=False, **kwargs):
+        super().__init__(allow_abbrev=allow_abbrev, **kwargs)
         self.define_args()
         self.set_default_args()
 
@@ -298,6 +335,34 @@ class RelevanceArgParser(ArgumentParser):
 
     def set_default_args(self):
         pass
+
+    def parse_args(self, args: List[str]) -> Namespace:
+        """
+        Parse command line arguments passed a list of strings.
+        Additionally, handles dynamic arguments for feature_config
+        and model_config with prefixes feature_config. and model_config.
+        respectively
+
+        Parameters
+        ----------
+        args: list of str
+            List of command line args to be parsed
+
+        Returns
+        -------
+        Namespace
+            Namespace object obtained by parsing the input
+        """
+        dynamic_args = self.parse_known_args(args)[1]
+
+        for i in range(int(len(dynamic_args) / 2)):
+            key = dynamic_args[i * 2]
+            dest = "{}_custom".format(key.split(".")[0]).replace("--", "")
+            self.add_argument(key,
+                              dest=dest,
+                              action=CustomFeatureDictUpdater)
+
+        return super(RelevanceArgParser, self).parse_args(args)
 
 
 def get_args(args: List[str]) -> Namespace:

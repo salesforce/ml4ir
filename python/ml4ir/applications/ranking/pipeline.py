@@ -81,8 +81,8 @@ class RankingPipeline(RelevancePipeline):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.model_config_file,
+        scorer: ScorerBase = RelevanceScorer(
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
@@ -95,7 +95,7 @@ class RankingPipeline(RelevancePipeline):
             metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
-        optimizer: Optimizer = get_optimizer(file_io=self.file_io, model_config_file=self.model_config_file)
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
         relevance_model: RelevanceModel = RankingModel(
