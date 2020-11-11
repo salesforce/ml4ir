@@ -107,9 +107,6 @@ class RelevancePipeline(object):
                     DefaultDirectoryKey.TEMP_MODELS, os.path.basename(self.model_file)
                 )
 
-        # Read/Parse model config YAML
-        self.model_config_file = self.args.model_config
-
         # Setup other arguments
         self.loss_key: str = self.args.loss_key
         if self.args.metrics_keys[0] == "[":
@@ -119,6 +116,7 @@ class RelevancePipeline(object):
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type
 
+        # RankLib/LibSVM data format specific setup
         if args.data_format == DataFormatKey.RANKLIB:
             try:
                 self.non_zero_features_only = self.args.non_zero_features_only
@@ -141,9 +139,24 @@ class RelevancePipeline(object):
         # Set random seeds
         self.set_seeds()
 
+        # Read/Parse feature_config and model_config YAML
+        feature_config_dict = self.file_io.read_yaml(args.feature_config)
+        model_config_dict = self.file_io.read_yaml(args.model_config)
+
+        # Customize feature_config and model_config dictionaries
+        if "feature_config_custom" in args:
+            feature_config_dict = customize_with_dynamic_args(
+                base_dict=feature_config_dict,
+                dynamic_args=args.feature_config_custom)
+        if "model_config_custom" in args:
+            model_config_dict = customize_with_dynamic_args(
+                base_dict=model_config_dict,
+                dynamic_args=args.model_config_custom)
+        self.model_config = model_config_dict
+
         # Load and parse feature config
         self.feature_config: FeatureConfig = FeatureConfig.get_instance(
-            feature_config_dict=self.file_io.read_yaml(self.args.feature_config),
+            feature_config_dict=feature_config_dict,
             tfrecord_type=self.tfrecord_type,
             logger=self.logger,
         )

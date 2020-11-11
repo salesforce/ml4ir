@@ -182,7 +182,8 @@ class TestLrSchedules(unittest.TestCase):
             file_io=io,
         )
 
-        optimizer: Optimizer = get_optimizer(file_io=io, model_config_file=self.model_config_file)
+        optimizer: Optimizer = get_optimizer(
+            model_config_file=io.read_yaml(self.model_config_file))
 
         # Combine the above to define a RelevanceModel
         relevance_model: RelevanceModel = RankingModel(
