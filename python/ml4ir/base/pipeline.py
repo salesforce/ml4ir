@@ -322,11 +322,11 @@ class RelevancePipeline(object):
             test_metrics = dict()
 
             # Build dataset
-            relevance_dataset = self.get_relevance_dataset()
+            self.dataset = self.get_relevance_dataset()
             self.logger.info("Relevance Dataset created")
 
             # Build model
-            relevance_model = self.get_relevance_model()
+            self.model = self.get_relevance_model()
             self.logger.info("Relevance Model created")
 
             if self.args.execution_mode in {
@@ -336,8 +336,8 @@ class RelevancePipeline(object):
                 ExecutionModeKey.TRAIN_ONLY,
             }:
                 # Train
-                train_metrics = relevance_model.fit(
-                    dataset=relevance_dataset,
+                train_metrics = self.model.fit(
+                    dataset=self.dataset,
                     num_epochs=self.args.num_epochs,
                     models_dir=self.models_dir_local,
                     logs_dir=self.logs_dir_local,
@@ -356,8 +356,8 @@ class RelevancePipeline(object):
                 ExecutionModeKey.EVALUATE_RESAVE,
             }:
                 # Evaluate
-                _, _, test_metrics = relevance_model.evaluate(
-                    test_dataset=relevance_dataset.test,
+                _, _, test_metrics = self.model.evaluate(
+                    test_dataset=self.dataset.test,
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
@@ -373,8 +373,8 @@ class RelevancePipeline(object):
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
                 # Predict relevance scores
-                relevance_model.predict(
-                    test_dataset=relevance_dataset.test,
+                self.model.predict(
+                    test_dataset=self.dataset.test,
                     inference_signature=self.args.inference_signature,
                     additional_features={},
                     logs_dir=self.logs_dir_local,
@@ -394,7 +394,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.RESAVE_ONLY,
             }:
                 # Save model
-                relevance_model.save(
+                self.model.save(
                     models_dir=self.models_dir_local,
                     preprocessing_keys_to_fns={},
                     postprocessing_fn=None,
@@ -414,7 +414,7 @@ class RelevancePipeline(object):
             experiment_tracking_dict.update(test_metrics)
 
             # Add optimizer and lr schedule
-            experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
+            experiment_tracking_dict.update(self.model.model.optimizer.get_config())
 
         except Exception as e:
             self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))
