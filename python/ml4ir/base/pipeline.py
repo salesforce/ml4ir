@@ -155,7 +155,7 @@ class RelevancePipeline(object):
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
 
-        # Load and parse feature config
+        # Define a FeatureConfig object from loaded YAML
         self.feature_config: FeatureConfig = FeatureConfig.get_instance(
             feature_config_dict=feature_config_dict,
             tfrecord_type=self.tfrecord_type,

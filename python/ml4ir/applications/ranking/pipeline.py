@@ -82,6 +82,7 @@ class RankingPipeline(RelevancePipeline):
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer(
+            feature_config=self.feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
