@@ -303,6 +303,12 @@ class RelevancePipeline(object):
         """
         Run the pipeline to train, evaluate and save the model
 
+        Returns
+        -------
+        dict
+            Experiment tracking dictionary with metrics and metadata for the run.
+            Used for model selection and hyperparameter optimization
+
         Notes
         -----
         Also populates a experiment tracking dictionary containing
@@ -422,6 +428,8 @@ class RelevancePipeline(object):
 
         # Finish
         self.finish(job_status, job_info)
+
+        return experiment_tracking_dict
 
     def finish(self, job_status, job_info):
         """
