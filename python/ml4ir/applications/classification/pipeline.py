@@ -74,7 +74,7 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer(
-            model_config_file=self.model_config,
+            model_config=self.model_config,
             feature_config=self.feature_config,
             interaction_model=interaction_model,
             loss=loss,
