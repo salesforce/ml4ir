@@ -1,11 +1,11 @@
 import os
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from tensorflow import data
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.base.model.relevance_model import RelevanceModel
 from typing import Optional
-import tensorflow as tf
 
 
 class ClassificationModel(RelevanceModel):
