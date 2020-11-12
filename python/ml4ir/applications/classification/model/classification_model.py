@@ -206,15 +206,14 @@ class ClassificationModel(RelevanceModel):
         Iterates through the test data and collects for each
         data point the information to be logged.
         """
-        batch_count = 0
         predictions_df_list = []
-        for (x, y) in test_dataset.take(-1):  # returns (x, y) tuples
+        for batch_count, (x, y) in enumerate(test_dataset.take(-1)):  # returns (x, y) tuples
             batch_predictions = pd.DataFrame({key: np.squeeze(x[key].numpy()).tolist() for key in x.keys()})
             batch_predictions[self.feature_config.get_label()["name"]] = np.squeeze(y.numpy()).tolist()
             predictions_df_list.append(batch_predictions)
             if batch_count % logging_frequency == 0:
                 self.logger.info(f"Finished evaluating {batch_count} batches")
-            batch_count += 1
+        # This is a memory bottleneck; we bring everything in memory
         predictions_df = pd.concat(predictions_df_list)
         features_to_log = [f.get("node_name", f["name"]) for f in self.feature_config.get_features_to_log()]
         return predictions_df[features_to_log]
