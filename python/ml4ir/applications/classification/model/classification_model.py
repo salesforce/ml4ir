@@ -24,6 +24,11 @@ class ClassificationModel(RelevanceModel):
     ):
         """
         Evaluate the Classification Model
+        To avoid evaluating once on the the whole test
+        dataset, we calculate the metrics incrementally using
+        the batch size the user defined. Currently, we have a hacky
+        way to get the batch size since it is not part of the
+        `relevance_model` or `classification_model`.
 
         Parameters
         ----------
@@ -69,6 +74,9 @@ class ClassificationModel(RelevanceModel):
                                    logging_frequency=logging_frequency)
         global_metrics = []  # group_name, metric, value
         grouped_metrics = []
+        # instead of calculating measure with a single update_state (can result in a call with
+        # thousands of examples at once, we use the same batch size used during training.
+        # Helps prevent OOM issues.
         batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
         for metric in self.model.metrics:
             global_metrics.append(self.calculate_metric_on_batch(metric, predictions, batch_size))
@@ -97,8 +105,11 @@ class ClassificationModel(RelevanceModel):
     def get_chunks_from_df(dataframe, size):
         """
         Given a pd.DataFrame, creates batches of size `size`.
+        Instead of having a metric applied on big data once, this
+        ensures we are using batches of examples during test too.
         """
-        return [dataframe.iloc[pos:pos + size] for pos in range(0, len(dataframe), size)]
+        for pos in range(0, len(dataframe), size):
+            yield dataframe.iloc[pos:pos + size]
 
     def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
         """
