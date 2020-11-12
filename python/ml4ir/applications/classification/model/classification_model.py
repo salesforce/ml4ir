@@ -5,6 +5,7 @@ from tensorflow import data
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.base.model.relevance_model import RelevanceModel
 from typing import Optional
+import tensorflow as tf
 
 
 class ClassificationModel(RelevanceModel):
@@ -66,27 +67,16 @@ class ClassificationModel(RelevanceModel):
                                    additional_features=additional_features,
                                    logs_dir=None,
                                    logging_frequency=logging_frequency)
-
-        label_name = self.feature_config.get_label()['name']
-        output_name = self.output_name
         global_metrics = []  # group_name, metric, value
         grouped_metrics = []
+        batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
         for metric in self.model.metrics:
-            metric.reset_states()
-            metric.update_state(predictions[label_name].values.tolist(), predictions[output_name].values.tolist())
-            global_metrics.append({"metric": metric.name,
-                                   "value": metric.result().numpy()})
+            global_metrics.append(self.calculate_metric_on_batch(metric, predictions, batch_size))
             for group_ in group_metrics_keys:
                 for name, group in predictions.groupby(group_['name']):
                     if group.shape[0] >= group_metrics_min_queries:
-                        metric.reset_states()
-                        metric.update_state(group[label_name].values.tolist(),
-                                            group[output_name].values.tolist())
-                        grouped_metrics.append({"group_name": group_['name'],
-                                                "group_key": name,
-                                                "metric": metric.name,
-                                                "value": metric.result().numpy(),
-                                                "size": group.shape[0]})
+                        grouped_metrics.append(self.calculate_metric_on_batch(metric, group,
+                                                                              batch_size, group_['name'], name))
         global_metrics = pd.DataFrame(global_metrics)
         grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
         if logs_dir:
@@ -102,6 +92,56 @@ class ClassificationModel(RelevanceModel):
             )
             self.logger.info(f"Evaluation Results written at: {logs_dir}")
         return global_metrics, grouped_metrics, metrics_dict
+
+    @staticmethod
+    def get_chunks_from_df(dataframe, size):
+        """
+        Given a pd.DataFrame, creates batches of size `size`.
+        """
+        return [dataframe.iloc[pos:pos + size] for pos in range(0, len(dataframe), size)]
+
+    def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
+        """
+        Given a metric and a dataframe with `predictions`, it iterates the dataframe in
+        using `batch_size` and updates the metric. Once the dataframe is fully iterated,
+        the score of the metric is returned as a dictionary containing
+        {"group_name": group_name,
+         "group_key": group_key,
+         "metric": metric.name,
+         "value": metric.result().numpy(),
+         "size": predictions.shape[0]
+        }
+        When group_name and group_key are not provided, they are exluded from the dict.
+
+        Parameters
+        ----------
+        metric : an instance of tf.keras.metrics
+        predictions : pd.DataFrame
+        batch_size: int
+        group_name : str, optional
+            The name to be used in the returned dictionary
+        group_key : str, optional
+            A key to be used in the returned dictionary
+
+        Returns
+        -------
+        A dictionary with the metric scores for the given data.
+        """
+        label_name = self.feature_config.get_label()['name']
+        output_name = self.output_name
+        metric.reset_states()
+        for chunk in self.get_chunks_from_df(predictions, batch_size):
+            metric.update_state(tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32),
+                                tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32))
+        if group_name:
+            return {"group_name": group_name,
+                    "group_key": group_key,
+                    "metric": metric.name,
+                    "value": metric.result().numpy(),
+                    "size": predictions.shape[0]}
+        return {"metric": metric.name,
+                "value": metric.result().numpy(),
+                "size": predictions.shape[0]}
 
     def predict(
         self,
@@ -140,19 +180,31 @@ class ClassificationModel(RelevanceModel):
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
             self.file_io.rm_file(outfile)
+        predictions_df = self._create_prediction_dataframe(logging_frequency,
+                                                           test_dataset)
+        predictions_ = np.squeeze(self.model.predict(test_dataset))
+        # Below, avoid doing predictions.tolist() as it explodes the memory
+        predictions_df[self.output_name] = [x for x in predictions_]
+        if logs_dir:
+            predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+            self.logger.info(f"Model predictions written to: {outfile}")
+        return predictions_df
 
-        predictions_df_list = list()
+    def _create_prediction_dataframe(self, logging_frequency, test_dataset):
+        """
+        Iterates through the test data and collects for each
+        data point the information to be logged.
+        """
+        batch_count = 0
+        predictions_df_list = []
         for (x, y) in test_dataset.take(-1):  # returns (x, y) tuples
             batch_predictions = pd.DataFrame({key: np.squeeze(x[key].numpy()).tolist() for key in x.keys()})
             batch_predictions[self.feature_config.get_label()["name"]] = np.squeeze(y.numpy()).tolist()
             predictions_df_list.append(batch_predictions)
+            if batch_count % logging_frequency == 0:
+                self.logger.info(f"Finished evaluating {batch_count} batches")
+            batch_count += 1
         predictions_df = pd.concat(predictions_df_list)
-        predictions_df[self.output_name] = np.squeeze(self.model.predict(test_dataset)).tolist()
-        features_to_log = [f.get("node_name", f["name"]) for f in self.feature_config.get_features_to_log()] + [self.output_name]
-        predictions_df = predictions_df[features_to_log]
-        if logs_dir:
-            predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-            self.logger.info("Model predictions written to -> {}".format(outfile))
-
-        return predictions_df
+        features_to_log = [f.get("node_name", f["name"]) for f in self.feature_config.get_features_to_log()]
+        return predictions_df[features_to_log]
 
