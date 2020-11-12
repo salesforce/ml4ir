@@ -8,9 +8,9 @@ class ClassificationModelTest(ClassificationTestBase):
     :func:`~ml4ir.applications.classification.pipeline.ClassificationPipeline.get_relevance_model`
     """
 
-    def test_csv_loss(self):
+    def test_csv_loss_metrics(self):
         """Test the loss from CSV data"""
-        # Check if the loss and accuracy on the test set is the same
+        # Check if the loss, accuracy and top 5 accuracy on the test set is the same
         # Note that we don't check Precision which is not useful for this test model
         # Note that these numbers are different if you run it directly vs with docker-compose up
         expected_loss = 1.705
@@ -19,17 +19,13 @@ class ClassificationModelTest(ClassificationTestBase):
                         msg=f"Loss not in expected range."
                             f" Expected: {expected_loss} ± {tol}, Found: {self.metrics_dict['loss']}")
 
-    def test_csv_accuracy(self):
-        """Test the accuracy from CSV data"""
         expected_acc = 0.203
         tol = 0.01
         self.assertTrue(np.isclose(self.metrics_dict["categorical_accuracy"], expected_acc, rtol=tol),
                         msg=f"Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict['categorical_accuracy']}")
 
-    def test_csv_top5_accuracy(self):
-        """Test the accuracy from CSV data"""
-        expected_acc = 1.0  # 0.140 for 5 epochs in CircleCI
+        expected_acc = 1.0
         tol = 0.01
         _metric = "top_5_categorical_accuracy"
         self.assertTrue(np.isclose(self.metrics_dict[_metric], expected_acc, rtol=tol),
