@@ -46,8 +46,6 @@ class RankOneListNet(ListwiseLossBase):
             # Scale the sum of losses down by number of queries in the batch
             return tf.math.divide(bce(y_true, y_pred), batch_size)
 
-            return bce(y_true, y_pred, sample_weight=mask)
-
         return _loss_fn
 
     def get_final_activation_op(self, output_name):
