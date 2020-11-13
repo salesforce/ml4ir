@@ -55,7 +55,8 @@ class RelevancePipeline(object):
         if len(self.args.run_id) > 0:
             self.run_id: str = self.args.run_id
         else:
-            self.run_id = "-".join([socket.gethostname(), time.strftime("%Y%m%d-%H%M%S")])
+            self.run_id = "-".join([socket.gethostname(),
+                                    time.strftime("%Y%m%d-%H%M%S")])
         self.start_time = time.time()
 
         # Setup directories
@@ -68,22 +69,27 @@ class RelevancePipeline(object):
             self.logs_dir = os.path.join(self.args.logs_dir, self.run_id)
             self.data_dir = self.args.data_dir
 
-            self.models_dir_local = os.path.join(DefaultDirectoryKey.MODELS, self.run_id)
-            self.logs_dir_local = os.path.join(DefaultDirectoryKey.LOGS, self.run_id)
+            self.models_dir_local = os.path.join(
+                DefaultDirectoryKey.MODELS, self.run_id)
+            self.logs_dir_local = os.path.join(
+                DefaultDirectoryKey.LOGS, self.run_id)
             self.data_dir_local = os.path.join(
                 DefaultDirectoryKey.TEMP_DATA, os.path.basename(self.data_dir)
             )
         else:
-            self.models_dir_local = os.path.join(self.args.models_dir, self.run_id)
+            self.models_dir_local = os.path.join(
+                self.args.models_dir, self.run_id)
             self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
             self.data_dir_local = self.args.data_dir
 
         # Setup logging
         self.local_io.make_directory(self.logs_dir_local, clear_dir=True)
         self.logger: Logger = self.setup_logging()
-        self.logger.info("Logging initialized. Saving logs to : {}".format(self.logs_dir_local))
+        self.logger.info(
+            "Logging initialized. Saving logs to : {}".format(self.logs_dir_local))
         self.logger.info("Run ID: {}".format(self.run_id))
-        self.logger.debug("CLI args: \n{}".format(json.dumps(vars(self.args), indent=4)))
+        self.logger.debug("CLI args: \n{}".format(
+            json.dumps(vars(self.args), indent=4)))
         self.local_io.set_logger(self.logger)
         self.local_io.make_directory(self.models_dir_local, clear_dir=False)
         self.model_file = self.args.model_file
@@ -95,17 +101,21 @@ class RelevancePipeline(object):
             self.file_io = SparkIO(self.logger)
 
             # Copy data dir from HDFS to local file system
-            self.local_io.make_directory(dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
-            self.file_io.copy_from_hdfs(self.data_dir, DefaultDirectoryKey.TEMP_DATA)
+            self.local_io.make_directory(
+                dir_path=DefaultDirectoryKey.TEMP_DATA, clear_dir=True)
+            self.file_io.copy_from_hdfs(
+                self.data_dir, DefaultDirectoryKey.TEMP_DATA)
 
             # Copy model_file if present from HDFS to local file system
             if self.model_file:
                 self.local_io.make_directory(
                     dir_path=DefaultDirectoryKey.TEMP_MODELS, clear_dir=True
                 )
-                self.file_io.copy_from_hdfs(self.model_file, DefaultDirectoryKey.TEMP_MODELS)
+                self.file_io.copy_from_hdfs(
+                    self.model_file, DefaultDirectoryKey.TEMP_MODELS)
                 self.model_file = os.path.join(
-                    DefaultDirectoryKey.TEMP_MODELS, os.path.basename(self.model_file)
+                    DefaultDirectoryKey.TEMP_MODELS, os.path.basename(
+                        self.model_file)
                 )
 
         # Setup other arguments
@@ -172,7 +182,8 @@ class RelevancePipeline(object):
         """
         # Remove status file from any previous job at the start of the current job
         for status_file in ["_SUCCESS", "_FAILURE"]:
-            self.local_io.rm_file(os.path.join(self.logs_dir_local, status_file))
+            self.local_io.rm_file(os.path.join(
+                self.logs_dir_local, status_file))
 
         return logging_utils.setup_logging(
             reset=True,
@@ -201,7 +212,8 @@ class RelevancePipeline(object):
         """
         Validate the arguments to be used with RelevancePipeline
         """
-        unset_arguments = {key: value for (key, value) in vars(self.args).items() if value is None}
+        unset_arguments = {key: value for (key, value) in vars(
+            self.args).items() if value is None}
 
         if len(unset_arguments) > 0:
             raise Exception(
@@ -407,24 +419,27 @@ class RelevancePipeline(object):
             experiment_tracking_dict.update(vars(self.args))
 
             # Add feature config information
-            experiment_tracking_dict.update(self.feature_config.get_hyperparameter_dict())
+            experiment_tracking_dict.update(
+                self.feature_config.get_hyperparameter_dict())
 
             # Add train and test metrics
             experiment_tracking_dict.update(train_metrics)
             experiment_tracking_dict.update(test_metrics)
 
             # Add optimizer and lr schedule
-            experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
+            experiment_tracking_dict.update(
+                relevance_model.model.optimizer.get_config())
+
+            job_info = pd.DataFrame.from_dict(
+                experiment_tracking_dict, orient="index", columns=["value"]
+            ).to_csv()
 
         except Exception as e:
-            self.logger.error("!!! Error Training Model: !!!\n{}".format(str(e)))
+            self.logger.error(
+                "!!! Error Training Model: !!!\n{}".format(str(e)))
             traceback.print_exc()
             job_status = "_FAILURE"
             job_info = "{}\n{}".format(str(e), traceback.format_exc())
-
-        job_info = pd.DataFrame.from_dict(
-            experiment_tracking_dict, orient="index", columns=["value"]
-        ).to_csv()
 
         # Finish
         self.finish(job_status, job_info)
@@ -461,12 +476,15 @@ class RelevancePipeline(object):
 
         if self.args.file_handler == FileHandlerKey.SPARK:
             # Copy logs and models to HDFS
-            self.file_io.copy_to_hdfs(self.models_dir_local, self.models_dir, overwrite=True)
-            self.file_io.copy_to_hdfs(self.logs_dir_local, self.logs_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(
+                self.models_dir_local, self.models_dir, overwrite=True)
+            self.file_io.copy_to_hdfs(
+                self.logs_dir_local, self.logs_dir, overwrite=True)
 
         e = int(time.time() - self.start_time)
         self.logger.info(
-            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(e // 3600, (e % 3600 // 60), e % 60)
+            "Done! Elapsed time: {:02d}:{:02d}:{:02d}".format(
+                e // 3600, (e % 3600 // 60), e % 60)
         )
 
         return self
