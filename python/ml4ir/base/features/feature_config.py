@@ -202,15 +202,11 @@ class FeatureConfig:
         if self.logger:
             self.logger.info("Feature config loaded successfully")
             self.logger.info(
-                "Trainable Features : \n{}".format(
-                    "\n".join(self.get_train_features("name"))
-                )
+                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
             )
             self.logger.info("Label : {}".format(self.get_label("name")))
             self.logger.info(
-                "Metadata Features : \n{}".format(
-                    "\n".join(self.get_metadata_features("name"))
-                )
+                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
             )
 
     def _get_key_or_dict(self, dict_, key: str = None):
@@ -357,9 +353,9 @@ class FeatureConfig:
         else:
             raise KeyError("No feature named {} in FeatureConfig".format(name))
 
-    def get_all_features(self, key: str = None,
-                         include_label: bool = True,
-                         include_mask: bool = True):
+    def get_all_features(
+        self, key: str = None, include_label: bool = True, include_mask: bool = True
+    ):
         """
         Getter method for all_features in FeatureConfig object
         Can additionally be used to only fetch a particular value from the dict
@@ -537,7 +533,7 @@ class FeatureConfig:
         """
 
         def get_shape(feature_info: dict):
-            return feature_info.get("shape", (1,))
+            return feature_info.get("shape", (feature_info.get("max_len", 1),))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):
@@ -547,9 +543,7 @@ class FeatureConfig:
             """
             node_name = feature_info.get("node_name", feature_info["name"])
             inputs[node_name] = Input(
-                shape=get_shape(feature_info),
-                name=node_name,
-                dtype=self.get_dtype(feature_info),
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
             )
 
         return inputs
@@ -601,9 +595,7 @@ class FeatureConfig:
                 for preprocessing_info in feature_info["preprocessing_info"]:
                     config.update(
                         {
-                            "{}_{}_{}".format(
-                                feature_name, preprocessing_info["fn"], k
-                            ): v
+                            "{}_{}_{}".format(feature_name, preprocessing_info["fn"], k): v
                             for k, v in preprocessing_info["args"].items()
                         }
                     )
@@ -778,9 +770,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         except KeyError:
             self.rank = None
             if self.logger:
-                self.logger.warning(
-                    "'rank' key not found in the feature_config specified"
-                )
+                self.logger.warning("'rank' key not found in the feature_config specified")
 
         for feature_info in self.all_features:
             if feature_info.get("trainable", True):
@@ -858,25 +848,17 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         if self.logger:
             self.logger.info("Feature config loaded successfully")
             self.logger.info(
-                "Trainable Features : \n{}".format(
-                    "\n".join(self.get_train_features("name"))
-                )
+                "Trainable Features : \n{}".format("\n".join(self.get_train_features("name")))
             )
             self.logger.info("Label : {}".format(self.get_label("name")))
             self.logger.info(
-                "Metadata Features : \n{}".format(
-                    "\n".join(self.get_metadata_features("name"))
-                )
+                "Metadata Features : \n{}".format("\n".join(self.get_metadata_features("name")))
             )
             self.logger.info(
-                "Context Features : \n{}".format(
-                    "\n".join(self.get_context_features("name"))
-                )
+                "Context Features : \n{}".format("\n".join(self.get_context_features("name")))
             )
             self.logger.info(
-                "Sequence Features : \n{}".format(
-                    "\n".join(self.get_sequence_features("name"))
-                )
+                "Sequence Features : \n{}".format("\n".join(self.get_sequence_features("name")))
             )
 
     def generate_mask(self):
@@ -955,9 +937,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         def get_shape(feature_info: dict):
             # Setting size to None for sequence features as the num_records is variable
             if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-                return feature_info.get("shape", (None,))
+                return feature_info.get("shape", (None, feature_info.get("max_len", 1)))
             else:
-                return feature_info.get("shape", (1,))
+                return feature_info.get("shape", (feature_info.get("max_len", 1),))
 
         inputs: Dict[str, Input] = dict()
         for feature_info in self.get_all_features(include_label=False):
@@ -967,9 +949,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             """
             node_name = feature_info.get("node_name", feature_info["name"])
             inputs[node_name] = Input(
-                shape=get_shape(feature_info),
-                name=node_name,
-                dtype=self.get_dtype(feature_info),
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
             )
 
         return inputs
@@ -1014,8 +994,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
         return dummy_query_group.apply(
             lambda g: get_sequence_example_proto(
-                group=g,
-                context_features=context_features,
-                sequence_features=sequence_features,
+                group=g, context_features=context_features, sequence_features=sequence_features,
             )
         ).values[0]

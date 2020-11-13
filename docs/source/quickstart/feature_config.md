@@ -40,6 +40,12 @@ Tensorflow data type of the feature. Can be `string`, `int64` or `float`
 
 -----
 
+**`max_len | str |default=1`**
+
+Maximum number of values in a feature when read from the TFRecord. For context features this results in a feature of shape `(max_len,)`, while for sequence feature this results in a feature of shape `(sequence_size, max_len)`.
+
+-----
+
 **`trainable | bool | default=True`**
 
 Value representing whether the feature is to be used for the scoring function. If set to False, the feature is considered a metadata feature that can be used to compute custom metrics and losses. Setting it to True, will make the transformed feature available for scoring by default.
