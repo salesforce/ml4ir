@@ -167,22 +167,6 @@ class SequenceExampleParserTest(unittest.TestCase):
         assert sequence_size == 5
         self.parser.pad_sequence = True
 
-    def test_pad_feature(self):
-        """
-        Test feature padding to max sequence size
-        """
-        # Check no padding for context features
-        feature_tensor = self.parser.pad_feature(
-            tf.zeros((10)), self.feature_config.get_feature("query_text")
-        )
-        assert feature_tensor.shape == (10,)
-
-        # Check padding for sequence features
-        feature_tensor = self.parser.pad_feature(
-            tf.zeros((10, 1)), self.feature_config.get_feature("quality_score")
-        )
-        assert feature_tensor.shape == (25, 1)
-
     def test_parse_fn(self):
         """
         Test the Example parsing function
