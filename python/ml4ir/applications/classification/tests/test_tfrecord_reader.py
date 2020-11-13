@@ -100,17 +100,6 @@ class TFRecordExampleParserTest(unittest.TestCase):
         assert "mask" not in features_dict
         assert sequence_size == tf.constant(0)
 
-    def test_pad_feature(self):
-        """
-        Test feature padding to max sequence size
-        """
-        feature_tensor = self.parser.pad_feature(
-            tf.zeros((10)), self.feature_config.get_feature("query_text")
-        )
-
-        # Check that there was no padding done
-        assert feature_tensor.shape == (10,)
-
     def test_parse_fn(self):
         """
         Test the Example parsing function

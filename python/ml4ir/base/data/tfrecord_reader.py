@@ -143,26 +143,6 @@ class TFRecordParser(object):
         """
         raise NotImplementedError
 
-    def pad_feature(self, feature_tensor, feature_info):
-        """
-        Pad the feature to the `max_sequence_size` in order to create
-        uniform data batches for training
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor to be padded
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor padded to the `max_sequence_size`
-        """
-
-        raise NotImplementedError
-
     def preprocess_feature(self, feature_tensor, feature_info):
         """
         Preprocess feature based on the feature configuration
@@ -248,9 +228,6 @@ class TFRecordParser(object):
 
                 # Fetch the feature corresponding to the feature_info from the extracted features
                 feature_tensor = self.get_feature(feature_info, extracted_features, sequence_size)
-
-                # Pad the extracted feature to the max_sequence_size for training
-                feature_tensor = self.pad_feature(feature_tensor, feature_info)
 
                 # Preprocess the extracted feature using the specification from
                 # the FeatureConfig and functions from PreprocessingMap
@@ -394,25 +371,6 @@ class TFRecordExampleParser(TFRecordParser):
             Number of elements in the sequence of the TFRecord
         """
         return features_dict, tf.constant(0)
-
-    def pad_feature(self, feature_tensor, feature_info):
-        """
-        Pad the feature to the `max_sequence_size` in order to create
-        uniform data batches for training
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor to be padded
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor padded to the `max_sequence_size`
-        """
-        return feature_tensor
 
 
 class TFRecordSequenceExampleParser(TFRecordParser):
@@ -665,29 +623,6 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         features_dict["mask"] = mask
 
         return features_dict, sequence_size
-
-    def pad_feature(self, feature_tensor, feature_info):
-        """
-        Pad the feature to the `max_sequence_size` in order to create
-        uniform data batches for training
-
-        Parameters
-        ----------
-        feature_tensor: tf.Tensor
-            Feature tensor to be padded
-        feature_info: dict
-            Feature configuration information for the feature as specified in the feature_config
-
-        Returns
-        -------
-        tf.Tensor
-            Feature tensor padded to the `max_sequence_size`
-        """
-        if self.pad_sequence and feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-            pad_len = self.max_sequence_size - tf.shape(feature_tensor)[0]
-            feature_tensor = tf.pad(feature_tensor, [[0, pad_len], [0, 0]])
-
-        return feature_tensor
 
 
 def get_parse_fn(
