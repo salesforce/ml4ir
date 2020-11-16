@@ -13,6 +13,7 @@ class ClassificationModel(RelevanceModel):
     to create a classification model to
     create classification evaluate and predict
     methods."""
+
     def evaluate(
         self,
         test_dataset: data.TFRecordDataset,
@@ -62,52 +63,69 @@ class ClassificationModel(RelevanceModel):
         -----
         You can directly do a `model.evaluate()` only if the keras model is compiled
         """
+        # FIXME: We need to come to a consensus for computing in pandas or spark and how we plan to
+        #  do that. In the mean time we will stick with just the model evaluation metrics
+        compute_group_metrics_in_memory = False
+
         if not self.is_compiled:
             return NotImplementedError
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         metrics_dict = self.model.evaluate(test_dataset)
         metrics_dict = dict(zip(self.model.metrics_names, metrics_dict))
-        predictions = self.predict(test_dataset,
-                                   inference_signature=inference_signature,
-                                   additional_features=additional_features,
-                                   logs_dir=None,
-                                   logging_frequency=logging_frequency)
-        global_metrics = []  # group_name, metric, value
-        grouped_metrics = []
-        # instead of calculating measure with a single update_state (can result in a call with
-        # thousands of examples at once, we use the same batch size used during training.
-        # Helps prevent OOM issues.
-        batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
-        # Letting metrics in the outer loop to avoid tracing
-        for metric in self.model.metrics:
-            global_metrics.append(self.calculate_metric_on_batch(metric, predictions, batch_size))
-            self.logger.info(f"Global metric {metric.name} completed."
-                             f" Score: {global_metrics[-1]['value']}")
+        if compute_group_metrics_in_memory:
+            predictions = self.predict(test_dataset,
+                                       inference_signature=inference_signature,
+                                       additional_features=additional_features,
+                                       logs_dir=None,
+                                       logging_frequency=logging_frequency)
+            global_metrics = []  # group_name, metric, value
+            grouped_metrics = []
+            # instead of calculating measure with a single update_state (can result in a call with
+            # thousands of examples at once, we use the same batch size used during training.
+            # Helps prevent OOM issues.
+            batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
+            # Letting metrics in the outer loop to avoid tracing
+            for metric in self.model.metrics:
+                global_metrics.append(
+                    self.calculate_metric_on_batch(metric, predictions, batch_size))
+                self.logger.info(f"Global metric {metric.name} completed."
+                                 f" Score: {global_metrics[-1]['value']}")
 
-            for group_ in group_metrics_keys:  # Calculate metrics for group metrics
-                for name, group in predictions.groupby(group_['name']):
-                    self.logger.info(f"Per feature metric {metric.name}."
-                                     f" Feature: {group_['name']}, value: {name}")
-                    if group.shape[0] >= group_metrics_min_queries:
-                        grouped_metrics.append(self.calculate_metric_on_batch(metric,
-                                                                              group,
-                                                                              batch_size,
-                                                                              group_['name'], name))
-        global_metrics = pd.DataFrame(global_metrics)
-        grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
-        if logs_dir:
-            self.file_io.write_df(
-                grouped_metrics,
-                outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
-                index=False
+                for group_ in group_metrics_keys:  # Calculate metrics for group metrics
+                    for name, group in predictions.groupby(group_['name']):
+                        self.logger.info(f"Per feature metric {metric.name}."
+                                         f" Feature: {group_['name']}, value: {name}")
+                        if group.shape[0] >= group_metrics_min_queries:
+                            grouped_metrics.append(self.calculate_metric_on_batch(metric,
+                                                                                  group,
+                                                                                  batch_size,
+                                                                                  group_['name'],
+                                                                                  name))
+            global_metrics = pd.DataFrame(global_metrics)
+            grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
+            if logs_dir:
+                self.file_io.write_df(
+                    grouped_metrics,
+                    outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                    index=False
                 )
+                self.file_io.write_df(
+                    global_metrics,
+                    outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE),
+                    index=False
+                )
+                self.logger.info(f"Evaluation Results written at: {logs_dir}")
+            return global_metrics, grouped_metrics, metrics_dict
+        if logs_dir:
+            global_metrics = pd.DataFrame.from_dict(metrics_dict, orient='index', columns=["value"])
+            global_metrics = global_metrics.reset_index().rename(columns={'index': 'metric'})
             self.file_io.write_df(
                 global_metrics,
                 outfile=os.path.join(logs_dir, RelevanceModelConstants.METRICS_CSV_FILE),
                 index=False
             )
             self.logger.info(f"Evaluation Results written at: {logs_dir}")
-        return global_metrics, grouped_metrics, metrics_dict
+        return None, None, metrics_dict
 
     @staticmethod
     def get_chunks_from_df(dataframe, size):
@@ -163,12 +181,12 @@ class ClassificationModel(RelevanceModel):
                 "size": predictions.shape[0]}
 
     def predict(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = "serving_default",
-        additional_features: dict = {},
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = "serving_default",
+            additional_features: dict = {},
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -242,8 +260,8 @@ class ClassificationModel(RelevanceModel):
             # we want to create np.arrays that contain the full data here.
             # to do this, if something is 2-dim we use np.vstack
             # for 1-dim data we use np.hstack for the intended result
-            predictions[key] = np.hstack(val) if len(predictions[key][0].shape) == 1 else np.vstack(val)
+            predictions[key] = np.hstack(val) if len(predictions[key][0].shape) == 1 else np.vstack(
+                val)
         predictions_df = pd.DataFrame({key: val if len(val.shape) == 1 else [inner for inner in val]
-                                       for key,val in predictions.items()})
+                                       for key, val in predictions.items()})
         return predictions_df
-

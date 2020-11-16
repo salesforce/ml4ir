@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
 
@@ -32,7 +33,8 @@ class ClassificationModelTest(ClassificationTestBase):
                         msg=f"Top5 Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict[_metric]}")
 
-    def test_group_metrics_df(self):
+    @pytest.mark.skip(reason="Pending based on spike for EP evaluation")
+    def test_group_metrics_df(self):  # FIXME: Pending based on spike for EP evaluation
         """
         Test the dimensions of the grouped metrics
         """
