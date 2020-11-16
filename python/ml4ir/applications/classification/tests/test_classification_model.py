@@ -33,8 +33,8 @@ class ClassificationModelTest(ClassificationTestBase):
                         msg=f"Top5 Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict[_metric]}")
 
-    @pytest.mark.skip(reason="Pending based on spike for EP evaluation")
-    def test_group_metrics_df(self):  # FIXME: Pending based on spike for EP evaluation
+    @pytest.mark.skip(reason="Pending on planning for classification model evaluation")
+    def test_group_metrics_df(self):  # FIXME: Pending on planning for classification model evaluation
         """
         Test the dimensions of the grouped metrics
         """
