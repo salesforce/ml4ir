@@ -158,3 +158,18 @@ class DynamicArgsTest(unittest.TestCase):
             "0.name",
             "val_x"
         )[0]["name"] == "val_x"
+
+    def test_new_arg(self):
+        """
+        Unit test adding a new key value argument
+        """
+        updated_dict = dynamic_args.override_dict(
+            {
+                "key_0": "val_0",
+                "key_1": "val_1"
+            },
+            "key_2",
+            "val_2")
+
+        assert len(updated_dict) == 3
+        assert updated_dict["key_2"] == "val_2"

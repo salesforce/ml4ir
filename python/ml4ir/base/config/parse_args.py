@@ -338,7 +338,7 @@ class RelevanceArgParser(ArgumentParser):
 
     def parse_args(self, args: List[str]) -> Namespace:
         """
-        Parse command line arguments passed a list of strings.
+        Parse command line arguments passed as a list of strings.
         Additionally, handles dynamic arguments for feature_config
         and model_config with prefixes feature_config. and model_config.
         respectively
