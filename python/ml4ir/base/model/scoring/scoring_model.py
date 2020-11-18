@@ -32,6 +32,7 @@ class ScorerBase(object):
         loss: RelevanceLossBase,
         file_io: FileIO,
         output_name: str = "score",
+        logger: Optional[Logger] = None,
     ):
         """
         Constructor method for creating a ScorerBase object
@@ -52,6 +53,8 @@ class ScorerBase(object):
             FileIO object that handles read and write
         output_name : str, optional
             Name of the output that captures the score computed by the model
+        logger : Logger, optional
+            Logging handler
         """
         self.model_config = model_config
         self.feature_config = feature_config
@@ -90,6 +93,8 @@ class ScorerBase(object):
             FileIO object that handles read and write
         output_name : str, optional
             Name of the output that captures the score computed by the model
+        logger: Logger, optional
+            Logging handler
 
         Returns
         -------
@@ -105,6 +110,7 @@ class ScorerBase(object):
             loss=loss,
             file_io=file_io,
             output_name=output_name,
+            logger=logger
         )
 
     def __call__(self, inputs: Dict[str, Input]):
