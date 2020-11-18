@@ -4,6 +4,7 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import SequenceExampleTypeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.features.feature_fns.sequence import bytes_sequence_to_encoding_bilstm
+from ml4ir.base.features.feature_fns.sequence import global_1d_pooling
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_to_encoding_bilstm
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_hash_buckets
 from ml4ir.base.features.feature_fns.categorical import categorical_embedding_with_indices
@@ -23,6 +24,7 @@ class FeatureLayerMap:
         """
         self.key_to_fn = {
             bytes_sequence_to_encoding_bilstm.__name__: bytes_sequence_to_encoding_bilstm,
+            global_1d_pooling.__name__: global_1d_pooling,
             categorical_embedding_to_encoding_bilstm.__name__: categorical_embedding_to_encoding_bilstm,
             categorical_embedding_with_hash_buckets.__name__: categorical_embedding_with_hash_buckets,
             categorical_embedding_with_indices.__name__: categorical_embedding_with_indices,
