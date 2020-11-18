@@ -21,7 +21,7 @@ PyYAML==5.1
 # IPython tools
 ipython==7.11.1
 jupyterlab==1.2.3
-notebook==6.0.2
+notebook==6.1.5
 
 # pytest
 pytest==6.0.2
