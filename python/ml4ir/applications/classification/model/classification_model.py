@@ -1,11 +1,12 @@
 import os
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import data
-from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.base.model.relevance_model import RelevanceModel
-from typing import Optional
+from ml4ir.base.model.relevance_model import RelevanceModelConstants
 
 
 class ClassificationModel(RelevanceModel):
@@ -22,6 +23,7 @@ class ClassificationModel(RelevanceModel):
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the Classification Model
@@ -48,6 +50,8 @@ class ClassificationModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+        compute_intermediate_stats : bool
+            Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------
@@ -63,16 +67,18 @@ class ClassificationModel(RelevanceModel):
         -----
         You can directly do a `model.evaluate()` only if the keras model is compiled
         """
-        # FIXME: We need to come to a consensus for computing in pandas or spark and how we plan to
-        #  do that. In the mean time we will stick with just the model evaluation metrics
-        compute_group_metrics_in_memory = False
 
         if not self.is_compiled:
             return NotImplementedError
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         metrics_dict = self.model.evaluate(test_dataset)
         metrics_dict = dict(zip(self.model.metrics_names, metrics_dict))
-        if compute_group_metrics_in_memory:
+        if compute_intermediate_stats:
+            self.logger.info("Computing grouped metrics.")
+            self.logger.warning("Warning: currently, group-wise metric computation "
+                                "collects the test data and predictions "
+                                "in memory in order to perform the groupBy operations. "
+                                "With large test datasets, it can lead in OOM issues.")
             predictions = self.predict(test_dataset,
                                        inference_signature=inference_signature,
                                        additional_features=additional_features,
