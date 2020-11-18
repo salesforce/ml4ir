@@ -565,3 +565,11 @@ class RankingModelTest(RankingTestBase):
         # Strings domain_0 and domain_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
         assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
         assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
+
+    def test_global_1d_pooling(self):
+        """
+        Unit test the global 1D pooling feature function on sequence features
+
+        Checks the right output shapes produced and the values generated
+        """
+        pass

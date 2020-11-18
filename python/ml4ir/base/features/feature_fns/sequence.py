@@ -175,7 +175,7 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
                         tf.where(
                             tf.equal(feature_tensor, padded_val),
                             tf.constant(0, dtype=feature_tensor.dtype),
-                            tf.constant(1, dtype=feature_tensor.dtype))
+                            tf.constant(1, dtype=feature_tensor.dtype)),
                         axis=-1)))
 
         if fn == "max":
