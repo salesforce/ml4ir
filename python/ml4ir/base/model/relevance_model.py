@@ -515,6 +515,7 @@ class RelevanceModel:
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -536,6 +537,8 @@ class RelevanceModel:
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+        compute_intermediate_stats : bool
+            Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------

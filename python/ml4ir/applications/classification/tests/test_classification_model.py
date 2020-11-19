@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
 
