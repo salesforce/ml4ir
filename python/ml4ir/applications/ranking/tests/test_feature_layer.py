@@ -659,8 +659,9 @@ class RankingModelTest(RankingTestBase):
 
         # Test function with padded values
         # Here, we mask all the even values
+        padded_val = -1.
         feature_tensor_with_mask = tf.where(
-            feature_tensor % 2 == 0, feature_tensor, -1.)
+            feature_tensor % 2 == 0, feature_tensor, padded_val)
         pooled_tensor_with_mask = sequence_fns.global_1d_pooling(
             feature_tensor=feature_tensor_with_mask,
             feature_info={
@@ -674,7 +675,7 @@ class RankingModelTest(RankingTestBase):
                             "min",
                             "count_nonzero"
                         ],
-                        "padded_val": -1.
+                        "padded_val": padded_val
                     }
                 }
             },
