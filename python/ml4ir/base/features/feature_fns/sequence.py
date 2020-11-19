@@ -128,11 +128,6 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
         fns : list of str
             List of string pooling operations that should be applied.
             Must be one of ["sum", "mean", "max", "min", "count_nonzero"]
-        data_format : str
-            A string, one of channels_first (default) or channels_first. The
-            ordering of the dimensions in the inputs. channels_last corresponds
-            to inputs with shape (batch, steps, features) while channels_first
-            corresponds to inputs with shape (batch, features, steps).
         padded_val : int/float
             Value to be ignored from the pooling operations.
     """
@@ -143,18 +138,18 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
     masked_val_lookup = {
         "sum": tf.constant(0, dtype=feature_tensor.dtype),
         "mean": tf.constant(0, dtype=feature_tensor.dtype),
-        "max": tf.constant(np.inf, dtype=feature_tensor.dtype),
-        "min": tf.constant(-np.inf, dtype=feature_tensor.dtype),
+        "max": tf.constant(-np.inf, dtype=feature_tensor.dtype),
+        "min": tf.constant(np.inf, dtype=feature_tensor.dtype),
         "count_nonzero": tf.constant(0, dtype=feature_tensor.dtype)
     }
     padded_val_tensor = None
-    if padded_val:
-        padded_val_tensor = tf.constant(padded_val, dtype=feature_tensor.dtype)
+    if "padded_val" in args:
+        padded_val_tensor = tf.constant(args["padded_val"], dtype=feature_tensor.dtype)
 
     # Apply the 1D global pooling on the last dimension
-    for fn in fns:
+    for fn in args["fns"]:
         # If padded_val is passed, mask the padded values appropriately
-        if padded_val:
+        if "padded_val" in args:
             masked_feature_tensor = tf.where(
                 tf.equal(feature_tensor, padded_val_tensor),
                 masked_val_lookup[fn],
@@ -168,15 +163,19 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
                 tf.math.reduce_sum(masked_feature_tensor, axis=-1))
 
         if fn == "mean":
-            pooled_tensors.append(
-                tf.math.divide(
-                    tf.math.reduce_sum(masked_feature_tensor, axis=-1),
-                    tf.math.reduce_sum(
-                        tf.where(
-                            tf.equal(feature_tensor, padded_val),
-                            tf.constant(0, dtype=feature_tensor.dtype),
-                            tf.constant(1, dtype=feature_tensor.dtype)),
-                        axis=-1)))
+            if "padded_val" in args:
+                pooled_tensors.append(
+                    tf.math.divide(
+                        tf.math.reduce_sum(masked_feature_tensor, axis=-1),
+                        tf.math.reduce_sum(
+                            tf.where(
+                                tf.equal(feature_tensor, padded_val_tensor),
+                                tf.constant(0, dtype=feature_tensor.dtype),
+                                tf.constant(1, dtype=feature_tensor.dtype)),
+                            axis=-1)))
+            else:
+                pooled_tensors.append(
+                    tf.math.reduce_mean(masked_feature_tensor, axis=-1))
 
         if fn == "max":
             pooled_tensors.append(
@@ -188,7 +187,9 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
 
         if fn == "count_nonzero":
             pooled_tensors.append(
-                tf.math.count_nonzero(masked_feature_tensor, axis=-1))
+                tf.cast(
+                    tf.math.count_nonzero(masked_feature_tensor, axis=-1),
+                    dtype=masked_feature_tensor.dtype))
 
     # Stack all the pooled tensors to get one fixed dimensional dense vector
     return tf.stack(pooled_tensors,

@@ -357,6 +357,9 @@ class RelevanceArgParser(ArgumentParser):
 
         for i in range(int(len(dynamic_args) / 2)):
             key = dynamic_args[i * 2]
+            if key.split(".")[0] not in {"feature_config", "model_config"}:
+                raise KeyError(
+                    "Dynamic arguments currently supported must have the prefix feature_config. or model_config., but found: {}".format(key))
             dest = "{}_custom".format(key.split(".")[0]).replace("--", "")
             self.add_argument(key,
                               dest=dest,
