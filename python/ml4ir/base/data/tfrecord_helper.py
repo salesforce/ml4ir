@@ -64,10 +64,11 @@ def get_example_proto(row, features):
             raise Exception(
                 "Could not find column {} in record: {}".format(feature_name, str(row))
             )
+        feature_val = (
+            row[feature_name] if not pd.isna(row[feature_name]) else feature_info["default_value"]
+        )
         features_dict[feature_name] = feature_fn(
-            [row[feature_name]]
-            if not pd.isna(row[feature_name])
-            else [feature_info["default_value"]]
+            feature_val if isinstance(feature_val, list) else [feature_val]
         )
 
     return train.Example(features=train.Features(feature=features_dict))
@@ -96,14 +97,20 @@ def get_sequence_example_proto(group, context_features, sequence_features):
     for feature_info in context_features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
-        context_features_dict[feature_name] = feature_fn([group[feature_name].tolist()[0]])
+        feature_val = group[feature_name].tolist()[0]
+        context_features_dict[feature_name] = feature_fn(
+            feature_val if isinstance(feature_val, list) else [feature_val]
+        )
 
     for feature_info in sequence_features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
             sequence_features_dict[feature_name] = train.FeatureList(
-                feature=[feature_fn(group[feature_name].tolist())]
+                feature=[
+                    feature_fn(f) if isinstance(f, list) else feature_fn([f])
+                    for f in group[feature_name].tolist()
+                ]
             )
 
     return train.SequenceExample(

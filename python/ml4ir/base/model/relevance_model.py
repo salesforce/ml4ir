@@ -116,6 +116,7 @@ class RelevanceModel:
 
             # Create model with functional Keras API
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+            self.model.output_names = [self.output_name]
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
