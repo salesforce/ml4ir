@@ -152,13 +152,13 @@ class RankingModelTest(RankingTestBase):
                     "encoding_type": "bilstm",
                     "encoding_size": encoding_size,
                     "embedding_size": embedding_size,
-                    "dropout_rate": 0.2
+                    "dropout_rate": 0.2,
                 },
             },
             "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
         }
 
-        string_tensor = tf.constant([[['AAA', 'BBB', 'out_of_vocabulary']]])
+        string_tensor = tf.constant([[["AAA", "BBB", "out_of_vocabulary"]]])
 
         categorical_fns.categorical_embedding_to_encoding_bilstm(
             string_tensor, feature_info, self.file_io
@@ -171,7 +171,9 @@ class RankingModelTest(RankingTestBase):
         """
         embedding_size = 128
         encoding_size = 512
-        vocabulary_file = "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv"
+        vocabulary_file = (
+            "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv"
+        )
 
         feature_info = {
             "name": "categorical_variable",
@@ -183,7 +185,7 @@ class RankingModelTest(RankingTestBase):
                     "encoding_type": "bilstm",
                     "encoding_size": encoding_size,
                     "embedding_size": embedding_size,
-                    "dropout_rate": 0.2
+                    "dropout_rate": 0.2,
                 },
             },
             "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
@@ -194,7 +196,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define a batch where each row is a single word from the vocabulary (so that we can later compare each word
         # encoding)
-        words = vocabulary + ['out_of_vocabulary', 'out_of_vocabulary2']
+        words = vocabulary + ["out_of_vocabulary", "out_of_vocabulary2"]
         string_tensor = tf.constant([[[word]] for word in words])
 
         # If the embedding lookup input dimension were computed incorrectly, the following call would fail with:
@@ -207,17 +209,27 @@ class RankingModelTest(RankingTestBase):
         # Check that each word, except the OOV ones are mapped to different encodings (actually different embeddings,
         # but the encoding on top should be equivalent as each row is a single word).
         for word1_position in range(0, len(vocabulary)):
-            for word2_position in range(word1_position + 1, len(vocabulary) + 1):  # +1 to include one OOV word
-                if tf.reduce_all(tf.equal(sequence_encoding[word1_position],
-                                                        sequence_encoding[word2_position])):
+            # +1 to include one OOV word
+            for word2_position in range(word1_position + 1, len(vocabulary) + 1):
+                if tf.reduce_all(
+                    tf.equal(sequence_encoding[word1_position], sequence_encoding[word2_position])
+                ):
                     word1, word2 = words[word1_position], words[word2_position]
-                    self.assertFalse(tf.reduce_all(tf.equal(sequence_encoding[word1_position],
-                                                        sequence_encoding[word2_position])),
-                                 msg="Check that non-OOV words map to different encodings, and not also not to OOV:"
-                                     "{} vs. {}".format(word1, word2))
+                    self.assertFalse(
+                        tf.reduce_all(
+                            tf.equal(
+                                sequence_encoding[word1_position],
+                                sequence_encoding[word2_position],
+                            )
+                        ),
+                        msg="Check that non-OOV words map to different encodings, and not also not to OOV:"
+                        "{} vs. {}".format(word1, word2),
+                    )
 
-        self.assertTrue(tf.reduce_all(tf.equal(sequence_encoding[-1], sequence_encoding[-2])),
-                        msg="Check that OOV words map to the same encodings")
+        self.assertTrue(
+            tf.reduce_all(tf.equal(sequence_encoding[-1], sequence_encoding[-2])),
+            msg="Check that OOV words map to the same encodings",
+        )
         assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
 
     def test_categorical_embedding_with_hash_buckets(self):
@@ -565,3 +577,111 @@ class RankingModelTest(RankingTestBase):
         # Strings domain_0 and domain_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
         assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
         assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
+
+    def test_global_1d_pooling(self):
+        """
+        Unit test the global 1D pooling feature function on sequence features
+
+        Checks the right output shapes produced and the values generated
+        """
+        feature_tensor = tf.reshape(tf.constant(range(30), dtype=tf.float32), (2, 5, 3))
+        pooled_tensor = sequence_fns.global_1d_pooling(
+            feature_tensor=feature_tensor,
+            feature_info={
+                "name": "f",
+                "feature_layer_info": {
+                    "args": {"fns": ["sum", "mean", "max", "min", "count_nonzero"]}
+                },
+            },
+            file_io=None,
+        )
+
+        assert pooled_tensor.shape == (2, 5, 5)
+        assert (
+            pooled_tensor.numpy()
+            == [
+                [
+                    [3.0, 1.0, 2.0, 0.0, 2.0],
+                    [12.0, 4.0, 5.0, 3.0, 3.0],
+                    [21.0, 7.0, 8.0, 6.0, 3.0],
+                    [30.0, 10.0, 11.0, 9.0, 3.0],
+                    [39.0, 13.0, 14.0, 12.0, 3.0],
+                ],
+                [
+                    [48.0, 16.0, 17.0, 15.0, 3.0],
+                    [57.0, 19.0, 20.0, 18.0, 3.0],
+                    [66.0, 22.0, 23.0, 21.0, 3.0],
+                    [75.0, 25.0, 26.0, 24.0, 3.0],
+                    [84.0, 28.0, 29.0, 27.0, 3.0],
+                ],
+            ]
+        ).all()
+
+        # Test function with padded values
+        # Here, we mask all the even values
+        padded_val = -1.0
+        feature_tensor_with_mask = tf.where(feature_tensor % 2 == 0, feature_tensor, padded_val)
+        pooled_tensor_with_mask = sequence_fns.global_1d_pooling(
+            feature_tensor=feature_tensor_with_mask,
+            feature_info={
+                "name": "f",
+                "feature_layer_info": {
+                    "args": {
+                        "fns": ["sum", "mean", "max", "min", "count_nonzero"],
+                        "padded_val": padded_val,
+                    }
+                },
+            },
+            file_io=None,
+        )
+        assert pooled_tensor_with_mask.shape == (2, 5, 5)
+        assert not (pooled_tensor_with_mask.numpy() == pooled_tensor.numpy()).all()
+        assert (
+            pooled_tensor_with_mask.numpy()
+            == [
+                [
+                    [2.0, 1.0, 2.0, 0.0, 1.0],
+                    [4.0, 4.0, 4.0, 4.0, 1.0],
+                    [14.0, 7.0, 8.0, 6.0, 2.0],
+                    [10.0, 10.0, 10.0, 10.0, 1.0],
+                    [26.0, 13.0, 14.0, 12.0, 2.0],
+                ],
+                [
+                    [16.0, 16.0, 16.0, 16.0, 1.0],
+                    [38.0, 19.0, 20.0, 18.0, 2.0],
+                    [22.0, 22.0, 22.0, 22.0, 1.0],
+                    [50.0, 25.0, 26.0, 24.0, 2.0],
+                    [28.0, 28.0, 28.0, 28.0, 1.0],
+                ],
+            ]
+        ).all()
+
+        # Test empty pooling fn list
+        found_value_error = False
+        try:
+            pooled_tensor = sequence_fns.global_1d_pooling(
+                feature_tensor=feature_tensor,
+                feature_info={
+                    "name": "f",
+                    "feature_layer_info": {"args": {"fns": [], "padded_val": padded_val}},
+                },
+                file_io=None,
+            )
+        except ValueError:
+            found_value_error = True
+        assert found_value_error
+
+        # Test invalid pooling fn
+        found_key_error = False
+        try:
+            pooled_tensor = sequence_fns.global_1d_pooling(
+                feature_tensor=feature_tensor,
+                feature_info={
+                    "name": "f",
+                    "feature_layer_info": {"args": {"fns": ["invalid"], "padded_val": padded_val}},
+                },
+                file_io=None,
+            )
+        except KeyError:
+            found_key_error = True
+        assert found_key_error
