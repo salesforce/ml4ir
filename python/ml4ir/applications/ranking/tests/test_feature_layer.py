@@ -84,14 +84,10 @@ class RankingModelTest(RankingTestBase):
         assert sequence_encoding.shape[2] == encoding_size
 
         # Strings 0 and 2 should result in the same embedding because they are the same
-        assert tf.reduce_all(
-            tf.equal(sequence_encoding[0], sequence_encoding[2]))
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[0], sequence_encoding[1]))
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[3], sequence_encoding[4]))
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[1], sequence_encoding[4]))
+        assert tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[2]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[3], sequence_encoding[4]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[1], sequence_encoding[4]))
 
     def test_categorical_embedding_to_encoding_bilstm_file_truncation(self):
         """
@@ -134,14 +130,10 @@ class RankingModelTest(RankingTestBase):
         assert sequence_encoding.shape[1] == 1
         assert sequence_encoding.shape[2] == encoding_size
 
-        assert tf.reduce_all(
-            tf.equal(sequence_encoding[0], sequence_encoding[2]))
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[0], sequence_encoding[1]))
-        assert tf.reduce_all(
-            tf.equal(sequence_encoding[3], sequence_encoding[4]))
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[1], sequence_encoding[4]))
+        assert tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[2]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
+        assert tf.reduce_all(tf.equal(sequence_encoding[3], sequence_encoding[4]))
+        assert not tf.reduce_all(tf.equal(sequence_encoding[1], sequence_encoding[4]))
 
     def test_categorical_embedding_to_encoding_bilstm_sequence_of_words(self):
         """
@@ -160,13 +152,13 @@ class RankingModelTest(RankingTestBase):
                     "encoding_type": "bilstm",
                     "encoding_size": encoding_size,
                     "embedding_size": embedding_size,
-                    "dropout_rate": 0.2
+                    "dropout_rate": 0.2,
                 },
             },
             "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
         }
 
-        string_tensor = tf.constant([[['AAA', 'BBB', 'out_of_vocabulary']]])
+        string_tensor = tf.constant([[["AAA", "BBB", "out_of_vocabulary"]]])
 
         categorical_fns.categorical_embedding_to_encoding_bilstm(
             string_tensor, feature_info, self.file_io
@@ -179,7 +171,9 @@ class RankingModelTest(RankingTestBase):
         """
         embedding_size = 128
         encoding_size = 512
-        vocabulary_file = "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv"
+        vocabulary_file = (
+            "ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv"
+        )
 
         feature_info = {
             "name": "categorical_variable",
@@ -191,7 +185,7 @@ class RankingModelTest(RankingTestBase):
                     "encoding_type": "bilstm",
                     "encoding_size": encoding_size,
                     "embedding_size": embedding_size,
-                    "dropout_rate": 0.2
+                    "dropout_rate": 0.2,
                 },
             },
             "tfrecord_type": SequenceExampleTypeKey.CONTEXT,
@@ -202,7 +196,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define a batch where each row is a single word from the vocabulary (so that we can later compare each word
         # encoding)
-        words = vocabulary + ['out_of_vocabulary', 'out_of_vocabulary2']
+        words = vocabulary + ["out_of_vocabulary", "out_of_vocabulary2"]
         string_tensor = tf.constant([[[word]] for word in words])
 
         # If the embedding lookup input dimension were computed incorrectly, the following call would fail with:
@@ -217,18 +211,26 @@ class RankingModelTest(RankingTestBase):
         for word1_position in range(0, len(vocabulary)):
             # +1 to include one OOV word
             for word2_position in range(word1_position + 1, len(vocabulary) + 1):
-                if tf.reduce_all(tf.equal(sequence_encoding[word1_position],
-                                          sequence_encoding[word2_position])):
+                if tf.reduce_all(
+                    tf.equal(sequence_encoding[word1_position], sequence_encoding[word2_position])
+                ):
                     word1, word2 = words[word1_position], words[word2_position]
-                    self.assertFalse(tf.reduce_all(tf.equal(sequence_encoding[word1_position],
-                                                            sequence_encoding[word2_position])),
-                                     msg="Check that non-OOV words map to different encodings, and not also not to OOV:"
-                                     "{} vs. {}".format(word1, word2))
+                    self.assertFalse(
+                        tf.reduce_all(
+                            tf.equal(
+                                sequence_encoding[word1_position],
+                                sequence_encoding[word2_position],
+                            )
+                        ),
+                        msg="Check that non-OOV words map to different encodings, and not also not to OOV:"
+                        "{} vs. {}".format(word1, word2),
+                    )
 
-        self.assertTrue(tf.reduce_all(tf.equal(sequence_encoding[-1], sequence_encoding[-2])),
-                        msg="Check that OOV words map to the same encodings")
-        assert not tf.reduce_all(
-            tf.equal(sequence_encoding[0], sequence_encoding[1]))
+        self.assertTrue(
+            tf.reduce_all(tf.equal(sequence_encoding[-1], sequence_encoding[-2])),
+            msg="Check that OOV words map to the same encodings",
+        )
+        assert not tf.reduce_all(tf.equal(sequence_encoding[0], sequence_encoding[1]))
 
     def test_categorical_embedding_with_hash_buckets(self):
         """
@@ -265,14 +267,11 @@ class RankingModelTest(RankingTestBase):
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(string_tensor)
         assert categorical_embedding.shape[1] == 1
-        assert categorical_embedding.shape[2] == num_hash_buckets * \
-            embedding_size
+        assert categorical_embedding.shape[2] == num_hash_buckets * embedding_size
 
         # Strings 0 and 2 should result in the same embedding because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
 
     def test_categorical_embedding_with_indices(self):
         """
@@ -307,12 +306,9 @@ class RankingModelTest(RankingTestBase):
         assert categorical_embedding.shape[2] == embedding_size
 
         # Assert equality of embeddings with same indices
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[1], categorical_embedding[3]))
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[-1]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[1], categorical_embedding[3]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[-1]))
 
     def test_categorical_embedding_with_vocabulary_file_with_ids(self):
         """
@@ -338,8 +334,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
@@ -352,18 +347,13 @@ class RankingModelTest(RankingTestBase):
         assert categorical_embedding.shape[2] == embedding_size
 
         # Strings 0 and 2 should result in the same embedding because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[4], categorical_embedding[5]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
 
         # Strings domain_0 and domain_2 should result in the same embedding because they are mapped to the same ID
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[3]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[3], categorical_embedding[4]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
     def test_categorical_embedding_with_vocabulary_file_without_ids(self):
         """
@@ -389,8 +379,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
@@ -403,18 +392,13 @@ class RankingModelTest(RankingTestBase):
         assert categorical_embedding.shape[2] == embedding_size
 
         # Strings 0 and 2 should result in the same embedding because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[4], categorical_embedding[5]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
 
         # Strings domain_0 and domain_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[3]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[3], categorical_embedding[4]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
     def test_categorical_embedding_with_vocabulary_file_with_ids_and_dropout(self):
         """
@@ -439,8 +423,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         value_error_raised = False
@@ -477,8 +460,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
@@ -495,24 +477,18 @@ class RankingModelTest(RankingTestBase):
         assert categorical_embedding.shape[2] == embedding_size
 
         # Strings 0 and 2 should result in the same embedding because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding[4], categorical_embedding[5]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[2]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[1]))
+        assert tf.reduce_all(tf.equal(categorical_embedding[4], categorical_embedding[5]))
 
         # Strings domain_0 and domain_2 should NOT result in the same embedding because they use a default one-to-one vocabulary mapping
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[0], categorical_embedding[3]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_embedding[3], categorical_embedding[4]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[0], categorical_embedding[3]))
+        assert not tf.reduce_all(tf.equal(categorical_embedding[3], categorical_embedding[4]))
 
         categorical_embedding = model(string_tensor, training=True)
         # Since dropout_rate is set to 0.999, all categorical indices
         # should be masked to OOV index and thus the embeddings should be the same
-        assert tf.reduce_all(
-            tf.equal(categorical_embedding, categorical_embedding[0]))
+        assert tf.reduce_all(tf.equal(categorical_embedding, categorical_embedding[0]))
 
     def test_categorical_indicator_with_vocabulary_file_with_ids(self):
         """
@@ -536,8 +512,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
@@ -548,22 +523,16 @@ class RankingModelTest(RankingTestBase):
         assert categorical_one_hot.shape[0] == len(string_tensor)
         assert categorical_one_hot.shape[1] == 1
         assert categorical_one_hot.shape[2] == 6
-        assert tf.reduce_all(tf.squeeze(
-            tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
 
         # Strings 0 and 2 should result in the same one-hot vector because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
 
         # Strings domain_0 and domain_2 should result in the same one-hot vector because they are mapped to the same ID
-        assert tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
 
     def test_categorical_indicator_with_vocabulary_file_without_ids(self):
         """
@@ -587,8 +556,7 @@ class RankingModelTest(RankingTestBase):
 
         # Define an input string tensor
         string_tensor = tf.constant(
-            ["domain_0", "domain_1", "domain_0",
-                "domain_2", "domain_10", "domain_11"]
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
         categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
@@ -599,22 +567,16 @@ class RankingModelTest(RankingTestBase):
         assert categorical_one_hot.shape[0] == len(string_tensor)
         assert categorical_one_hot.shape[1] == 1
         assert categorical_one_hot.shape[2] == 6
-        assert tf.reduce_all(tf.squeeze(
-            tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
+        assert tf.reduce_all(tf.squeeze(tf.reduce_sum(categorical_one_hot, axis=2)) == 1.0)
 
         # Strings 0 and 2 should result in the same one-hot vector because they are the same
-        assert tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
-        assert tf.reduce_all(
-            tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[2]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[1]))
+        assert tf.reduce_all(tf.equal(categorical_one_hot[4], categorical_one_hot[5]))
 
         # Strings domain_0 and domain_2 should NOT result in the same one-hot vector because they use a default one-to-one vocabulary mapping
-        assert not tf.reduce_all(
-            tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
-        assert not tf.reduce_all(
-            tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[0], categorical_one_hot[3]))
+        assert not tf.reduce_all(tf.equal(categorical_one_hot[3], categorical_one_hot[4]))
 
     def test_global_1d_pooling(self):
         """
@@ -622,75 +584,104 @@ class RankingModelTest(RankingTestBase):
 
         Checks the right output shapes produced and the values generated
         """
-        feature_tensor = tf.reshape(
-            tf.constant(range(30), dtype=tf.float32),
-            (2, 5, 3))
+        feature_tensor = tf.reshape(tf.constant(range(30), dtype=tf.float32), (2, 5, 3))
         pooled_tensor = sequence_fns.global_1d_pooling(
             feature_tensor=feature_tensor,
             feature_info={
                 "name": "f",
                 "feature_layer_info": {
-                    "args": {
-                        "fns": [
-                            "sum",
-                            "mean",
-                            "max",
-                            "min",
-                            "count_nonzero"
-                        ]
-                    }
-                }
+                    "args": {"fns": ["sum", "mean", "max", "min", "count_nonzero"]}
+                },
             },
-            file_io=None
+            file_io=None,
         )
 
         assert pooled_tensor.shape == (2, 5, 5)
-        assert (pooled_tensor.numpy() == [[[3.,  1.,  2.,  0.,  2.],
-                                           [12.,  4.,  5.,  3.,  3.],
-                                           [21.,  7.,  8.,  6.,  3.],
-                                           [30., 10., 11.,  9.,  3.],
-                                           [39., 13., 14., 12.,  3.]],
-
-                                          [[48., 16., 17., 15.,  3.],
-                                           [57., 19., 20., 18.,  3.],
-                                           [66., 22., 23., 21.,  3.],
-                                           [75., 25., 26., 24.,  3.],
-                                           [84., 28., 29., 27.,  3.]]]).all()
+        assert (
+            pooled_tensor.numpy()
+            == [
+                [
+                    [3.0, 1.0, 2.0, 0.0, 2.0],
+                    [12.0, 4.0, 5.0, 3.0, 3.0],
+                    [21.0, 7.0, 8.0, 6.0, 3.0],
+                    [30.0, 10.0, 11.0, 9.0, 3.0],
+                    [39.0, 13.0, 14.0, 12.0, 3.0],
+                ],
+                [
+                    [48.0, 16.0, 17.0, 15.0, 3.0],
+                    [57.0, 19.0, 20.0, 18.0, 3.0],
+                    [66.0, 22.0, 23.0, 21.0, 3.0],
+                    [75.0, 25.0, 26.0, 24.0, 3.0],
+                    [84.0, 28.0, 29.0, 27.0, 3.0],
+                ],
+            ]
+        ).all()
 
         # Test function with padded values
         # Here, we mask all the even values
-        padded_val = -1.
-        feature_tensor_with_mask = tf.where(
-            feature_tensor % 2 == 0, feature_tensor, padded_val)
+        padded_val = -1.0
+        feature_tensor_with_mask = tf.where(feature_tensor % 2 == 0, feature_tensor, padded_val)
         pooled_tensor_with_mask = sequence_fns.global_1d_pooling(
             feature_tensor=feature_tensor_with_mask,
             feature_info={
                 "name": "f",
                 "feature_layer_info": {
                     "args": {
-                        "fns": [
-                            "sum",
-                            "mean",
-                            "max",
-                            "min",
-                            "count_nonzero"
-                        ],
-                        "padded_val": padded_val
+                        "fns": ["sum", "mean", "max", "min", "count_nonzero"],
+                        "padded_val": padded_val,
                     }
-                }
+                },
             },
-            file_io=None
+            file_io=None,
         )
         assert pooled_tensor_with_mask.shape == (2, 5, 5)
         assert not (pooled_tensor_with_mask.numpy() == pooled_tensor.numpy()).all()
-        assert (pooled_tensor_with_mask.numpy() == [[[2.,  1.,  2.,  0.,  1.],
-                                                     [4.,  4.,  4.,  4.,  1.],
-                                                     [14.,  7.,  8.,  6.,  2.],
-                                                     [10., 10., 10., 10.,  1.],
-                                                     [26., 13., 14., 12.,  2.]],
+        assert (
+            pooled_tensor_with_mask.numpy()
+            == [
+                [
+                    [2.0, 1.0, 2.0, 0.0, 1.0],
+                    [4.0, 4.0, 4.0, 4.0, 1.0],
+                    [14.0, 7.0, 8.0, 6.0, 2.0],
+                    [10.0, 10.0, 10.0, 10.0, 1.0],
+                    [26.0, 13.0, 14.0, 12.0, 2.0],
+                ],
+                [
+                    [16.0, 16.0, 16.0, 16.0, 1.0],
+                    [38.0, 19.0, 20.0, 18.0, 2.0],
+                    [22.0, 22.0, 22.0, 22.0, 1.0],
+                    [50.0, 25.0, 26.0, 24.0, 2.0],
+                    [28.0, 28.0, 28.0, 28.0, 1.0],
+                ],
+            ]
+        ).all()
 
-                                                    [[16., 16., 16., 16.,  1.],
-                                                     [38., 19., 20., 18.,  2.],
-                                                     [22., 22., 22., 22.,  1.],
-                                                     [50., 25., 26., 24.,  2.],
-                                                     [28., 28., 28., 28.,  1.]]]).all()
+        # Test empty pooling fn list
+        found_value_error = False
+        try:
+            pooled_tensor = sequence_fns.global_1d_pooling(
+                feature_tensor=feature_tensor,
+                feature_info={
+                    "name": "f",
+                    "feature_layer_info": {"args": {"fns": [], "padded_val": padded_val}},
+                },
+                file_io=None,
+            )
+        except ValueError:
+            found_value_error = True
+        assert found_value_error
+
+        # Test invalid pooling fn
+        found_key_error = False
+        try:
+            pooled_tensor = sequence_fns.global_1d_pooling(
+                feature_tensor=feature_tensor,
+                feature_info={
+                    "name": "f",
+                    "feature_layer_info": {"args": {"fns": ["invalid"], "padded_val": padded_val}},
+                },
+                file_io=None,
+            )
+        except KeyError:
+            found_key_error = True
+        assert found_key_error
