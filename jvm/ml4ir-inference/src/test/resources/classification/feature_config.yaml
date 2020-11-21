@@ -54,7 +54,7 @@ features:
           remove_punctuation: true
           to_lower: true
     serving_info:
-      name: query_text
+      name: query
       required: true
     default_value: ""
     tfrecord_type: context
@@ -88,7 +88,7 @@ features:
         max_length: 1
         default_value: -1
     serving_info:
-      name: query_words
+      name: query
       required: true
       default_value: ""
     tfrecord_type: context

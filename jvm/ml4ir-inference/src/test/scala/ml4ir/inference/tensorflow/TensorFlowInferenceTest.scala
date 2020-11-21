@@ -85,8 +85,7 @@ class TensorFlowInferenceTest extends TestData {
                                                                      ImmutableMap.of())
 
     val queryContext = Map(
-      "query_text" -> "a nay act hour",
-      "query_words" -> "a nay act hour",
+      "query" -> "a nay act hour",
       "domain_id" -> "G",
       "user_context" -> "BBB,FFF,HHH,HHH,CCC,HHH,DDD,FFF,EEE,CCC,BBB,CCC,AAA,HHH,BBB,FFF"
     )

@@ -40,7 +40,7 @@ public class ExampleJavaBuilderTest {
                         modelFeatures,
                         ImmutableMap.of(),
                         ImmutableMap.of(),
-                        ImmutableMap.of("query_words", String::toLowerCase)
+                        ImmutableMap.of("query", String::toLowerCase)
                 );
 
         String queryText = "The quick brown!";
@@ -49,15 +49,17 @@ public class ExampleJavaBuilderTest {
         String entityId = "AAA";
 
         Map<String, String> queryContext =
-                ImmutableMap.of("query_text", queryText,
+                ImmutableMap.of("query", queryText,
                         "domain_id", domainId,
-                        "user_context", userContext,
-                        "query_words", queryText);
+                        "user_context", userContext);
 
         Example example = exampleBuilder.apply(queryContext);
 
-        ByteString queryTextByteString = example.getFeatures().getFeatureMap().get("query_words").getBytesList().getValue(0);
-        assertEquals(queryText.toLowerCase(), queryTextByteString.toString("UTF-8"));
+        ByteString queryBytesByteString = example.getFeatures().getFeatureMap().get("query_bytes").getBytesList().getValue(0);
+        assertEquals(queryText.toLowerCase(), queryBytesByteString.toString("UTF-8"));
+
+        ByteString queryWordsByteString = example.getFeatures().getFeatureMap().get("query_words").getBytesList().getValue(0);
+        assertEquals(queryText.toLowerCase(), queryWordsByteString.toString("UTF-8"));
     }
 
 }
