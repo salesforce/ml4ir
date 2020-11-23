@@ -23,6 +23,7 @@ from typing import Dict, Optional, List, Union, Type
 class RelevanceModelConstants:
 
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
+    METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
     CHECKPOINT_FNAME = "checkpoint.tf"
 
@@ -115,6 +116,7 @@ class RelevanceModel:
 
             # Create model with functional Keras API
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+            self.model.output_names = [self.output_name]
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
@@ -407,6 +409,7 @@ class RelevanceModel:
             )
 
             # Write metrics for experiment tracking
+            # Returns a dictionary
             train_metrics = dict()
             for metric, value in history.history.items():
                 if not metric.startswith("val_"):
@@ -416,14 +419,18 @@ class RelevanceModel:
                     to differentiate from validation and test metrics
                     in the final experiment results
                     """
-                    train_metrics["train_{}".format(metric)] = value[0]
+                    # History is a dict of key: list(values per epoch)
+                    # We are capturing the metrics of the last epoch (-1)
+                    train_metrics["train_{}".format(metric)] = value[-1]
                 else:
-                    train_metrics[metric] = value[0]
+                    train_metrics[metric] = value[-1]
 
             return train_metrics
         else:
             raise NotImplementedError(
-                "The model could not be trained. Check if the model was compiled correctly. Training loaded SavedModel is not currently supported."
+                "The model could not be trained. "
+                "Check if the model was compiled correctly."
+                " Training loaded SavedModel is not currently supported."
             )
 
     def predict(
@@ -509,6 +516,7 @@ class RelevanceModel:
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -530,6 +538,8 @@ class RelevanceModel:
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+        compute_intermediate_stats : bool
+            Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------

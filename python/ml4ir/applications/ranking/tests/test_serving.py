@@ -9,6 +9,7 @@ from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.config.keys import ServingSignatureKey
+from ml4ir.base.model.scoring.prediction_helper import flatten_query, filter_records
 
 
 class RankingModelTest(RankingTestBase):
@@ -94,26 +95,12 @@ class RankingModelTest(RankingTestBase):
             for i in range(self.args.batch_size)
         ]
 
-        def _flatten_records(x):
-            """Collapse first two dimensions of a tensor -> [batch_size, max_num_records]"""
-            return tf.reshape(x, tf.concat([[-1], tf.shape(x)[2:]], axis=0))
-
-        def _filter_records(x, mask):
-            """
-            Filter records that were padded in each query
-
-            Input shape: [batch_size, num_features]
-
-            Output shape: [batch_size, num_features]
-            """
-            return tf.squeeze(tf.gather_nd(x, tf.where(tf.not_equal(mask, 0))))
-
         # Get mask for padded values
-        mask = _flatten_records(parsed_sequence_examples["mask"])
+        mask = flatten_query(parsed_sequence_examples["mask"])
 
         # Flatten scores to each record and filter out scores from padded records
-        default_signature_predictions = _filter_records(
-            _flatten_records(default_signature_predictions), mask
+        default_signature_predictions = tf.squeeze(
+            filter_records(flatten_query(default_signature_predictions), mask), axis=-1
         )
         tfrecord_signature_predictions = tf.squeeze(
             tf.concat(tfrecord_signature_predictions, axis=1)
@@ -129,7 +116,9 @@ class RankingModelTest(RankingTestBase):
         ).all()
 
     def get_feature_config(self):
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(
+            self.root_data_dir, "configs", self.feature_config_fname
+        )
 
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
@@ -165,7 +154,7 @@ class RankingModelTest(RankingTestBase):
         feature_config: FeatureConfig = self.get_feature_config()
         tfrecord_signature = self.get_tfrecord_signature(feature_config)
 
-        for num_records in range(1, 250):
+        for num_records in range(1, 120):
             proto = tf.constant(
                 [feature_config.create_dummy_protobuf(num_records=num_records).SerializeToString()]
             )

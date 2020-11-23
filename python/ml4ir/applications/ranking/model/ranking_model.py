@@ -72,6 +72,7 @@ class RankingModel(RelevanceModel):
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -93,6 +94,8 @@ class RankingModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+        compute_intermediate_stats : bool
+            [Currently ignored] Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------
@@ -257,6 +260,8 @@ class RankingModel(RelevanceModel):
                 predictions[key] = tf.where(
                     tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
                 )
+                # Collapse additional tail dimension
+                predictions[key] = tf.squeeze(predictions[key], axis=-1)
 
             return predictions
 

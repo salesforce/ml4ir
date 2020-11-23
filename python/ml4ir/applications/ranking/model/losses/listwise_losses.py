@@ -26,16 +26,24 @@ class RankOneListNet(ListwiseLossBase):
         mask = kwargs.get("mask")
 
         def _loss_fn(y_true, y_pred):
+            """
+            Shapes
+            ------
+            y_true : [batch_size, num_classes, 1]
+            y_pred : [batch_size, num_classes, 1]
+            mask : [batch_size, num_classes, 1]
+            """
             batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 
             # Mask the padded records
             y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
             y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
 
-            # Reshape the tensors
-            y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
-            y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
+            # Reshape the tensors so that we sum the losses from each record
+            y_true = tf.expand_dims(y_true, axis=-1)
+            y_pred = tf.expand_dims(y_pred, axis=-1)
 
+            # Scale the sum of losses down by number of queries in the batch
             return tf.math.divide(bce(y_true, y_pred), batch_size)
 
         return _loss_fn
@@ -59,9 +67,8 @@ class RankOneListNet(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the softmax activation
         """
-        softmax_op = layers.Softmax(axis=-1, name=output_name)
+        softmax_op = layers.Softmax(axis=-1)
 
-        # Listwise Top 1 RankNet Loss
         def masked_softmax(logits, mask):
             """
             NOTE:
@@ -69,10 +76,11 @@ class RankOneListNet(ListwiseLossBase):
             but tf.keras.layers.Softmax() is more stable when working with
             cross_entropy layers
             """
+            mask = tf.squeeze(mask, axis=-1)
             logits = tf.where(
                 tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
             )
 
-            return softmax_op(logits)
+            return tf.expand_dims(softmax_op(logits), axis=-1, name=output_name)
 
         return masked_softmax

@@ -1,22 +1,20 @@
 import sys
 import ast
 from argparse import Namespace
-
-from tensorflow.keras.metrics import Metric, Precision
+from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
-
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, split_and_pad_string
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
-
+from ml4ir.applications.classification.model.classification_model import ClassificationModel
 from typing import Union, List, Type
 
 
@@ -75,9 +73,9 @@ class ClassificationPipeline(RelevancePipeline):
         loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.model_config_file,
+        scorer: ScorerBase = RelevanceScorer(
             feature_config=self.feature_config,
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
@@ -91,12 +89,10 @@ class ClassificationPipeline(RelevancePipeline):
         ]
 
         # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            model_config_file=self.model_config_file, file_io=self.file_io,
-        )
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RelevanceModel(
+        relevance_model: RelevanceModel = ClassificationModel(
             feature_config=self.feature_config,
             scorer=scorer,
             metrics=metrics,
