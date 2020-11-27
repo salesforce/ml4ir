@@ -20,8 +20,8 @@ object FeaturesConfigHelper {
           .groupBy(_.dType)
           .mapValues(
             _.map {
-              case FeatureConfig(nodeName, _, ServingConfig(servingName, defaultValue), _) =>
-                servingName -> NodeWithDefault(nodeName, defaultValue)
+              case FeatureConfig(name, _, ServingConfig(servingName, defaultValue), _) =>
+                servingName -> NodeWithDefault(name, defaultValue)
             }.toMap
           )
           .withDefaultValue(Map.empty)
