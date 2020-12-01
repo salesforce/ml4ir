@@ -68,7 +68,7 @@ class TensorFlowInferenceTest extends TestData {
 
   @Test
   def testClassificationSavedModelBundle(): Unit = {
-    val model_path = "classification/simple_classification_model"
+    val modelPath = "classification/simple_classification_model"
 
     val nodes = ModelExecutorConfig(
       queryNodeName = "serving_tfrecord_protos",
@@ -83,7 +83,7 @@ class TensorFlowInferenceTest extends TestData {
       "user_context" -> "BBB,FFF,HHH,HHH,CCC,HHH,DDD,FFF,EEE,CCC,BBB,CCC,AAA,HHH,BBB,FFF"
     )
 
-    val predictions: Array[Float] = predict(queryContext, model_path, featureConfigPath, nodes)
+    val predictions: Array[Float] = predict(queryContext, modelPath, featureConfigPath, nodes)
 
     // these magic numbers are what the python side writes to model_evaluation.csv - we should get the same on the jvm
     val expected = Array(0.1992322f, 0.22705518f, 0.19074143f, 0.18944256f, 0.18591811f, 0.0015369629f, 0.0015281563f,
@@ -98,24 +98,24 @@ class TensorFlowInferenceTest extends TestData {
       "user_context" -> "BBB,FFF,HHH,HHH,CCC,HHH,DDD,FFF,EEE,CCC,BBB,CCC,AAA,HHH,BBB,FFF"
     )
 
-    val predictionsSameName: Array[Float] = predict(queryContextSameName, model_path, featureConfigSameNamePath, nodes)
+    val predictionsSameName: Array[Float] = predict(queryContextSameName, modelPath, featureConfigSameNamePath, nodes)
 
     assertArrayEquals(expected, predictionsSameName, 1e-6f)
   }
 
-  private def predict(queryContext: Map[String, String], model_path: String, feature_config_path: String, nodes: ModelExecutorConfig) = {
-    val bundlePath = resourceFor(model_path)
+  private def predict(queryContext: Map[String, String],
+                      modelPath: String,
+                      featureConfigPath: String,
+                      nodes: ModelExecutorConfig) = {
+    val bundlePath = resourceFor(modelPath)
     val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       nodes
     )
-    val configPath = resourceFor(feature_config_path)
+    val configPath = resourceFor(featureConfigPath)
     val modelFeatures = ModelFeaturesConfig.load(configPath)
 
-    val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures,
-      ImmutableMap.of(),
-      ImmutableMap.of(),
-      ImmutableMap.of())
+    val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures)
     val proto: Example = protoBuilder.apply(queryContext.asJava)
     val predictions = bundleExecutor.apply(proto)
     predictions
