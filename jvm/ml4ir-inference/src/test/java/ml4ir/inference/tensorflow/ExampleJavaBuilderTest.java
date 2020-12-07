@@ -7,6 +7,7 @@ import ml4ir.inference.tensorflow.data.ModelFeaturesConfig;
 import ml4ir.inference.tensorflow.data.StringMapExampleBuilder;
 import org.junit.Test;
 import org.tensorflow.example.Example;
+import org.tensorflow.example.Feature;
 
 import java.util.Map;
 
@@ -23,7 +24,7 @@ public class ExampleJavaBuilderTest {
         return classLoader.getResource("classification/" + name).getPath();
     }
 
-    private final String configFile = "feature_config.yaml";
+    private final String configFile = "feature_config_with_same_name.yaml";
 
     /**
      * Verify that {@see Example}-building applies the correct in-jvm feature-preprocessing (lowercasing, in this
@@ -40,7 +41,7 @@ public class ExampleJavaBuilderTest {
                         modelFeatures,
                         ImmutableMap.of(),
                         ImmutableMap.of(),
-                        ImmutableMap.of("query_words", String::toLowerCase)
+                        ImmutableMap.of("query_text", String::toLowerCase)
                 );
 
         String queryText = "The quick brown!";
@@ -51,12 +52,12 @@ public class ExampleJavaBuilderTest {
         Map<String, String> queryContext =
                 ImmutableMap.of("query_text", queryText,
                         "domain_id", domainId,
-                        "user_context", userContext,
-                        "query_words", queryText);
+                        "user_context", userContext);
 
         Example example = exampleBuilder.apply(queryContext);
 
-        ByteString queryTextByteString = example.getFeatures().getFeatureMap().get("query_words").getBytesList().getValue(0);
+        Map<String, Feature> featureMap = example.getFeatures().getFeatureMap();
+        ByteString queryTextByteString = featureMap.get("query_text").getBytesList().getValue(0);
         assertEquals(queryText.toLowerCase(), queryTextByteString.toString("UTF-8"));
     }
 

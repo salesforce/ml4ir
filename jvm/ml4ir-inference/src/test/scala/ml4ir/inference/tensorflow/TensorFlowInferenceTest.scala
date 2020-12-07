@@ -68,33 +68,56 @@ class TensorFlowInferenceTest extends TestData {
 
   @Test
   def testClassificationSavedModelBundle(): Unit = {
-    val bundlePath = resourceFor("classification/simple_classification_model")
-    val bundleExecutor = new TFRecordExecutor(
-      bundlePath,
-      ModelExecutorConfig(
-        queryNodeName = "serving_tfrecord_protos",
-        scoresNodeName = "StatefulPartitionedCall_3"
-      )
+    val modelPath = "classification/simple_classification_model"
+
+    val nodes = ModelExecutorConfig(
+      queryNodeName = "serving_tfrecord_protos",
+      scoresNodeName = "StatefulPartitionedCall_3"
     )
-    val configPath = resourceFor("classification/feature_config.yaml")
-    val modelFeatures = ModelFeaturesConfig.load(configPath)
 
-    val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures,
-                                                                     ImmutableMap.of(),
-                                                                     ImmutableMap.of(),
-                                                                     ImmutableMap.of())
-
+    val featureConfigPath = "classification/feature_config.yaml"
     val queryContext = Map(
       "query_text" -> "a nay act hour",
       "query_words" -> "a nay act hour",
       "domain_id" -> "G",
       "user_context" -> "BBB,FFF,HHH,HHH,CCC,HHH,DDD,FFF,EEE,CCC,BBB,CCC,AAA,HHH,BBB,FFF"
     )
-    val proto: Example = protoBuilder.apply(queryContext.asJava)
-    val predictions = bundleExecutor.apply(proto)
+
+    val predictions: Array[Float] = predict(queryContext, modelPath, featureConfigPath, nodes)
+
     // these magic numbers are what the python side writes to model_evaluation.csv - we should get the same on the jvm
     val expected = Array(0.1992322f, 0.22705518f, 0.19074143f, 0.18944256f, 0.18591811f, 0.0015369629f, 0.0015281563f,
       0.0027524738f, 0.0017929341f)
     assertArrayEquals(expected, predictions, 1e-6f)
+
+    // Now use the same model, but query_text and query_words renamed to the same serving_info name 'query_text'
+    val featureConfigSameNamePath = "classification/feature_config_with_same_name.yaml"
+    val queryContextSameName = Map(
+      "query_text" -> "a nay act hour",
+      "domain_id" -> "G",
+      "user_context" -> "BBB,FFF,HHH,HHH,CCC,HHH,DDD,FFF,EEE,CCC,BBB,CCC,AAA,HHH,BBB,FFF"
+    )
+
+    val predictionsSameName: Array[Float] = predict(queryContextSameName, modelPath, featureConfigSameNamePath, nodes)
+
+    assertArrayEquals(expected, predictionsSameName, 1e-6f)
+  }
+
+  private def predict(queryContext: Map[String, String],
+                      modelPath: String,
+                      featureConfigPath: String,
+                      nodes: ModelExecutorConfig) = {
+    val bundlePath = resourceFor(modelPath)
+    val bundleExecutor = new TFRecordExecutor(
+      bundlePath,
+      nodes
+    )
+    val configPath = resourceFor(featureConfigPath)
+    val modelFeatures = ModelFeaturesConfig.load(configPath)
+
+    val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures)
+    val proto: Example = protoBuilder.apply(queryContext.asJava)
+    val predictions = bundleExecutor.apply(proto)
+    predictions
   }
 }

@@ -35,13 +35,14 @@ case class ModelFeaturesConfig(@JsonProperty("rank") initialRank: FeatureConfig,
 
 /**
   * At inference-time, ml4ir's FeatureConfig needs to know only the following properties per feature:
-  * @param nodeName the Tensorflow input graph node name to wire this feature into
+  * @param name the protobuf key name representing the input. Tensorflow will wire the value into the corresponding node
+  *             name
   * @param dTypeString string | int64 | float
   * @param servingConfig {@see ServingConfig} below
   * @param tfRecordType context | sequence (latter only for {@see SequenceExample} features)
   */
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class FeatureConfig(@JsonProperty("node_name") nodeName: String,
+case class FeatureConfig(@JsonProperty("name") name: String,
                          @JsonProperty("dtype") dTypeString: String,
                          @JsonProperty("serving_info") servingConfig: ServingConfig,
                          @JsonProperty("tfrecord_type") tfRecordType: String) {

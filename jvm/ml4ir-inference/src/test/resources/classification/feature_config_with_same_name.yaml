@@ -1,0 +1,155 @@
+query_key:
+  name: query_key
+  node_name: query_key
+  trainable: false
+  dtype: string
+  log_at_inference: true
+  feature_layer_info:
+    type: string
+    shape: null
+  serving_info:
+    name: queryId
+    required: false
+    default_value: 0
+  tfrecord_type: context
+label:
+  name: entity_id
+  node_name: entity_id
+  trainable: false
+  dtype: string
+  shape:
+    - 1
+    - null
+  log_at_inference: true
+  preprocessing_info:
+    - fn: one_hot_vectorize_label
+  feature_layer_info:
+    type: numeric
+    fn: categorical_indicator_with_vocabulary_file
+    args:
+      vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
+  serving_info:
+    name: entity_id
+    required: false
+    default_value: ""
+  tfrecord_type: context
+features:
+  - name: query_text
+    node_name: query_text
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      fn: bytes_sequence_to_encoding_bilstm
+      args:
+        encoding_type: bilstm
+        encoding_size: 128
+        embedding_size: 128
+        max_length: 20
+    preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
+    serving_info:
+      name: query_text
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: query_text
+    node_name: query_words
+    trainable: true
+    dtype: string
+    shape:
+      - 1
+      - 20
+    log_at_inference: true
+    is_group_metric_key: true
+    preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
+          replace_with_whitespace: true
+      - fn: split_and_pad_string
+        args:
+          split_char: " "
+          max_length: 20
+    feature_layer_info:
+      type: numeric
+      fn: categorical_embedding_to_encoding_bilstm
+      args:
+        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/query_word.csv
+        embedding_size: 32
+        encoding_size: 256
+        dropout_rate: 0.2
+        max_length: 1
+        default_value: -1
+    serving_info:
+      name: query_text
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: domain_id
+    node_name: domain_id
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      # fn: categorical_embedding_with_hash_buckets
+      # args:
+      #   num_hash_buckets: 4
+      #   hash_bucket_size: 64
+      #   embedding_size: 32
+      #   merge_mode: concat
+      fn: categorical_embedding_with_vocabulary_file
+      args:
+        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/domain_id.csv
+        embedding_size: 64
+        default_value: -1
+        num_oov_buckets: 1
+    serving_info:
+      name: domain_id
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: user_context
+    node_name: user_context
+    trainable: true
+    dtype: string
+    shape:
+      - 1
+      - 20
+    log_at_inference: true
+    is_group_metric_key: true
+    preprocessing_info:
+      - fn: split_and_pad_string
+        args:
+          split_char: ","
+          max_length: 20
+    feature_layer_info:
+      type: numeric
+      shape: null
+      # fn: categorical_embedding_to_encoding_bilstm
+      # args:
+      #   num_hash_buckets: 4
+      #   hash_bucket_size: 64
+      #   embedding_size: 32
+      #   merge_mode: concat
+      fn: categorical_embedding_to_encoding_bilstm
+      args:
+        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
+        embedding_size: 64
+        encoding_size: 64
+        num_oov_buckets: 1
+        max_length: 20
+    serving_info:
+      name: user_context
+      required: true
+      default_value: ""
+    tfrecord_type: context
