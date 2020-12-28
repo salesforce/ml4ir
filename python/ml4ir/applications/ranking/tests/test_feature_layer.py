@@ -628,6 +628,7 @@ class RankingModelTest(RankingTestBase):
                 "feature_layer_info": {
                     "args": {
                         "fns": ["sum", "mean", "max", "min", "count_nonzero"],
+                        "masked_val": [0.0, 0.0, -100., 100., 0.],
                         "padded_val": padded_val,
                     }
                 },
