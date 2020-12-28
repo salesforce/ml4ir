@@ -140,13 +140,9 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
         )
 
     # Define the masking value for each pooling op
-    masked_val_lookup = {
-        "sum": tf.constant(0, dtype=feature_tensor.dtype),
-        "mean": tf.constant(0, dtype=feature_tensor.dtype),
-        "max": tf.constant(-np.inf, dtype=feature_tensor.dtype),
-        "min": tf.constant(np.inf, dtype=feature_tensor.dtype),
-        "count_nonzero": tf.constant(0, dtype=feature_tensor.dtype),
-    }
+    masked_values = dict(zip(args["fns"], args["masked_val"]))
+    masked_val_lookup = {k: tf.constant(masked_values.get(k, 0.0), dtype=feature_tensor.dtype) for k in args["fns"]}
+
     padded_val_tensor = None
     if "padded_val" in args:
         padded_val_tensor = tf.constant(args["padded_val"], dtype=feature_tensor.dtype)
@@ -167,13 +163,14 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
 
         elif fn == "mean":
             if "padded_val" in args:
+                # NOTE: To avoid division by zero, we set 0 to a small value of 1e-10
                 pooled_tensors.append(
                     tf.math.divide(
                         tf.math.reduce_sum(masked_feature_tensor, axis=-1),
                         tf.math.reduce_sum(
                             tf.where(
                                 tf.equal(feature_tensor, padded_val_tensor),
-                                tf.constant(0, dtype=feature_tensor.dtype),
+                                tf.constant(1e-10, dtype=feature_tensor.dtype),
                                 tf.constant(1, dtype=feature_tensor.dtype),
                             ),
                             axis=-1,
