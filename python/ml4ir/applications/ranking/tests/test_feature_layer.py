@@ -629,6 +629,7 @@ class RankingModelTest(RankingTestBase):
                     "args": {
                         "fns": ["sum", "mean", "max", "min", "count_nonzero"],
                         "padded_val": padded_val,
+                        "masked_max_val": 100.0,
                     }
                 },
             },

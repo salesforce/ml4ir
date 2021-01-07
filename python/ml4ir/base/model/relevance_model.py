@@ -635,11 +635,14 @@ class RelevanceModel:
         # Save individual layer weights
         self.file_io.make_directory(os.path.join(model_file, "layers"), clear_dir=True)
         for layer in self.model.layers:
-            self.file_io.save_numpy_array(
-                np_array=layer.get_weights(),
-                file_path=os.path.join(model_file, "layers", "{}.npz".format(layer.name)),
-                zip=True,
-            )
+            try:
+                self.file_io.save_numpy_array(
+                    np_array=layer.get_weights(),
+                    file_path=os.path.join(model_file, "layers", "{}.npz".format(layer.name)),
+                    zip=True,
+                )
+            except FileNotFoundError:
+                self.logger.warning("Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
 
         self.logger.info("Final model saved to : {}".format(model_file))
 
