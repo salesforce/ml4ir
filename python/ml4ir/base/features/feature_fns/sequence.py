@@ -147,12 +147,12 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
         )
 
     # Define the masking value for each pooling op
-    DEFAULT_MASK_MIN_VAL = 2.0
+    DEFAULT_MASKED_MAX_VAL = 2.0
     masked_val_lookup = {
         "sum": 0.0,
         "mean": 0.0,
-        "max": - args.get("masked_max_val", DEFAULT_MASK_MIN_VAL),
-        "min": args.get("masked_max_val", DEFAULT_MASK_MIN_VAL),
+        "max": - args.get("masked_max_val", DEFAULT_MASKED_MAX_VAL),
+        "min": args.get("masked_max_val", DEFAULT_MASKED_MAX_VAL),
         "count_nonzero": 0.0
     }
 
