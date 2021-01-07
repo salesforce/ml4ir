@@ -642,7 +642,7 @@ class RelevanceModel:
                     zip=True,
                 )
             except FileNotFoundError:
-                self.logger.warning("Error saving layer: {}. Skipping...".format(layer.name))
+                self.logger.warning("Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
 
         self.logger.info("Final model saved to : {}".format(model_file))
 

@@ -129,6 +129,13 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
             Must be one of ["sum", "mean", "max", "min", "count_nonzero"]
         padded_val : int/float
             Value to be ignored from the pooling operations.
+        masked_max_val : int/float
+            Value used to mask the padded values for computing the max and min
+            pooling operations. This allows us to ignore these values in the min
+            and max pool operations. For example, if all the values in the tensor
+            are in [0., 1.], then a masked_max_val of > 1. will make sure we do
+            not pick padded values in the min/max pooling ops.
+            Default value: 2
     """
     args = feature_info["feature_layer_info"]["args"]
     pooled_tensors = list()
@@ -140,8 +147,14 @@ def global_1d_pooling(feature_tensor, feature_info, file_io: FileIO):
         )
 
     # Define the masking value for each pooling op
-    masked_values = dict(zip(args["fns"], args["masked_val"]))
-    masked_val_lookup = {k: tf.constant(masked_values.get(k, 0.0), dtype=feature_tensor.dtype) for k in args["fns"]}
+    DEFAULT_MASK_MIN_VAL = 2.0
+    masked_val_lookup = {
+        "sum": 0.0,
+        "mean": 0.0,
+        "max": - args.get("masked_max_val", DEFAULT_MASK_MIN_VAL),
+        "min": args.get("masked_max_val", DEFAULT_MASK_MIN_VAL),
+        "count_nonzero": 0.0
+    }
 
     padded_val_tensor = None
     if "padded_val" in args:
