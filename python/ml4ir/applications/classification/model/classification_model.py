@@ -82,7 +82,7 @@ class ClassificationModel(RelevanceModel):
             predictions = self.predict(test_dataset,
                                        inference_signature=inference_signature,
                                        additional_features=additional_features,
-                                       logs_dir=None,
+                                       logs_dir=logs_dir,
                                        logging_frequency=logging_frequency)
             global_metrics = []  # group_name, metric, value
             grouped_metrics = []
