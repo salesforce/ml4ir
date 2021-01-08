@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Optional
 
 import numpy as np
@@ -231,7 +232,6 @@ class ClassificationModel(RelevanceModel):
         # than a list on numpy arrays
         predictions_df[self.output_name] = [x for x in predictions_]
         if logs_dir:
-            import sys
             np.set_printoptions(threshold=sys.maxsize)
             predictions_df.to_csv(outfile, mode="w", header=True, index=False)
             self.logger.info(f"Model predictions written to: {outfile}")
