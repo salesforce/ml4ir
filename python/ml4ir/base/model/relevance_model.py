@@ -23,7 +23,7 @@ from typing import Dict, Optional, List, Union, Type
 class RelevanceModelConstants:
 
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
-    MODEL_PREDICTIONS_NUMPY_FILE = "model_predictions.csv"
+    MODEL_PREDICTIONS_NUMPY_FILE = "model_predictions"
     METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
     CHECKPOINT_FNAME = "checkpoint.tf"
