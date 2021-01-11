@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import Optional
 
 import numpy as np
@@ -82,7 +83,7 @@ class ClassificationModel(RelevanceModel):
             predictions = self.predict(test_dataset,
                                        inference_signature=inference_signature,
                                        additional_features=additional_features,
-                                       logs_dir=None,
+                                       logs_dir=logs_dir,
                                        logging_frequency=logging_frequency)
             global_metrics = []  # group_name, metric, value
             grouped_metrics = []
@@ -231,6 +232,7 @@ class ClassificationModel(RelevanceModel):
         # than a list on numpy arrays
         predictions_df[self.output_name] = [x for x in predictions_]
         if logs_dir:
+            np.set_printoptions(threshold=sys.maxsize)  # write the full vector in the csv not ...
             predictions_df.to_csv(outfile, mode="w", header=True, index=False)
             self.logger.info(f"Model predictions written to: {outfile}")
         return predictions_df
