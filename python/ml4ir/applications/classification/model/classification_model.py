@@ -221,20 +221,23 @@ class ClassificationModel(RelevanceModel):
             made with the `RelevanceModel`
         """
         if logs_dir:
-            outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
+            outfile_df = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
+            outfile_numpy = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_NUMPY_FILE)
             # Delete file if it exists
-            self.file_io.rm_file(outfile)
+            self.file_io.rm_file(outfile_df)
+            self.file_io.rm_file(outfile_numpy)
         predictions_df = self._create_prediction_dataframe(logging_frequency,
                                                            test_dataset)
         predictions_ = np.squeeze(self.model.predict(test_dataset))
+        if logs_dir:
+            predictions_df.to_csv(outfile_df, mode="w", header=True, index=False)
+            np.savez(outfile_numpy, predictions_)
+            self.logger.info(f"Data info written to: {outfile_df}")
+            self.logger.info(f"Data predictions written to: {outfile_numpy}")
         # Below, avoid doing predictions.tolist() as it explodes the memory
         # tolist() will create a list of lists, which consumes more memory
         # than a list on numpy arrays
         predictions_df[self.output_name] = [x for x in predictions_]
-        if logs_dir:
-            np.set_printoptions(threshold=sys.maxsize)  # write the full vector in the csv not ...
-            predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-            self.logger.info(f"Model predictions written to: {outfile}")
         return predictions_df
 
     def _create_prediction_dataframe(self, logging_frequency, test_dataset):
