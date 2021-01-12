@@ -230,6 +230,7 @@ class ClassificationModel(RelevanceModel):
                                                            test_dataset)
         predictions_ = np.squeeze(self.model.predict(test_dataset))
         if logs_dir:
+            np.set_printoptions(threshold=sys.maxsize)
             predictions_df.to_csv(outfile_df, mode="w", header=True, index=False)
             np.savez(outfile_numpy, predictions_)
             self.logger.info(f"Data info written to: {outfile_df}")
