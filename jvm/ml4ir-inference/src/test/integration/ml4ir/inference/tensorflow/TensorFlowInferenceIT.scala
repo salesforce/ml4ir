@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
 @Test
-class TensorFlowInferenceIntegrationTest extends TestData {
+class TensorFlowInferenceIT extends TestData {
   val classLoader = getClass.getClassLoader
 
   def resourceFor(path: String) = classLoader.getResource(path).getPath
@@ -25,7 +25,7 @@ class TensorFlowInferenceIntegrationTest extends TestData {
   /**
    * Ugly parsing of the Python CSV predicition.
    *
-   * Mainly removing the b'' formatting and slicing into List and Map.
+   * Mainly removing the "b'" formatting and slicing into List and Map.
    *
    * @param line
    * @return
@@ -74,8 +74,11 @@ class TensorFlowInferenceIntegrationTest extends TestData {
 
   @Test
   def testClassificationGeneratedModelBundle(): Unit = {
-    val generatedBundleLocation = "../../python/" // TODO: This need to be read from the mvn config
+    // TODO: This need to be read from the mvn config
+    val generatedBundleLocation = "../../python/"
     val bundlePath = generatedBundleLocation + "models/end_to_end_classif/final/tfrecord"
+    val predictionPath = generatedBundleLocation + "logs/end_to_end_classif/model_predictions.csv"
+    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
     val bundleExecutor = new TFRecordExecutor(
       bundlePath,
@@ -85,14 +88,14 @@ class TensorFlowInferenceIntegrationTest extends TestData {
       )
     )
 
+    // TODO: using the model yaml don't work.
     val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
-    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
     val modelFeatures = ModelFeaturesConfig.load(featureConfigPath)
 
 
     val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures)
 
-    val vectors: List[PredictionVector] = readPredictionCSV(generatedBundleLocation + "logs/end_to_end_classif/model_predictions.csv")
+    val vectors: List[PredictionVector] = readPredictionCSV(predictionPath)
 
     assertNotEquals("No predictions found in file!", 0, vectors.length)
 
