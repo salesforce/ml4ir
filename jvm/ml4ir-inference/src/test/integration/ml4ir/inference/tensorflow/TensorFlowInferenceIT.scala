@@ -75,9 +75,10 @@ class TensorFlowInferenceIT extends TestData {
   @Test
   def testClassificationGeneratedModelBundle(): Unit = {
     // TODO: This need to be read from the mvn config
-    val generatedBundleLocation = "../../python/"
-    val bundlePath = generatedBundleLocation + "models/end_to_end_classif/final/tfrecord"
-    val predictionPath = generatedBundleLocation + "logs/end_to_end_classif/model_predictions.csv"
+    val generatedBundleLocation = System.getProperty("bundleLocation")
+    def modelName = System.getProperty("runName")
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
+    val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
     val bundleExecutor = new TFRecordExecutor(

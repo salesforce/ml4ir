@@ -12,9 +12,20 @@
 
   <profiles>
     <profile>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
       <id>integration_tests</id>
+
+      <properties>
+        <bundleLocation>${basedir}/../../python/</bundleLocation>
+        <runName>end_to_end_test</runName>
+      </properties>
+
       <build>
         <plugins>
+
           <plugin>
             <artifactId>exec-maven-plugin</artifactId>
             <groupId>org.codehaus.mojo</groupId>
@@ -26,11 +37,15 @@
                   <goal>exec</goal>
                 </goals>
                 <configuration>
-                  <executable>${basedir}/../../python/generate_classification.sh</executable>
+                  <executable>${basedir}/scripts/generate_model.sh</executable>
+                  <arguments>
+                    <argument>${runName}</argument>
+                  </arguments>
                 </configuration>
               </execution>
             </executions>
           </plugin>
+
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.22.0</version>
@@ -40,9 +55,23 @@
                 <goals>
                   <goal>test</goal>
                 </goals>
+                <configuration>
+                  <systemPropertyVariables>
+                    <bundleLocation>${bundleLocation}</bundleLocation>
+                    <runName>${runName}</runName>
+                  </systemPropertyVariables>
+
+                  <excludes>
+                    <exclude>TensorFlowInferenceTest</exclude>
+                  </excludes>
+                  <includes>
+                    <include>**/*IT</include>
+                  </includes>
+                </configuration>
               </execution>
             </executions>
           </plugin>
+
         </plugins>
       </build>
     </profile>
