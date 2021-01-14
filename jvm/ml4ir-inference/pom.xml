@@ -60,10 +60,6 @@
                     <bundleLocation>${bundleLocation}</bundleLocation>
                     <runName>${runName}</runName>
                   </systemPropertyVariables>
-
-                  <excludes>
-                    <exclude>TensorFlowInferenceTest</exclude>
-                  </excludes>
                   <includes>
                     <include>**/*IT</include>
                   </includes>
