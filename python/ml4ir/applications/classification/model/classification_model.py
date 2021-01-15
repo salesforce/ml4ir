@@ -232,7 +232,11 @@ class ClassificationModel(RelevanceModel):
         # than a list on numpy arrays
         predictions_df[self.output_name] = [x for x in predictions_]
         if logs_dir:
-            np.set_printoptions(threshold=sys.maxsize)  # write the full vector in the csv not ...
+            np.set_printoptions(formatter={'all':lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                                linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full vector in the csv not ...
+            for col in predictions_df.columns:
+                if isinstance(predictions_df[col].values[0], bytes):
+                    predictions_df[col] = predictions_df[col].str.decode('utf8')
             predictions_df.to_csv(outfile, mode="w", header=True, index=False)
             self.logger.info(f"Model predictions written to: {outfile}")
         return predictions_df

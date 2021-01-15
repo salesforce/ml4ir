@@ -20,35 +20,31 @@ class TensorFlowInferenceIT extends TestData {
    * @param sequence the Example context
    * @param scores the prediction scores
    */
-  class PredictionVector(var sequence: Map[String, String], var scores: Array[Float])
+  case class PredictionVector(sequence: Map[String, String], scores: Array[Float])
 
   /**
-   * Ugly parsing of the Python CSV predicition.
-   *
-   * Mainly removing the "b'" formatting and slicing into List and Map.
+   * Basic parsing of the Python CSV predicition.
    *
    * @param line
    * @return
    */
-  def extractColumnValues(line: String): PredictionVector = {
+  def extractColumnValues(line: String): Option[PredictionVector] = {
     val cols = line.split(",").map(_.trim)
 
-    val sequence = Map("query_text" -> cols(1).substring(2, cols(1).length - 1),
-      "domain_id" -> cols(3).substring(2, cols(3).length - 1),
-      "user_context" -> cols(4).substring(2, cols(4).length - 2).filterNot("'b".toSet).trim().replace(" ", ","))
+    val sequence = Map("query_text" -> cols(1),
+      "domain_id" -> cols(3),
+      "user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","))
 
     try {
-      val scores = cols(7).substring(2, cols(7).length - 2).split(" ").map(_.trim).map((s: String) => s.toFloat)
-      new PredictionVector(sequence, scores)
+      val scores = cols(7).substring(1, cols(7).length - 1).split(" ").map(_.trim).map((s: String) => s.toFloat)
+      Some(PredictionVector(sequence, scores))
     } catch {
-      case _: NumberFormatException => null
+      case _: NumberFormatException => None
     }
-
   }
 
   /**
    * Read a prediction file from the python project.
-   * The prediction csv is not 1 row per line, so we need to reconcile the file.
    *
    * @param csvFile path to the CSV
    * @return List of PredictionVector
@@ -57,16 +53,8 @@ class TensorFlowInferenceIT extends TestData {
     val lines = Source.fromFile(csvFile).getLines.toList
 
     var vectorList = new ListBuffer[PredictionVector]
-    var vector = ""
-    for (line <- lines.drop(1)) {
-      if (!line.startsWith(" ")) {
-        if (vector != "") {
-          vectorList ++= Option(extractColumnValues(vector))  // Don't add element if it's null
-        }
-        vector = line
-      } else {
-        vector += line
-      }
+    for (line <- lines.drop(1)) { //skip the header
+      vectorList ++= extractColumnValues(line)  // Don't add element if it's null
     }
     vectorList.toList
   }
