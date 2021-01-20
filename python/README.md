@@ -145,6 +145,9 @@ To use ml4ir as a deep learning library to build relevance models, look at the f
 
 Enter the following command to spin up Jupyter notebook on your browser to run the above notebooks
 ```
+cd path/to/ml4ir/python/
+source env/.ml4ir_venv3/bin/activate
+pip3 install notebook
 jupyter-notebook
 ```
 
