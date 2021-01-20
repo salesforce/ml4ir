@@ -125,7 +125,7 @@ An example ranking training predict and evaluate pipeline
 docker-compose run ml4ir \
 	python3 ml4ir/applications/ranking/pipeline.py \
 	--data_dir ml4ir/applications/ranking/tests/data/tfrecord \
-	--feature_config ml4ir/applications/ranking/tests/data/config/feature_config.yaml \
+	--feature_config ml4ir/applications/ranking/tests/data/configs/feature_config.yaml \
 	--run_id test \
 	--data_format tfrecord \
 	--execution_mode train_inference_evaluate
@@ -145,6 +145,9 @@ To use ml4ir as a deep learning library to build relevance models, look at the f
 
 Enter the following command to spin up Jupyter notebook on your browser to run the above notebooks
 ```
+cd path/to/ml4ir/python/
+source env/.ml4ir_venv3/bin/activate
+pip3 install notebook
 jupyter-notebook
 ```
 
