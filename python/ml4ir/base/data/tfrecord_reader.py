@@ -761,7 +761,7 @@ def read(
 
     # Create BatchedDataSet
     if batch_size:
-        dataset = dataset.batch(batch_size, drop_remainder=True)
+        dataset = dataset.batch(batch_size, drop_remainder=False)
 
     if logger:
         logger.info(
