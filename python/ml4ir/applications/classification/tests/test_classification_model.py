@@ -33,6 +33,10 @@ class ClassificationModelTest(ClassificationTestBase):
                         msg=f"Top5 Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict[_metric]}")
 
+        # Assert we predict for all the items
+        expected_size_predictions = 200  # the same with data in test
+        self.assertTrue(self.predictions.shape[0] == expected_size_predictions)
+
     def test_group_metrics_df(self):
         """
         Test the dimensions of the grouped metrics
