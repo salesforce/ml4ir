@@ -16,20 +16,20 @@ class ClassificationModelTest(ClassificationTestBase):
         # Note that these numbers are different if you run it directly vs with docker-compose up
         expected_loss = 1.7
         tol = 0.2
-        self.assertTrue(np.isclose(self.metrics_dict["loss"], expected_loss, rtol=tol),
+        self.assertTrue(np.isclose(self.metrics_dict["loss"], expected_loss, atol=tol),
                         msg=f"Loss not in expected range."
                             f" Expected: {expected_loss} ± {tol}, Found: {self.metrics_dict['loss']}")
 
-        expected_acc = 0.203
-        tol = 0.01
-        self.assertTrue(np.isclose(self.metrics_dict["categorical_accuracy"], expected_acc, rtol=tol),
+        expected_acc = 0.2
+        tol = 0.05
+        self.assertTrue(np.isclose(self.metrics_dict["categorical_accuracy"], expected_acc, atol=tol),
                         msg=f"Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict['categorical_accuracy']}")
 
         expected_acc = 1.0
         tol = 0.01
         _metric = "top_5_categorical_accuracy"
-        self.assertTrue(np.isclose(self.metrics_dict[_metric], expected_acc, rtol=tol),
+        self.assertTrue(np.isclose(self.metrics_dict[_metric], expected_acc, atol=tol),
                         msg=f"Top5 Categorical_accuracy not in expected range."
                             f" Expected: {expected_acc} ± {tol}, Found: {self.metrics_dict[_metric]}")
 
