@@ -50,13 +50,7 @@ class TensorFlowInferenceIT extends TestData {
    * @return List of PredictionVector
    */
   def readPredictionCSV(csvFile: String): List[PredictionVector] = {
-    val lines = Source.fromFile(csvFile).getLines.toList
-
-    var vectorList = new ListBuffer[PredictionVector]
-    for (line <- lines.drop(1)) { //skip the header
-      vectorList ++= extractColumnValues(line)  // Don't add element if it's null
-    }
-    vectorList.toList
+    return Source.fromFile(csvFile).getLines.toList.tail.flatMap(extractColumnValues)
   }
 
 
