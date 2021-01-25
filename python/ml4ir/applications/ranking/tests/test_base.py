@@ -16,7 +16,7 @@ from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.applications.ranking.model.ranking_model import RankingModel
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
@@ -126,7 +126,11 @@ class RankingTestBase(unittest.TestCase):
         )
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RankingModel(
+        if self.args.use_linear_model:
+            RankingModelClass = LinearRankingModel
+        else:
+            RankingModelClass = RankingModel
+        relevance_model: RelevanceModel = RankingModelClass(
             feature_config=feature_config,
             tfrecord_type=self.args.tfrecord_type,
             scorer=scorer,

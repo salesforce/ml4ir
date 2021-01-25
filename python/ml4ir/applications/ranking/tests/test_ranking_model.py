@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import random
 import tensorflow as tf
 
@@ -93,3 +94,35 @@ class RankingModelTest(RankingTestBase):
         # Compare CSV and TFRecord loss and accuracies
         assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)
         assert np.isclose(tfrecord_mrr, csv_mrr, rtol=0.01)
+
+    def test_linear_ranking_model_save(self):
+        """
+        Test the save functionality of LinearRankingModel.
+        Specifically, we test to see if the features and coefficients have been saved as CSV file.
+        """
+        feature_config_path = os.path.join(self.root_data_dir, "configs/linear_model", self.feature_config_fname)
+        self.args.model_config = os.path.join(self.root_data_dir, "configs/linear_model", "model_config.yaml")
+        feature_config: FeatureConfig = FeatureConfig.get_instance(
+            tfrecord_type=self.args.tfrecord_type,
+            feature_config_dict=self.file_io.read_yaml(feature_config_path),
+            logger=self.logger,
+        )
+
+        self.args.use_linear_model = True
+        ranking_model: RankingModel = self.get_ranking_model(
+            loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=["MRR"]
+        )
+
+        # Save the model and check if coefficients file was saved
+        ranking_model.save(models_dir=self.args.models_dir)
+        assert os.path.exists(os.path.join(self.args.models_dir, "coefficients.csv"))
+
+        # Check coefficients for all features were saved
+        coefficients_df = pd.read_csv(
+            os.path.join(self.args.models_dir, "coefficients.csv"),
+            index_col=0)
+        train_features = set(feature_config.get_train_features("node_name"))
+
+        assert len(train_features) == coefficients_df.shape[0]
+        for train_feature in train_features:
+            assert train_feature in coefficients_df.index
