@@ -251,8 +251,7 @@ python ml4ir/applications/ranking/pipeline.py \
 --model_config ml4ir/applications/ranking/tests/data/configs/linear_model/model_config.yaml \
 --run_id test \
 --data_format tfrecord \
---execution_mode train_inference_evaluate \
---use_linear_model True
+--execution_mode train_inference_evaluate
 ```
 
 #### Query Classification <a name="query-classification-usage"></a>

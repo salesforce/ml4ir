@@ -25,13 +25,6 @@ class RankingArgParser(RelevanceArgParser):
             "applications/ranking/config/keys.py",
         )
 
-        self.add_argument(
-            "--use_linear_model",
-            type=bool,
-            default=False,
-            help="Train a linear ranking model if set to True. Will save the coefficients for the linear model as key-value pairs."
-        )
-
     def set_default_args(self):
         super().set_default_args()
 

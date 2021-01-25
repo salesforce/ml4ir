@@ -5,6 +5,7 @@ from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.base.pipeline import RelevancePipeline
+from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
@@ -99,7 +100,7 @@ class RankingPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        if self.args.use_linear_model:
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
             RankingModelClass = LinearRankingModel
         else:
             RankingModelClass = RankingModel

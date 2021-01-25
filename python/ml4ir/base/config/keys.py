@@ -19,6 +19,7 @@ class ArchitectureKey(Key):
     """Model architecture keys"""
 
     DNN = "dnn"
+    LINEAR = "linear"
     RNN = "rnn"
 
 

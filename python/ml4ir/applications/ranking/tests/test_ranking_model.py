@@ -101,16 +101,17 @@ class RankingModelTest(RankingTestBase):
         Specifically, we test to see if the features and coefficients have been saved as CSV file.
         """
         feature_config_path = os.path.join(self.root_data_dir, "configs/linear_model", self.feature_config_fname)
-        self.args.model_config = os.path.join(self.root_data_dir, "configs/linear_model", "model_config.yaml")
+        self.load_model_config(os.path.join(self.root_data_dir, "configs/linear_model", "model_config.yaml"))
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
             logger=self.logger,
         )
 
-        self.args.use_linear_model = True
         ranking_model: RankingModel = self.get_ranking_model(
-            loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=["MRR"]
+            loss_key=self.args.loss_key,
+            feature_config=feature_config,
+            metrics_keys=["MRR"]
         )
 
         # Save the model and check if coefficients file was saved

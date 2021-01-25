@@ -16,6 +16,7 @@ from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metric_factory
@@ -58,8 +59,7 @@ class RankingTestBase(unittest.TestCase):
         self.args.models_dir = output_dir
         self.args.logs_dir = output_dir
 
-        # Load model_config
-        self.model_config = self.file_io.read_yaml(self.args.model_config)
+        self.load_model_config(self.args.model_config)
 
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
@@ -77,11 +77,16 @@ class RankingTestBase(unittest.TestCase):
         tf.keras.backend.clear_session()
         gc.collect()
 
+    def load_model_config(self, model_config_path:str):
+        """Load the model config dictionary"""
+        self.model_config = self.file_io.read_yaml(model_config_path)
+
     def get_ranking_model(
         self,
         loss_key: str,
         metrics_keys: List,
         feature_config: FeatureConfig,
+        model_config: dict = {},
         feature_layer_keys_to_fns={},
         initialize_layers_dict={},
         freeze_layers_list=[],
@@ -107,11 +112,13 @@ class RankingTestBase(unittest.TestCase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.args.model_config,
+        scorer: ScorerBase = RelevanceScorer(
+            feature_config=feature_config,
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
+            logger=self.logger,
             file_io=self.file_io,
         )
 
@@ -126,7 +133,7 @@ class RankingTestBase(unittest.TestCase):
         )
 
         # Combine the above to define a RelevanceModel
-        if self.args.use_linear_model:
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
             RankingModelClass = LinearRankingModel
         else:
             RankingModelClass = RankingModel
