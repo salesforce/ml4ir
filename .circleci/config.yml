@@ -2,6 +2,36 @@
 # Reference doc: https://circleci.com/docs/2.0/project-walkthrough/
 version: 2.1
 jobs:
+  build_integration_tests:
+    docker:
+      - image: ducouloa/ml4ir:0.1
+    steps:
+      - checkout
+      - restore_cache:
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r python/requirements.txt
+      - run:
+          name: Build
+          command: |
+            cd jvm
+            mvn clean -Dmaven.test.skip=true install
+      - save_cache:
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+          paths:
+            - ~/.m2
+            - "venv"
+      - run:
+          name: Run JVM integrations tests (only)
+          command: |
+            . venv/bin/activate
+            cd jvm
+            mvn verify -Pintegration_tests
+
   build_test_jvm:
     docker:
       - image: circleci/openjdk:8u242-jdk
@@ -98,3 +128,4 @@ workflows:
       - build_test_jvm
       - build_test_python_ranking
       - build_test_python_classification
+      - build_integration_tests
