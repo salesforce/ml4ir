@@ -100,6 +100,7 @@ class ClassificationTestBase(unittest.TestCase):
             cls.classification_model.evaluate(test_dataset=cls.relevance_dataset.test,
                                               logs_dir=cls.args.logs_dir,
                                               group_metrics_min_queries=0)
+        cls.predictions = cls.classification_model.predict(test_dataset=cls.relevance_dataset.test)
 
     @classmethod
     def tearDownClass(cls):
