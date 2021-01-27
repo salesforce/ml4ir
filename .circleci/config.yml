@@ -27,7 +27,7 @@ jobs:
             - ~/.m2
             - "venv"
       - run:
-          name: Run JVM integrations tests (only)
+          name: Run JVM tests and integration tests
           command: |
             . venv/bin/activate
             cd jvm
@@ -59,12 +59,10 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
+            python3 -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
-      - store_artifacts:
-          path: python/classification/pytest_report.html
       - store_test_results:
-          path: python/classification/pytest_report.html
+          path: python/test_results
 
   build_test_python_ranking:
     docker:
@@ -90,17 +88,15 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/ranking/tests --html=pytest_report.html
+            python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
-      - store_artifacts:
-          path: python/ranking/pytest_report.html
       - store_test_results:
-          path: python/ranking/pytest_report.html
+          path: python/test_results
  
 workflows:
   version: 2.1
   build_and_test:
     jobs:
+      - build_test_jvm_integration
       - build_test_python_ranking
       - build_test_python_classification
-      - build_integration_tests
