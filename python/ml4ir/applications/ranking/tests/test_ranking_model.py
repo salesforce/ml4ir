@@ -120,10 +120,9 @@ class RankingModelTest(RankingTestBase):
 
         # Check coefficients for all features were saved
         coefficients_df = pd.read_csv(
-            os.path.join(self.args.models_dir, "coefficients.csv"),
-            index_col=0)
+            os.path.join(self.args.models_dir, "coefficients.csv"))
         train_features = set(feature_config.get_train_features("node_name"))
 
         assert len(train_features) == coefficients_df.shape[0]
         for train_feature in train_features:
-            assert train_feature in coefficients_df.index
+            assert train_feature in coefficients_df.feature.values

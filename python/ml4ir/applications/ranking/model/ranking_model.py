@@ -341,19 +341,19 @@ class LinearRankingModel(RankingModel):
         if not dense_layer:
             raise KeyError("No dense layer found in the model. Can not save the linear ranking model coefficients.")
 
-        linear_model_coefficients = pd.Series(
-            dict(zip(
+        linear_model_coefficients = pd.DataFrame(
+            list(zip(
                 [f.name.split(":")[0] for f in self.model.get_layer(
                     "tf_op_layer_train_features").input],
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),
-            name="weight")
+            columns=["feature", "weight"])
         self.logger.info("Linear Model Coefficients:\n{}".format(
-            linear_model_coefficients.to_csv()))
+            linear_model_coefficients.to_csv(index=False)))
         self.file_io.write_df(
             linear_model_coefficients,
             outfile=os.path.join(models_dir, "coefficients.csv"),
-            index=True
+            index=False
         )
 
         # Call super save method to persist the SavedModel files
