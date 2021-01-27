@@ -2,7 +2,7 @@
 # Reference doc: https://circleci.com/docs/2.0/project-walkthrough/
 version: 2.1
 jobs:
-  build_integration_tests:
+  build_test_jvm_integration:
     docker:
       - image: ducouloa/ml4ir:0.1
     resource_class: xlarge
