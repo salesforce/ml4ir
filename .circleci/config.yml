@@ -2,32 +2,38 @@
 # Reference doc: https://circleci.com/docs/2.0/project-walkthrough/
 version: 2.1
 jobs:
-  build_test_jvm:
+  build_test_jvm_integration:
     docker:
-      - image: circleci/openjdk:8u242-jdk
+      - image: ducouloa/ml4ir:0.1
+    resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r python/requirements.txt
       - run:
           name: Build
           command: |
             cd jvm
             mvn clean -Dmaven.test.skip=true install
       - save_cache:
-          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
           paths:
             - ~/.m2
+            - "venv"
       - run:
-          name: Run JVM tests
+          name: Run JVM tests and integration tests
           command: |
+            . venv/bin/activate
             cd jvm
-            mvn test
-            mvn surefire-report:report-only
-      - store_artifacts:
-          path: jvm/ml4ir-inference/target/site/surefire-report.html
+            mvn verify -Pintegration_tests
       - store_test_results:
-          path: jvm/ml4ir-inference/target/site/surefire-report.html
+          path: jvm/ml4ir-inference/target
 
   build_test_python_classification:
     docker:
@@ -53,12 +59,10 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
+            python3 -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
-      - store_artifacts:
-          path: python/classification/pytest_report.html
       - store_test_results:
-          path: python/classification/pytest_report.html
+          path: python/test_results
 
   build_test_python_ranking:
     docker:
@@ -84,17 +88,15 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/ranking/tests --html=pytest_report.html
+            python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
-      - store_artifacts:
-          path: python/ranking/pytest_report.html
       - store_test_results:
-          path: python/ranking/pytest_report.html
- 
+          path: python/test_results
+
 workflows:
   version: 2.1
   build_and_test:
     jobs:
-      - build_test_jvm
+      - build_test_jvm_integration
       - build_test_python_ranking
       - build_test_python_classification
