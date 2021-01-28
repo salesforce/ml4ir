@@ -34,8 +34,6 @@ jobs:
             mvn verify -Pintegration_tests
       - store_test_results:
           path: jvm/ml4ir-inference/target
-      - store_artifacts:
-          path: jvm/ml4ir-inference/target
 
   build_test_python_classification:
     docker:
@@ -65,8 +63,6 @@ jobs:
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_test_results:
           path: python/test_results
-      - store_artifacts:
-          path: python/test_results
 
   build_test_python_ranking:
     docker:
@@ -95,8 +91,6 @@ jobs:
             python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_test_results:
-          path: python/test_results
-      - store_artifacts:
           path: python/test_results
 
 workflows:
