@@ -5,12 +5,13 @@ from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.base.pipeline import RelevancePipeline
+from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
-from ml4ir.applications.ranking.model.ranking_model import RankingModel
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import MetricKey
 from ml4ir.applications.ranking.config.keys import ScoringTypeKey
@@ -99,7 +100,11 @@ class RankingPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RankingModel(
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
+            RankingModelClass = LinearRankingModel
+        else:
+            RankingModelClass = RankingModel
+        relevance_model: RelevanceModel = RankingModelClass(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             scorer=scorer,
