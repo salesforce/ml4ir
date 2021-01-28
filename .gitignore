@@ -24,6 +24,7 @@ hs_err_pid*
 
 **/.pytest_cache
 **/test_output
+**/test_results
 
 **/__pycache__
 

@@ -2,7 +2,9 @@
 
 The `ModelConfig` is created from a YAML file and defines the scoring layers of the `RelevanceModel`. Specifically, the model config defines the layers to convert the transformed features output by the `InteractionModel` to the scores for the model. 
 
-Currently, ml4ir supports a dense neural network architecture (multi layer perceptron like). Users can define the type of scoring architecture using the `architecture_key`. The layers of the neural network can be defined as a list of configurations using the `layers` attribute. For each layer, define the `type` of tensorflow-keras layer. Then for each layer, we can specify arguments to be passed to the instantiation of the layer. Finally, for each layer, we can specify a name using the `name` attribute.
+Currently, ml4ir supports a dense neural network architecture (multi layer perceptron like) and a linear ranking model. Users can define the type of scoring architecture using the `architecture_key`. The layers of the neural network can be defined as a list of configurations using the `layers` attribute. For each layer, define the `type` of tensorflow-keras layer. Then for each layer, we can specify arguments to be passed to the instantiation of the layer. Finally, for each layer, we can specify a name using the `name` attribute.
+
+**Note**: To train a simple linear ranking model, use the architecture_key as `linear` with a single `dense` layer.
 
 This file is also used to define the optimizer and the learning rate schedule. The current supported optimizers are: `adam`, `adagrad`, `nadam`, `sgd`, `rms_prop`. Each of these optimizers need so set the following hyper-parameter: `gradient_clip_value`. `adam` is the default optimizer if non was specified.
 The current supported learning rate schedules are: `exponential`, `cyclic` and `constant`. `constant` is the default schedule if non was specified with learning rate = 0.01

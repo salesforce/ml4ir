@@ -7,33 +7,31 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 
 # Constants
-GOLD_METRICS = {
-    "query_count": 1408.0,
-    "old_ACR": 1.65056,
-    "new_ACR": 2.42968,
-    "old_MRR": 0.78588,
-    "new_MRR": 0.59365,
-    "mean_old_name_match_failure_all": 0.06392,
-    "mean_old_name_match_failure_any": 0.11221,
-    "mean_old_name_match_failure_all_rank": 0.14843,
-    "mean_old_name_match_failure_any_rank": 0.35227,
-    "mean_old_name_match_failure_any_count": 0.16690,
-    "mean_old_name_match_failure_any_fraction": 0.0889,
-    "mean_new_name_match_failure_all": 0.0866,
-    "mean_new_name_match_failure_any": 0.2194,
-    "mean_new_name_match_failure_all_rank": 0.19602,
-    "mean_new_name_match_failure_any_rank": 0.79119,
-    "mean_new_name_match_failure_any_count": 0.34090,
-    "mean_new_name_match_failure_any_fraction": 0.15354,
-    "perc_improv_ACR": -47.20309,
-    "perc_improv_MRR": -24.46050,
-    "perc_improv_mean_name_match_failure_all": -0.35555,
-    "perc_improv_mean_name_match_failure_any": -0.95569,
-    "perc_improv_mean_name_match_failure_all_rank": -0.32057,
-    "perc_improv_mean_name_match_failure_any_rank": -1.24596,
-    "perc_improv_mean_name_match_failure_any_count": -1.04255,
-    "perc_improv_mean_name_match_failure_any_fraction": -0.7254,
-}
+GOLD_METRICS = {'query_count': 1500.0,
+                'old_ACR': 1.656,
+                'new_ACR': 2.410,
+                'old_MRR': 0.783,
+                'new_MRR': 0.597,
+                'mean_old_name_match_failure_all': 0.061,
+                'mean_old_name_match_failure_any': 0.111,
+                'mean_old_name_match_failure_all_rank': 0.142,
+                'mean_old_name_match_failure_any_rank': 0.351,
+                'mean_old_name_match_failure_any_count': 0.165,
+                'mean_old_name_match_failure_any_fraction': 0.087,
+                'mean_new_name_match_failure_all': 0.086,
+                'mean_new_name_match_failure_any': 0.218,
+                'mean_new_name_match_failure_all_rank': 0.196,
+                'mean_new_name_match_failure_any_rank': 0.788,
+                'mean_new_name_match_failure_any_count': 0.342,
+                'mean_new_name_match_failure_any_fraction': 0.153,
+                'perc_improv_ACR': -45.513,
+                'perc_improv_MRR': -23.760,
+                'perc_improv_mean_name_match_failure_all': -0.402,
+                'perc_improv_mean_name_match_failure_any': -0.964,
+                'perc_improv_mean_name_match_failure_all_rank': -0.380,
+                'perc_improv_mean_name_match_failure_any_rank': -1.244,
+                'perc_improv_mean_name_match_failure_any_count': -1.068,
+                'perc_improv_mean_name_match_failure_any_fraction': -0.754}
 
 
 class RankingModelTest(RankingTestBase):
@@ -92,4 +90,4 @@ class RankingModelTest(RankingTestBase):
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
-            assert np.isclose(metrics[gold_metric_name], gold_metric_val, rtol=0.01)
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.02)
