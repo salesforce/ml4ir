@@ -30,6 +30,6 @@ setup(
     include_package_data=True,
     data_files=[("ml4ir/build", ["ml4ir/build/Dockerfile", "ml4ir/build/run_driver.sh"])],
     license="ASL 2.0",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=load_dependencies(),
 )
