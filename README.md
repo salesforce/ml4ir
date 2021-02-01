@@ -56,7 +56,9 @@ We use CircleCI for running tests. Both jvm and python tests will run on each co
 
 Unit test can be run from the Python/Java IDEs directly or with dedictated `mvn` or `python` command
 
-For integration test, you need to run the `mvn verify -Pintegration_tests` in the jvm directory *after* enabling your Python environement as described in the python README.md
+For integration test, you need to run, in the `jvm` directory:
+* `mvn verify -Pintegration_tests` *after* enabling your Python environement as described in the python README.md
+* or, if you prefer running the Python training in Docker, `mvn verify -Pintegration_tests -DuseDocker`
 
 ## Documentation
 

@@ -8,7 +8,15 @@ cd ${DIR}/../../../python
 
 CLASSIFICATION_MODEL=ml4ir/applications/classification
 
-PYTHONPATH=. python ${CLASSIFICATION_MODEL}/pipeline.py \
+if [ -z "$2" ]
+  then
+    export PYTHONPATH=.
+    EXECUTOR="python"
+else
+  EXECUTOR="docker-compose run ml4ir python"
+fi
+
+$EXECUTOR ${CLASSIFICATION_MODEL}/pipeline.py \
     --data_dir ${CLASSIFICATION_MODEL}/tests/data/csv/  \
     --feature_config ${CLASSIFICATION_MODEL}/tests/data/configs/feature_config.yaml \
     --model_config ${CLASSIFICATION_MODEL}/tests/data/configs/model_config.yaml \
