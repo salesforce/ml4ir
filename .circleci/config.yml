@@ -104,7 +104,7 @@ jobs:
   build_test_coverage:
     docker:
       - image: circleci/python:3.7.7
-    resource_class: large
+    resource_class: medium
     steps:
       - checkout
       - restore_cache:
