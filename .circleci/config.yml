@@ -132,7 +132,7 @@ jobs:
             coverage html
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
-          path: htmlcov
+          path: python/htmlcov
 
 workflows:
   version: 2.1
