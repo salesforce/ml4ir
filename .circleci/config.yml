@@ -53,10 +53,13 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
+            coverage run -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
+	    coverage report
+            coverage html  # open htmlcov/index.html in a browser
+            # python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
-          path: python/classification/pytest_report.html
+          path: htmlcov
       - store_test_results:
           path: python/classification/pytest_report.html
 
