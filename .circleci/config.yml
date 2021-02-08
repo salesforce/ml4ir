@@ -146,7 +146,7 @@ workflows:
       - build_test_jvm_integration
       - build_test_python_ranking
       - build_test_python_classification
-      - build_test_coverage
+      - build_test_coverage:
           requires:
             - build_test_python_ranking
             - build_test_python_classification
