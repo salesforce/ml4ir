@@ -9,9 +9,9 @@ pre-commit
 mypy
 
 # ml4ir dependencies
-tensorflow==2.0.3
+tensorflow==2.0.4
 numpy==1.18.5
-pandas==1.1.5
+pandas==1.2.1
 
 # pytest
 pytest==6.2.1

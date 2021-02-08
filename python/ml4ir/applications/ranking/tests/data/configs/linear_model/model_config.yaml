@@ -1,0 +1,15 @@
+architecture_key: linear
+layers:
+  - type: dropout
+    name: first_dropout
+    rate: 0.0
+  - type: dense
+    name: final_dense
+    units: 1
+    activation: null
+optimizer:
+  key: adam
+  gradient_clip_value: 5.0
+lr_schedule:
+  key: constant
+  learning_rate: 0.01
