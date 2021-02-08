@@ -66,6 +66,9 @@ jobs:
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
           path: htmlcov
+      - store_artifacts:
+          - path: python/test_results/results.xml
+          - destination: test_results.xml
       - store_test_results:
           path: python/test_results
 
