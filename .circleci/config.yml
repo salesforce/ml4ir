@@ -59,7 +59,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/test_classification_model.py --junitxml=test_results/results.xml
 #            coverage report --include "ml4ir/*"
 #            coverage html --include "ml4ir/*"  # open htmlcov/index.html in a browser
           no_output_timeout: 45m  # Time for running the tests before we timeout
@@ -94,7 +94,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/applications/ranking/tests/test_lr_schedule.py --junitxml=test_results/results.xml
 #            coverage report --include "ml4ir/*"
 #            coverage html --include "ml4ir/*"  # open htmlcov/index.html in a browser
             # python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
@@ -143,7 +143,7 @@ workflows:
   version: 2.1
   build_and_test:
     jobs:
-      - build_test_jvm_integration
+#      - build_test_jvm_integration
       - build_test_python_ranking
       - build_test_python_classification
       - build_test_coverage:
