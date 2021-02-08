@@ -62,10 +62,10 @@ jobs:
             coverage run -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
             coverage report --include "ml4ir/*"
             coverage html --include "ml4ir/*"  # open htmlcov/index.html in a browser
-            # python3 -m pytest ml4ir/applications/classification/tests --html=pytest_report.html
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
           path: python/htmlcov
+          destanation: python/htmlcov_classification
       - store_test_results:
           path: python/test_results
 
@@ -93,10 +93,17 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
+            coverage run -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
+            coverage report --include "ml4ir/*"
+            coverage html --include "ml4ir/*"  # open htmlcov/index.html in a browser
+            # python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_test_results:
           path: python/test_results
+      - store_artifacts:
+          path: python/htmlcov
+          destanation: python/htmlcov_ranking
+
 
 workflows:
   version: 2.1
