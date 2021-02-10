@@ -59,8 +59,12 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/classification/tests --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
+      - persist_to_workspace:
+          root: python/reports
+          paths:
+            - .coverage.classif
       - store_test_results:
           path: python/test_results
 
@@ -88,10 +92,47 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest ml4ir/applications/ranking/tests --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/applications/ranking/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
+      - persist_to_workspace:
+          root: python/reports
+          paths:
+            - .coverage.ranking
       - store_test_results:
           path: python/test_results
+
+  build_test_coverage:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: medium
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/requirements.txt" }}
+          paths:
+            - "venv"
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: reports
+      - run:
+          name: Run Python Coverage
+          command: |
+            . venv/bin/activate
+            coverage combine reports/.coverage.ranking reports/.coverage.classif
+            coverage report
+            coverage html --fail-under=85
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - store_artifacts:
+          path: /home/circleci/project/htmlcov
 
 workflows:
   version: 2.1
@@ -100,3 +141,7 @@ workflows:
       - build_test_jvm_integration
       - build_test_python_ranking
       - build_test_python_classification
+      - build_test_coverage:
+          requires:
+            - build_test_python_ranking
+            - build_test_python_classification

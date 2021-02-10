@@ -168,3 +168,9 @@ To run specific tests,
 ```
 python3 -m pytest /path/to/test/module
 ```
+
+# Build
+We are using CircleCi for the build process. 
+For code coverage for python, we are using [`coverage`](https://coverage.readthedocs.io/en/v4.5.x/cmd.html)
+Python coverage scores for each PR are calculated by the build and are available in the "Artifacts" section
+ of the `build_test_coverage` job.
