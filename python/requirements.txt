@@ -7,6 +7,7 @@ pandas==1.2.1
 pytest==6.2.1
 pytest-cov==2.11.0
 pytest-html==3.1.1
+PyYAML==5.4.1
 
 # Pyspark for spark_io
 pyspark==3.0.1
