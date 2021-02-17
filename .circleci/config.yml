@@ -9,20 +9,20 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r python/requirements.txt
+            pip install -r python/build-requirements.txt
       - run:
           name: Build
           command: |
             cd jvm
             mvn clean -Dmaven.test.skip=true install
       - save_cache:
-          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
           paths:
             - ~/.m2
             - "venv"
@@ -42,16 +42,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install -r requirements.txt
+            pip install -r build-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -75,16 +75,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install -r requirements.txt
+            pip install -r build-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -108,16 +108,16 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install -r requirements.txt
+            pip install -r build-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
           paths:
             - "venv"
       - attach_workspace:

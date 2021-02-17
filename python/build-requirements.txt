@@ -1,3 +1,13 @@
+# Python dependencies for developing on ml4ir and for use in the CircleCI builds
+Sphinx
+coverage
+flake8
+python-dotenv>=0.15.0
+flake8-black
+flake8-mypy
+pre-commit
+mypy
+
 # ml4ir dependencies
 tensorflow==2.0.4
 numpy==1.18.5

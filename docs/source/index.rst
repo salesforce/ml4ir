@@ -75,6 +75,7 @@ Contents
    quickstart/index
    advanced/index
    api/index
+   misc/changelog
    misc/faq
    misc/license
    misc/contact
