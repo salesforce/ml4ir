@@ -87,9 +87,9 @@ Set the PYTHONPATH environment variable to point to the python package
 export PYTHONPATH=$PYTHONPATH:`pwd`
 ```
 
-**Note about contributing to ml4ir**
-
-pre-commit-hooks are required, and installed as a requirement for contributing to ml4ir. 
+#### Contributing to ml4ir
+* Install python dependencies from the `build-requirements.txt` to setup the dependencies required for pre-commit hooks.
+* `pre-commit-hooks` are required, and installed as a requirement for contributing to ml4ir. 
 If an error results that they didn't install, execute `pre-commit install` to install git hooks in your .git/ directory.
 
 ## Running Tests

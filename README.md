@@ -1,6 +1,6 @@
 # ml4ir: Machine Learning for Information Retrieval
 
-[![CircleCI](https://circleci.com/gh/salesforce/ml4ir.svg?style=svg)](https://app.circleci.com/pipelines/github/salesforce/ml4ir)
+[![CircleCI](https://circleci.com/gh/salesforce/ml4ir.svg?style=svg)](https://app.circleci.com/pipelines/github/salesforce/ml4ir) | [changelog](docs/source/misc/changelog.md)
 
 **Quickstart &rarr;** **[ml4ir Read the Docs](https://ml4ir.readthedocs.io/en/latest/)** | **[ml4ir pypi](https://pypi.org/project/ml4ir/)** | **[python ReadMe](python/)**
 
