@@ -27,6 +27,7 @@ from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.features.preprocessing import convert_label_to_clicks
+from ml4ir.base.model.calibrations.temperature_scaling import temperature_scale
 
 from typing import List
 
@@ -198,7 +199,6 @@ class RelevancePipeline(object):
         np.random.seed(self.args.random_state)
         tf.random.set_seed(self.args.random_state)
         random.seed(self.args.random_state)
-
 
     def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
@@ -390,6 +390,26 @@ class RelevancePipeline(object):
                 experiment_tracking_dict, orient="index", columns=["value"]
             ).to_csv()
 
+            # temperature scaling
+            if self.args.execution_mode in {
+                ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
+                ExecutionModeKey.TRAIN_EVALUATE,
+                ExecutionModeKey.TRAIN_INFERENCE,
+                ExecutionModeKey.TRAIN_ONLY,
+                ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
+                ExecutionModeKey.EVALUATE_RESAVE,
+                ExecutionModeKey.INFERENCE_RESAVE,
+            }:
+                if 'calibration' in self.model_config:
+                    if self.model_config['calibration']['key'] == 'temperature_scaling':
+                        temperature = self.model_config['calibration']['temperature'] if \
+                            'temperature' in self.model_config['calibration'] else 1.5
+                        temperature_scale(relevance_model=relevance_model,
+                                          dataset=relevance_dataset,
+                                          logger=self.logger,
+                                          logs_dir_local=self.logs_dir_local,
+                                          temperature_init=temperature)
+
         except Exception as e:
             self.logger.error(
                 "!!! Error Training Model: !!!\n{}".format(str(e)))
@@ -444,6 +464,11 @@ class RelevancePipeline(object):
         )
 
         return self
+
+    @staticmethod
+    def execute_temperature_scaling(relevance_model, dataset, logger, logs_dir_local):
+        """execute temperature scaling"""
+        temperature_scale(relevance_model, dataset, logger, logs_dir_local)
 
 
 def main(argv):

@@ -24,6 +24,9 @@ optimizer:
 lr_schedule:
   key: constant
   learning_rate: 0.01
+calibration:
+  key: temperature_scaling
+  temperature: 1.5
 
 
 #Below is an example of defining other learning rate schedules.
