@@ -364,3 +364,6 @@ class LinearRankingModel(RankingModel):
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
         )
+
+    def calibration(self, **kwargs):
+        raise NotImplementedError

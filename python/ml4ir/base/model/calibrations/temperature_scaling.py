@@ -14,7 +14,8 @@ import pandas as pd
 import tensorflow_probability as tfp
 from logging import Logger
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.model.relevance_model import RelevanceModel
+from ml4ir.base.model.scoring.scoring_model import ScorerBase
+
 import shutil
 
 TEMPERATURE_SCALE = 'temp_scaling_scores'
@@ -99,23 +100,26 @@ def dict_to_zipped_csv(data_dic, root_dir):
     return zip_dir_path
 
 
-def get_intermediate_model(relevance_model: RelevanceModel):
+def get_intermediate_model(model, scorer):
     """
     returns a tf.keras.models.Model copy of the relavence_model.model. This model must generate
     logits (inputs of softmax).
+    Parameters:
+        model:
+        scorer:
     """
     # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
-    final_layer_name = relevance_model.scorer.model_config['layers'][-1]['name']
-    layer_output = relevance_model.model.get_layer(name=final_layer_name).output
+    final_layer_name = scorer.model_config['layers'][-1]['name']
+    layer_output = model.get_layer(name=final_layer_name).output
 
-    return tf.keras.models.Model(inputs=relevance_model.model.input, outputs=layer_output)
+    return tf.keras.models.Model(inputs=model.input, outputs=layer_output)
 
 
-def eval_relevance_model(scorer, logits, labels, temperature=None):
+def eval_relevance_model(scorer: ScorerBase, logits, labels, temperature=None):
     """
     evaluate the relevance model given the logits and labels
     Parameters:
-        scorer: Scorer
+        scorer: Scorer of the RelevanceModel
         logits: numpy array, logits (input of softmax)
         labels: numpy array, class labels
         temperature: TF.Tensor, a parameter of size=(1)
@@ -148,14 +152,16 @@ def get_logits_labels(model: tf.keras.Model, evaluation_set: tf.data.TFRecordDat
     return logits_nps, labels_nps
 
 
-def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset, logger: Logger,
+def temperature_scale(model: tf.keras.Model, scorer: ScorerBase, dataset: RelevanceDataset,
+                      logger: Logger,
                       logs_dir_local: str, temperature_init: float):
     """
     learns a temperature parameter using Temperature Scaling (TS) technique on the validation set.
     It, then, computes the probability scores of the test set with and without TS and writes them
     in a .zip file.
     Parameters:
-        relevance_model : RelevanceModel object to be used for temperature scaling
+        model : tf.keras.Model object to be used for temperature scaling
+        scorer:  ScorerBase object of the RelevanceModel
         dataset: RelevanceDataset to be used for temperature scaling.
         logger : Logger
         logs_dir_local: path to save the TS scores
@@ -163,7 +169,7 @@ def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset
     """
     # get an intermediate model with logits as output --> MUST NOT BE AN ACTIVATION (e.g.
     # SOFTMAX) LAYER
-    intermediate_model = get_intermediate_model(relevance_model)
+    intermediate_model = get_intermediate_model(model, scorer)
 
     start = tf.Variable(initial_value=[temperature_init], shape=(1), dtype=tf.float32, name="temp",
                         trainable=True)
@@ -189,7 +195,7 @@ def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset
 
     # evaluation on validation set before temperature scaling
     logits_nps, labels_nps = get_logits_labels(intermediate_model, dataset.validation)
-    org_acc_op, org_nll_loss_op, _ = eval_relevance_model(relevance_model.scorer, logits_nps,
+    org_acc_op, org_nll_loss_op, _ = eval_relevance_model(scorer, logits_nps,
                                                           labels_nps)
 
     # perform temperature scaling
@@ -197,15 +203,14 @@ def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset
 
     # evaluation on validation set with temperature scaling
     temper = tf.constant(results.position)
-    acc_op, nll_loss_op, _ = eval_relevance_model(relevance_model.scorer, logits_nps, labels_nps,
+    acc_op, nll_loss_op, _ = eval_relevance_model(scorer, logits_nps, labels_nps,
                                                   temperature=temper)
 
     logger.info("=" * 50)
     logger.info(f'temperature value : {results.position}')
     logger.info('Evaluating on the validation dataset ')
     logger.info(f'original loss: {org_nll_loss_op}, accuracy: {org_acc_op}, \n'
-          f'temperature scaling loss: {results.objective_value}, accuracy: {acc_op}\n'
-                f'temperature scaling loss: {nll_loss_op} \n')
+          f'temperature scaling loss: {results.objective_value}, accuracy: {acc_op}\n')
 
     logger.info("="*50)
     logger.info("Evaluating on the test dataset")
@@ -213,11 +218,11 @@ def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset
     logits_nps_test, labels_nps_test = get_logits_labels(intermediate_model, dataset.test)
 
     # evaluation on test set before temperature scaling
-    acc_test_ts, _, org_softmaxes = eval_relevance_model(relevance_model.scorer, logits_nps_test,
+    acc_test_ts, _, org_softmaxes = eval_relevance_model(scorer, logits_nps_test,
                                           labels_nps_test)
 
     # evaluation on test set with temperature scaling
-    acc_test_org, _, ts_softmaxes = eval_relevance_model(relevance_model.scorer,
+    acc_test_org, _, ts_softmaxes = eval_relevance_model(scorer,
                                                          logits_nps_test,
                                            labels_nps_test, temperature=temper)
 
@@ -236,7 +241,7 @@ def temperature_scale(relevance_model: RelevanceModel, dataset: RelevanceDataset
     logger.info(f'original test accuracy: {acc_test_org}, \ntemperature scaling '
                      f'test accuracy: {acc_test_ts} \n')
 
-    # the file might be too big and needs to be zipped
+    # the file is big and should be zipped
     zip_dir_path = dict_to_zipped_csv(data_dic, logs_dir_local)
     logger.info(f"Read and zipped  {zip_dir_path}")
 

@@ -131,3 +131,9 @@ class FileHandlerKey(Key):
 
     LOCAL = "local"
     SPARK = "spark"
+
+
+class CalibrationKey(Key):
+    CALIBRATION = "calibration"
+    TEMPERATURE_SCALING = "temperature_scaling"
+    TEMPERATURE = "temperature"

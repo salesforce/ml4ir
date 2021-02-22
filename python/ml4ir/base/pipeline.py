@@ -26,6 +26,7 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
+from ml4ir.base.config.keys import CalibrationKey
 from ml4ir.base.features.preprocessing import convert_label_to_clicks
 from ml4ir.base.model.calibrations.temperature_scaling import temperature_scale
 
@@ -296,7 +297,7 @@ class RelevancePipeline(object):
             relevance_model = self.get_relevance_model()
             self.logger.info("Relevance Model created")
 
-            if self.args.execution_mode in {
+            '''if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
                 ExecutionModeKey.TRAIN_EVALUATE,
                 ExecutionModeKey.TRAIN_INFERENCE,
@@ -388,7 +389,7 @@ class RelevancePipeline(object):
 
             job_info = pd.DataFrame.from_dict(
                 experiment_tracking_dict, orient="index", columns=["value"]
-            ).to_csv()
+            ).to_csv()'''
 
             # temperature scaling
             if self.args.execution_mode in {
@@ -400,15 +401,18 @@ class RelevancePipeline(object):
                 ExecutionModeKey.EVALUATE_RESAVE,
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
-                if 'calibration' in self.model_config:
-                    if self.model_config['calibration']['key'] == 'temperature_scaling':
-                        temperature = self.model_config['calibration']['temperature'] if \
-                            'temperature' in self.model_config['calibration'] else 1.5
-                        temperature_scale(relevance_model=relevance_model,
-                                          dataset=relevance_dataset,
-                                          logger=self.logger,
-                                          logs_dir_local=self.logs_dir_local,
-                                          temperature_init=temperature)
+                if CalibrationKey.CALIBRATION in self.model_config:
+                    if self.model_config[CalibrationKey.CALIBRATION]['key'] == \
+                            CalibrationKey.TEMPERATURE_SCALING:
+                        temperature = self.model_config[CalibrationKey.CALIBRATION][
+                            CalibrationKey.TEMPERATURE] if \
+                            CalibrationKey.TEMPERATURE in\
+                            self.model_config[CalibrationKey.CALIBRATION] else 1.5
+                        relevance_model.calibration(relevance_dataset=relevance_dataset,
+                                                    logger=self.logger,
+                                                    logs_dir_local=self.logs_dir_local,
+                                                    temperature_init=temperature
+                                                    )
 
         except Exception as e:
             self.logger.error(
@@ -464,11 +468,6 @@ class RelevancePipeline(object):
         )
 
         return self
-
-    @staticmethod
-    def execute_temperature_scaling(relevance_model, dataset, logger, logs_dir_local):
-        """execute temperature scaling"""
-        temperature_scale(relevance_model, dataset, logger, logs_dir_local)
 
 
 def main(argv):
