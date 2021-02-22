@@ -11,3 +11,6 @@ PyYAML==5.4.1
 
 # Pyspark for spark_io
 pyspark==3.0.1
+
+#calibration
+tensorflow_probability==0.8.0
