@@ -365,5 +365,5 @@ class LinearRankingModel(RankingModel):
             pad_sequence=pad_sequence,
         )
 
-    def calibration(self, **kwargs):
+    def calibrate(self, **kwargs):
         raise NotImplementedError

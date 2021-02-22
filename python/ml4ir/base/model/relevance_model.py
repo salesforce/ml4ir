@@ -780,7 +780,8 @@ class RelevanceModel:
 
         return callbacks_list
 
-    def calibration(self, relevance_dataset, logger, logs_dir_local, temperature_init):
+    def calibrate(self, relevance_dataset, logger, logs_dir_local, temperature_init):
+        logger.info("Calibrating the model with temperature scaling")
         temperature_scale(model=self.model,
                           scorer=self.scorer,
                           dataset=relevance_dataset,

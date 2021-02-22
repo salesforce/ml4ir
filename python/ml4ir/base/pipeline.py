@@ -297,7 +297,7 @@ class RelevancePipeline(object):
             relevance_model = self.get_relevance_model()
             self.logger.info("Relevance Model created")
 
-            '''if self.args.execution_mode in {
+            if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
                 ExecutionModeKey.TRAIN_EVALUATE,
                 ExecutionModeKey.TRAIN_INFERENCE,
@@ -389,7 +389,7 @@ class RelevancePipeline(object):
 
             job_info = pd.DataFrame.from_dict(
                 experiment_tracking_dict, orient="index", columns=["value"]
-            ).to_csv()'''
+            ).to_csv()
 
             # temperature scaling
             if self.args.execution_mode in {
@@ -408,11 +408,10 @@ class RelevancePipeline(object):
                             CalibrationKey.TEMPERATURE] if \
                             CalibrationKey.TEMPERATURE in\
                             self.model_config[CalibrationKey.CALIBRATION] else 1.5
-                        relevance_model.calibration(relevance_dataset=relevance_dataset,
-                                                    logger=self.logger,
-                                                    logs_dir_local=self.logs_dir_local,
-                                                    temperature_init=temperature
-                                                    )
+                        relevance_model.calibrate(relevance_dataset=relevance_dataset,
+                                                  logger=self.logger,
+                                                  logs_dir_local=self.logs_dir_local,
+                                                  temperature_init=temperature)
 
         except Exception as e:
             self.logger.error(
