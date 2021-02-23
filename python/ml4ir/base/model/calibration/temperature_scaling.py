@@ -299,10 +299,10 @@ def temperature_scale(model: tf.keras.Model,
     logits_nps_test, labels_nps_test = get_logits_labels(intermediate_model, dataset.test)
 
     # evaluation on test set before temperature scaling
-    acc_test_ts, _, org_softmaxes = eval_relevance_model(scorer, logits_nps_test, labels_nps_test)
+    acc_test_org, _, org_softmaxes = eval_relevance_model(scorer, logits_nps_test, labels_nps_test)
 
     # evaluation on test set with temperature scaling
-    acc_test_org, _, ts_softmaxes = eval_relevance_model(scorer, logits_nps_test,
+    acc_test_temperature_scaling, _, temperature_scaling_softmaxes = eval_relevance_model(scorer, logits_nps_test,
                                                          labels_nps_test, temperature=temper)
 
     # write the full vector in the csv not ...
@@ -315,13 +315,13 @@ def temperature_scale(model: tf.keras.Model,
     # the temperature scaling predicted labels must be the same as  original
     # predicted labels: `org_predicted_label`
     data_dic = {'org_scores': [x for x in org_softmaxes.numpy()],
-                'ts_scores': [x for x in ts_softmaxes.numpy()],
+                'temperature_scaling_scores': [x for x in temperature_scaling_softmaxes.numpy()],
                 'org_predicted_label': tf.argmax(org_softmaxes, axis=-1).numpy(),
                 'true_label': labels_nps_test,
                 }
 
     logger.info(f'original test accuracy: {acc_test_org}, \ntemperature scaling '
-                     f'test accuracy: {acc_test_ts} \n')
+                     f'test accuracy: {acc_test_temperature_scaling} \n')
 
     # the file is big and should be zipped
     zip_dir_path = dict_to_zipped_csv(data_dic, logs_dir_local, file_io)
