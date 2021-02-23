@@ -28,7 +28,6 @@ from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
 from ml4ir.base.features.preprocessing import convert_label_to_clicks
-from ml4ir.base.model.calibrations.temperature_scaling import temperature_scale
 
 from typing import List
 

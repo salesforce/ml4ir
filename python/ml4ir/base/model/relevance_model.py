@@ -16,7 +16,7 @@ from ml4ir.base.model.scoring.interaction_model import InteractionModel, Univari
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
-from ml4ir.base.model.calibrations.temperature_scaling import temperature_scale
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale
 
 from typing import Dict, Optional, List, Union, Type
 
@@ -787,4 +787,5 @@ class RelevanceModel:
                           dataset=relevance_dataset,
                           logger=logger,
                           logs_dir_local=logs_dir_local,
-                          temperature_init=temperature_init)
+                          temperature_init=temperature_init,
+                          file_io=self.file_io)
