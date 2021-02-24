@@ -15,7 +15,7 @@ class TestCalibration(ClassificationTestBase):
     """Class to test temperature scaling from `ml4ir.base.model.calibration.temperature_scaling` """
 
     def test_dict_to_zipped_csv(self):
-        """Tests if the .zip file has created and contains .csv file.
+        """Tests if the .zip file has been created and contains .csv file.
          It also tests if .csv file contains true values"""
 
         data_dict = {'feature': [1, 2.0, 3], 'labels': [0, 0, 1]}
@@ -44,10 +44,10 @@ class TestCalibration(ClassificationTestBase):
         """Tests temperature scaling """
 
         # computing logits before temperature scaling of the validation set
-        logits_nps, labels_nps = get_logits_labels(self.classification_model.model,
-                                                   self.relevance_dataset.validation)
+        logits_numpys, labels_numpys = get_logits_labels(self.classification_model.model,
+                                                         self.relevance_dataset.validation)
         # sanity check the shape of logits and labels
-        self.assertTrue(len(logits_nps) == len(labels_nps))
+        self.assertTrue(len(logits_numpys) == len(labels_numpys))
 
         results = temperature_scale(self.classification_model.model,
                                     self.classification_model.scorer,
@@ -61,31 +61,20 @@ class TestCalibration(ClassificationTestBase):
         self.assertTrue(np.isclose(results.position[0], expected_value, atol=atol))
 
         # computing logits after temperature scaling of the validation set
-        logits_nps_w_ts, labels_nps_w_ts = get_logits_labels(self.classification_model.model,
-                                                   self.relevance_dataset.validation)
+        logits_numpys_w_ts, labels_numpys_w_ts = get_logits_labels(self.classification_model.model,
+                                                                   self.relevance_dataset.validation)
 
         # Tests if the model weights were frozen and not affected by temperature scaling
-        np.testing.assert_array_equal(logits_nps, logits_nps_w_ts)
-        np.testing.assert_array_equal(labels_nps, labels_nps_w_ts)
+        np.testing.assert_array_equal(logits_numpys, logits_numpys_w_ts)
+        np.testing.assert_array_equal(labels_numpys, labels_numpys_w_ts)
 
         # Tests the accuracy of the validation set before and after temperature scaling
-        logits_tensor = tf.constant(logits_nps, dtype='float32')
-        labels_tenosr = tf.constant(labels_nps, dtype='int32')
+        logits_tensor = tf.constant(logits_numpys, dtype='float32')
+        labels_tenosr = tf.constant(labels_numpys, dtype='int32')
         acc_org = accuracy(logits_tensor, labels_tenosr)
 
-        logits_w_ts_tensor = tf.constant(logits_nps_w_ts, dtype='float32')
-        labels_w_ts_tenosr = tf.constant(labels_nps_w_ts, dtype='int32')
+        logits_w_ts_tensor = tf.constant(logits_numpys_w_ts, dtype='float32')
+        labels_w_ts_tenosr = tf.constant(labels_numpys_w_ts, dtype='int32')
         acc_ts = accuracy(logits_w_ts_tensor, labels_w_ts_tenosr)
 
         np.testing.assert_array_equal(acc_org, acc_ts)
-
-
-
-
-
-
-
-
-
-
-

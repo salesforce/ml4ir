@@ -207,9 +207,10 @@ def get_logits_labels(model: tf.keras.Model, evaluation_set: tf.data.TFRecordDat
         model output: numpy.ndarray
         labels: numpy.ndarray
     """
-    logits_nps = model.predict(evaluation_set).squeeze()
-    labels_nps = np.concatenate(list(map(lambda x: x[1], evaluation_set))).squeeze().argmax(axis=-1)
-    return logits_nps, labels_nps
+    logits_numpys = model.predict(evaluation_set).squeeze()
+    labels_numpys = np.concatenate(list(map(lambda x: x[1], evaluation_set))).squeeze().argmax(
+        axis=-1)
+    return logits_numpys, labels_numpys
 
 
 def temperature_scale(model: tf.keras.Model,
@@ -242,7 +243,7 @@ def temperature_scale(model: tf.keras.Model,
 
     Returns
     -------
-        `Union[np.ndarray, Tuple[np.ndarray, ...]]`
+        `Tuple[np.ndarray, ...]`
         optimizer output containing temperature value learned during temperature scaling
     """
     # get an intermediate model with logits as output --> MUST NOT BE AN ACTIVATION (e.g.
@@ -259,8 +260,8 @@ def temperature_scale(model: tf.keras.Model,
         Returns:
             NLL loss value (averaged on total examples)
         """
-        logits_tensor = tf.constant(logits_nps, name='logits_tensor', dtype=tf.float32)
-        labels_tensor = tf.constant(labels_nps, name='labels_tensor', dtype=tf.int32)
+        logits_tensor = tf.constant(logits_numpys, name='logits_tensor', dtype=tf.float32)
+        labels_tensor = tf.constant(labels_numpys, name='labels_tensor', dtype=tf.int32)
         logits_w_temp = tf.divide(logits_tensor, temperature)
 
         return tf.reduce_mean(
@@ -275,16 +276,16 @@ def temperature_scale(model: tf.keras.Model,
                                             initial_position=start)
 
     # evaluation on validation set before temperature scaling
-    logits_nps, labels_nps = get_logits_labels(intermediate_model, dataset.validation)
-    original_acc_op, original_nll_loss_op, _ = eval_relevance_model(scorer, logits_nps,
-                                                                    labels_nps)
+    logits_numpys, labels_numpys = get_logits_labels(intermediate_model, dataset.validation)
+    original_acc_op, original_nll_loss_op, _ = eval_relevance_model(scorer, logits_numpys,
+                                                                    labels_numpys)
 
     # perform temperature scaling
     results = run_optimizer(nll_with_lbfgs, logger)
 
     # evaluation on validation set with temperature scaling
     temper = tf.constant(results.position)
-    acc_op, _, _ = eval_relevance_model(scorer, logits_nps, labels_nps, temperature=temper)
+    acc_op, _, _ = eval_relevance_model(scorer, logits_numpys, labels_numpys, temperature=temper)
 
     logger.info("=" * 50)
     logger.info(f'temperature value : {results.position}')
@@ -294,15 +295,15 @@ def temperature_scale(model: tf.keras.Model,
     logger.info("="*50)
     logger.info("Evaluating on the test dataset")
 
-    logits_nps_test, labels_nps_test = get_logits_labels(intermediate_model, dataset.test)
+    logits_numpys_test, labels_numpys_test = get_logits_labels(intermediate_model, dataset.test)
 
     # evaluation on test set before temperature scaling
-    acc_test_original, _, original_softmaxes = eval_relevance_model(scorer, logits_nps_test,
-                                                                    labels_nps_test)
+    acc_test_original, _, original_softmaxes = eval_relevance_model(scorer, logits_numpys_test,
+                                                                    labels_numpys_test)
 
     # evaluation on test set with temperature scaling
     acc_test_temperature_scaling, _, temperature_scaling_softmaxes =\
-        eval_relevance_model(scorer, logits_nps_test,labels_nps_test, temperature=temper)
+        eval_relevance_model(scorer, logits_numpys_test, labels_numpys_test, temperature=temper)
 
     # write the full vector in the csv not ...
     np.set_printoptions(
@@ -316,7 +317,7 @@ def temperature_scale(model: tf.keras.Model,
     data_dic = {'original_scores': [x for x in original_softmaxes.numpy()],
                 'temperature_scaling_scores': [x for x in temperature_scaling_softmaxes.numpy()],
                 'original_predicted_label': tf.argmax(original_softmaxes, axis=-1).numpy(),
-                'true_label': labels_nps_test,
+                'true_label': labels_numpys_test,
                 }
 
     logger.info(f'original test accuracy: {acc_test_original}, \ntemperature scaling '
