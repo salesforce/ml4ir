@@ -1,11 +1,13 @@
 import os
 from logging import Logger
-import tensorflow as tf
+from typing import Dict, Optional, List, Union, Type, Tuple
 from tensorflow.keras import callbacks, Input, Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow import data
 from tensorflow.keras import metrics as kmetrics
 import pandas as pd
+import tensorflow as tf
+import numpy as np
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -16,8 +18,8 @@ from ml4ir.base.model.scoring.interaction_model import InteractionModel, Univari
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale
 
-from typing import Dict, Optional, List, Union, Type
 
 
 class RelevanceModelConstants:
@@ -778,3 +780,33 @@ class RelevanceModel:
         # Add more here
 
         return callbacks_list
+
+    def calibrate(self, relevance_dataset, logger, logs_dir_local, temperature_init)\
+            -> Tuple[np.ndarray, ...]:
+        """Calibrate model with temperature scaling
+        Parameters
+        ----------
+        relevance_dataset: RelevanceDataset
+            RelevanceDataset object to be used for training and evaluating temperature scaling
+        logger: Logger
+            Logger object to log events
+        logs_dir_local: str
+            path to save the calibration results. (zipped csv file containing original
+            probabilities, calibrated probabilities, ...)
+        temperature_init: float
+            temperature initial value
+        Returns
+        -------
+        `Union[np.ndarray, Tuple[np.ndarray, ...]]`
+        optimizer output containing temperature value learned during temperature scaling
+
+        """
+        logger.info("=" * 50)
+        logger.info("Calibrating the model with temperature scaling")
+        return temperature_scale(model=self.model,
+                                 scorer=self.scorer,
+                                 dataset=relevance_dataset,
+                                 logger=logger,
+                                 logs_dir_local=logs_dir_local,
+                                 temperature_init=temperature_init,
+                                 file_io=self.file_io)
