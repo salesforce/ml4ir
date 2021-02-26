@@ -169,7 +169,7 @@ def define_feature_layer(
                 )
             elif feature_info["trainable"]:
                 # Default feature layer
-                feature_tensor = tf.expand_dims(feature_tensor, axis=-1)
+                feature_tensor = tf.expand_dims(feature_tensor, axis=-1, name="{}_expanded".format(feature_node_name))
 
             """
             NOTE: If the trainable feature is of type context, then we tile/duplicate

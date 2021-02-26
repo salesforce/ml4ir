@@ -341,7 +341,7 @@ class LinearRankingModel(RankingModel):
 
         linear_model_coefficients = pd.DataFrame(
             list(zip(
-                [f.name.split(":")[0] for f in self.model.get_layer(
+                [f.name.split(":")[0].replace("_expanded", "") for f in self.model.get_layer(
                     "tf_op_layer_train_features").input],
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),
