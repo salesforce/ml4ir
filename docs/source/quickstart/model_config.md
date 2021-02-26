@@ -17,7 +17,9 @@ The `cyclic` learning rate schedule has three different type of policies: `trian
 For more information, see: https://www.tensorflow.org/addons/api_docs/python/tfa/optimizers/CyclicalLearningRate and https://arxiv.org/pdf/1506.01186.pdf.
 
 Calibration will be done as a separate process after possibly training or evaluating a
- (classification) model. It implements [temperature scaling](https://github.com/gpleiss/temperature_scaling) technique to
+ (classification) model (currently, we do not support calibration for `RankingModel`). 
+  It implements [temperature scaling](https://github.com/gpleiss
+ /temperature_scaling) technique to
  calibrate output probabilities of a classifier. It uses the `validation` set to train a
   `temperature` parameter, defined in the `ModelConfig` file. Then, it evaluates the calibrated
    model
