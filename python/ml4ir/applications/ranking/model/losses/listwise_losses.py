@@ -40,8 +40,8 @@ class RankOneListNet(ListwiseLossBase):
             y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
 
             # Reshape the tensors so that we sum the losses from each record
-            y_true = tf.expand_dims(y_true, axis=-1)
-            y_pred = tf.expand_dims(y_pred, axis=-1)
+            y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
+            y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
 
             # Scale the sum of losses down by number of queries in the batch
             return tf.math.divide(bce(y_true, y_pred), batch_size)
@@ -67,7 +67,7 @@ class RankOneListNet(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the softmax activation
         """
-        softmax_op = layers.Softmax(axis=-1)
+        softmax_op = layers.Softmax(axis=-1, name=output_name)
 
         def masked_softmax(logits, mask):
             """
@@ -76,11 +76,10 @@ class RankOneListNet(ListwiseLossBase):
             but tf.keras.layers.Softmax() is more stable when working with
             cross_entropy layers
             """
-            mask = tf.squeeze(mask, axis=-1)
             logits = tf.where(
                 tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
             )
 
-            return tf.expand_dims(softmax_op(logits), axis=-1, name=output_name)
+            return softmax_op(logits)
 
         return masked_softmax

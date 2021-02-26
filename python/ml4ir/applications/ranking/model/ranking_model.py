@@ -269,8 +269,6 @@ class RankingModel(RelevanceModel):
                     tf.equal(features_dict["mask"], 0), tf.constant(
                         0.0), predictions[key]
                 )
-                # Collapse additional tail dimension
-                predictions[key] = tf.squeeze(predictions[key], axis=-1)
 
             return predictions
 
