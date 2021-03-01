@@ -269,8 +269,6 @@ class RankingModel(RelevanceModel):
                     tf.equal(features_dict["mask"], 0), tf.constant(
                         0.0), predictions[key]
                 )
-                # Collapse additional tail dimension
-                predictions[key] = tf.squeeze(predictions[key], axis=-1)
 
             return predictions
 
@@ -343,7 +341,7 @@ class LinearRankingModel(RankingModel):
 
         linear_model_coefficients = pd.DataFrame(
             list(zip(
-                [f.name.split(":")[0] for f in self.model.get_layer(
+                [f.name.split(":")[0].replace("_expanded", "") for f in self.model.get_layer(
                     "tf_op_layer_train_features").input],
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),

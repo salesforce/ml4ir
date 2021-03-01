@@ -67,8 +67,6 @@ class MeanMetricWrapper(metrics.Mean):
         -----
         `y_true` and `y_pred` should have the same shape.
         """
-        y_true = tf.squeeze(y_true, axis=-1)
-        y_pred = tf.squeeze(y_pred, axis=-1)
         query_scores: Tensor = self._fn(y_true, y_pred, **self._fn_kwargs)
         return super(MeanMetricWrapper, self).update_state(
             query_scores, sample_weight=sample_weight
@@ -114,8 +112,8 @@ class MeanRankMetric(MeanMetricWrapper):
         """
         name = "{}_{}".format(state, name)
         # TODO: Handle Example dataset without mask and rank fields
-        rank = tf.squeeze(metadata_features[feature_config.get_rank("node_name")], axis=-1)
-        mask = tf.squeeze(metadata_features[feature_config.get_mask("node_name")], axis=-1)
+        rank = metadata_features[feature_config.get_rank("node_name")]
+        mask = metadata_features[feature_config.get_mask("node_name")]
 
         super(MeanRankMetric, self).__init__(
             self._compute, name, dtype=dtype, rank=rank, mask=mask

@@ -21,10 +21,7 @@ def convert_score_to_rank(features, label, scores):
         Rank of each record within a query for all queries in the batch
         Shape -> [batch_size, sequence_size, 1]
     """
-    scores = tf.squeeze(scores, axis=-1)
-    sorted_indices = tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True)
-    ranks = tf.argsort(sorted_indices, stable=True)
-    ranks = tf.add(ranks, tf.constant(1))
-    ranks = tf.expand_dims(ranks, axis=-1)
-
-    return ranks
+    return tf.add(
+        tf.argsort(tf.argsort(scores, axis=-1, direction="DESCENDING", stable=True), stable=True),
+        tf.constant(1),
+    )

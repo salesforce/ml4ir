@@ -141,19 +141,17 @@ def define_feature_layer(
         train_features = dict()
         metadata_features = dict()
 
-        """
-        Define a dynamic tensor tiling shape
-        We do this so that we can concatenate the training features into a dense tensor later
-
-        NOTE: Can not be hardcoded as we allow for varying sequence_size at inference time
-        Has to be a dynamic tensor.
-        """
+        # Define a dynamic tensor tiling shape
+        # NOTE: Can not be hardcoded as we allow for varying sequence_size at inference time
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-            # Train tiling shape -> [1, max_sequence_size, 1]
-            train_tile_shape = tf.shape(tf.expand_dims(tf.gather(inputs["mask"], 0), axis=0))
-
-            # Metadata tiling shape -> [1, max_sequence_size]
-            metadata_tile_shape = tf.shape(tf.transpose(tf.gather(inputs["mask"], 0)))
+            train_tile_shape = tf.shape(
+                tf.expand_dims(
+                    tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0), axis=-1
+                )
+            )
+            metadata_tile_shape = tf.shape(
+                tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0)
+            )
 
         for feature_info in feature_config.get_all_features(include_label=False):
             feature_node_name = feature_info.get("node_name", feature_info["name"])
@@ -169,6 +167,9 @@ def define_feature_layer(
                 feature_tensor = feature_fn(
                     feature_tensor=feature_tensor, feature_info=feature_info, file_io=file_io
                 )
+            elif feature_info["trainable"]:
+                # Default feature layer
+                feature_tensor = tf.expand_dims(feature_tensor, axis=-1, name="{}_expanded".format(feature_node_name))
 
             """
             NOTE: If the trainable feature is of type context, then we tile/duplicate

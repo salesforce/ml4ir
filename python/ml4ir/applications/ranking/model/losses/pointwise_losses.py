@@ -55,17 +55,4 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         function
             Function to apply sigmoid activation to the output score
         """
-        sigmoid_op = layers.Activation("sigmoid")
-
-        def masked_sigmoid(logits, mask):
-            """
-            Sigmoid with masked/padded values set to 0
-            """
-            mask = tf.squeeze(mask, axis=-1)
-            logits = tf.where(
-                tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
-            )
-
-            return tf.expand_dims(sigmoid_op(logits), axis=-1, name=output_name)
-
-        return masked_sigmoid
+        return lambda logits, mask: layers.Activation("sigmoid", name=output_name)(logits)
