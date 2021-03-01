@@ -17,3 +17,6 @@ layers:
   - type: dense
     name: final_dense
     activation: null
+calibration:  
+  key: temperature_scaling  
+  temperature: 1.5
