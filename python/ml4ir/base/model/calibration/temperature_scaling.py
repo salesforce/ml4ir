@@ -19,8 +19,10 @@ import pandas as pd
 import tensorflow_probability as tfp
 
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
+#from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase
 from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.config.keys import CalibrationKey
 
 TEMPERATURE_SCALE = 'temp_scaling_scores'
 
@@ -324,6 +326,47 @@ def temperature_scale(model: tf.keras.Model,
                      f'test accuracy: {acc_test_temperature_scaling} \n')
 
     # the file is big and should be zipped
-    zip_dir_path = dict_to_zipped_csv(data_dic, logs_dir_local, file_io)
-    logger.info(f"Read and zipped  {zip_dir_path}")
+    #zip_dir_path = dict_to_zipped_csv(data_dic, logs_dir_local, file_io)
+    #logger.info(f"Read and zipped  {zip_dir_path}")
     return results
+
+
+class TemperatureScalingLayer(tf.keras.layers.Layer):
+    """
+    Temperature Scaling class , a custom layer. This layer will divide the input tensors by
+    temperature value.
+    """
+
+    def __init__(self, temperature, name='temperature', **kwargs):
+        """
+        Constructor method for creating the Temperature Scaling layer
+
+        Parameters
+        ----------
+            temperature: float
+            temperature parameter to scale the input.
+        """
+        super(TemperatureScalingLayer, self).__init__(name=name, **kwargs)
+        self.temperature = temperature
+
+    def get_config(self):
+        """
+        Returns a Python dict containing the configuration of the layer
+        """
+        config = super(TemperatureScalingLayer, self).get_config()
+        config.update({"temperature": self.temperature})
+        return config
+
+    def call(self, input):
+        """
+        Scales the input and computes input/temperature.
+        Parameters
+        ---------
+        input: `Tensor` object
+            Tensors (should be logits) as nominator in scaling operation.
+
+        Returns
+        ------
+        scaled input w.r.t temperature parameter (input/temperature).
+        """
+        return tf.divide(input, self.temperature)

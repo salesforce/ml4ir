@@ -410,6 +410,27 @@ class RelevancePipeline(object):
 
                         experiment_tracking_dict.update({CalibrationKey.TEMPERATURE:
                                                              results.position[0]})
+                        # replace the existing model with model with temperature scaling layer
+                        relevance_model.add_temperature_layer(results.position)
+                        # saving calibrated (with temperature scaling layer) model
+                        relevance_model.save(
+                            models_dir=self.models_dir_local,
+                            preprocessing_keys_to_fns={},
+                            postprocessing_fn=None,
+                            required_fields_only=not self.args.use_all_fields_at_inference,
+                            pad_sequence=self.args.pad_sequence_at_inference,
+                            sub_dir='final_calibrated'
+                        )
+                        # the following raises error , both for original model (without TS) and
+                        # calibrated model
+                        # ValueError: You tried to call `count_params` on query,
+                        # but the layer isn't built.
+                        # You can build it manually via: `query.build(batch_input_shape)
+
+                        #path = os.path.join(self.models_dir_local, 'final_calibrated')
+                        #path = os.path.join(path, 'default')
+                        #m = relevance_model.load(model_file=path)
+                        #print(m.summary())
 
             job_info = pd.DataFrame.from_dict(
                 experiment_tracking_dict, orient="index", columns=["value"]
