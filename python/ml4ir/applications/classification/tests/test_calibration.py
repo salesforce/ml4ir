@@ -6,20 +6,22 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 
-from ml4ir.base.model.calibration.temperature_scaling import dict_to_zipped_csv, \
-    TEMPERATURE_SCALE, accuracy, get_logits_labels, temperature_scale
+from ml4ir.base.model.calibration.temperature_scaling import dict_to_csv, \
+    TEMPERATURE_SCALE, accuracy, get_logits_labels, temperature_scale, get_intermediate_model
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
+
+TEMPERATURE_LAYER_NAME = 'temperature_layer'
 
 
 class TestCalibration(ClassificationTestBase):
     """Class to test temperature scaling from `ml4ir.base.model.calibration.temperature_scaling` """
 
-    def test_dict_to_zipped_csv(self):
+    def test_dict_to_csv(self):
         """Tests if the .zip file has been created and contains .csv file.
          It also tests if .csv file contains true values"""
 
         data_dict = {'feature': [1, 2.0, 3], 'labels': [0, 0, 1]}
-        dict_to_zipped_csv(data_dict, self.output_dir, self.file_io)
+        dict_to_csv(data_dict, self.output_dir, self.file_io, zip_output=True)
 
         filename_zip = os.path.join(self.output_dir, TEMPERATURE_SCALE)
         filename_csv = os.path.join(self.output_dir, TEMPERATURE_SCALE, f'{TEMPERATURE_SCALE}.csv')
@@ -38,15 +40,15 @@ class TestCalibration(ClassificationTestBase):
         labels_tensor = tf.constant(labels, name='logits_test', dtype=tf.float32)
 
         acc = accuracy(scores_tensor, labels_tensor)
-        self.assertEqual(acc, 0.5)
+        self.assertEqual(acc, 0.5, msg="accuracy function does not work as expected")
 
     def test_temperature_scaling(self):
         """Tests temperature scaling """
 
-        # computing logits before temperature scaling of the validation set
+        # Computing logits before temperature scaling of the validation set
         logits_numpys, labels_numpys = get_logits_labels(self.classification_model.model,
                                                          self.relevance_dataset.validation)
-        # sanity check the shape of logits and labels
+        # Sanity check the shape of logits and labels
         self.assertTrue(len(logits_numpys) == len(labels_numpys))
 
         results = temperature_scale(self.classification_model.model,
@@ -77,4 +79,95 @@ class TestCalibration(ClassificationTestBase):
         labels_w_ts_tenosr = tf.constant(labels_numpys_w_ts, dtype='int32')
         acc_ts = accuracy(logits_w_ts_tensor, labels_w_ts_tenosr)
 
-        np.testing.assert_array_equal(acc_org, acc_ts)
+        np.testing.assert_array_equal(acc_org, acc_ts, err_msg="the accuracy of the validation "
+                                                               "set before and after temperature "
+                                                               "scaling differs")
+
+    def test_add_temperature_layer(self):
+        """Tests whether adding temperature scaling layer scales the logits as expected """
+
+        # getting logits of val. set from original model (without temperature scaling)
+        model_wo_ts = get_intermediate_model(self.classification_model.model,
+                                                  self.classification_model.scorer)
+        logits_numpys_wo_ts, labels_numpys_wo_ts = get_logits_labels(model_wo_ts,
+                                                                     self.relevance_dataset.
+                                                                     validation)
+
+        # adding a temperature scaling layer to the original model
+        temperature = 1.5
+        self.classification_model.add_temperature_layer(temperature=temperature,
+                                                        layer_name=TEMPERATURE_LAYER_NAME)
+
+        # getting logits of val. set from the model with temperature scaling layer
+        temperature_layer = self.classification_model.model.get_layer(name=TEMPERATURE_LAYER_NAME)
+        model_wth_ts = tf.keras.models.Model(self.classification_model.model.input,
+                                             temperature_layer.output)
+
+        logits_numpys_w_ts, labels_numpys_w_ts = get_logits_labels(model_wth_ts,
+                                                                   self.relevance_dataset.validation)
+
+        # tests if the scaled logits w.r.t. temperature are the same as the  model with temperature
+        # scaling layer logits
+        rtol = 1e-6
+        np.testing.assert_allclose(logits_numpys_wo_ts/temperature, logits_numpys_w_ts,
+                                   rtol=rtol, err_msg="scaled logits w.r.t. temperature are not "
+                                                      "the same as the model with TS layer logits")
+
+    def test_relevance_model_w_ts_save(self):
+        """Tests whether a loaded model with temperature scaling layer predicts same output with
+        the initial model """
+
+        # refreshing relevance model
+        self.classification_model = self.classification_pipeline.get_relevance_model()
+        initial_model_no_layers = len(self.classification_model.model.layers)
+
+        # adding Temperature Scaling layer
+        temperature = 1.5
+        self.classification_model.add_temperature_layer(temperature=temperature,
+                                                        layer_name=TEMPERATURE_LAYER_NAME)
+        model_w_temperature_no_layers = len(self.classification_model.model.layers)
+
+        # tests whether the model with TS layer has one additional (TS) layer
+        self.assertEqual(initial_model_no_layers + 1, model_w_temperature_no_layers,
+                         msg="difference between number of layers of models with and without "
+                             "temperature should be one")
+
+        logits_before_saving = self.classification_model.model.predict(
+            self.relevance_dataset.validation).squeeze()
+
+        # saving and loading the model with TS layer
+        self.classification_model.save(
+            models_dir=self.output_dir,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only=not self.args.use_all_fields_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference,
+            sub_dir='final_calibrated'
+        )
+        # refreshing relevance model and loading the saved model
+        # currently the TS layer is not part of architecture building and needs to be added to
+        # the model separately
+        self.classification_model = self.classification_pipeline.get_relevance_model()
+        # deliberately assigning a different temperature value here
+        self.classification_model.add_temperature_layer(temperature=1.0)
+        path = os.path.join(self.output_dir, 'final_calibrated', 'default')
+        self.classification_model.load_weights(path)
+
+        # tests whether the model before saving and loaded model have equal number of layers
+        self.assertEqual(model_w_temperature_no_layers,
+                         len(self.classification_model.model.layers),
+                         msg="number of layers for model with temperature before and after "
+                             "saving differs!")
+
+        logits_loaded_model = self.classification_model.model.predict(
+            self.relevance_dataset.validation).squeeze()
+
+        # tests whether the saved model and loaded model predicts same results
+        rtol = 1e-6
+        np.testing.assert_allclose(logits_before_saving, logits_loaded_model, rtol=rtol,
+                                   err_msg="logits differs between models with temperature before"
+                                           " and after saving!")
+
+
+
+

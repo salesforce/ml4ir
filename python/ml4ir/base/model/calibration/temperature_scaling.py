@@ -112,8 +112,8 @@ def accuracy(scores, labels) -> np.ndarray:
     return acc.result().numpy()
 
 
-def dict_to_zipped_csv(data_dic: dict, root_dir: str, file_io: FileIO) -> str:
-    """Saves input dictionary to a zipped csv file
+def dict_to_csv(data_dic: dict, root_dir: str, file_io: FileIO, zip_output: bool = True) -> str:
+    """Saves input dictionary to a csv file and zips if requested
     Parameters
     ---------
         data_dic: dict
@@ -122,24 +122,28 @@ def dict_to_zipped_csv(data_dic: dict, root_dir: str, file_io: FileIO) -> str:
                 path to save the output file
         file_io: FileIO
                 file I/O handler objects for reading and writing data
+        zip_output: bool
+                boolean value indicates whether the output should be zipped
     Returns
     -------
         `str`
          path to the created zip file
     """
     # creating zip dir
-    zip_dir_path = os.path.join(root_dir, TEMPERATURE_SCALE)
-    file_io.make_directory(zip_dir_path)
+    final_dir_path = os.path.join(root_dir, TEMPERATURE_SCALE)
+    file_io.make_directory(final_dir_path)
 
-    csv_path = os.path.join(zip_dir_path, f'{TEMPERATURE_SCALE}.csv')
+    csv_path = os.path.join(final_dir_path, f'{TEMPERATURE_SCALE}.csv')
 
-    # creating .csv & .zip files
+    # creating .csv
     pd.DataFrame.from_dict(data_dic).to_csv(csv_path, index=False)
-    shutil.make_archive(zip_dir_path, "zip", root_dir, TEMPERATURE_SCALE)
+    if zip_output:
+        # creating .zip file
+        shutil.make_archive(final_dir_path, "zip", root_dir, TEMPERATURE_SCALE)
 
-    # removing the dir, keeping only the zip
-    shutil.rmtree(zip_dir_path)
-    return zip_dir_path
+        # removing the dir, keeping only the zip
+        shutil.rmtree(final_dir_path)
+    return final_dir_path
 
 
 def get_intermediate_model(model, scorer) -> tf.keras.models.Model:
@@ -220,8 +224,10 @@ def temperature_scale(model: tf.keras.Model,
                       dataset: RelevanceDataset,
                       logger: Logger,
                       logs_dir_local: str,
-                      temperature_init: float,
-                      file_io: FileIO) -> Tuple[np.ndarray, ...]:
+                      temperature: float,
+                      file_io: FileIO,
+                      zip_output: bool = True
+                      ) -> Tuple[np.ndarray, ...]:
     """learns a temperature parameter using Temperature Scaling (TS) technique on the validation set
     It, then, computes the probability scores of the test set with and without TS and writes them
     in a .zip file.
@@ -238,10 +244,12 @@ def temperature_scale(model: tf.keras.Model,
                  Logger object to log events
         logs_dir_local: str
                  path to save the TS scores
-        temperature_init: float
+        temperature: float
                 temperature initial value
         file_io:FileIO
                 file I/O handler objects for reading and writing data
+        zip_output: bool
+                boolean value indicates whether the output should be zipped
 
     Returns
     -------
@@ -252,19 +260,19 @@ def temperature_scale(model: tf.keras.Model,
     # SOFTMAX) LAYER
     intermediate_model = get_intermediate_model(model, scorer)
 
-    start = tf.Variable(initial_value=[temperature_init], shape=(1), dtype=tf.float32, name="temp",
+    start = tf.Variable(initial_value=[temperature], shape=(1), dtype=tf.float32, name="temp",
                         trainable=True)
 
-    def nll_loss_fn(temperature):
+    def nll_loss_fn(temperature_var):
         """Computes Negative Log Likelihood loss by applying temperature scaling.
         Parameters:
-            temperature: TF.Tensor,  a  parameter of size=(1) to be trained
+            temperature_var: TF.Tensor,  a  parameter of size=(1) to be trained
         Returns:
             NLL loss value (averaged on total examples)
         """
         logits_tensor = tf.constant(logits_numpys, name='logits_tensor', dtype=tf.float32)
         labels_tensor = tf.constant(labels_numpys, name='labels_tensor', dtype=tf.int32)
-        logits_w_temp = tf.divide(logits_tensor, temperature)
+        logits_w_temp = tf.divide(logits_tensor, temperature_var)
 
         return tf.reduce_mean(
             tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels_tensor,
@@ -325,9 +333,9 @@ def temperature_scale(model: tf.keras.Model,
     logger.info(f'original test accuracy: {acc_test_original}, \ntemperature scaling '
                      f'test accuracy: {acc_test_temperature_scaling} \n')
 
-    # the file is big and should be zipped
-    #zip_dir_path = dict_to_zipped_csv(data_dic, logs_dir_local, file_io)
-    #logger.info(f"Read and zipped  {zip_dir_path}")
+    # the file is big and can be zipped
+    final_dir_path = dict_to_csv(data_dic, logs_dir_local, file_io, zip_output=zip_output)
+    logger.info(f"Read and created  {final_dir_path}")
     return results
 
 
@@ -344,10 +352,24 @@ class TemperatureScalingLayer(tf.keras.layers.Layer):
         Parameters
         ----------
             temperature: float
-            temperature parameter to scale the input.
+                a float value to be used for initializing the temperature parameter to scale the
+                input.
         """
         super(TemperatureScalingLayer, self).__init__(name=name, **kwargs)
         self.temperature = temperature
+
+    def build(self, input_shape):
+        """initialize weights for temperature parameter
+        Parameters
+        ----------
+        input_shape: tuple
+            a tuple showing layer input shape
+        """
+        self.temperature_var = self.add_weight("temperature",
+                                               shape=[1],
+                                               dtype=tf.float32,
+                                               initializer=tf.keras.initializers.
+                                               Constant(value=self.temperature))
 
     def get_config(self):
         """
@@ -369,4 +391,4 @@ class TemperatureScalingLayer(tf.keras.layers.Layer):
         ------
         scaled input w.r.t temperature parameter (input/temperature).
         """
-        return tf.divide(input, self.temperature)
+        return tf.divide(input, self.temperature_var)

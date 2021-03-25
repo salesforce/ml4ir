@@ -137,3 +137,4 @@ class CalibrationKey(Key):
     CALIBRATION = "calibration"
     TEMPERATURE_SCALING = "temperature_scaling"
     TEMPERATURE = "temperature"
+    ARGS = "args"
