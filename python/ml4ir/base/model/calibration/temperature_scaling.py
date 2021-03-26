@@ -19,10 +19,8 @@ import pandas as pd
 import tensorflow_probability as tfp
 
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-#from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.config.keys import CalibrationKey
 
 TEMPERATURE_SCALE = 'temp_scaling_scores'
 
