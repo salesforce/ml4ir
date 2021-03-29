@@ -86,6 +86,25 @@ class TestCalibration(ClassificationTestBase):
     def test_add_temperature_layer(self):
         """Tests whether adding temperature scaling layer scales the logits as expected """
 
+        # Tests whether temperature = 1.0 has no effect on outputs
+        output_original = self.classification_model.model.predict(
+            self.relevance_dataset.validation).squeeze()
+
+        temperature = 1.0
+        self.classification_model.add_temperature_layer(temperature=temperature,
+                                                        layer_name=TEMPERATURE_LAYER_NAME)
+
+        output_calibration = self.classification_model.model.predict(
+            self.relevance_dataset.validation).squeeze()
+
+        rtol = 1e-6
+        np.testing.assert_allclose(output_original, output_calibration, rtol=rtol,
+                                   err_msg="outputs differs between models with and "
+                                           "without temperature = 1.0 ")
+
+        # refreshing relevance model
+        self.classification_model = self.classification_pipeline.get_relevance_model()
+
         # getting logits of val. set from original model (without temperature scaling)
         model_wo_ts = get_intermediate_model(self.classification_model.model,
                                                   self.classification_model.scorer)
@@ -132,7 +151,7 @@ class TestCalibration(ClassificationTestBase):
                          msg="difference between number of layers of models with and without "
                              "temperature should be one")
 
-        logits_before_saving = self.classification_model.model.predict(
+        outputs_before_saving = self.classification_model.model.predict(
             self.relevance_dataset.validation).squeeze()
 
         # saving and loading the model with TS layer
@@ -159,13 +178,13 @@ class TestCalibration(ClassificationTestBase):
                          msg="number of layers for model with temperature before and after "
                              "saving differs!")
 
-        logits_loaded_model = self.classification_model.model.predict(
+        ouputs_loaded_model = self.classification_model.model.predict(
             self.relevance_dataset.validation).squeeze()
 
         # tests whether the saved model and loaded model predicts same results
         rtol = 1e-6
-        np.testing.assert_allclose(logits_before_saving, logits_loaded_model, rtol=rtol,
-                                   err_msg="logits differs between models with temperature before"
+        np.testing.assert_allclose(outputs_before_saving, ouputs_loaded_model, rtol=rtol,
+                                   err_msg="Outputs differ between models with temperature before"
                                            " and after saving!")
 
 
