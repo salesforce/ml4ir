@@ -18,8 +18,8 @@ from ml4ir.base.model.scoring.interaction_model import InteractionModel, Univari
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
-from ml4ir.base.model.calibration.temperature_scaling import temperature_scale
-
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
+    TemperatureScalingLayer
 
 
 class RelevanceModelConstants:
@@ -572,6 +572,7 @@ class RelevanceModel:
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
+        sub_dir: str = 'final'
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -602,6 +603,8 @@ class RelevanceModel:
         pad_sequence: bool, optional
             Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
             Set this to False if you want to not handle padded scores.
+        sub_dir: str, optional
+            sub directory name to save the model into
 
         Notes
         -----
@@ -609,7 +612,7 @@ class RelevanceModel:
         serializable tensor graph operations
         """
 
-        model_file = os.path.join(models_dir, "final")
+        model_file = os.path.join(models_dir, sub_dir)
 
         # Save model with default signature
         self.model.save(filepath=os.path.join(model_file, "default"))
@@ -781,7 +784,7 @@ class RelevanceModel:
 
         return callbacks_list
 
-    def calibrate(self, relevance_dataset, logger, logs_dir_local, temperature_init)\
+    def calibrate(self, relevance_dataset, logger, logs_dir_local, **kwargs)\
             -> Tuple[np.ndarray, ...]:
         """Calibrate model with temperature scaling
         Parameters
@@ -793,8 +796,6 @@ class RelevanceModel:
         logs_dir_local: str
             path to save the calibration results. (zipped csv file containing original
             probabilities, calibrated probabilities, ...)
-        temperature_init: float
-            temperature initial value
         Returns
         -------
         `Union[np.ndarray, Tuple[np.ndarray, ...]]`
@@ -808,5 +809,47 @@ class RelevanceModel:
                                  dataset=relevance_dataset,
                                  logger=logger,
                                  logs_dir_local=logs_dir_local,
-                                 temperature_init=temperature_init,
-                                 file_io=self.file_io)
+                                 file_io=self.file_io,
+                                 **kwargs)
+
+    def add_temperature_layer(self, temperature: float = 1.0, layer_name: str = 'temperature_layer'):
+        """Add temperature layer to the input of last activation (softmax) layer
+        Parameters
+        ----------
+        self: RelevanceModel
+                        input RelevanceModel object that its last layer inputs will be divided by a
+                        temperature value
+        temperature: float
+                     a scalar value to scale the last activation layer inputs
+        layer_name: str
+            name of the temperature scaling layer
+        Returns
+        -------
+        `RelevanceModel`
+        updated RelevanceModel object with temperature
+        """
+
+        # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
+        final_layer_name = self.scorer.model_config['layers'][-1]['name']
+
+        final_layer = self.model.get_layer(name=final_layer_name).output
+        temperature_layer = TemperatureScalingLayer(name=layer_name,
+                                                    temperature=temperature)(final_layer)
+
+        # using the `last layer` as final activation function before computing loss
+        idx_activation = -1
+        if len(self.model.layers) > 0 and isinstance(self.model.layers[idx_activation],
+                                                     tf.keras.layers.Activation):
+            # creating new activation layer
+            activation_layer_name = self.model.get_layer(index=idx_activation).name
+            activation_function = self.model.get_layer(index=idx_activation).activation
+            activation_layer = tf.keras.layers.Activation\
+                (activation_function, name=activation_layer_name)(temperature_layer)
+            # creating new keras Functional API model
+            self.model = Model(self.model.inputs, activation_layer)
+            self.logger.info(f'Temperature Scaling layer added and new Functional API model'
+                             f' replaced; temperature = {temperature}.')
+        else:
+            self.logger.info("Skipping adding Temperature Scaling layer because no activation "
+                             "exist in the last layer of Keras original model!")
+

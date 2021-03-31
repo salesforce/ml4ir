@@ -399,17 +399,29 @@ class RelevancePipeline(object):
                 if CalibrationKey.CALIBRATION in self.model_config:
                     if self.model_config[CalibrationKey.CALIBRATION]['key'] == \
                             CalibrationKey.TEMPERATURE_SCALING:
-                        temperature = self.model_config[CalibrationKey.CALIBRATION][
-                            CalibrationKey.TEMPERATURE] if \
-                            CalibrationKey.TEMPERATURE in\
-                            self.model_config[CalibrationKey.CALIBRATION] else 1.5
+                        kwargs = self.model_config[CalibrationKey.CALIBRATION][
+                            CalibrationKey.ARGS] if CalibrationKey.ARGS in self.model_config[
+                            CalibrationKey.CALIBRATION] else {}
+
                         results = relevance_model.calibrate(relevance_dataset=relevance_dataset,
                                                             logger=self.logger,
                                                             logs_dir_local=self.logs_dir_local,
-                                                            temperature_init=temperature)
+                                                            **kwargs)
 
                         experiment_tracking_dict.update({CalibrationKey.TEMPERATURE:
                                                              results.position[0]})
+                        # replacing the existing keras functional API model with the model with
+                        # temperature scaling layer
+                        relevance_model.add_temperature_layer(results.position[0])
+                        # saving calibrated (with temperature scaling layer) model
+                        relevance_model.save(
+                            models_dir=self.models_dir_local,
+                            preprocessing_keys_to_fns={},
+                            postprocessing_fn=None,
+                            required_fields_only=not self.args.use_all_fields_at_inference,
+                            pad_sequence=self.args.pad_sequence_at_inference,
+                            sub_dir='final_calibrated'
+                        )
 
             job_info = pd.DataFrame.from_dict(
                 experiment_tracking_dict, orient="index", columns=["value"]

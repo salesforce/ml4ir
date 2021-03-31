@@ -23,7 +23,12 @@ Calibration will be done as a separate process after possibly training or evalua
  calibrate output probabilities of a classifier. It uses the `validation` set to train a
   `temperature` parameter, defined in the `ModelConfig` file. Then, it evaluates the calibrated
    model
-   on the `test` set and stores the probability scores before and after applying calibration.
+   on the `test` set and stores the probability scores before and after applying calibration
+   . After training TS, the calibrated model can be created using `relevance_model
+   .add_temperature_layer(temp_value)`  from
+     the original `RelevanceModel` and be saved using `relevance_model.save()`. Note that for
+      applying calibration to the Functional API model of a `RelevanceModel` it is
+      expected that the model has an Activation layer (e.g. SoftMax) as the last layer. 
 
 Below you can see an example model config YAML using a DNN architecture to stack a bunch of dense layers with ReLU activation layers. Additionally, there are also a few dropout layers for regularization in between. A triangular2 cyclic learning rate schedule is used with adam optimizer.
 
