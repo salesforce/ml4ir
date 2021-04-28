@@ -147,6 +147,8 @@ class LocalIO(FileIO):
             dataframe in csv form if outfile is None
         """
         self.log("Writing dataframe to : {}".format(outfile))
+        np.set_printoptions(formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                            linewidth=sys.maxsize, threshold=sys.maxsize)
         output = df.to_csv(
             sep=sep, index=index, quotechar='"', escapechar="\\", quoting=csv.QUOTE_NONNUMERIC
         )
