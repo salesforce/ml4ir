@@ -1,7 +1,9 @@
 package ml4ir.inference.tensorflow
 
+import com.google.common.collect.ImmutableMap
+
 import scala.collection.JavaConverters._
-import ml4ir.inference.tensorflow.data.{ModelFeaturesConfig, StringMapExampleBuilder, TestData}
+import ml4ir.inference.tensorflow.data.{ModelFeaturesConfig, StringMapExampleBuilder, StringMapSequenceExampleBuilder, TestData}
 import org.junit.Test
 import org.junit.Assert._
 import org.tensorflow.example._
@@ -53,11 +55,65 @@ class TensorFlowInferenceIT extends TestData {
     return Source.fromFile(csvFile).getLines.toList.tail.flatMap(extractColumnValues)
   }
 
+  def validateScores(scores: Array[Float], numDocs: Int) = {
+    val docScores = scores.take(numDocs)
+    val maskedScores = scores.drop(numDocs)
+    docScores.foreach(
+      score => assertTrue("all docs should score non-negative", score > 0)
+    )
+    for {
+      maskedScore <- maskedScores
+      docScore <- docScores
+    } {
+      assertTrue(
+        s"docScore ($docScore) should be > masked score ($maskedScore)",
+        docScore > maskedScore
+      )
+    }
+    assertTrue(
+      "second doc should score better than first",
+      scores(1) > scores(0)
+    )
+    println(scores.mkString(", "))
+  }
+
+  @Test
+  def testRankingGeneratedModelBundle(): Unit = {
+    val generatedBundleLocation = "/Users/aducoulombier/projects/ml4ir_back/python/" //System.getProperty("bundleLocation")
+    def modelName = "alain_ranking" //System.getProperty("runName") + "_classification"
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
+    val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
+    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
+
+    val bundleExecutor = new TFRecordExecutor(
+      bundlePath,
+      ModelExecutorConfig(
+        queryNodeName = "serving_tfrecord_protos",
+        scoresNodeName = "StatefulPartitionedCall_1"
+      )
+    )
+
+    // TODO: using the model yaml don't work.
+    val featureConfigPath = "/Users/aducoulombier/projects/ml4ir_back/python/ml4ir/applications/ranking/tests/data/config/feature_config.yaml"
+    val modelFeatures = ModelFeaturesConfig.load(featureConfigPath)
+
+
+    val protoBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(modelFeatures,
+      ImmutableMap.of(),
+      ImmutableMap.of(),
+      ImmutableMap.of())
+
+    sampleQueryContexts.foreach { queryContext: Map[String, String] =>
+      val proto: SequenceExample = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
+      val scores: Array[Float] = bundleExecutor(proto)
+      validateScores(scores, sampleDocumentExamples.length)
+    }
+  }
 
   @Test
   def testClassificationGeneratedModelBundle(): Unit = {
-    val generatedBundleLocation = System.getProperty("bundleLocation")
-    def modelName = System.getProperty("runName")
+    val generatedBundleLocation = "../../python/" //System.getProperty("bundleLocation")
+    def modelName = "end_to_end_test_classification" //System.getProperty("runName") + "_classification"
     val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"

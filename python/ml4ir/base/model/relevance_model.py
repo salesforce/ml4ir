@@ -490,6 +490,15 @@ class RelevanceModel:
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
             if logs_dir:
+                np.set_printoptions(
+                    formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full vector in the csv not ...
+                for col in predictions_df.columns:
+                    if isinstance(predictions_df[col].values[0], bytes):
+                        predictions_df[col] = predictions_df[col].str.decode('utf8')
+
+                import pdb; pdb.set_trace()
+
                 if os.path.isfile(outfile):
                     predictions_df.to_csv(outfile, mode="a", header=False, index=False)
                 else:
