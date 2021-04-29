@@ -5,17 +5,20 @@ import java.util
 import com.google.common.collect.ImmutableMap
 
 import scala.collection.JavaConverters._
-import ml4ir.inference.tensorflow.data.{ModelFeaturesConfig, MultiFeatures, StringMapCSVLoader, StringMapExampleBuilder, StringMapQueryContextAndDocs, StringMapSequenceExampleBuilder, TestData}
+import ml4ir.inference.tensorflow.data._
+
 import org.junit.Test
 import org.junit.Assert._
 import org.tensorflow.example._
+
+
 @Test
 class TensorFlowInferenceTest extends TestData {
   val classLoader = getClass.getClassLoader
 
   def resourceFor(name: String) = classLoader.getResource(name).getPath
 
-  def validateScores(query: StringMapQueryContextAndDocs,
+  def validateScores(query: StringMapQueryAndPredictions,
                      sequenceExample: SequenceExample,
                      scores: Array[Float],
                      numDocs: Int) = {
@@ -32,6 +35,9 @@ class TensorFlowInferenceTest extends TestData {
         s"docScore ($docScore) should be > masked score ($maskedScore)",
         docScore > maskedScore
       )
+    }
+    if (query.predictedScores != null) {
+      assertArrayEquals("scores aren't close enough: ", docScores, query.predictedScores, 1e-2f)
     }
     println("input, as java object:")
     println("\n" + query.toString + "\n")
@@ -63,22 +69,23 @@ class TensorFlowInferenceTest extends TestData {
       val sampleDocs: List[util.Map[String, String]] = sampleDocumentExamples.map(_.asJava)
       val proto = protoBuilder(queryContext.asJava, sampleDocumentExamples.map(_.asJava))
       val scores = bundleExecutor(proto)
-      validateScores(StringMapQueryContextAndDocs(queryContext.asJava, sampleDocs.asJava), proto, scores, sampleDocumentExamples.length)
+      // TODO/FIXME: just passing null here so it compiles.  Needs fixing!
+      validateScores(StringMapQueryAndPredictions(queryContext.asJava, sampleDocs.asJava, null), proto, scores, sampleDocumentExamples.length)
     }
   }
 
   @Test
   def testSavedModelBundleWithCSVData(): Unit = {
-    val allScores: Iterable[(StringMapQueryContextAndDocs, SequenceExample, Array[Float])] = runQueriesAgainstDocs(
+    val allScores: Iterable[(StringMapQueryAndPredictions, SequenceExample, Array[Float], Array[Float])] = runQueriesAgainstDocs(
       resourceFor("ranking_happy_path/model_predictions.csv"),
-      resourceFor("ranking_happy_path/ranking_model_bundle"),
+      resourceFor("ranking_happy_path/ranking_list_loss_model_bundle"),
       resourceFor("ranking_happy_path/feature_config.yaml"),
       "serving_tfrecord_protos",
       "StatefulPartitionedCall_1"
     )
 
-    allScores.take(1).foreach {
-      case (query: StringMapQueryContextAndDocs, sequenceExample: SequenceExample, scores: Array[Float]) =>
+    allScores.foreach {
+      case (query: StringMapQueryAndPredictions, sequenceExample: SequenceExample, scores: Array[Float], predictedScores: Array[Float]) =>
         validateScores(query, sequenceExample, scores, scores.length)
     }
   }
@@ -98,7 +105,7 @@ class TensorFlowInferenceTest extends TestData {
       modelPath: String,
       featureConfigPath: String,
       inputTFNode: String,
-      scoresTFNode: String): Iterable[(StringMapQueryContextAndDocs, SequenceExample, Array[Float])] = {
+      scoresTFNode: String): Iterable[(StringMapQueryAndPredictions, SequenceExample, Array[Float], Array[Float])] = {
     val featureConfig = ModelFeaturesConfig.load(featureConfigPath)
     val sequenceExampleBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(featureConfig)
     val rankingModelConfig = ModelExecutorConfig(inputTFNode, scoresTFNode)
@@ -108,9 +115,9 @@ class TensorFlowInferenceTest extends TestData {
     val queryContextsAndDocs = StringMapCSVLoader.loadDataFromCSV(csvDataPath, featureConfig)
     assertTrue("attempting to test empty query set!", queryContextsAndDocs.nonEmpty)
     queryContextsAndDocs.map {
-      case q @ StringMapQueryContextAndDocs(queryContext, docs) =>
+      case q @ StringMapQueryAndPredictions(queryContext, docs, predictedScores) =>
         val sequenceExample = sequenceExampleBuilder.build(queryContext, docs)
-        (q, sequenceExample, rankingModel(sequenceExample))
+        (q, sequenceExample, rankingModel(sequenceExample), predictedScores)
     }
   }
 
