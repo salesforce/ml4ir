@@ -8,25 +8,8 @@ from ml4ir.base.io.file_io import FileIO
 
 
 def define_default_signature(model, feature_config):
-    # Default signature
-    #
-    # TODO: Define input_signature
-    #
-    # @tf.function(input_signature=[])
-    # def _serve_default(**features):
-    #     features_dict = {k: tf.cast(v, tf.float32) for k, v in features.items()}
-    #     # Run the model to get predictions
-    #     predictions = model(inputs=features_dict)
-
-    #     # Mask the padded records
-    #     for key, value in predictions.items():
-    #         predictions[key] = tf.where(
-    #             tf.equal(features_dict['mask'], 0),
-    #             tf.constant(-np.inf),
-    #             predictions[key])
-
-    #     return predictions
-    return
+    """Default serving signature to take each model feature as input and outputs the scores"""
+    raise NotImplementedError
 
 
 def define_tfrecord_signature(
@@ -40,9 +23,37 @@ def define_tfrecord_signature(
     max_sequence_size: int = 0,
 ):
     """
-    Add signatures to the tf keras savedmodel
+    Serving signature that wraps around the keras model trained as a RelevanceModel
+    with a pre-step to parse TFRecords and apply additional feature preprocessing
 
-    Returns:
+    Parameters
+    ----------
+    model : keras Model
+        Keras model object to be saved
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf that the saved model will be used on at serving time
+    feature_config : `FeatureConfig` object
+        FeatureConfig object that defines the input features into the model
+        and the corresponding feature preprocesing functions to be used
+        in the serving signature
+    preprocessing_keys_to_fns : dict
+        Dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+    postprocessing_fn: function
+        custom tensorflow compatible postprocessing function to be used at serving time.
+        Saved as part of the postprocessing layer of the tfrecord serving signature
+    required_fields_only: bool
+        boolean value defining if only required fields
+        need to be added to the tfrecord parsing function at serving time
+    pad_sequence: bool, optional
+        Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+        Set this to False if you want to not handle padded scores.
+    max_sequence_size : int, optional
+        Maximum sequence size for SequenceExample protobuf
+        The protobuf object will be padded or clipped to this value
+
+    Returns
+    -------
+    `tf.function`
         Serving signature function that accepts a TFRecord string tensor and returns predictions
     """
 
@@ -132,7 +143,44 @@ def define_serving_signatures(
     pad_sequence: bool = False,
     max_sequence_size: int = 0,
 ):
-    """Defines all serving signatures for the SavedModel"""
+    """
+    Defines all serving signatures for the SavedModel
+
+    Parameters
+    ----------
+    model : keras Model
+        Keras model object to be saved
+    tfrecord_type : {"example", "sequence_example"}
+        Type of the TFRecord protobuf that the saved model will be used on at serving time
+    feature_config : `FeatureConfig` object
+        FeatureConfig object that defines the input features into the model
+        and the corresponding feature preprocesing functions to be used
+        in the serving signature
+    preprocessing_keys_to_fns : dict
+        Dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+    postprocessing_fn: function
+        custom tensorflow compatible postprocessing function to be used at serving time.
+        Saved as part of the postprocessing layer of the tfrecord serving signature
+    required_fields_only: bool
+        boolean value defining if only required fields
+        need to be added to the tfrecord parsing function at serving time
+    pad_sequence: bool, optional
+        Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+        Set this to False if you want to not handle padded scores.
+    max_sequence_size : int, optional
+        Maximum sequence size for SequenceExample protobuf
+        The protobuf object will be padded or clipped to this value
+
+    Returns
+    -------
+    list of `tf.function`
+        List of serving signature functions that make predictions at serving time
+        with optional pre and post wrapper steps
+
+    Notes
+    -----
+    Currently only supports TFRecord serving signature
+    """
     return {
         ServingSignatureKey.TFRECORD: define_tfrecord_signature(
             model=model,

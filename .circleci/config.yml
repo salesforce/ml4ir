@@ -2,50 +2,56 @@
 # Reference doc: https://circleci.com/docs/2.0/project-walkthrough/
 version: 2.1
 jobs:
-  build_test_jvm:
+  build_test_jvm_integration:
     docker:
-      - image: circleci/openjdk:8u242-jdk
+      - image: ducouloa/ml4ir:0.1
+    resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r python/build-requirements.txt
       - run:
           name: Build
           command: |
             cd jvm
             mvn clean -Dmaven.test.skip=true install
       - save_cache:
-          key: maven-deps-{{ checksum "jvm/pom.xml" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
           paths:
             - ~/.m2
+            - "venv"
       - run:
-          name: Run JVM tests
+          name: Run JVM tests and integration tests
           command: |
+            . venv/bin/activate
             cd jvm
-            mvn test
-            mvn surefire-report:report-only
-      - store_artifacts:
-          path: jvm/ml4ir-inference/target/site/surefire-report.html
+            mvn verify -Pintegration_tests
       - store_test_results:
-          path: jvm/ml4ir-inference/target/site/surefire-report.html
+          path: jvm/ml4ir-inference/target
 
-  build_test_python:
+  build_test_python_classification:
     docker:
       - image: circleci/python:3.7.7
     resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install -r requirements.txt
+            pip install -r build-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -53,16 +59,89 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            python3 -m pytest --html=pytest_report.html
-          no_output_timeout: 30m  # Time for running the tests before we timeout
-      - store_artifacts:
-          path: python/pytest_report.html
+            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - persist_to_workspace:
+          root: python/reports
+          paths:
+            - .coverage.classif
       - store_test_results:
-          path: python/pytest_report.html
+          path: python/test_results
+
+  build_test_python_ranking:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r build-requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          paths:
+            - "venv"
+      - run:
+          name: Run Python tests
+          command: |
+            . venv/bin/activate
+            cd python
+            COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/applications/ranking/tests/ --junitxml=test_results/results.xml
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - persist_to_workspace:
+          root: python/reports
+          paths:
+            - .coverage.ranking
+      - store_test_results:
+          path: python/test_results
+
+  build_test_coverage:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: medium
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r build-requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          paths:
+            - "venv"
+      - attach_workspace:
+          # Must be absolute path or relative path from working_directory
+          at: reports
+      - run:
+          name: Run Python Coverage
+          command: |
+            . venv/bin/activate
+            coverage combine reports/.coverage.ranking reports/.coverage.classif
+            coverage report
+            coverage html --fail-under=85
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - store_artifacts:
+          path: /home/circleci/project/htmlcov
 
 workflows:
   version: 2.1
   build_and_test:
     jobs:
-      - build_test_jvm
-      - build_test_python
+      - build_test_jvm_integration
+      - build_test_python_ranking
+      - build_test_python_classification
+      - build_test_coverage:
+          requires:
+            - build_test_python_ranking
+            - build_test_python_classification

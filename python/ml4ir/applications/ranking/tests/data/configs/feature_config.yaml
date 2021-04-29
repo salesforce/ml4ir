@@ -1,0 +1,160 @@
+query_key: 
+  name: query_id
+  node_name: query_id
+  trainable: false
+  dtype: string
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: queryId
+    required: false
+    default_value: ""
+  tfrecord_type: context
+rank:
+  name: rank
+  node_name: rank
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: originalRank
+    required: true
+    default_value: 0
+  tfrecord_type: sequence
+label:
+  name: clicked
+  node_name: clicked
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: clicked
+    required: false
+    default_value: 0
+  tfrecord_type: sequence
+features:
+  - name: text_match_score
+    node_name: text_match_score
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: textMatchScore
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: page_views_score
+    node_name: page_views_score
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: pageViewsScore
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: quality_score
+    node_name: quality_score
+    trainable: true
+    dtype: float
+    log_at_inference: false
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: qualityScore
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: name_match
+    node_name: name_match
+    trainable: false
+    dtype: float
+    log_at_inference: true
+    is_secondary_label: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: nameMatch
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: query_text
+    node_name: query_text
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      fn: bytes_sequence_to_encoding_bilstm
+      args:
+        encoding_type: bilstm
+        encoding_size: 128
+        embedding_size: 128
+        max_length: 20
+    preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
+    serving_info:
+      name: q
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: domain_id
+    node_name: domain_id
+    trainable: true
+    dtype: int64
+    log_at_inference: false
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      fn: categorical_embedding_with_indices
+      args:
+        num_buckets: 8
+        embedding_size: 64
+        default_value: null
+    serving_info:
+      name: domainID
+      required: true
+      default_value: 0
+    tfrecord_type: context
+  - name: domain_name
+    node_name: domain_name
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    is_group_metric_key: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      fn: categorical_embedding_with_vocabulary_file
+      args:
+        vocabulary_file: 'ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv'
+        embedding_size: 64
+        default_value: -1
+        num_oov_buckets: 1
+    serving_info:
+      name: domainName
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  

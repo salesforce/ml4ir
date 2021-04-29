@@ -1,15 +1,17 @@
 import sys
+import ast
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.base.pipeline import RelevancePipeline
+from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.optimizer import get_optimizer
-from ml4ir.applications.ranking.model.ranking_model import RankingModel
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import MetricKey
 from ml4ir.applications.ranking.config.keys import ScoringTypeKey
@@ -21,7 +23,23 @@ from typing import Union, List, Type
 
 
 class RankingPipeline(RelevancePipeline):
+    """Base class that defines a pipeline to train, evaluate and save
+    a RankingModel using ml4ir"""
+
     def __init__(self, args: Namespace):
+        """
+        Constructor to create a RelevancePipeline object to train, evaluate
+        and save a model on ml4ir.
+        This method sets up data, logs, models directories, file handlers used.
+        The method also loads and sets up the FeatureConfig for the model training
+        pipeline
+
+        Parameters
+        ----------
+        args: argparse Namespace
+            arguments to be used with the pipeline.
+            Typically, passed from command line arguments
+        """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
 
@@ -29,9 +47,24 @@ class RankingPipeline(RelevancePipeline):
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RankingModel
+        Creates a RankingModel that can be used for training and evaluating
 
-        NOTE: Override this method to create custom loss, scorer, model objects
+        Parameters
+        ----------
+        feature_layer_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to tensorflow compatible
+            function definitions that can now be used in the InteractionModel
+            as a feature function to transform input features
+
+        Returns
+        -------
+        `RankingModel`
+            RankingModel that can be used for training and evaluating
+            a ranking model
+
+        Notes
+        -----
+        Override this method to create custom loss, scorer, model objects
         """
 
         # Define interaction model
@@ -49,8 +82,9 @@ class RankingPipeline(RelevancePipeline):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.model_config_file,
+        scorer: ScorerBase = RelevanceScorer(
+            feature_config=self.feature_config,
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
@@ -63,23 +97,22 @@ class RankingPipeline(RelevancePipeline):
             metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
-        # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
-        )
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RankingModel(
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
+            RankingModelClass = LinearRankingModel
+        else:
+            RankingModelClass = RankingModel
+        relevance_model: RelevanceModel = RankingModelClass(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             scorer=scorer,
             metrics=metrics,
             optimizer=optimizer,
-            model_file=self.args.model_file,
+            model_file=self.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             file_io=self.local_io,
@@ -89,6 +122,9 @@ class RankingPipeline(RelevancePipeline):
         return relevance_model
 
     def validate_args(self):
+        """
+        Validate the arguments to be used with RelevancePipeline
+        """
         super().validate_args()
 
         if self.loss_key not in LossKey.get_all_keys():

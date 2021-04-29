@@ -5,10 +5,76 @@
   <parent>
     <groupId>ml4ir</groupId>
     <artifactId>ml4ir-parent</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
   </parent>
   <artifactId>ml4ir-inference</artifactId>
   <packaging>jar</packaging>
+
+  <profiles>
+    <profile>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
+      <id>integration_tests</id>
+
+      <properties>
+        <bundleLocation>${basedir}/../../python/</bundleLocation>
+        <runName>end_to_end_test</runName>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>exec-maven-plugin</artifactId>
+            <groupId>org.codehaus.mojo</groupId>
+            <executions>
+              <execution><!-- Run our version calculation script -->
+                <id>generate Python models</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${basedir}/scripts/generate_model.sh</executable>
+                  <arguments>
+                    <argument>${runName}</argument>
+                    <argument>${useDocker}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <version>2.19.1</version>
+            <executions>
+              <execution>
+                <id>integration-tests</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <systemPropertyVariables>
+                    <bundleLocation>${bundleLocation}</bundleLocation>
+                    <runName>${runName}</runName>
+                  </systemPropertyVariables>
+                  <includes>
+                    <include>**/*IT</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <sourceDirectory>src/main/scala</sourceDirectory>
@@ -46,6 +112,7 @@
             <configuration>
               <sources>
                 <source>src/test/java</source>
+                <source>src/test/integration</source>
               </sources>
             </configuration>
           </execution>
@@ -99,6 +166,15 @@
             <manifest>
             </manifest>
           </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.0</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*IT</exclude>
+          </excludes>
         </configuration>
       </plugin>
     </plugins>

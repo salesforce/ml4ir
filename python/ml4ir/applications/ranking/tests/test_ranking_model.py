@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import random
 import tensorflow as tf
 
@@ -68,28 +69,60 @@ class RankingModelTest(RankingTestBase):
 
         # Test model training on CSV data
         data_dir = os.path.join(self.root_data_dir, "csv")
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
         csv_loss, csv_mrr = self.run_default_pipeline(
             data_dir=data_dir, data_format="csv", feature_config_path=feature_config_path
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(csv_loss, 0.556431, rtol=0.01)
-        assert np.isclose(csv_mrr, 0.703246, rtol=0.01)
+        assert np.isclose(csv_loss, 0.56748, rtol=0.01)
+        assert np.isclose(csv_mrr, 0.70396, rtol=0.01)
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
         tfrecord_loss, tfrecord_mrr = self.run_default_pipeline(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
         )
 
         # Check if the loss and accuracy on the test set is the same
-        assert np.isclose(tfrecord_loss, 0.556431, rtol=0.01)
-        assert np.isclose(tfrecord_mrr, 0.703246, rtol=0.01)
+        assert np.isclose(tfrecord_loss, 0.56748, rtol=0.01)
+        assert np.isclose(tfrecord_mrr, 0.70396, rtol=0.01)
 
         # Compare CSV and TFRecord loss and accuracies
         assert np.isclose(tfrecord_loss, csv_loss, rtol=0.01)
         assert np.isclose(tfrecord_mrr, csv_mrr, rtol=0.01)
+
+    def test_linear_ranking_model_save(self):
+        """
+        Test the save functionality of LinearRankingModel.
+        Specifically, we test to see if the features and coefficients have been saved as CSV file.
+        """
+        feature_config_path = os.path.join(self.root_data_dir, "configs/linear_model", self.feature_config_fname)
+        self.load_model_config(os.path.join(self.root_data_dir, "configs/linear_model", "model_config.yaml"))
+        feature_config: FeatureConfig = FeatureConfig.get_instance(
+            tfrecord_type=self.args.tfrecord_type,
+            feature_config_dict=self.file_io.read_yaml(feature_config_path),
+            logger=self.logger,
+        )
+
+        ranking_model: RankingModel = self.get_ranking_model(
+            loss_key=self.args.loss_key,
+            feature_config=feature_config,
+            metrics_keys=["MRR"]
+        )
+
+        # Save the model and check if coefficients file was saved
+        ranking_model.save(models_dir=self.args.models_dir)
+        assert os.path.exists(os.path.join(self.args.models_dir, "coefficients.csv"))
+
+        # Check coefficients for all features were saved
+        coefficients_df = pd.read_csv(
+            os.path.join(self.args.models_dir, "coefficients.csv"))
+        train_features = set(feature_config.get_train_features("node_name"))
+
+        assert len(train_features) == coefficients_df.shape[0]
+        for train_feature in train_features:
+            assert train_feature in coefficients_df.feature.values

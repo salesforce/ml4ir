@@ -1,37 +1,64 @@
 import sys
+import ast
 from argparse import Namespace
-
-from tensorflow.keras.metrics import Metric, Precision
+from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
-
 from ml4ir.applications.classification.config.parse_args import get_args
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
-from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.classification.model.metrics import metrics_factory
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.optimizer import get_optimizer
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
-
+from ml4ir.applications.classification.model.classification_model import ClassificationModel
 from typing import Union, List, Type
 
 
 class ClassificationPipeline(RelevancePipeline):
-    """
-    Pipeline defining the classification models.
-    """
+    """Base class that defines a pipeline to train, evaluate and save
+    a RelevanceModel for classification using ml4ir"""
+
     def __init__(self, args: Namespace):
+        """
+        Constructor to create a RelevancePipeline object to train, evaluate
+        and save a model on ml4ir.
+        This method sets up data, logs, models directories, file handlers used.
+        The method also loads and sets up the FeatureConfig for the model training
+        pipeline
+
+        Parameters
+        ----------
+        args: argparse Namespace
+            arguments to be used with the pipeline.
+            Typically, passed from command line arguments
+        """
         self.loss_key = args.loss_key
         super().__init__(args)
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RelevanceModel suited for classification use-case.
+        Creates a RelevanceModel that can be used for training and evaluating
 
-        NOTE: Override this method to create custom loss, scorer, model objects.
+        Parameters
+        ----------
+        feature_layer_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to tensorflow compatible
+            function definitions that can now be used in the InteractionModel
+            as a feature function to transform input features
+
+        Returns
+        -------
+        `RelevanceModel`
+            RelevanceModel that can be used for training and evaluating
+            a classification model
+
+        Notes
+        -----
+        Override this method to create custom loss, scorer, model objects
         """
 
         # Define interaction model
@@ -39,17 +66,16 @@ class ClassificationPipeline(RelevancePipeline):
             feature_config=self.feature_config,
             feature_layer_keys_to_fns=feature_layer_keys_to_fns,
             tfrecord_type=self.tfrecord_type,
-            file_io=self.file_io)
-
-        # Define loss object from loss key
-        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(
-            loss_key=self.loss_key
+            file_io=self.file_io,
         )
 
+        # Define loss object from loss key
+        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
+
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.model_config_file,
+        scorer: ScorerBase = RelevanceScorer(
             feature_config=self.feature_config,
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
@@ -59,26 +85,22 @@ class ClassificationPipeline(RelevancePipeline):
 
         # Define metrics objects from metrics keys
         metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
         # Define optimizer
-        optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
-        )
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RelevanceModel(
+        relevance_model: RelevanceModel = ClassificationModel(
             feature_config=self.feature_config,
             scorer=scorer,
             metrics=metrics,
             optimizer=optimizer,
             tfrecord_type=self.tfrecord_type,
             model_file=self.args.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             file_io=self.local_io,
@@ -86,15 +108,36 @@ class ClassificationPipeline(RelevancePipeline):
         )
         return relevance_model
 
-    def get_relevance_dataset(self, parse_tfrecord=True, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+    def get_relevance_dataset(
+        self, parse_tfrecord=True, preprocessing_keys_to_fns={}
+    ) -> RelevanceDataset:
         """
-        Creates RelevanceDataset
+        Create RelevanceDataset object by loading train, test data as tensorflow datasets
+        Defines a preprocessing feature function to one hot vectorize
+        classification labels
 
-        NOTE: Override this method to create custom dataset objects
+        Parameters
+        ----------
+        preprocessing_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to function definitions
+            that can now be used for preprocessing while loading the
+            TFRecordDataset to create the RelevanceDataset object
+
+        Returns
+        -------
+        `RelevanceDataset` object
+            RelevanceDataset object that can be used for training and evaluating
+            the model
+
+        Notes
+        -----
+        Override this method to create custom dataset objects
         """
-        # Adding one_hot_vectorizer needed for classification.
+        # Adding one_hot_vectorizer needed for classification
         preprocessing_keys_to_fns = {
-            "one_hot_vectorize_label": get_one_hot_label_vectorizer(self.feature_config.get_label(), self.file_io)
+            "one_hot_vectorize_label": get_one_hot_label_vectorizer(
+                self.feature_config.get_label(), self.file_io
+            )
         }
 
         # Prepare Dataset
@@ -116,6 +159,7 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         return relevance_dataset
+
 
 def main(argv):
     # Define args

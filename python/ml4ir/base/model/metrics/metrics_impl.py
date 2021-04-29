@@ -17,7 +17,27 @@ def get_metrics_impl(
     metadata_features: Dict,
     **kwargs
 ) -> List[Union[Metric, str]]:
+    """
+    Wrapper function to get Metric objects
+    to compute validation and test metrics on RelevanceModel
 
+    Parameters
+    ----------
+    metrics : list
+        List of string metric names or custom keras Metric classes
+    feature_config : `FeatureConfig` object
+        FeatureConfig object that defines the configuration for each
+        feature used in the RelevanceModel
+    metadata_features : dict
+        Dictionary of feature tensors which are not used for training but can be
+        used for computing custom metrics
+
+    Returns
+    -------
+    list
+        List of metric names or Metric instances that will be used for
+        computing validation and test metrics on RelevanceModel
+    """
     metrics_impl: List[Union[Metric, str]] = list()
 
     for metric in metrics:

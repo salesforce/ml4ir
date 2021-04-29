@@ -29,15 +29,29 @@ class RankingModel(RelevanceModel):
         logging_frequency: int = 25,
     ):
         """
-        Predict the labels for the trained model
+        Predict the scores on the test dataset using the trained model
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            logging_frequency: integer representing how often(in batches) to log status
+        Parameters
+        ----------
+        test_dataset : `Dataset` object
+            `Dataset` object for which predictions are to be made
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
 
-        Returns:
-            ranking scores or new ranks for each record in a query
+        Returns
+        -------
+        `pd.DataFrame`
+            pandas DataFrame containing the predictions on the test dataset
+            made with the `RelevanceModel`
         """
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
@@ -57,20 +71,48 @@ class RankingModel(RelevanceModel):
         group_metrics_min_queries: int = 50,
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
-        Evaluate the ranking model
+        Evaluate the RelevanceModel
 
-        Args:
-            test_dataset: an instance of tf.data.dataset
-            inference_signature: If using a SavedModel for prediction, specify the inference signature
-            logging_frequency: integer representing how often(in batches) to log status
-            metric_group_keys: list of fields to compute group based metrics on
-            save_to_file: set to True to save predictions to file like self.predict()
+        Parameters
+        ----------
+        test_dataset: an instance of tf.data.dataset
+        inference_signature : str, optional
+            If using a SavedModel for prediction, specify the inference signature to be used for computing scores
+        additional_features : dict, optional
+            Dictionary containing new feature name and function definition to
+            compute them. Use this to compute additional features from the scores.
+            For example, converting ranking scores for each document into ranks for
+            the query
+        group_metrics_min_queries : int, optional
+            Minimum count threshold per group to be considered for computing
+            groupwise metrics
+        logs_dir : str, optional
+            Path to directory to save logs
+        logging_frequency : int
+            Value representing how often(in batches) to log status
+        compute_intermediate_stats : bool
+            [Currently ignored] Determines if group metrics and other intermediate stats on the test set should be computed
 
-        Returns:
-            metrics and groupwise metrics as pandas DataFrames
+        Returns
+        -------
+        df_overall_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing overall metrics
+        df_groupwise_metrics : `pd.DataFrame` object
+            `pd.DataFrame` containing groupwise metrics if
+            group_metric_keys are defined in the FeatureConfig
+        metrics_dict : dict
+            metrics as a dictionary of metric names mapping to values
+
+        Notes
+        -----
+        You can directly do a `model.evaluate()` only if the keras model is compiled
+
+        Override this method to implement your own evaluation metrics.
         """
+        metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         evaluation_features = (
             group_metrics_keys
@@ -84,7 +126,8 @@ class RankingModel(RelevanceModel):
                 for f in self.feature_config.get_secondary_labels()
                 if f.get(
                     "node_name",
-                    f["name"] not in self.feature_config.get_group_metrics_keys("node_name"),
+                    f["name"] not in self.feature_config.get_group_metrics_keys(
+                        "node_name"),
                 )
             ]
         )
@@ -113,20 +156,31 @@ class RankingModel(RelevanceModel):
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
                 new_rank_col=RankingConstants.NEW_RANK,
-                group_keys=self.feature_config.get_group_metrics_keys("node_name"),
-                secondary_labels=self.feature_config.get_secondary_labels("node_name"),
+                group_keys=self.feature_config.get_group_metrics_keys(
+                    "node_name"),
+                secondary_labels=self.feature_config.get_secondary_labels(
+                    "node_name"),
             )
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
             else:
-                df_grouped_stats = df_grouped_stats.add(df_batch_grouped_stats, fill_value=0.0)
+                df_grouped_stats = df_grouped_stats.add(
+                    df_batch_grouped_stats, fill_value=0.0)
             batch_count += 1
             if batch_count % logging_frequency == 0:
-                self.logger.info("Finished evaluating {} batches".format(batch_count))
+                self.logger.info(
+                    "Finished evaluating {} batches".format(batch_count))
 
         # Compute overall metrics
-        df_overall_metrics = metrics_helper.summarize_grouped_stats(df_grouped_stats)
+        df_overall_metrics = metrics_helper.summarize_grouped_stats(
+            df_grouped_stats)
         self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
+
+        # Log metrics to weights and biases
+        metrics_dict.update(
+            {"test_{}".format(k): v for k,
+             v in df_overall_metrics.to_dict().items()}
+        )
 
         df_group_metrics = None
         df_group_metrics_summary = None
@@ -143,7 +197,8 @@ class RankingModel(RelevanceModel):
             if logs_dir:
                 self.file_io.write_df(
                     df_group_metrics,
-                    outfile=os.path.join(logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                    outfile=os.path.join(
+                        logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
                 )
 
             # Compute group metrics summary
@@ -153,9 +208,18 @@ class RankingModel(RelevanceModel):
                     self.feature_config.get_group_metrics_keys("node_name")
                 )
             )
-            self.logger.info("Groupwise Metrics: \n{}".format(df_group_metrics_summary.T))
+            self.logger.info("Groupwise Metrics: \n{}".format(
+                df_group_metrics_summary.T))
 
-        return df_overall_metrics, df_group_metrics
+            # Log metrics to weights and biases
+            metrics_dict.update(
+                {
+                    "test_group_mean_{}".format(k): v
+                    for k, v in df_group_metrics_summary.T["mean"].to_dict().items()
+                }
+            )
+
+        return df_overall_metrics, df_group_metrics, metrics_dict
 
     def save(
         self,
@@ -166,16 +230,44 @@ class RankingModel(RelevanceModel):
         pad_sequence: bool = False,
     ):
         """
-        Save tf.keras model to models_dir
+        Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
+        Additionally, sets the score for the padded records to 0
 
-        Args:
-            models_dir: path to directory to save the model
+        There are two different serving signatures currently used to save the model
+            `default`: default keras model without any pre/post processing wrapper
+            `tfrecord`: serving signature that allows keras model to be served using TFRecord proto messages.
+                      Allows definition of custom pre/post processing logic
+
+        Additionally, each model layer is also saved as a separate numpy zipped
+        array to enable transfer learning with other ml4ir models.
+
+        Parameters
+        ----------
+        models_dir : str
+            path to directory to save the model
+        preprocessing_keys_to_fns : dict
+            dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+        postprocessing_fn: function
+            custom tensorflow compatible postprocessing function to be used at serving time.
+            Saved as part of the postprocessing layer of the tfrecord serving signature
+        required_fields_only: bool
+            boolean value defining if only required fields
+            need to be added to the tfrecord parsing function at serving time
+        pad_sequence: bool, optional
+            Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+            Set this to False if you want to not handle padded scores.
+
+        Notes
+        -----
+        All the functions passed under `preprocessing_keys_to_fns` here must be
+        serializable tensor graph operations
         """
 
         def mask_padded_records(predictions, features_dict):
             for key, value in predictions.items():
                 predictions[key] = tf.where(
-                    tf.equal(features_dict["mask"], 0), tf.constant(0.0), predictions[key]
+                    tf.equal(features_dict["mask"], 0), tf.constant(
+                        0.0), predictions[key]
                 )
 
             return predictions
@@ -187,3 +279,89 @@ class RankingModel(RelevanceModel):
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
         )
+
+
+class LinearRankingModel(RankingModel):
+    """
+    Subclass of the RankingModel object customized for training and saving a
+    simple linear ranking model. Current implementation overrides the save model
+    functionality to map input feature nodes into corresponding weights/coefficients.
+    """
+
+    def save(
+        self,
+        models_dir: str,
+        preprocessing_keys_to_fns={},
+        postprocessing_fn=None,
+        required_fields_only: bool = True,
+        pad_sequence: bool = False,
+    ):
+        """
+        Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
+        Additionally, sets the score for the padded records to 0
+
+        There are two different serving signatures currently used to save the model
+            `default`: default keras model without any pre/post processing wrapper
+            `tfrecord`: serving signature that allows keras model to be served using TFRecord proto messages.
+                      Allows definition of custom pre/post processing logic
+
+        Parameters
+        ----------
+        models_dir : str
+            path to directory to save the model
+        preprocessing_keys_to_fns : dict
+            dictionary mapping function names to tf.functions that should be saved in the preprocessing step of the tfrecord serving signature
+        postprocessing_fn: function
+            custom tensorflow compatible postprocessing function to be used at serving time.
+            Saved as part of the postprocessing layer of the tfrecord serving signature
+        required_fields_only: bool
+            boolean value defining if only required fields
+            need to be added to the tfrecord parsing function at serving time
+        pad_sequence: bool, optional
+            Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
+            Set this to False if you want to not handle padded scores.
+
+        Notes
+        -----
+        - All the functions passed under `preprocessing_keys_to_fns` here must be
+        serializable tensor graph operations
+        - The LinearRankingModel.save() method specifically saves the weights
+        of the dense layer as a CSV file where the feature names are mapped to
+        the weights as key-value pairs.
+        """
+
+        # Save the linear model coefficients as a CSV
+        dense_layer = None
+        for layer in self.model.layers:
+            if isinstance(layer, tf.keras.layers.Dense):
+                dense_layer = layer
+                assert dense_layer.units == 1
+        if not dense_layer:
+            raise KeyError("No dense layer found in the model. Can not save the linear ranking model coefficients.")
+
+        linear_model_coefficients = pd.DataFrame(
+            list(zip(
+                [f.name.split(":")[0].replace("_expanded", "") for f in self.model.get_layer(
+                    "tf_op_layer_train_features").input],
+                tf.squeeze(dense_layer.get_weights()[0]).numpy())
+            ),
+            columns=["feature", "weight"])
+        self.logger.info("Linear Model Coefficients:\n{}".format(
+            linear_model_coefficients.to_csv(index=False)))
+        self.file_io.write_df(
+            linear_model_coefficients,
+            outfile=os.path.join(models_dir, "coefficients.csv"),
+            index=False
+        )
+
+        # Call super save method to persist the SavedModel files
+        super().save(
+            models_dir=models_dir,
+            preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+            postprocessing_fn=postprocessing_fn,
+            required_fields_only=required_fields_only,
+            pad_sequence=pad_sequence,
+        )
+
+    def calibrate(self, **kwargs):
+        raise NotImplementedError

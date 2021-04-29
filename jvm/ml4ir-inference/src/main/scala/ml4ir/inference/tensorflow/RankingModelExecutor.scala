@@ -7,7 +7,7 @@ import org.tensorflow.example.SequenceExample
 class RankingModelExecutor[Q, S](modelPath: String,
                                  executorConfig: ModelExecutorConfig,
                                  sequenceExampleBuilder: SequenceExampleBuilder[Q, S]) {
-  val rankingModel = new SavedModelBundleExecutor(modelPath, executorConfig)
+  val rankingModel = new TFRecordExecutor(modelPath, executorConfig)
 
   def apply(queryContext: Q, docs: List[S]): Array[Float] = {
     val sequenceExample: SequenceExample = sequenceExampleBuilder(queryContext, docs)

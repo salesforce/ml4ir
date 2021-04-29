@@ -12,11 +12,12 @@ from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.optimizer import get_optimizer
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.logging_utils import setup_logging
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.applications.ranking.model.ranking_model import RankingModel
+from ml4ir.base.config.keys import ArchitectureKey
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
@@ -58,8 +59,7 @@ class RankingTestBase(unittest.TestCase):
         self.args.models_dir = output_dir
         self.args.logs_dir = output_dir
 
-        # Load model_config
-        self.model_config = self.file_io.read_yaml(self.args.model_config)
+        self.load_model_config(self.args.model_config)
 
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
@@ -77,12 +77,19 @@ class RankingTestBase(unittest.TestCase):
         tf.keras.backend.clear_session()
         gc.collect()
 
+    def load_model_config(self, model_config_path:str):
+        """Load the model config dictionary"""
+        self.model_config = self.file_io.read_yaml(model_config_path)
+
     def get_ranking_model(
         self,
         loss_key: str,
         metrics_keys: List,
         feature_config: FeatureConfig,
+        model_config: dict = {},
         feature_layer_keys_to_fns={},
+        initialize_layers_dict={},
+        freeze_layers_list=[],
     ) -> RelevanceModel:
         """
         Creates RankingModel
@@ -105,11 +112,13 @@ class RankingTestBase(unittest.TestCase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
-            model_config_file=self.args.model_config,
+        scorer: ScorerBase = RelevanceScorer(
+            feature_config=feature_config,
+            model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
             output_name=self.args.output_name,
+            logger=self.logger,
             file_io=self.file_io,
         )
 
@@ -120,21 +129,23 @@ class RankingTestBase(unittest.TestCase):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            optimizer_key=self.args.optimizer_key,
-            learning_rate=self.args.learning_rate,
-            learning_rate_decay=self.args.learning_rate_decay,
-            learning_rate_decay_steps=self.args.learning_rate_decay_steps,
-            gradient_clip_value=self.args.gradient_clip_value,
+            model_config=self.file_io.read_yaml(self.args.model_config),
         )
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = RankingModel(
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
+            RankingModelClass = LinearRankingModel
+        else:
+            RankingModelClass = RankingModel
+        relevance_model: RelevanceModel = RankingModelClass(
             feature_config=feature_config,
             tfrecord_type=self.args.tfrecord_type,
             scorer=scorer,
             metrics=metrics,
             optimizer=optimizer,
             model_file=self.args.model_file,
+            initialize_layers_dict=initialize_layers_dict,
+            freeze_layers_list=freeze_layers_list,
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
             logger=self.logger,

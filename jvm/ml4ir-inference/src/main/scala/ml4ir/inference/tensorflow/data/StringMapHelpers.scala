@@ -11,26 +11,6 @@ import scala.io.Source
 
 case class StringMapQueryContextAndDocs(queryContext: JMap[String, String], docs: JList[JMap[String, String]])
 
-case class StringMapSequenceExampleBuilder(modelFeatures: ModelFeaturesConfig,
-                                           floatFns: JMap[String, JFunction[java.lang.Float, java.lang.Float]],
-                                           longFns: JMap[String, JFunction[java.lang.Long, java.lang.Long]],
-                                           strFns: JMap[String, JFunction[java.lang.String, java.lang.String]])
-    extends SequenceExampleBuilder[JMap[String, String], JMap[String, String]](
-      FeatureProcessors.forStringMaps(modelFeatures, "context", floatFns, longFns, strFns),
-      FeatureProcessors.forStringMaps(modelFeatures, "sequence", floatFns, longFns, strFns)
-    )
-
-object StringMapSequenceExampleBuilder {
-  def withFeatureProcessors(modelFeatures: ModelFeaturesConfig,
-                            floatFns: JMap[String, JFunction[java.lang.Float, java.lang.Float]],
-                            longFns: JMap[String, JFunction[java.lang.Long, java.lang.Long]],
-                            strFns: JMap[String, JFunction[java.lang.String, java.lang.String]]) =
-    StringMapSequenceExampleBuilder(modelFeatures, floatFns, longFns, strFns)
-
-  def withFeatureProcessors(modelFeatures: ModelFeaturesConfig) =
-    StringMapSequenceExampleBuilder(modelFeatures, ImmutableMap.of(), ImmutableMap.of(), ImmutableMap.of());
-}
-
 object StringMapCSVLoader {
 
   def loadDataFromCSV(dataPath: String, featureConfig: ModelFeaturesConfig): Iterable[StringMapQueryContextAndDocs] = {

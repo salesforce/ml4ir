@@ -1,9 +1,0 @@
-*.git
-**/*.pyc
-**/__pycache__
-./python/data
-./python/models
-./python/logs
-target/
-**/test_output/
-**/test_output/

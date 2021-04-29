@@ -1,0 +1,25 @@
+# Python dependencies for developing on ml4ir and for use in the CircleCI builds
+Sphinx
+coverage
+flake8
+python-dotenv>=0.15.0
+flake8-black
+flake8-mypy
+pre-commit
+mypy
+
+# ml4ir dependencies
+tensorflow==2.0.4
+numpy==1.18.5
+pandas==1.2.1
+
+# pytest
+pytest==6.2.1
+pytest-cov==2.11.0
+pytest-html==3.1.1
+
+# Pyspark for spark_io
+pyspark==3.0.1
+
+#calibration
+tensorflow_probability==0.8.0

@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import pandas as pd
+import numpy as np
 import gzip
 import sys
 import csv
@@ -19,16 +20,16 @@ from io import StringIO  # type: ignore
 class LocalIO(FileIO):
     """Class defining the file I/O handler methods for the local file system"""
 
-    def make_directory(self, dir_path: str, clear_dir: bool = False) -> str:
+    def make_directory(self, dir_path: str, clear_dir: bool = False):
         """
         Create directory structure specified recursively
 
-        Args:
-            dir_path: path for directory to be create
-            clear_dir: clear contents on existing directory
-
-        Returns:
-            directory path
+        Parameters
+        ----------
+        dir_path : str
+            path for directory to be create
+        clear_dir : bool, optional
+            clear contents on existing directory
         """
 
         if os.path.exists(dir_path):
@@ -43,21 +44,25 @@ class LocalIO(FileIO):
         # Knowing that folder does not exist, create it from scratch
         os.makedirs(dir_path)
 
-        return dir_path
-
     def read_df(
         self, infile: str, sep: str = ",", index_col: int = None
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
 
-        Args:
-            infile: path to the csv input file; can be hdfs path
-            sep: separator to use for loading file
-            index_col: column to be used as index
+        Parameters
+        ----------
+        infile : str
+            path to the csv input file; can be hdfs path
+        sep : str, optional
+            separator to use for loading file
+        index_col : int, optional
+            column to be used as index
 
-        Returns:
-            pandas dataframe
+        Returns
+        -------
+        `pandas.DataFrame`
+            pandas dataframe loaded from file
         """
         self.log("Loading dataframe from path : {}".format(infile))
 
@@ -102,13 +107,19 @@ class LocalIO(FileIO):
         """
         Load a pandas dataframe from a list of files
 
-        Args:
-            infiles: paths to the csv input files; can be hdfs paths
-            sep: separator to use for loading file
-            index_col: column to be used as index
+        Parameters
+        ----------
+        infiles : list of str
+            paths to the csv input files; can be hdfs paths
+        sep : str, optional
+            separator to use for loading file
+        index_col : int, optional
+            column to be used as index
 
-        Returns:
-            pandas dataframe
+        Returns
+        -------
+        `pd.DataFrame`
+            pandas dataframe loaded from file
         """
         self.log("Reading {} files from [{}, ..".format(len(infiles), infiles[0]))
         return pd.concat(
@@ -119,16 +130,21 @@ class LocalIO(FileIO):
         """
         Write a pandas dataframe to a file
 
-        Args:
-            df: dataframe to be written
-            outfile: path to the csv output file; can NOT be hdfs path currently
-            sep: separator to use for loading file
-            index: boolean specifying if index should be saved
+        Parameters
+        ----------
+        df : `pandas.DataFrame`
+            dataframe to be written
+        outfile : str
+            path to the csv output file; can NOT be hdfs path currently
+        sep : str
+            separator to use for loading file
+        index : int
+            boolean specifying if index should be saved
 
-        Returns:
+        Returns
+        -------
+        str
             dataframe in csv form if outfile is None
-
-        NOTE: Does not support spark write
         """
         self.log("Writing dataframe to : {}".format(outfile))
         output = df.to_csv(
@@ -148,11 +164,15 @@ class LocalIO(FileIO):
         """
         Read JSON file and return a python dictionary
 
-        Args:
-            infile: path to the json file; can be hdfs path
+        Parameters
+        ----------
+        infile : str
+            path to the json file; can be hdfs path
 
-        Returns:
-            python dictionary
+        Returns
+        -------
+        dict
+            python dictionary loaded from file
         """
         self.log("Reading JSON file from : {}".format(infile))
         return json.load(open(infile, "r"))
@@ -161,11 +181,15 @@ class LocalIO(FileIO):
         """
         Read YAML file and return a python dictionary
 
-        Args:
-            infile: path to the json file; can be hdfs path
+        Parameters
+        ----------
+        infile : str
+            path to the json file; can be hdfs path
 
-        Returns:
-            python dictionary
+        Returns
+        -------
+        dict
+            python dictionary loaded from file
         """
         self.log("Reading YAML file from : {}".format(infile))
         return yaml.safe_load(open(infile, "r"))
@@ -174,9 +198,12 @@ class LocalIO(FileIO):
         """
         Write dictionary to a JSON file
 
-        Args:
-            json_dict: dictionary to be dumped to json file
-            outfile: path to the output file
+        Parameters
+        ----------
+        json_dict : dict
+            dictionary to be dumped to json file
+        outfile : str
+            path to the output file
         """
         self.log("Writing JSON dictionary to : {}".format(outfile))
         json.dump(json_dict, open(outfile, "w"), indent=4, sort_keys=True)
@@ -185,10 +212,14 @@ class LocalIO(FileIO):
         """
         Check if a path exists
 
-        Args:
-            path: check if path exists
+        Parameters
+        ----------
+        path : str
+            check if path exists
 
-        Returns:
+        Returns
+        -------
+        bool
             True if path exists; False otherwise
         """
         if os.path.exists(path):
@@ -202,12 +233,18 @@ class LocalIO(FileIO):
         """
         Get list of files in a directory
 
-        Args:
-            indir: input directory to search for files
-            extension: extension of the files to search for
-            prefix: string file name prefix to narrow search
+        Parameters
+        ----------
+        indir : str
+            input directory to search for files
+        extension : str, optional
+            extension of the files to search for
+        prefix : str, optional
+            string file name prefix to narrow search
 
-        Returns:
+        Returns
+        -------
+        list of str
             list of file path strings
         """
         files_in_directory = sorted(
@@ -220,8 +257,10 @@ class LocalIO(FileIO):
         """
         Clear contents of existing directory
 
-        Args:
-            dir_path: path to directory to be cleared
+        Parameters
+        ----------
+        dir_path :  str
+            path to directory to be cleared
         """
         for dir_content in glob.glob(os.path.join(dir_path, "*")):
             if os.path.isfile(dir_content):
@@ -234,8 +273,10 @@ class LocalIO(FileIO):
         """
         Delete existing directory
 
-        Args:
-            dir_path: path to directory to be removed
+        Parameters
+        ----------
+        dir_path : str
+            path to directory to be removed
         """
         if os.path.isdir(dir_path):
             shutil.rmtree(dir_path)
@@ -243,11 +284,85 @@ class LocalIO(FileIO):
 
     def rm_file(self, file_path: str):
         """
-        Deletes existing file_path
+        Delete existing file_path
 
-        Args:
-            file_path: path to file to be removed
+        Parameters
+        ----------
+        file_path : str
+            path to file to be removed
         """
         if os.path.isfile(file_path):
             os.remove(file_path)
             self.log("File deleted : {}".format(file_path))
+
+    def save_numpy_array(self, np_array, file_path: str, allow_pickle=True, zip=True, **kwargs):
+        """
+        Save a numpy array to disk
+
+        Parameters
+        ----------
+        np_array : numpy array or list of numpy arrays
+            Array like numpy object to be saved
+        file_path : str
+            file path to save the object to
+        allow_pickle : bool, optional
+            Allow pickling of objects while saving
+        zip : bool, optional,
+            use np.savez to save the numpy arrays, allows passing in python list
+
+        Notes
+        -----
+        Used to save individual model layer weights for transfer learning.
+
+        If using zip=True, the np_array has to be a python list
+        tensorflow layer weights are lists of arrays.
+        np.save() can not be used for saving list of numpy arrays directly
+        as it tries to manually convert the list into a numpy array, leading
+        to errors with numpy shape.
+        savez allows us to save each list item in separate files and abstracts this step for end user.
+        """
+        if zip:
+            """
+            NOTE: In this case, the np_array has to be a python list
+
+            tensorflow layer weights are lists of arrays.
+            np.save() can not be used for saving list of numpy arrays directly
+            as it tries to manually convert the list into a numpy array, leading
+            to errors with numpy shape.
+            savez allows us to save each list item in separate files and abstracts this step for end user.
+            """
+            np.savez(file_path, *np_array)
+        else:
+            np.save(file_path, arr=np_array, allow_pickle=allow_pickle, **kwargs)
+
+    def load_numpy_array(self, file_path, allow_pickle=True, unzip=True, **kwargs):
+        """
+        Load a numpy array from disk
+
+        Parameters
+        ----------
+        file_path : str
+            file path to load the numpy object from
+        allow_pickle : bool, optional
+            Allow pickling of objects while loading
+        unzip : bool, optional
+            To unzip the numpy array saved as a zip file. Used when saved with zip=True
+
+        Returns
+        -------
+        list of numpy arrays
+            python list of numpy arrays
+
+        Notes
+        -----
+        Used to load individual model layer weights for transfer learning
+        """
+        np_array = np.load(file_path, allow_pickle=allow_pickle, **kwargs)
+
+        if unzip:
+            np_array_list = list()
+            for np_file in np_array.files:
+                np_array_list.append(np_array[np_file])
+            return np_array_list
+        else:
+            return np_array

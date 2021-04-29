@@ -19,6 +19,7 @@ class ArchitectureKey(Key):
     """Model architecture keys"""
 
     DNN = "dnn"
+    LINEAR = "linear"
     RNN = "rnn"
 
 
@@ -31,12 +32,27 @@ class OptimizerKey(Key):
     SGD = "sgd"
     RMS_PROP = "rms_prop"
 
+class LearningRateScheduleKey(Key):
+    """Learning rate schedule keys"""
+
+    EXPONENTIAL = "exponential"
+    CYCLIC = "cyclic"
+    CONSTANT = 'constant'
+
+class CyclicLearningRateType(Key):
+    """Cyclic learning rate schedule type keys"""
+
+    TRIANGULAR = "triangular"
+    TRIANGULAR2 = "triangular2"
+    EXPONENTIAL = "exponential"
+
 
 class DataFormatKey(Key):
     """Data Format keys"""
 
     CSV = "csv"
     TFRECORD = "tfrecord"
+    RANKLIB = "ranklib"
 
 
 class DataSplitKey(Key):
@@ -107,6 +123,7 @@ class DefaultDirectoryKey(Key):
     LOGS = "logs"
     DATA = "data"
     TEMP_DATA = "data/temp"
+    TEMP_MODELS = "models/temp"
 
 
 class FileHandlerKey(Key):
@@ -114,3 +131,10 @@ class FileHandlerKey(Key):
 
     LOCAL = "local"
     SPARK = "spark"
+
+
+class CalibrationKey(Key):
+    CALIBRATION = "calibration"
+    TEMPERATURE_SCALING = "temperature_scaling"
+    TEMPERATURE = "temperature"
+    ARGS = "args"

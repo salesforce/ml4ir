@@ -6,35 +6,32 @@ from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 
-
 # Constants
-GOLD_METRICS = {
-    "query_count": 1408.0,
-    "old_ACR": 1.65056,
-    "new_ACR": 2.19460,
-    "old_MRR": 0.78588,
-    "new_MRR": 0.64859,
-    "mean_old_name_match_failure_all": 0.06392,
-    "mean_new_name_match_failure_all": 0.09517,
-    "mean_old_name_match_failure_any": 0.11221,
-    "mean_new_name_match_failure_any": 0.19744,
-    "mean_old_name_match_failure_all_rank": 0.148437,
-    "mean_new_name_match_failure_all_rank": 0.217329,
-    "mean_old_name_match_failure_any_rank": 0.352272,
-    "mean_new_name_match_failure_any_rank": 0.684659,
-    "mean_old_name_match_failure_any_count": 0.166903,
-    "mean_new_name_match_failure_any_count": 0.311789,
-    "mean_old_name_match_failure_any_fraction": 0.088986,
-    "mean_new_name_match_failure_any_fraction": 0.148283,
-    "perc_improv_ACR": -32.960413,
-    "perc_improv_MRR": -17.469067,
-    "perc_improv_mean_name_match_failure_all": -0.488888,
-    "perc_improv_mean_name_match_failure_any": -0.759493,
-    "perc_improv_mean_name_match_failure_all_rank": -0.464114,
-    "perc_improv_mean_name_match_failure_any_rank": -0.943548,
-    "perc_improv_mean_name_match_failure_any_count": -0.868085,
-    "perc_improv_mean_name_match_failure_any_fraction": -0.666356,
-}
+GOLD_METRICS = {'query_count': 1500.0,
+                'old_ACR': 1.656,
+                'new_ACR': 2.410,
+                'old_MRR': 0.783,
+                'new_MRR': 0.597,
+                'mean_old_name_match_failure_all': 0.061,
+                'mean_old_name_match_failure_any': 0.111,
+                'mean_old_name_match_failure_all_rank': 0.142,
+                'mean_old_name_match_failure_any_rank': 0.351,
+                'mean_old_name_match_failure_any_count': 0.165,
+                'mean_old_name_match_failure_any_fraction': 0.087,
+                'mean_new_name_match_failure_all': 0.086,
+                'mean_new_name_match_failure_any': 0.218,
+                'mean_new_name_match_failure_all_rank': 0.196,
+                'mean_new_name_match_failure_any_rank': 0.788,
+                'mean_new_name_match_failure_any_count': 0.342,
+                'mean_new_name_match_failure_any_fraction': 0.153,
+                'perc_improv_ACR': -45.513,
+                'perc_improv_MRR': -23.760,
+                'perc_improv_mean_name_match_failure_all': -0.402,
+                'perc_improv_mean_name_match_failure_any': -0.964,
+                'perc_improv_mean_name_match_failure_all_rank': -0.380,
+                'perc_improv_mean_name_match_failure_any_rank': -1.244,
+                'perc_improv_mean_name_match_failure_any_count': -1.068,
+                'perc_improv_mean_name_match_failure_any_fraction': -0.754}
 
 
 class RankingModelTest(RankingTestBase):
@@ -71,7 +68,7 @@ class RankingModelTest(RankingTestBase):
             loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
         )
 
-        overall_metrics, _ = ranking_model.evaluate(
+        overall_metrics, _, _ = ranking_model.evaluate(
             test_dataset=relevance_dataset.test, logs_dir=self.args.logs_dir,
         )
 
@@ -84,7 +81,7 @@ class RankingModelTest(RankingTestBase):
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        feature_config_path = os.path.join(self.root_data_dir, "config", self.feature_config_fname)
+        feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
         metrics = self.run_default_pipeline(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
@@ -93,4 +90,4 @@ class RankingModelTest(RankingTestBase):
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
-            assert np.isclose(metrics[gold_metric_name], gold_metric_val, rtol=0.01)
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.02)

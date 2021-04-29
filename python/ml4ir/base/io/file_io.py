@@ -8,18 +8,41 @@ class FileIO(object):
     """Abstract class defining the file I/O handler methods"""
 
     def __init__(self, logger: Optional[Logger] = None):
+        """
+        Constructor method to create a FileIO handler object
+
+        Parameters
+        ----------
+        logger : `Logger` object, optional
+            logging handler object to instantiate FileIO object
+            with the ability to log progress updates
+        """
         self.logger = logger
 
     def set_logger(self, logger: Optional[Logger] = None):
+        """
+        Setter method to assign a logging handler to the FileIO object
+
+        Parameters
+        ----------
+        logger : `Logger` object, optional
+            logging handler object to be used with the FileIO object
+            to log progress updates
+        """
         self.logger = logger
 
     def log(self, string, mode=INFO):
         """
-        Wrapper method for logging
+        Write specified string with preset logging object
+        using the mode specified
 
-        Args:
-            string: String to be logged
-            mode: logging mode to use
+        Parameters
+        ----------
+        string : str
+            string text to be logged
+        mode : int, optional
+            One of the supported logging message types.
+            Currently supported values are logging.INFO, DEBUG, ERROR
         """
         if self.logger:
             if mode == INFO:
@@ -33,12 +56,17 @@ class FileIO(object):
         """
         Create directory structure specified recursively
 
-        Args:
-            dir_path: path for directory to be create
-            clear_dir: clear contents on existing directory
+        Parameters
+        ----------
+        dir_path : str
+            path for directory to be create
+        clear_dir : bool, optional
+            clear contents on existing directory
 
-        Returns:
-            directory path
+        Returns
+        -------
+        str
+            path to the directory created
         """
         raise NotImplementedError
 
@@ -48,27 +76,39 @@ class FileIO(object):
         """
         Load a pandas dataframe from a file
 
-        Args:
-            infile: path to the csv input file
-            sep: separator to use for loading file
-            index_col: column to be used as index
+        Parameters
+        ----------
+        infile : str
+            path to the csv input file
+        sep : str, optional
+            separator to use for loading file
+        index_col : int, optional
+            column to be used as index
 
-        Returns:
-            pandas dataframe
+        Returns
+        -------
+        `pandas.DataFrame`
+            pandas dataframe loaded from specified path
         """
         raise NotImplementedError
 
     def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
         """
-        Load a pandas dataframe from a list of files
+        Load a pandas dataframe from a list of files by concatenating
+        the individual dataframes from each file
 
-        Args:
-            infiles: paths to the csv input files
-            sep: separator to use for loading file
-            index_col: column to be used as index
+        Parameters
+        ----------
+        infiles : list of str
+            list of paths to the csv input files
+        sep : str, optional
+            separator to use for loading file
+        index_col : int, optional
+            column to be used as index
 
         Returns:
-            pandas dataframe
+        `pandas.DataFrame`
+            pandas dataframe loaded from specified path
         """
         raise NotImplementedError
 
@@ -76,11 +116,16 @@ class FileIO(object):
         """
         Write a pandas dataframe to a file
 
-        Args:
-            df: dataframe to be written
-            outfile: path to the csv output file
-            sep: separator to use for loading file
-            index: boolean specifying if index should be saved
+        Parameters
+        ----------
+        df : `pandas.DataFrame`
+            dataframe to be written
+        outfile : str. optional
+            path to the csv output file
+        sep : str, optional
+            separator to use for loading file
+        index : bool, optional
+            boolean specifying if index should be saved
         """
         raise NotImplementedError
 
@@ -88,10 +133,14 @@ class FileIO(object):
         """
         Read text file and return as string
 
-        Args:
-            infile: path to the text file
+        Parameters
+        ----------
+        infile : str
+            path to the text file
 
-        Returns:
+        Returns
+        -------
+        str
             file contents as a string
         """
         raise NotImplementedError
@@ -100,11 +149,15 @@ class FileIO(object):
         """
         Read JSON file and return a python dictionary
 
-        Args:
-            infile: path to the json file
+        Parameters
+        ----------
+        infile : str
+            path to the json file
 
-        Returns:
-            python dictionary
+        Returns
+        -------
+        dict
+            python dictionary loaded from JSON file
         """
         raise NotImplementedError
 
@@ -112,11 +165,15 @@ class FileIO(object):
         """
         Read YAML file and return a python dictionary
 
-        Args:
-            infile: path to the json file
+        Parameters
+        ----------
+        infile : str
+            path to the YAML file
 
-        Returns:
-            python dictionary
+        Returns
+        -------
+        dict
+            python dictionary loaded from JSON file
         """
         raise NotImplementedError
 
@@ -124,20 +181,27 @@ class FileIO(object):
         """
         Write dictionary to a JSON file
 
-        Args:
-            json_dict: dictionary to be dumped to json file
-            outfile: path to the output file
+        Parameters
+        ----------
+        json_dict : dict
+            dictionary to be dumped to json file
+        outfile : str
+            path to the output file
         """
         raise NotImplementedError
 
     def path_exists(self, path: str) -> bool:
         """
-        Check if a path exists
+        Check if a file path exists
 
-        Args:
-            path: check if path exists
+        Parameters
+        ----------
+        path : str
+            check if path exists
 
-        Returns:
+        Returns
+        -------
+        bool
             True if path exists; False otherwise
         """
         raise NotImplementedError
@@ -146,12 +210,18 @@ class FileIO(object):
         """
         Get list of files in a directory
 
-        Args:
-            indir: input directory to search for files
-            extension: extension of the files to search for
-            prefix: string file name prefix to narrow search
+        Parameters
+        ----------
+        indir : str
+            input directory to search for files
+        extension : str, optional
+            extension of the files to search for
+        prefix : str, optional
+            string file name prefix to narrow search
 
-        Returns:
+        Returns
+        -------
+        list of str
             list of file path strings
         """
         raise NotImplementedError
@@ -160,8 +230,10 @@ class FileIO(object):
         """
         Clear contents of existing directory
 
-        Args:
-            dir_path: path to directory to be cleared
+        Parameters
+        ----------
+        dir_path : str
+            path to directory to be cleared
         """
         raise NotImplementedError
 
@@ -169,8 +241,10 @@ class FileIO(object):
         """
         Delete existing directory
 
-        Args:
-            dir_path: path to directory to be removed
+        Parameters
+        ----------
+        dir_path : str
+            path to directory to be removed
         """
         raise NotImplementedError
 
@@ -178,7 +252,9 @@ class FileIO(object):
         """
         Deletes existing file_path
 
-        Args:
-            file_path: path to file to be removed
+        Parameters
+        ----------
+        file_path : str
+            path to file to be removed
         """
         raise NotImplementedError
