@@ -70,9 +70,9 @@ class TensorFlowInferenceTest extends TestData {
   @Test
   def testSavedModelBundleWithCSVData(): Unit = {
     val allScores: Iterable[(StringMapQueryContextAndDocs, SequenceExample, Array[Float])] = runQueriesAgainstDocs(
-      resourceFor("file_0.csv"),
-      resourceFor("activate_model_bundle"),
-      resourceFor("activate_feature_config.yaml"),
+      resourceFor("ranking_happy_path/model_predictions.csv"),
+      resourceFor("ranking_happy_path/ranking_model_bundle"),
+      resourceFor("ranking_happy_path/feature_config.yaml"),
       "serving_tfrecord_protos",
       "StatefulPartitionedCall_1"
     )
