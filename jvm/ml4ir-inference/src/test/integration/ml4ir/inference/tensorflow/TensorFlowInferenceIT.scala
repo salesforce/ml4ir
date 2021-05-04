@@ -1,11 +1,12 @@
 package ml4ir.inference.tensorflow
 
 import scala.collection.JavaConverters._
-import ml4ir.inference.tensorflow.data.{ModelFeaturesConfig, StringMapExampleBuilder, StringMapSequenceExampleBuilder, TestData}
+import ml4ir.inference.tensorflow.data.{FeatureConfig, ModelFeaturesConfig, ServingConfig, StringMapExampleBuilder, StringMapSequenceExampleBuilder, TestData}
 import org.junit.Test
 import org.junit.Assert._
 import org.tensorflow.example._
 
+import java.util.stream.Collectors
 import scala.io.Source
 
 @Test
@@ -27,18 +28,8 @@ class TensorFlowInferenceIT extends TestData {
   object StringMapCSVLoader {
 
     def loadDataFromCSV(dataPath: String, featureConfig: ModelFeaturesConfig): Iterable[StringMapQueryAndPredictions] = {
-      val servingNameTr = Map("query_id" -> "queryId",
-        "clicked" -> "clicked",
-        "text_match_score" -> "textMatchScore",
-        "page_views_score" ->                        "pageViewsScore",
-        "quality_score" ->                               "qualityScore",
-        "name_match" ->                              "nameMatch",
-        "query_text" ->       "q",
-        "domain_id" -> "domainID",
-        "domain_name" -> "domainName",
-        "rank" -> "rank",
-        "ranking_score" -> "rankingScore",
-        "new_rank" -> "newRank");
+      val servingNameTrList = featureConfig.features.map { case FeatureConfig(train, _, ServingConfig(inference, _), _) => train -> inference}
+      val servingNameTr = servingNameTrList.toMap;
 
       val lines = Source.fromFile(dataPath).getLines().toList
       val (header, dataLines) = (lines.head, lines.tail)
