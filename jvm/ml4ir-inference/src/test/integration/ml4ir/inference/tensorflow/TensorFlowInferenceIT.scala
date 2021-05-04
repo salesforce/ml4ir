@@ -27,9 +27,22 @@ class TensorFlowInferenceIT extends TestData {
   object StringMapCSVLoader {
 
     def loadDataFromCSV(dataPath: String, featureConfig: ModelFeaturesConfig): Iterable[StringMapQueryAndPredictions] = {
+      val servingNameTr = Map("query_id" -> "queryId",
+        "clicked" -> "clicked",
+        "text_match_score" -> "textMatchScore",
+        "page_views_score" ->                        "pageViewsScore",
+        "quality_score" ->                               "qualityScore",
+        "name_match" ->                              "nameMatch",
+        "query_text" ->       "q",
+        "domain_id" -> "domainID",
+        "domain_name" -> "domainName",
+        "rank" -> "rank",
+        "ranking_score" -> "rankingScore",
+        "new_rank" -> "newRank");
+
       val lines = Source.fromFile(dataPath).getLines().toList
       val (header, dataLines) = (lines.head, lines.tail)
-      val colNames = header.split(",")
+      val colNames = header.split(",").map( n => servingNameTr.getOrElse(n, "null"))
       val lineMapper: String => Map[String, String] = (line: String) => colNames.zip(line.split(",")).toMap
       val data: List[Map[String, String]] = dataLines.map(lineMapper)
 
@@ -41,12 +54,12 @@ class TensorFlowInferenceIT extends TestData {
       val groupMapper = (group: List[Map[String, String]]) => {
         val context: Map[String, String] = group.head.filterKeys(contextFeatures.contains)
         val docs: List[Map[String, String]] = group.map(_.filterKeys(sequenceFeatures.contains))
-        val predictedScores: Array[Float] = group.map(_.apply("ranking_score").toFloat).toArray
+        val predictedScores: Array[Float] = group.map(_.apply("rankingScore").toFloat).toArray
         (context, docs, predictedScores)
       }
 
       val contextsAndDocs: Iterable[(Map[String, String], List[Map[String, String]], Array[Float])] =
-        data.groupBy(_("query_id")).values.map(groupMapper)
+        data.groupBy(_("queryId")).values.map(groupMapper)
 
       contextsAndDocs.map(pair => StringMapQueryAndPredictions(pair._1, pair._2, pair._3))
     }
