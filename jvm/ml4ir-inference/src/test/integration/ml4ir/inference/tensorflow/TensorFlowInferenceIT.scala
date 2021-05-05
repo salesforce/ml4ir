@@ -6,7 +6,6 @@ import org.junit.Test
 import org.junit.Assert._
 import org.tensorflow.example._
 
-import java.util.stream.Collectors
 import scala.io.Source
 
 @Test
@@ -22,18 +21,20 @@ class TensorFlowInferenceIT extends TestData {
    */
   case class PredictionVector(sequence: Map[String, String], scores: Array[Float])
 
+  /**
+   * Class holding a Ranking sequence of documents from Python prediction.
+   */
   case class StringMapQueryAndPredictions(queryContext: Map[String, String],
                                           docs: List[Map[String, String]],
                                           predictedScores: Array[Float])
   object StringMapCSVLoader {
 
     def loadDataFromCSV(dataPath: String, featureConfig: ModelFeaturesConfig): Iterable[StringMapQueryAndPredictions] = {
-      val servingNameTrList = featureConfig.features.map { case FeatureConfig(train, _, ServingConfig(inference, _), _) => train -> inference}
-      val servingNameTr = servingNameTrList.toMap;
+      val servingNameTr = featureConfig.features.map { case FeatureConfig(train, _, ServingConfig(inference, _), _) => train -> inference }.toMap
 
       val lines = Source.fromFile(dataPath).getLines().toList
       val (header, dataLines) = (lines.head, lines.tail)
-      val colNames = header.split(",").map( n => servingNameTr.getOrElse(n, "null"))
+      val colNames = header.split(",").map( n => servingNameTr.getOrElse(n, n))
       val lineMapper: String => Map[String, String] = (line: String) => colNames.zip(line.split(",")).toMap
       val data: List[Map[String, String]] = dataLines.map(lineMapper)
 
@@ -45,12 +46,12 @@ class TensorFlowInferenceIT extends TestData {
       val groupMapper = (group: List[Map[String, String]]) => {
         val context: Map[String, String] = group.head.filterKeys(contextFeatures.contains)
         val docs: List[Map[String, String]] = group.map(_.filterKeys(sequenceFeatures.contains))
-        val predictedScores: Array[Float] = group.map(_.apply("rankingScore").toFloat).toArray
+        val predictedScores: Array[Float] = group.map(_.apply("ranking_score").toFloat).toArray
         (context, docs, predictedScores)
       }
 
       val contextsAndDocs: Iterable[(Map[String, String], List[Map[String, String]], Array[Float])] =
-        data.groupBy(_("queryId")).values.map(groupMapper)
+        data.groupBy(_("query_id")).values.map(groupMapper)
 
       contextsAndDocs.map(pair => StringMapQueryAndPredictions(pair._1, pair._2, pair._3))
     }
@@ -58,7 +59,7 @@ class TensorFlowInferenceIT extends TestData {
   }
 
   /**
-   * Basic parsing of the Python CSV predicition.
+   * Basic parsing of the Python CSV prediction.
    *
    * @param line
    * @return
