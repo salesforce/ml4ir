@@ -1,10 +1,10 @@
+import sys
 import unittest
 import warnings
 import pandas as pd
 import numpy as np
 from sklearn import datasets
 from sklearn.linear_model import Perceptron, LogisticRegression
-from sklearn.utils import check_random_state
 from ml4ir.applications.ranking.pipeline import RankingPipeline
 from ml4ir.applications.ranking.config.parse_args import get_args
 import shutil
@@ -12,7 +12,6 @@ import pathlib
 import random
 from argparse import Namespace
 warnings.filterwarnings("ignore")
-
 
 
 def create_ml4ir_dataframe(X, Y):
@@ -70,28 +69,29 @@ def generate_data(args):
         task harder.
     - class_sep: Larger values spread out the clusters/classes and make the classification task easier.
     - seed: Random seed
+    - n_trials: Number of trials of data generation to obtain a linearly separable data
     Returns: the best seprabale data set by a Perceptorn.
     """
     separable = False
-    seed = args.seed
-    rng = check_random_state(args.seed)
     best_accuracy = 0
     best_accuracy_data = None
-    trials = 1000
+    random.seed(args.seed)
+    seeds = list(range(args.n_trials))
+    random.shuffle(seeds)
+    trials = len(seeds)-1
     while not separable and trials > 0:
         samples = datasets.make_classification(n_classes=args.n_classes, n_samples=args.n_samples, n_features=args.n_features,
                                                n_redundant=args.n_redundant, n_informative=args.n_informative,
                                                n_clusters_per_class=args.n_clusters_per_class, flip_y=args.flip_y,
-                                               class_sep=args.class_sep, random_state=rng)
-        p = Perceptron(fit_intercept=True, max_iter=1000, verbose=0, random_state=seed, validation_fraction=0.0001)
+                                               class_sep=args.class_sep, random_state=seeds[trials])
+        p = Perceptron(fit_intercept=True, max_iter=1000, verbose=0, random_state=args.seed, validation_fraction=0.0001)
         p.fit(samples[0], samples[1])
         acc = p.score(samples[0], samples[1])
         if acc > best_accuracy:
             best_accuracy = acc
             best_accuracy_data = samples
-        acc = p.score(samples[0], samples[1])
         if acc == 1.0:
-            break
+            separable = True
         trials -= 1
     return best_accuracy_data[0], best_accuracy_data[1]
 
@@ -104,16 +104,16 @@ def calculate_MRR(prediction, y):
         return 0
     pred = prediction
     clickedDocIdxs = [i for i, x in enumerate(y) if x == 1.0]
-    MRR = 0
+    mrr = 0
     sortedPred = sorted(pred)[::-1]
     for clickedDocIdx in clickedDocIdxs:
         clickedDocScore = pred[clickedDocIdx]
         # ties are resolved with the worst case (i.e. the correct doc will have the lowest place among other docs with same score)
         equalScoreCount = sortedPred.count(clickedDocScore)
         predictedRank = sortedPred.index(clickedDocScore) + equalScoreCount - 1.0
-        MRR += 1.0 / (predictedRank + 1.0)
-    MRR = MRR / len(clickedDocIdxs)
-    return MRR
+        mrr += 1.0 / (predictedRank + 1.0)
+    mrr = mrr / len(clickedDocIdxs)
+    return mrr
 
 
 def check_MRR(df, model, featureCount=2):
@@ -177,6 +177,43 @@ def wrap_linear_model_in_sklearn_model(df, W):
     return wrapper_model
 
 
+def test_ml4ir_sanity_pipeline(args, p, log_dir):
+        df = generate(args)
+        df.to_csv(p / 'train' / 'data.csv')
+        df.to_csv(p / 'validation' / 'data.csv')
+        df.to_csv(p / 'test' / 'data.csv')
+
+        fconfig_name = "feature_config_sanity_tests_" + str(args.n_features) + "_features.yaml"
+        feature_config_file = pathlib.Path(__file__).parent / "data" / "configs" / fconfig_name
+        model_config_file = pathlib.Path(__file__).parent / "data" / "configs" / "model_config_sanity_tests.yaml"
+        train_ml4ir(p.as_posix(), feature_config_file.as_posix(), model_config_file.as_posix(), log_dir.as_posix())
+        logisticReg = LogisticRegression(fit_intercept=False, random_state=args.seed, max_iter=100,
+                                warm_start=True)
+        perceptron = Perceptron(fit_intercept=False, max_iter=100, random_state=args.seed, validation_fraction=0.0001,
+                       warm_start=True)
+        ml4ir_weights = pd.read_csv("models/test_command_line/coefficients.csv")["weight"].tolist()
+        ml4ir_weights.append(0.0)
+        ml4ir = wrap_linear_model_in_sklearn_model(df, ml4ir_weights)
+        train_sklearn_model(df, logisticReg, featureCount=args.n_features)
+        train_sklearn_model(df, perceptron, featureCount=args.n_features)
+
+        ml4ir_mrr = check_MRR(df, ml4ir, args.n_features)
+        perceptron_mrr = check_MRR(df, perceptron, args.n_features)
+        log_regression_mrr = check_MRR(df, logisticReg, args.n_features)
+        return ml4ir_mrr, perceptron_mrr, log_regression_mrr
+
+
+def train_ml4ir(data_dir, feature_config, model_config, logs_dir):
+
+    argv = ['--data_dir', data_dir, '--feature_config', feature_config, '--loss_type', "pointwise", '--scoring_type', "pointwise",
+            '--run_id', 'test_command_line', '--data_format', 'csv', '--execution_mode', 'train_inference_evaluate', '--loss_key', 'sigmoid_cross_entropy',
+            '--num_epochs', '150', '--model_config', model_config, '--batch_size', '16', '--logs_dir', logs_dir,
+            '--max_sequence_size', '25', '--train_pcent_split', '1.0', '--val_pcent_split', '-1', '--test_pcent_split', '-1', '--early_stopping_patience', '1000']
+    args = get_args(argv)
+    rp = RankingPipeline(args=args)
+    rp.run()
+
+
 class TestML4IRSanity(unittest.TestCase):
     def setUp(self):
         self.dir = pathlib.Path(__file__).parent
@@ -196,59 +233,31 @@ class TestML4IRSanity(unittest.TestCase):
 
     def test_ml4ir_sanity_1(self):
         args = Namespace(n_classes=2, n_samples=1000, n_features=2, n_redundant=0, n_informative=2,
-                         n_clusters_per_class=2, flip_y=-1, class_sep=1.0, seed=13)
-        self.test_ml4ir_sanity_pipeline(args)
-
-    def test_ml4ir_sanity_2(self):
-        args = Namespace(n_classes=2, n_samples=500, n_features=5, n_redundant=0, n_informative=5,
-                         n_clusters_per_class=3, flip_y=-1, class_sep=2.0, seed=13)
-        self.test_ml4ir_sanity_pipeline(args)
-
-    def test_ml4ir_sanity_3(self):
-        args = Namespace(class_sep=0.1, flip_y=-1.0, n_classes=2, n_clusters_per_class=2, n_features=2, n_informative=2,
-                         n_redundant=0, n_samples=1000, seed=1111)
-        self.test_ml4ir_sanity_pipeline(args)
-
-    def test_ml4ir_sanity_4(self):
-        args = Namespace(class_sep=0.1, flip_y=-1.0, n_classes=2, n_clusters_per_class=5, n_features=10, n_informative=7, n_redundant=3,
-                         n_samples=1000, seed=1111)
-        self.test_ml4ir_sanity_pipeline(args)
-
-    def test_ml4ir_sanity_pipeline(self, args):
-        df = generate(args)
-        df.to_csv(self.p / 'train' / 'data.csv')
-        df.to_csv(self.p / 'validation' / 'data.csv')
-        df.to_csv(self.p / 'test' / 'data.csv')
-
-        fconfig_name = "feature_config_sanity_tests_" + str(args.n_features) + "_features.yaml"
-        feature_config_file = pathlib.Path(__file__).parent / "data" / "configs" / fconfig_name
-        model_config_file = pathlib.Path(__file__).parent / "data" / "configs" / "model_config_sanity_tests.yaml"
-        self.train_ml4ir(self.p.as_posix(), feature_config_file.as_posix(), model_config_file.as_posix(), self.log_dir.as_posix())
-        logisticReg = LogisticRegression(fit_intercept=False, random_state=args.seed, max_iter=100,
-                                warm_start=True)
-        perceptron = Perceptron(fit_intercept=False, max_iter=100, random_state=args.seed, validation_fraction=0.0001,
-                       warm_start=True)
-        ml4ir_weights = pd.read_csv("models/test_command_line/coefficients.csv")["weight"].tolist()
-        ml4ir_weights.append(0.0)
-        ml4ir = wrap_linear_model_in_sklearn_model(df, ml4ir_weights)
-        train_sklearn_model(df, logisticReg, featureCount=args.n_features)
-        train_sklearn_model(df, perceptron, featureCount=args.n_features)
-
-        ml4ir_mrr = check_MRR(df, ml4ir, args.n_features)
-        perceptron_mrr = check_MRR(df, perceptron, args.n_features)
-        log_regression_mrr = check_MRR(df, logisticReg, args.n_features)
+                         n_clusters_per_class=2, flip_y=-1, class_sep=1.0, seed=13, n_trials=100)
+        ml4ir_mrr, perceptron_mrr, log_regression_mrr= test_ml4ir_sanity_pipeline(args, self.p, self.log_dir)
         assert ml4ir_mrr >= perceptron_mrr
         assert ml4ir_mrr >= log_regression_mrr
 
-    def train_ml4ir(self, data_dir, feature_config, model_config, logs_dir):
+    def test_ml4ir_sanity_2(self):
+        args = Namespace(n_classes=2, n_samples=500, n_features=5, n_redundant=0, n_informative=5,
+                         n_clusters_per_class=3, flip_y=-1, class_sep=2.0, seed=13, n_trials=100)
+        ml4ir_mrr, perceptron_mrr, log_regression_mrr = test_ml4ir_sanity_pipeline(args, self.p, self.log_dir)
+        assert ml4ir_mrr >= perceptron_mrr
+        assert ml4ir_mrr >= log_regression_mrr
 
-        argv = ['--data_dir', data_dir, '--feature_config', feature_config, '--loss_type', "pointwise", '--scoring_type', "pointwise",
-                '--run_id', 'test_command_line', '--data_format', 'csv', '--execution_mode', 'train_inference_evaluate', '--loss_key', 'sigmoid_cross_entropy',
-                '--num_epochs', '150', '--model_config', model_config, '--batch_size', '16', '--logs_dir', logs_dir,
-                '--max_sequence_size', '25', '--train_pcent_split', '1.0', '--val_pcent_split', '-1', '--test_pcent_split', '-1', '--early_stopping_patience', '1000']
-        args = get_args(argv)
-        rp = RankingPipeline(args=args)
-        rp.run()
+    def test_ml4ir_sanity_3(self):
+        args = Namespace(class_sep=0.1, flip_y=-1.0, n_classes=2, n_clusters_per_class=2, n_features=2,
+                         n_informative=2, n_redundant=0, n_samples=1000, seed=1111, n_trials=100)
+        ml4ir_mrr, perceptron_mrr, log_regression_mrr = test_ml4ir_sanity_pipeline(args, self.p, self.log_dir)
+        assert ml4ir_mrr >= perceptron_mrr
+        assert ml4ir_mrr >= log_regression_mrr
+
+    def test_ml4ir_sanity_4(self):
+        args = Namespace(class_sep=0.1, flip_y=-1.0, n_classes=2, n_clusters_per_class=5, n_features=10,
+                         n_informative=7, n_redundant=3, n_samples=1000, seed=1111, n_trials=100)
+        ml4ir_mrr, perceptron_mrr, log_regression_mrr = test_ml4ir_sanity_pipeline(args, self.p, self.log_dir)
+        assert ml4ir_mrr >= perceptron_mrr
+        assert ml4ir_mrr >= log_regression_mrr
 
 
 
