@@ -86,7 +86,7 @@ class TensorFlowInferenceIT extends TestData {
    * @return List of PredictionVector
    */
   def readPredictionCSV(csvFile: String): List[PredictionVector] = {
-    return Source.fromFile(csvFile).getLines.toList.tail.flatMap(extractColumnValues)
+    Source.fromFile(csvFile).getLines.toList.tail.flatMap(extractColumnValues)
   }
 
   def validateRankingScores(query: StringMapQueryAndPredictions,
@@ -108,31 +108,9 @@ class TensorFlowInferenceIT extends TestData {
       )
     }
     if (query.predictedScores != null) {
-      assertArrayEquals("scores aren't close enough: ", docScores, query.predictedScores, 1e-2f)
+      assertArrayEquals("scores aren't close enough: ", docScores, query.predictedScores, 1e-6f)
     }
 
-  }
-
-  def validateScores(scores: Array[Float], numDocs: Int) = {
-    val docScores = scores.take(numDocs)
-    val maskedScores = scores.drop(numDocs)
-    docScores.foreach(
-      score => assertTrue("all docs should score non-negative", score > 0)
-    )
-    for {
-      maskedScore <- maskedScores
-      docScore <- docScores
-    } {
-      assertTrue(
-        s"docScore ($docScore) should be > masked score ($maskedScore)",
-        docScore > maskedScore
-      )
-    }
-    assertTrue(
-      "second doc should score better than first",
-      scores(1) > scores(0)
-    )
-    println(scores.mkString(", "))
   }
 
   @Test
@@ -143,6 +121,10 @@ class TensorFlowInferenceIT extends TestData {
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
 
+    evaluateRankingInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
+  }
+
+  def evaluateRankingInferenceAccuracy(bundlePath: String, predictionPath: String, featureConfigPath: String) = {
     val allScores: Iterable[(StringMapQueryAndPredictions, SequenceExample, Array[Float], Array[Float])] = runQueriesAgainstDocs(
       predictionPath,
       bundlePath,
@@ -195,7 +177,13 @@ class TensorFlowInferenceIT extends TestData {
     val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
+    // TODO: using the model yaml don't work.
+    val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
 
+    evaluateClassificationInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
+  }
+
+  def evaluateClassificationInferenceAccuracy(bundlePath: String, predictionPath: String, featureConfigPath: String) = {
     val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       ModelExecutorConfig(
@@ -204,8 +192,6 @@ class TensorFlowInferenceIT extends TestData {
       )
     )
 
-    // TODO: using the model yaml don't work.
-    val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
     val modelFeatures = ModelFeaturesConfig.load(featureConfigPath)
 
 
