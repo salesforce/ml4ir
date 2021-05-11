@@ -5,10 +5,6 @@ import numpy as np
 from sklearn import datasets
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.utils import check_random_state
-
-import sys
-sys.path.insert(0, '/Users/mohamed.m/Documents/work/projects/ml4ir_sanity_tests/python')
-
 from ml4ir.applications.ranking.pipeline import RankingPipeline
 from ml4ir.applications.ranking.config.parse_args import get_args
 import shutil
