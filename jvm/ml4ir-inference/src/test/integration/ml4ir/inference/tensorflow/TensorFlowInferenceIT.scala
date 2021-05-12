@@ -177,7 +177,8 @@ class TensorFlowInferenceIT extends TestData {
     val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
-    // TODO: using the model yaml don't work.
+    // TODO: We are using another feature_config.yaml that works for this prediction, but ideally, we must used the one that has been
+    // used for traning (commented above).
     val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
 
     evaluateClassificationInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
