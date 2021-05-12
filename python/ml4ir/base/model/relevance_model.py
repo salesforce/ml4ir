@@ -493,7 +493,7 @@ class RelevanceModel:
             if logs_dir:
                 np.set_printoptions(
                     formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
-                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full vector in the csv not ...
+                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
                 for col in predictions_df.columns:
                     if isinstance(predictions_df[col].values[0], bytes):
                         predictions_df[col] = predictions_df[col].str.decode('utf8')
