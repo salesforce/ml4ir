@@ -34,5 +34,6 @@ $EXECUTOR ${RANKING_MODEL}/pipeline.py \
     --run_id ${1}_ranking \
     --data_format csv \
     --execution_mode train_inference_evaluate \
+    --loss_key rank_one_listnet \
     --batch_size 32
 cd -

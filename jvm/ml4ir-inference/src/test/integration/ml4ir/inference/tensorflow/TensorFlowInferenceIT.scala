@@ -27,6 +27,17 @@ class TensorFlowInferenceIT extends TestData {
   case class StringMapQueryAndPredictions(queryContext: Map[String, String],
                                           docs: List[Map[String, String]],
                                           predictedScores: Array[Float])
+
+  /**
+   *
+   * @param dataPath fully qualified filesystem path to the "model_predictions.csv" file as produced by
+   *                 the train_inference_evaluate mode of pipeline.py (see the README at
+   *                 https://github.com/salesforce/ml4ir/tree/master/python )
+   * @param featureConfig the in-memory representation of the "feature_config.yaml" that the python training
+   *                      process used for training
+   * @return an iterable collection over what the training code got for ranking inference results, to compare with
+   *         what the JVM inference sees
+   */
   object StringMapCSVLoader {
 
     def loadDataFromCSV(dataPath: String, featureConfig: ModelFeaturesConfig): Iterable[StringMapQueryAndPredictions] = {
