@@ -9,5 +9,5 @@ layers:
 optimizer:
   key: adam
 lr_schedule:
-  key: exponential
-  learning_rate: 0.1
+  key: constant
+  learning_rate: 0.01
