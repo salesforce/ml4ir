@@ -60,6 +60,11 @@ For integration test, you need to run, in the `jvm` directory:
 * `mvn verify -Pintegration_tests` *after* enabling your Python environement as described in the python README.md
 * or, if you prefer running the Python training in Docker, `mvn verify -Pintegration_tests -DuseDocker`
 
+
+Alternatively, you can abuse the e2e test to test the jvm inference against a custom directory throught this command:
+`mvn test -Dtest=TensorFlowInferenceIT#testRankingSavedModelBundleWithCSVData -DbundleLocation=/path/to/my/trained/model -DrunName=myRunName`
+
+
 ## Documentation
 
 We use **[sphinx](https://www.sphinx-doc.org/en/master/)** for ml4ir documentation. The documentation is hosted using Read the Docs at **[ml4ir.readthedocs.io/en/latest](https://ml4ir.readthedocs.io/en/latest/)**.
