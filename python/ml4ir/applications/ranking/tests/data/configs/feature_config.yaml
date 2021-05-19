@@ -45,7 +45,7 @@ features:
     node_name: text_match_score
     trainable: true
     dtype: float
-    log_at_inference: false
+    log_at_inference: true
     feature_layer_info:
       type: numeric
       shape: null
@@ -58,7 +58,7 @@ features:
     node_name: page_views_score
     trainable: true
     dtype: float
-    log_at_inference: false
+    log_at_inference: true
     feature_layer_info:
       type: numeric
       shape: null
@@ -71,7 +71,7 @@ features:
     node_name: quality_score
     trainable: true
     dtype: float
-    log_at_inference: false
+    log_at_inference: true
     feature_layer_info:
       type: numeric
       shape: null
@@ -122,7 +122,7 @@ features:
     node_name: domain_id
     trainable: true
     dtype: int64
-    log_at_inference: false
+    log_at_inference: true
     is_group_metric_key: true
     feature_layer_info:
       type: numeric
