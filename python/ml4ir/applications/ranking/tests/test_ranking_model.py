@@ -123,6 +123,7 @@ class RankingModelTest(RankingTestBase):
             os.path.join(self.args.models_dir, "coefficients.csv"))
         train_features = set(feature_config.get_train_features("node_name"))
 
-        assert len(train_features) == coefficients_df.shape[0]
+        # Adding +1 to account for bias term
+        assert len(train_features)+1 == coefficients_df.shape[0]
         for train_feature in train_features:
             assert train_feature in coefficients_df.feature.values

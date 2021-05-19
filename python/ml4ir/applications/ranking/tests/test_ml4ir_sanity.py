@@ -5,7 +5,7 @@ import numpy as np
 import pathlib
 from testfixtures import TempDirectory
 from ml4ir.applications.ranking.pipeline import RankingPipeline
-from ml4ir.applications.ranking.config.parse_args import get_args 
+from ml4ir.applications.ranking.config.parse_args import get_args
 
 warnings.filterwarnings("ignore")
 
