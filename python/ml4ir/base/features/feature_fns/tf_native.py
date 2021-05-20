@@ -24,7 +24,7 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
     Notes
     -----
     Args under feature_layer_info:
-        list of dict
+        ops: list of dict
             List of function specifications with associated arguments
             
             Arguments under opts:
@@ -37,7 +37,7 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
     * The functions will be applied in the order they are specified.
     """
     feature_node_name = feature_info.get("node_name", feature_info.get("name"))
-    tf_ops = feature_info.get("feature_layer_info", {}).get("args")
+    tf_ops = feature_info.get("feature_layer_info", {}).get("args", {}).get("ops", {})
 
     if not tf_ops:
         return feature_tensor
