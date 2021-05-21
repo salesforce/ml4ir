@@ -1,9 +1,11 @@
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.base.features.feature_fns import categorical as categorical_fns
 from ml4ir.base.features.feature_fns import sequence as sequence_fns
+from ml4ir.base.features.feature_fns import tf_native as tf_native_fns
 from ml4ir.base.config.keys import SequenceExampleTypeKey
 
 import tensorflow as tf
+import numpy as np
 
 
 class RankingModelTest(RankingTestBase):
@@ -686,3 +688,30 @@ class RankingModelTest(RankingTestBase):
         except KeyError:
             found_key_error = True
         assert found_key_error
+
+    def test_tf_native_op(self):
+        """
+        Unit test the tf_native_op feature function
+
+        Checks the right output shapes produced and the values generated
+        """
+        input_tensor = np.random.randn(32, 4, 2)
+
+        actual_tensor = tf.native_fns(
+                feature_tensor=input_tensor,
+                feature_info={
+                    "name": "f"
+                    "feature_layer_info": {
+                        "args": {
+                            "ops": [
+                                {"fn": "tf.math.add", "kwargs": {"y": 1.}},
+                                {"fn": "tf.math.log"}
+                            ]
+                        }
+                    }
+                },
+                file_io=None
+            )
+        expected_tensor = tf.math.log(tf.math.add(input_tensor, 1.))
+
+        assert actual_tensor == expected_tensor
