@@ -695,12 +695,12 @@ class RankingModelTest(RankingTestBase):
 
         Checks the right output shapes produced and the values generated
         """
-        input_tensor = np.random.randn(32, 4, 2)
+        input_tensor = np.abs(np.random.randn(32, 4, 2))
 
-        actual_tensor = tf.native_fns(
+        actual_tensor = tf_native_fns.tf_native_op(
                 feature_tensor=input_tensor,
                 feature_info={
-                    "name": "f"
+                    "name": "f",
                     "feature_layer_info": {
                         "args": {
                             "ops": [
@@ -712,6 +712,6 @@ class RankingModelTest(RankingTestBase):
                 },
                 file_io=None
             )
-        expected_tensor = tf.math.log(tf.math.add(input_tensor, 1.))
+        expected_tensor = tf.expand_dims(tf.math.log(tf.math.add(input_tensor, 1.)), axis=-1)
 
-        assert actual_tensor == expected_tensor
+        assert tf.reduce_all(actual_tensor == expected_tensor)
