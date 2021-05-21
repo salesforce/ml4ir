@@ -54,6 +54,6 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
             raise Exception("Error while applying {} to {} feature:\n{}".format(tf_op["fn"], feature_node_name, e))
 
     # Adjusting the shape to the default feature fns for concatenating in the next step
-    feature_tensor = tf.expand_dims(feature_tensor, axis=-1, name="{}_expanded".format(feature_node_name))
+    feature_tensor = tf.expand_dims(feature_tensor, axis=-1, name="{}_tf_native_op".format(feature_node_name))
 
     return feature_tensor

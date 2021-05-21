@@ -100,7 +100,7 @@ class RankingTransferLearningTest(RankingTestBase):
             for f in glob.glob(os.path.join(self.args.models_dir, "final", "layers", "*"))
         ]
         for layer in model.model.layers:
-            assert "{}.npz".format(layer.name) in saved_layers
+            assert "{}.npz".format(layer.name.split("/")[0]) in saved_layers
 
     def test_loading_pretrained_weights(self):
         """
