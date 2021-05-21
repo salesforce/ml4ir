@@ -188,8 +188,8 @@ def get_grouped_stats(
             label_col=label_col,
             old_rank_col=old_rank_col,
             new_rank_col=new_rank_col,
-            group_keys=set(list(group_keys)),
-            secondary_labels=set(list(secondary_labels)),
+            group_keys=group_keys,
+            secondary_labels=secondary_labels,
         )
 
     # Select clicked records
@@ -277,7 +277,7 @@ def summarize_grouped_stats(df_grouped):
     for col in df_grouped_metrics.to_dict().keys():
         if "failure" in col:
             metric_name = col[len("mean_old_") :]
-            df_grouped_metrics["perc_improv_mean_{}".format(metric_name)] = 100. * (
+            df_grouped_metrics["perc_improv_mean_{}".format(metric_name)] = (
                 df_grouped_metrics["mean_old_{}".format(metric_name)]
                 - df_grouped_metrics["mean_new_{}".format(metric_name)]
             ) / df_grouped_metrics["mean_old_{}".format(metric_name)]
