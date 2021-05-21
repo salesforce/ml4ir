@@ -64,12 +64,13 @@ features:
       shape: null
       fn: tf_native_op
       args:
-        - fn: tf.math.add
-          kwargs:
-            y: 1.
-        - fn: tf.math.subtract  # The goal here is to see the end-to-end functionality of tf_native_op without modifying the tests
-          kwargs:
-            y: 1.
+        ops:
+          - fn: tf.math.add
+            kwargs:
+              y: 1.
+          - fn: tf.math.subtract  # The goal here is to see the end-to-end functionality of tf_native_op without modifying the tests
+            kwargs:
+              y: 1.
     serving_info:
       name: pageViewsScore
       required: true
