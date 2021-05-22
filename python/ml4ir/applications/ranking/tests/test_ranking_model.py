@@ -124,6 +124,7 @@ class RankingModelTest(RankingTestBase):
         train_features = set(feature_config.get_train_features("node_name"))
 
         # Adding +1 to account for bias term
-        assert len(train_features)+1 == coefficients_df.shape[0]
+        assert len(train_features) + 1 == coefficients_df.shape[0]
         for train_feature in train_features:
             assert train_feature in coefficients_df.feature.values
+
