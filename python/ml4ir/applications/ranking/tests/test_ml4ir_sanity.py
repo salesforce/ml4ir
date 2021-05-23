@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 
 def ml4ir_sanity_pipeline(df, working_dir, log_dir, n_features):
     """
-    Train ml4ir on the passed data and calculate the MRR for ml4ir, perceptron and logistic regression models.
+    Train ml4ir on the passed data and read the MRR for ml4ir
     """
     df.to_csv(working_dir / 'train' / 'data.csv')
     df.to_csv(working_dir / 'validation' / 'data.csv')
@@ -58,6 +58,20 @@ def train_ml4ir(data_dir, feature_config, model_config, logs_dir):
 def run_sanity_test(n_features, fname, perceptron_mrr, log_regression_mrr, working_dir, log_dir):
     """
     Runs sanity test for linear models.
+    Parameters
+    ----------
+    n_features : int
+        Number of features in the dataset.
+    fname : string
+        Dataset file name
+    perceptron_mrr : float
+        MRR of perceptron
+    log_regression_mrr : float
+        MRR of logistic regression
+    working_dir : string
+        Path of the working directory
+    log_dir : string
+        Path of the log directory
     """
     df = pd.read_csv(pathlib.Path(__file__).parent / "data" / "L1_sanity_tests" / fname)
     ml4ir_mrr = ml4ir_sanity_pipeline(df, working_dir, log_dir, n_features)
