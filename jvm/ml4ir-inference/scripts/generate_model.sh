@@ -30,7 +30,7 @@ RANKING_MODEL=ml4ir/applications/ranking
 
 $EXECUTOR ${RANKING_MODEL}/pipeline.py \
     --data_dir ${RANKING_MODEL}/tests/data/csv \
-    --feature_config ${RANKING_MODEL}/tests/data/configs/feature_config.yaml \
+    --feature_config ${RANKING_MODEL}/tests/data/configs/feature_config_integration_test.yaml \
     --run_id ${1}_ranking \
     --data_format csv \
     --execution_mode train_inference_evaluate \
