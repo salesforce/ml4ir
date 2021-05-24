@@ -119,7 +119,7 @@ class TensorFlowInferenceIT extends TestData {
       )
     }
     if (query.predictedScores != null) {
-      assertArrayEquals("scores aren't close enough: ", docScores, query.predictedScores, 1e-6f)
+      assertArrayEquals("scores aren't close enough: ", docScores, query.predictedScores, 1e-4f)
     }
 
   }
