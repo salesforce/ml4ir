@@ -6,6 +6,7 @@ from ml4ir.base.io.file_io import FileIO
 def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO):
     """
     Run a series of tensorflow native operations on the input feature tensor.
+    The functions will be applied in the order they are specified.
 
     Parameters
     ----------
@@ -31,10 +32,8 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
                 fn : str
                     Tensorflow native function name. Should start with tf.
                     Example: tf.math.log or tf.clip_by_value
-                kwargs : dict
+                arga : dict
                     Keyword arguments to be passed to the tensorflow function
-
-    * The functions will be applied in the order they are specified.
     """
     feature_node_name = feature_info.get("node_name", feature_info.get("name"))
     tf_ops = feature_info.get("feature_layer_info", {}).get("args", {}).get("ops", {})
@@ -44,12 +43,12 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
 
     for tf_op in tf_ops:
         try:
-            fn_, kwargs = eval(tf_op["fn"]), tf_op.get("kwargs", {})
+            fn_, fn_args = eval(tf_op["fn"]), tf_op.get("args", {})
         except AttributeError as e:
             raise KeyError("Invalid fn specified for tf_native_op : {}\n{}".format(tf_op["fn"], e))
         
         try:
-            feature_tensor = fn_(feature_tensor, **kwargs)
+            feature_tensor = fn_(feature_tensor, **fn_args)
         except Exception as e:
             raise Exception("Error while applying {} to {} feature:\n{}".format(tf_op["fn"], feature_node_name, e))
 
