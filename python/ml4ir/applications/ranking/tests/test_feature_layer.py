@@ -704,7 +704,7 @@ class RankingModelTest(RankingTestBase):
                     "feature_layer_info": {
                         "args": {
                             "ops": [
-                                {"fn": "tf.math.add", "kwargs": {"y": 1.}},
+                                {"fn": "tf.math.add", "args": {"y": 1.}},
                                 {"fn": "tf.math.log"}
                             ]
                         }
