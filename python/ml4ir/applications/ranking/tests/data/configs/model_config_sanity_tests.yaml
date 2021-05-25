@@ -1,0 +1,13 @@
+architecture_key: linear
+layers:
+  - type: dense
+    name: linear_layer
+    units: 1
+    kernel_initializer: Ones
+    use_bias: False
+    activation:
+optimizer:
+  key: adam
+lr_schedule:
+  key: constant
+  learning_rate: 0.01

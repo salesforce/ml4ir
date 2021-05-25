@@ -1,0 +1,170 @@
+query_key:
+  name: query_id
+  node_name: query_id
+  trainable: false
+  dtype: string
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: query_id
+    required: false
+  tfrecord_type: context
+rank:
+  name: fr
+  node_name: fr
+  trainable: false
+  dtype: float
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: fr
+    required: true
+  tfrecord_type: sequence
+label:
+  name: clicked
+  node_name: clicked
+  trainable: false
+  dtype: int64
+  log_at_inference: true
+  feature_layer_info:
+    type: numeric
+    shape: null
+  serving_info:
+    name: clicked
+    required: false
+  tfrecord_type: sequence
+features:
+  - name: f0
+    node_name: f0
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f0
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f1
+    node_name: f1
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f1
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f2
+    node_name: f2
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f2
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f3
+    node_name: f3
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f3
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f4
+    node_name: f4
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f4
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f5
+    node_name: f5
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f5
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f6
+    node_name: f6
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f6
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f7
+    node_name: f7
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f7
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f8
+    node_name: f8
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f8
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
+  - name: f9
+    node_name: f9
+    trainable: true
+    dtype: float
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+    serving_info:
+      name: f9
+      required: true
+      default_value: 0.0
+    tfrecord_type: sequence
