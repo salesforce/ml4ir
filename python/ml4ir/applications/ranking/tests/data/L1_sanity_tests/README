@@ -1,8 +1,0 @@
-- dataset1: 2 features, linearly separable, large margin class separation
-- dataset2: 2 features, linearly separable, small margin class separation
-- dataset3: 5 features, linearly separable, large margin class separation
-- dataset4: 2 features, not linearly separable, small number of noise samples
-- dataset5: 2 features, not linearly separable, large number of noise samples
-- dataset6: 10 features, not linearly separable, small number of noise samples
-- dataset7: 2 features, not linearly separable, large number of noise samples
-- dataset8: 10 features, not linearly separable, large number of noise samples

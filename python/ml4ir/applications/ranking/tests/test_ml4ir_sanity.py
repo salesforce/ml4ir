@@ -73,7 +73,7 @@ def run_sanity_test(n_features, fname, perceptron_mrr, log_regression_mrr, worki
     log_dir : string
         Path of the log directory
     """
-    df = pd.read_csv(pathlib.Path(__file__).parent / "data" / "L1_sanity_tests" / fname)
+    df = pd.read_csv(pathlib.Path(__file__).parent / "data" / "linear_sanity_tests" / fname)
     ml4ir_mrr = ml4ir_sanity_pipeline(df, working_dir, log_dir, n_features)
 
     assert np.isclose(ml4ir_mrr, perceptron_mrr, atol=0.001) or ml4ir_mrr >= perceptron_mrr
