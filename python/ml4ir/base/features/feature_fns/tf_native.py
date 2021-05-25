@@ -32,7 +32,7 @@ def tf_native_op(feature_tensor: tf.Tensor, feature_info: dict, file_io: FileIO)
                 fn : str
                     Tensorflow native function name. Should start with tf.
                     Example: tf.math.log or tf.clip_by_value
-                arga : dict
+                args : dict
                     Keyword arguments to be passed to the tensorflow function
     """
     feature_node_name = feature_info.get("node_name", feature_info.get("name"))

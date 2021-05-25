@@ -66,13 +66,13 @@ features:
       args:
         ops:
           - fn: tf.math.add
-            kwargs:
+            args:
               y: 0.
           - fn: tf.math.subtract  # The goal here is to see the end-to-end functionality of tf_native_op without modifying the tests
-            kwargs:
+            args:
               y: 0.
           - fn: tf.clip_by_value
-            kwargs:
+            args:
               clip_value_min: 0.
               clip_value_max: 1000000.
     serving_info:

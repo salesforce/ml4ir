@@ -66,10 +66,10 @@ features:
       args:
         ops:
           - fn: tf.math.add
-            kwargs:
+            args:
               y: 1.
           - fn: tf.clip_by_value
-            kwargs:
+            args:
               clip_value_min: 0.
               clip_value_max: 10.
     serving_info:
