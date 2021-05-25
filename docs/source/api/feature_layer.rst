@@ -17,3 +17,12 @@ Sequence Feature Transformations
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+Tensorflow Native Operations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: ml4ir.base.features.feature_fns.tf_native
+   :members:
+   :undoc-members:
+   :show-inheritance:

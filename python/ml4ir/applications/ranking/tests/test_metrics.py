@@ -26,12 +26,12 @@ GOLD_METRICS = {'query_count': 1500.0,
                 'mean_new_name_match_failure_any_fraction': 0.153,
                 'perc_improv_ACR': -45.513,
                 'perc_improv_MRR': -23.760,
-                'perc_improv_mean_name_match_failure_all': -0.402,
-                'perc_improv_mean_name_match_failure_any': -0.964,
-                'perc_improv_mean_name_match_failure_all_rank': -0.380,
-                'perc_improv_mean_name_match_failure_any_rank': -1.244,
-                'perc_improv_mean_name_match_failure_any_count': -1.068,
-                'perc_improv_mean_name_match_failure_any_fraction': -0.754}
+                'perc_improv_mean_name_match_failure_all': -40.217,
+                'perc_improv_mean_name_match_failure_any': -96.407,
+                'perc_improv_mean_name_match_failure_all_rank': -38.028,
+                'perc_improv_mean_name_match_failure_any_rank': -124.478,
+                'perc_improv_mean_name_match_failure_any_count': -106.854,
+                'perc_improv_mean_name_match_failure_any_fraction': -75.401}
 
 
 class RankingModelTest(RankingTestBase):
