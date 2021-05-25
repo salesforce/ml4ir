@@ -19,6 +19,7 @@ class RankingModelTest(RankingTestBase):
 
         # Test model training on TFRecord SequenceExample data
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
+        self.feature_config_fname = "feature_config_integration_test.yaml"
         feature_config: FeatureConfig = self.get_feature_config()
 
         metrics_keys = ["categorical_accuracy"]

@@ -28,6 +28,11 @@ def cast_dynamic_val(val: str):
                 # int
                 return int(val)
         elif val.isalnum():
+            # bool
+            if val.lower() == "true":
+                return True
+            elif val.lower() == "false":
+                return False
             # str
             return val
         else:
