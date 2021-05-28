@@ -1,0 +1,10 @@
+| dataset  | number of features | linearly separable | margin of separation | data generation                                                                                                         |
+|----------|--------------------|--------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------|
+| dataset1 | 2                  | yes                | 1.0                  | n_classes 2 n_samples 1000 n_features 2 n_redundant 0 n_informative 2 n_clusters_per_class 2 flip_y -1 class_sep 1.0    |
+| dataset2 | 2                  | yes                | 0.5                  | n_classes 2 n_samples 500 n_features 2 n_redundant 0 n_informative 2 n_clusters_per_class 2 flip_y -1 class_sep 0.5     |
+| dataset3 | 5                  | yes                | 2.0                  | n_classes 2 n_samples 500 n_features 5 n_redundant 0 n_informative 5 n_clusters_per_class 3 flip_y -1 class_sep 2.0     |
+| dataset4 | 2                  | no                 | 0.4                  | n_classes 2 n_samples 1000 n_features 2 n_redundant 0 n_informative 2 n_clusters_per_class 2 flip_y -1 class_sep 0.4    |
+| dataset5 | 2                  | no                 | 0.1                  | class_sep=0.1 flip_y=-1.0 n_classes=2 n_clusters_per_class=2 n_features=2 n_informative=2 n_redundant=0 n_samples=1000  |
+| dataset6 | 10                 | no                 | 0.1                  | class_sep=0.1 flip_y=-1.0 n_classes=2 n_clusters_per_class=5 n_features=10 n_informative=7 n_redundant=3 n_samples=1000 |
+| dataset7 | 2                  | no                 | 0.1                  | class_sep=0.1 flip_y=-1.0 n_classes=2 n_clusters_per_class=2 n_features=2 n_informative=2 n_redundant=0 n_samples=1000  |
+| dataset8 | 10                 | no                 | 0.1                  | n_classes 2 n_samples 1000 n_features 10 n_redundant 3 n_informative 7 n_clusters_per_class 5 flip_y -1 class_sep 0.1   |

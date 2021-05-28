@@ -156,10 +156,10 @@ class RankingModel(RelevanceModel):
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
                 new_rank_col=RankingConstants.NEW_RANK,
-                group_keys=self.feature_config.get_group_metrics_keys(
-                    "node_name"),
-                secondary_labels=self.feature_config.get_secondary_labels(
-                    "node_name"),
+                group_keys=list(set(self.feature_config.get_group_metrics_keys(
+                    "node_name"))),
+                secondary_labels=list(set(self.feature_config.get_secondary_labels(
+                    "node_name"))),
             )
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
@@ -346,9 +346,10 @@ class LinearRankingModel(RankingModel):
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),
             columns=["feature", "weight"])
-        #zahran adding log for bias value
-        bias_val = dense_layer.get_weights()[1][0]
-        linear_model_coefficients.loc[len(linear_model_coefficients.index)] = ['bias', bias_val]
+        # Adding log for bias value
+        if len(dense_layer.get_weights())>1:
+            bias_val = dense_layer.get_weights()[1][0]
+            linear_model_coefficients.loc[len(linear_model_coefficients.index)] = ['bias', bias_val]
         self.logger.info("Linear Model Coefficients:\n{}".format(
             linear_model_coefficients.to_csv(index=False)))
         self.file_io.write_df(

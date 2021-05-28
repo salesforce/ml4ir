@@ -12,6 +12,7 @@ from ml4ir.base.features.feature_fns.categorical import categorical_embedding_wi
 from ml4ir.base.features.feature_fns.categorical import (
     categorical_embedding_with_vocabulary_file_and_dropout,
 )
+from ml4ir.base.features.feature_fns.tf_native import tf_native_op
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -30,6 +31,7 @@ class FeatureLayerMap:
             categorical_embedding_with_indices.__name__: categorical_embedding_with_indices,
             categorical_embedding_with_vocabulary_file.__name__: categorical_embedding_with_vocabulary_file,
             categorical_embedding_with_vocabulary_file_and_dropout.__name__: categorical_embedding_with_vocabulary_file_and_dropout,
+            tf_native_op.__name__: tf_native_op
         }
 
     def add_fn(self, key, fn):
