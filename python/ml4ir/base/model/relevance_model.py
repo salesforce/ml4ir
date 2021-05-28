@@ -21,6 +21,7 @@ from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
     TemperatureScalingLayer
+from python.ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 
 
 class RelevanceModelConstants:
@@ -117,7 +118,6 @@ class RelevanceModel:
             inputs: Dict[str, Input] = feature_config.define_inputs()
             scores, train_features, metadata_features = scorer(inputs)
 
-            # Create model with functional Keras API
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
             self.model.output_names = [self.output_name]
 

@@ -31,6 +31,9 @@ from ml4ir.base.features.preprocessing import convert_label_to_clicks
 
 from typing import List
 
+from python.ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from python.ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, convert_fr_to_one_hot
+
 
 class RelevancePipeline(object):
     """Base class that defines a pipeline to train, evaluate and save
@@ -145,6 +148,24 @@ class RelevancePipeline(object):
         # Read/Parse feature_config and model_config YAML
         feature_config_dict = self.file_io.read_yaml(args.feature_config)
         model_config_dict = self.file_io.read_yaml(args.model_config)
+
+        # Adding fr as a trainable feature to learn the positional bias according to MLranker.
+        if 'positional_bias_handler' in model_config_dict and model_config_dict['positional_bias_handler']['key'] == PositionalBiasHandler.MLRANKER:
+            fr_feature = \
+            {
+              'name': 'fr',
+              'node_name': 'fr_feature',
+              'trainable': True,
+              'dtype': 'int64',
+              'log_at_inference': True,
+              'feature_layer_info': {'type': 'numeric', 'shape': None},
+              'serving_info': {'name': 'fr_feature', 'required': True},
+              'tfrecord_type': 'context',
+              'preprocessing_info': [{'fn': 'convert_fr_to_one_hot','args': {'max_ranks': 25, 'mask_fr': True}}]}
+            feature_config_dict['features'].append(fr_feature)
+
+
+
 
         # Customize feature_config and model_config dictionaries
         if "feature_config_custom" in args:
@@ -463,7 +484,8 @@ class RelevancePipeline(object):
 
         # Delete temp data directories
         if self.data_format == DataFormatKey.CSV:
-            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+            pass
+            #self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)
 

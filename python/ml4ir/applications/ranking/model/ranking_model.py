@@ -346,6 +346,9 @@ class LinearRankingModel(RankingModel):
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),
             columns=["feature", "weight"])
+        #zahran adding log for bias value
+        bias_val = dense_layer.get_weights()[1][0]
+        linear_model_coefficients.loc[len(linear_model_coefficients.index)] = ['bias', bias_val]
         self.logger.info("Linear Model Coefficients:\n{}".format(
             linear_model_coefficients.to_csv(index=False)))
         self.file_io.write_df(

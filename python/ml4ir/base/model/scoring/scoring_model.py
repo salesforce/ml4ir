@@ -132,6 +132,7 @@ class ScorerBase(object):
             Dictionary of tensor objects that are not used for training,
             but can be used for computing loss and metrics
         """
+
         # Apply feature layer and transform inputs
         train_features, metadata_features = self.interaction_model(inputs)
 

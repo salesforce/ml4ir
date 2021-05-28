@@ -87,6 +87,7 @@ def write_from_files(
 
     # Read CSV data into a pandas dataframe
     df = file_io.read_df_list(csv_files)
+    df.to_csv(tfrecord_file+'.csv')
     write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
 
 
