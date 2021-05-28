@@ -4,7 +4,7 @@ from typing import List
 
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
-from python.ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
 
 
