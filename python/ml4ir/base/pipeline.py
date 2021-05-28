@@ -31,8 +31,8 @@ from ml4ir.base.features.preprocessing import convert_label_to_clicks
 
 from typing import List
 
-from python.ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from python.ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, convert_fr_to_one_hot
+from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer, convert_fr_to_one_hot
 
 
 class RelevancePipeline(object):

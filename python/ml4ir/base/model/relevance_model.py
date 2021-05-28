@@ -21,7 +21,7 @@ from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
     TemperatureScalingLayer
-from python.ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 
 
 class RelevanceModelConstants:
