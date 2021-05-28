@@ -484,8 +484,7 @@ class RelevancePipeline(object):
 
         # Delete temp data directories
         if self.data_format == DataFormatKey.CSV:
-            pass
-            #self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)
 

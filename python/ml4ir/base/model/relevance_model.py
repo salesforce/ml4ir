@@ -118,6 +118,7 @@ class RelevanceModel:
             inputs: Dict[str, Input] = feature_config.define_inputs()
             scores, train_features, metadata_features = scorer(inputs)
 
+            # Create model with functional Keras API
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
             self.model.output_names = [self.output_name]
 

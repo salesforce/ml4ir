@@ -611,7 +611,6 @@ class VocabLookup(layers.Layer):
         Defines a Lookup Table  using a KeyValueTensorInitializer to map the keys to the IDs.
         Allows definition of two types of lookup tables based on whether the user specifies num_oov_buckets or the default_value
         """
-
         table_init = lookup.KeyValueTensorInitializer(
             keys=self.vocabulary_keys,
             values=self.vocabulary_ids,

@@ -177,10 +177,7 @@ def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     Output:
         >>> [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
     """
-    if feature_info['name'] == 'fr':
-        label_str = tf.keras.Input(shape=(1,), dtype=tf.int64)
-    else:
-        label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
+    label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
     label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
     # FIXME: we should avoid use another keras Model here (we are wrapping two Keras models here, which cause issues at
     #  saving time).
