@@ -11,5 +11,6 @@ services:
       - ./logs:/home/ml4ir/python/logs
       - ./data:/home/ml4ir/python/data
       - ./models:/home/ml4ir/python/models
+      - ./ml4ir/:/home/ml4ir/python/ml4ir
     tty: true # uncomment for python debugging
     stdin_open: true # uncomment for python debugging
