@@ -19,8 +19,7 @@ class PreprocessingMap:
             preprocess_text.__name__: preprocess_text,
             split_and_pad_string.__name__: split_and_pad_string,
             natural_log.__name__: natural_log,
-            convert_label_to_clicks.__name__: convert_label_to_clicks,
-            convert_fr_to_one_hot.__name__: convert_fr_to_one_hot
+            convert_label_to_clicks.__name__: convert_label_to_clicks
             # Add more here
         }
 
@@ -290,34 +289,6 @@ def convert_label_to_clicks(label_vector, dtype):
     cond = tf.math.equal(label_vector, maximum)
     clicks = tf.dtypes.cast(cond, typ)
     return clicks
-
-@tf.function
-def convert_fr_to_one_hot(fr_value, max_ranks, mask_fr):
-    """Convert the label vector to binary clicks. Documents with the maximum labels are considered clicked and receive
-        label (1). Any other document is considered not clicked and receive label (0)
-            Parameters
-            ----------
-            fr_value : tf tensor
-                The fr value
-            max_ranks : int
-                The maximum number of documents per query
-            mask_fr: Boolean
-                Whether to return a one-hot vector or mask the 'one and return a zeros vector
-
-
-            Returns
-            -------
-            tf tensor
-                one hot vector representation of fr
-    """
-
-    if mask_fr:
-        one_hot_fr = tf.zeros(max_ranks, dtype=tf.dtypes.int64)
-        #one_hot_fr = tf.one_hot(max_ranks+1, depth=max_ranks)
-    else:
-        one_hot_fr = tf.one_hot(fr_value[0]-1, depth=max_ranks)
-    #return tf.transpose(one_hot_fr)
-    return one_hot_fr
 
 ##########################################
 # Add any new preprocessing functions here

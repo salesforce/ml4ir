@@ -40,4 +40,4 @@ class LossTypeKey(Key):
 class PositionalBiasHandler(Key):
     """Types of models to handle positional bias"""
 
-    MLRANKER = "mlranker"
+    FIXED_ADDITIVE_POSITIONAL_BIAS = "fixed_additive_positional_bias"

@@ -78,6 +78,7 @@ class LocalIO(FileIO):
         try:
             df: pd.DataFrame = pd.read_csv(
                 fp,
+                fp.name,
                 sep=sep,
                 index_col=index_col,
                 skipinitialspace=True,
@@ -87,10 +88,10 @@ class LocalIO(FileIO):
                 warn_bad_lines=True,
                 engine="c",
             )
+
         except Exception as e:
             self.log("Error while reading : {}\n{}".format(fp, e), mode=logging.WARN)
             return None
-
         # Get the bad line string value and close the string IO
         bad_lines = bad_lines_io.getvalue()
         bad_lines_io.close()

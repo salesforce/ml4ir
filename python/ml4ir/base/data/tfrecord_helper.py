@@ -92,7 +92,6 @@ def get_sequence_example_proto(group, context_features, sequence_features):
     """
     sequence_features_dict = dict()
     context_features_dict = dict()
-
     for feature_info in context_features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
@@ -102,9 +101,8 @@ def get_sequence_example_proto(group, context_features, sequence_features):
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-            sequence_features_dict[feature_name] = train.FeatureList(
-                feature=[feature_fn(group[feature_name].tolist())]
-            )
+            sequence_features_dict[feature_name] = train.FeatureList(feature=[feature_fn(group[feature_name].tolist())])
+
 
     return train.SequenceExample(
         context=train.Features(feature=context_features_dict),

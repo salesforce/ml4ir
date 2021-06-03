@@ -180,7 +180,6 @@ def define_feature_layer(
             if (
                 tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
                 and feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT
-                and feature_node_name != 'fr_feature'  # no need for tiling to fr_feature
             ):
                 if feature_info["trainable"]:
                     feature_tensor = tf.tile(feature_tensor, train_tile_shape)

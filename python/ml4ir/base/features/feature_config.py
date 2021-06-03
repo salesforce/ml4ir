@@ -978,10 +978,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             # Setting size to None for sequence features as the num_records is variable
             if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
                 return feature_info.get("shape", (None,))
-            # The fr feature size is pre-defined to max_ranks
-            elif feature_info["node_name"] == "fr_feature":
-                biases_size = feature_info.get('preprocessing_info')[0]['args']['max_ranks']
-                return feature_info.get("shape", (biases_size,))
             else:
                 return feature_info.get("shape", (1,))
 

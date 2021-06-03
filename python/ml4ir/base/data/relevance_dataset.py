@@ -165,12 +165,6 @@ class RelevanceDataset:
             as it improved train/test/validation throughput
             by 30% in some real model training.
             """
-            # Setting the one-hot mask of the fr feature to be off for training
-            if self.feature_config.feature_exists('fr', trainable=True):
-                fr_dict_unmasked = dict(self.feature_config.get_feature('fr'))
-                fr_dict_unmasked['preprocessing_info'][0]['args']['mask_fr'] = False
-                self.feature_config.set_feature('fr', fr_dict_unmasked)
-
             self.train = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TRAIN),
                 feature_config=self.feature_config,
@@ -186,13 +180,6 @@ class RelevanceDataset:
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
             )
-
-            # Setting the one-hot mask of the fr feature to be on
-            if self.feature_config.feature_exists('fr', trainable=True):
-                fr_dict_masked = dict(self.feature_config.get_feature('fr'))
-                fr_dict_masked['preprocessing_info'][0]['args']['mask_fr'] = True
-                self.feature_config.set_feature('fr', fr_dict_masked)
-
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
                 feature_config=self.feature_config,

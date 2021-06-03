@@ -6,6 +6,7 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedAdditivePositionalBias
 
 
 OOV = 1
@@ -26,18 +27,8 @@ class DNN:
         self.feature_config = feature_config
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
         if 'positional_bias_handler' in self.model_config and self.model_config['positional_bias_handler'][
-            'key'] == PositionalBiasHandler.MLRANKER:
-            self.positional_bias_layer = layers.Dense(1,
-                                            name="positional_bias_layer",
-                                            activation=None,
-                                            use_bias=False,
-                                            kernel_initializer="glorot_uniform",
-                                            bias_initializer="zeros",
-                                            kernel_regularizer=None,
-                                            bias_regularizer=None,
-                                            activity_regularizer=None,
-                                            kernel_constraint=None,
-                                            bias_constraint=None)
+            'key'] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
+            self.positional_bias_layer = FixedAdditivePositionalBias()
 
     def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
         """
@@ -76,36 +67,27 @@ class DNN:
         ]
 
     def get_architecture_op(self):
-        def _architecture_op(ranking_features):
-            if 'positional_bias_handler' in self.model_config and self.model_config['positional_bias_handler']['key']==PositionalBiasHandler.MLRANKER:
-                layer_input = ranking_features[0]
-                # Pass ranking features through all the layers of the DNN
-                for layer_op in self.layer_ops:
-                    layer_input = layer_op(layer_input)
+        def _architecture_op(ranking_features, metadata_features):
+            layer_input = ranking_features
 
-                #positional_bias = self.positional_bias_layer(ranking_features[1])
-                positional_bias = self.positional_bias_layer(tf.transpose(ranking_features[1], [0, 2, 1]))
-                scores = layers.Add()([positional_bias, layer_input])
+            # Pass ranking features through all the layers of the DNN
+            for layer_op in self.layer_ops:
+                layer_input = layer_op(layer_input)
 
-                # Collapse extra dimensions
-                if isinstance(self.layer_ops[-1], layers.Dense) and (self.layer_ops[-1].units == 1):
-                    scores = tf.squeeze(scores, axis=-1)
+            if 'positional_bias_handler' in self.model_config and \
+                    self.model_config['positional_bias_handler']['key'] == \
+                    PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
 
-                return scores
+                positional_bias = self.positional_bias_layer(metadata_features[self.feature_config.get_rank()['name']],
+                                                             max_ranks=self.model_config['positional_bias_handler']['max_ranks_count'], training=True)
+                layer_input = layers.Add()([positional_bias, layer_input])
 
+            # Collapse extra dimensions
+            if isinstance(self.layer_ops[-1], layers.Dense) and (self.layer_ops[-1].units == 1):
+                scores = tf.squeeze(layer_input, axis=-1)
             else:
-                layer_input = ranking_features
+                scores = layer_input
 
-                # Pass ranking features through all the layers of the DNN
-                for layer_op in self.layer_ops:
-                    layer_input = layer_op(layer_input)
-
-                # Collapse extra dimensions
-                if isinstance(self.layer_ops[-1], layers.Dense) and (self.layer_ops[-1].units == 1):
-                    scores = tf.squeeze(layer_input, axis=-1)
-                else:
-                    scores = layer_input
-
-                return scores
+            return scores
 
         return _architecture_op

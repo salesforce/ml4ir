@@ -35,13 +35,7 @@ class InteractionModel:
             computing custom metrics and losses
         """
         train_features, metadata_features = self.feature_layer_op(inputs)
-        # separate the default learnable features from the fr_features
-        if self.feature_config.feature_exists('fr', trainable=True):
-            train_fr_features, _ = self.transform_features_op({'fr_feature':train_features['fr_feature']}, metadata_features)
-            train_features, metadata_features = self.transform_features_op({k: train_features[k] for k in train_features if k != 'fr_feature'}, metadata_features)
-            return [train_features, train_fr_features], metadata_features
-        else:
-            train_features, metadata_features = self.transform_features_op(train_features, metadata_features)
+        train_features, metadata_features = self.transform_features_op(train_features, metadata_features)
 
         return train_features, metadata_features
 
