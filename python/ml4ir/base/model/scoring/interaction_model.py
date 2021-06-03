@@ -35,8 +35,9 @@ class InteractionModel:
             computing custom metrics and losses
         """
         train_features, metadata_features = self.feature_layer_op(inputs)
-        train_features, metadata_features = self.transform_features_op(train_features, metadata_features)
-
+        train_features, metadata_features = self.transform_features_op(
+            train_features, metadata_features
+        )
         return train_features, metadata_features
 
     def feature_layer_op(self, inputs: Dict[str, Input]):

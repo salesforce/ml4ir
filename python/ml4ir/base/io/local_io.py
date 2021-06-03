@@ -78,7 +78,6 @@ class LocalIO(FileIO):
         try:
             df: pd.DataFrame = pd.read_csv(
                 fp,
-                fp.name,
                 sep=sep,
                 index_col=index_col,
                 skipinitialspace=True,

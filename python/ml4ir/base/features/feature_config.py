@@ -988,8 +988,9 @@ class SequenceExampleFeatureConfig(FeatureConfig):
                 We could do this in the future, to help define more complex loss functions
             """
             node_name = feature_info.get("node_name", feature_info["name"])
-            inputs[node_name] = Input(shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),)
-
+            inputs[node_name] = Input(
+                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
+            )
         return inputs
 
     def create_dummy_protobuf(self, num_records=1, required_only=False):
