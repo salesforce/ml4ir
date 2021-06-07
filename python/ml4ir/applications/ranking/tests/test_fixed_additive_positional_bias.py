@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 class TestFixedAdditivePositionalBias(unittest.TestCase):
 
-    def test_additive_positional_bias_call(self, rank_index, max_ranks, training):
+    def calling_additive_positional_bias(self, rank_index, max_ranks, training):
         """Testing to invoke additive positional bias"""
         positional_bias = FixedAdditivePositionalBias(max_ranks)
         biases = positional_bias(tf.convert_to_tensor(rank_index), training)
