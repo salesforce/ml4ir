@@ -12,7 +12,7 @@ class TestFixedAdditivePositionalBias(unittest.TestCase):
         self.positional_bias = FixedAdditivePositionalBias()
 
     def one_hot_conversion(self, rank_index, max_ranks, training):
-        """Convert to a one-hot tensor"""
+        """Test one-hot tensor conversion"""
         one_hot = self.positional_bias.convert_to_one_hot(tf.convert_to_tensor(rank_index), max_ranks, training)
         for i in range(len(rank_index)):
             expected = np.zeros(max_ranks)
