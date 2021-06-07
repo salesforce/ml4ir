@@ -20,11 +20,11 @@ class TestFixedAdditivePositionalBias(unittest.TestCase):
 
     def test_one_hot_conversion(self):
         """calling additive positional bias"""
-        self.test_additive_positional_bias_call([5, 4], 5, True)
-        self.test_additive_positional_bias_call([1,3], 5, False)
-        self.test_additive_positional_bias_call([1,2], 2, True)
-        self.test_additive_positional_bias_call([2], 2, False)
-        self.test_additive_positional_bias_call([2,4,6,8], 10, True)
+        self.calling_additive_positional_bias([5, 4], 5, True)
+        self.calling_additive_positional_bias([1,3], 5, False)
+        self.calling_additive_positional_bias([1,2], 2, True)
+        self.calling_additive_positional_bias([2], 2, False)
+        self.calling_additive_positional_bias([2,4,6,8], 10, True)
 
 
 if __name__ == "__main__":
