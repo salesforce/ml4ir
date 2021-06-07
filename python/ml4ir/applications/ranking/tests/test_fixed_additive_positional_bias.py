@@ -8,12 +8,11 @@ warnings.filterwarnings("ignore")
 
 
 class TestFixedAdditivePositionalBias(unittest.TestCase):
-    def setUp(self):
-        self.positional_bias = FixedAdditivePositionalBias()
 
     def one_hot_conversion(self, rank_index, max_ranks, training):
         """Test one-hot tensor conversion"""
-        one_hot = self.positional_bias.convert_to_one_hot(tf.convert_to_tensor(rank_index), max_ranks, training)
+        positional_bias = FixedAdditivePositionalBias(max_ranks)
+        one_hot = positional_bias.convert_to_one_hot(tf.convert_to_tensor(rank_index), training)
         for i in range(len(rank_index)):
             expected = np.zeros(max_ranks)
             if training:

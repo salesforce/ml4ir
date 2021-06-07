@@ -77,12 +77,13 @@ class LocalIO(FileIO):
 
         try:
             df: pd.DataFrame = pd.read_csv(
-                fp,
+                #fp,
+                fp.name,
                 sep=sep,
                 index_col=index_col,
                 skipinitialspace=True,
                 quotechar='"',
-                escapechar="\\",
+                #escapechar="\\",
                 error_bad_lines=False,
                 warn_bad_lines=True,
                 engine="c",
