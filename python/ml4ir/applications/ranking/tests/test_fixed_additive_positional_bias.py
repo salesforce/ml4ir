@@ -2,29 +2,29 @@ import unittest
 import warnings
 import tensorflow as tf
 from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedAdditivePositionalBias
-import numpy as np
 
 warnings.filterwarnings("ignore")
 
 
 class TestFixedAdditivePositionalBias(unittest.TestCase):
 
-    def one_hot_conversion(self, rank_index, max_ranks, training):
-        """Test one-hot tensor conversion"""
+    def test_additive_positional_bias_call(self, rank_index, max_ranks, training):
+        """Testing to invoke additive positional bias"""
         positional_bias = FixedAdditivePositionalBias(max_ranks)
-        one_hot = positional_bias.convert_to_one_hot(tf.convert_to_tensor(rank_index), training)
-        for i in range(len(rank_index)):
-            expected = np.zeros(max_ranks)
-            if training:
-                expected[rank_index[i] - 1] = 1
-            assert (one_hot[i].numpy() == expected).all()
+        biases = positional_bias(tf.convert_to_tensor(rank_index), training)
+        if not training:
+            assert tf.math.reduce_sum(biases).numpy() == 0.0
+        else:
+            for i in range(len(rank_index)):
+                assert biases[i][0].numpy() == positional_bias.weights[0][rank_index[i] - 1].numpy()[0]
 
     def test_one_hot_conversion(self):
-        self.one_hot_conversion([1,3], 5, False)
-        self.one_hot_conversion([5,4], 5, True)
-        self.one_hot_conversion([1,2], 2, True)
-        self.one_hot_conversion([2], 2, False)
-        self.one_hot_conversion([2,4,6,8], 10, True)
+        """calling additive positional bias"""
+        self.test_additive_positional_bias_call([5, 4], 5, True)
+        self.test_additive_positional_bias_call([1,3], 5, False)
+        self.test_additive_positional_bias_call([1,2], 2, True)
+        self.test_additive_positional_bias_call([2], 2, False)
+        self.test_additive_positional_bias_call([2,4,6,8], 10, True)
 
 
 if __name__ == "__main__":
