@@ -13,6 +13,8 @@ if [ -z "$2" ]
     export PYTHONPATH=.
     EXECUTOR="python"
 else
+  # docker-build to ensure to get all the local modifications tested
+  docker-compose build
   EXECUTOR="docker-compose run ml4ir python"
 fi
 
