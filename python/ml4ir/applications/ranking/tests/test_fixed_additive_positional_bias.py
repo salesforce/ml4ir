@@ -8,8 +8,8 @@ warnings.filterwarnings("ignore")
 
 class TestFixedAdditivePositionalBias(unittest.TestCase):
 
-    def calling_additive_positional_bias(self, rank_index, max_ranks, training):
-        """Testing to invoke additive positional bias"""
+    def apply_additive_positional_bias(self, rank_index, max_ranks, training):
+        """Tests if the positional bias is applied as expected during training (training=True) or evaluation."""
         positional_bias = FixedAdditivePositionalBias(max_ranks)
         biases = positional_bias(tf.convert_to_tensor(rank_index), training)
         if not training:
