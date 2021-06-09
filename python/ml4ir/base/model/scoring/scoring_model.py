@@ -207,7 +207,7 @@ class RelevanceScorer(ScorerBase):
             model_config=self.model_config,
             feature_config=self.feature_config,
             file_io=self.file_io,
-        )(train_features)
+        )(train_features, metadata_features)
 
     def final_activation_op(self, scores, metadata_features):
         """

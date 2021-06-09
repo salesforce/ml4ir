@@ -307,6 +307,26 @@ class FeatureConfig:
         """
         return self._get_key_or_dict(self.mask, key=key)
 
+    def get_feature_by_node_name(self, name: str):
+        """
+        Getter method for feature by node name in FeatureConfig object
+
+        Parameters
+        ----------
+        name : str
+            Name of the feature node name to fetch
+
+        Returns
+        -------
+        dict
+            Feature config dictionary for the name of the feature passed
+        """
+        for feature_info in self.get_all_features():
+            if feature_info["node_name"] == name:
+                return feature_info
+
+        raise KeyError("No feature with node name {} in FeatureConfig".format(name))
+
     def get_feature(self, name: str):
         """
         Getter method for feature in FeatureConfig object
@@ -326,6 +346,26 @@ class FeatureConfig:
                 return feature_info
 
         raise KeyError("No feature named {} in FeatureConfig".format(name))
+
+    def feature_exists(self, name: str, trainable=True):
+        """
+        Check if a feature exists in FeatureConfig object
+
+        Parameters
+        ----------
+        name : str
+            Name of the feature to fetch
+
+        Returns
+        -------
+        Boolean
+            If a feature exists
+        """
+        for feature_info in self.get_all_features():
+            if feature_info["name"] == name and feature_info["trainable"] == trainable:
+                return True
+
+        return False
 
     def set_feature(self, name: str, new_feature_info: dict):
         """
@@ -951,7 +991,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             inputs[node_name] = Input(
                 shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
             )
-
         return inputs
 
     def create_dummy_protobuf(self, num_records=1, required_only=False):
