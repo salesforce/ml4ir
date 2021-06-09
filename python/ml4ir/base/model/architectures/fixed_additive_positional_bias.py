@@ -14,6 +14,14 @@ class FixedAdditivePositionalBias(layers.Layer):
     This is an approach we have found useful for logged data as these are presented to the user with some order and
     there is a presentation bias (that this technique tries to model).
     When the data is labeled with actual graded relevance annotations then this technique is not recommended.
+
+    To trigger this technique add this section to the model_config.yaml file:
+
+    positional_bias_handler:
+        key: fixed_additive_positional_bias
+        max_ranks_count: x
+
+    Where x is the maximum number of documents per query.
     """
     def __init__(self, max_ranks):
         super(FixedAdditivePositionalBias, self).__init__()
