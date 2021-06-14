@@ -35,3 +35,9 @@ class LossTypeKey(Key):
     POINTWISE = "pointwise"
     PAIRWISE = "pairwise"
     LISTWISE = "listwise"
+
+
+class PositionalBiasHandler(Key):
+    """Types of models to handle positional bias"""
+
+    FIXED_ADDITIVE_POSITIONAL_BIAS = "fixed_additive_positional_bias"

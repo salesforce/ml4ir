@@ -92,7 +92,6 @@ def get_sequence_example_proto(group, context_features, sequence_features):
     """
     sequence_features_dict = dict()
     context_features_dict = dict()
-
     for feature_info in context_features:
         feature_name = feature_info["name"]
         feature_fn = _get_feature_fn(feature_info["dtype"])

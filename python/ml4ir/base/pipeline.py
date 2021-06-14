@@ -27,9 +27,9 @@ from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
-from ml4ir.base.features.preprocessing import convert_label_to_clicks
-
 from typing import List
+
+
 
 
 class RelevancePipeline(object):
