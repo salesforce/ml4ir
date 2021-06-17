@@ -438,8 +438,9 @@ class RelevancePipeline(object):
 
     def pre_processing_step(self):
         """
-        Performs any pre processing step (such as copying data) by custom class inheriting this class, which would
-        override this method.
+        Performs arbitrary pre-processing steps such as copying or transforming data that the rest of the code can not
+        accommodate. It serves as a placeholder without an explicit implementation (returns self) in the base pipeline.
+        We expect that users can extend it in their custom pipelines.
         """
         return self
 
