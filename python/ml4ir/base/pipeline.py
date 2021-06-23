@@ -1,5 +1,4 @@
 import socket
-import ast
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -20,16 +19,12 @@ from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.spark_io import SparkIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
-from ml4ir.base.config.keys import OptimizerKey
 from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
-from ml4ir.base.config.keys import TFRecordTypeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
 from typing import List
-
-
 
 
 class RelevancePipeline(object):
@@ -288,6 +283,8 @@ class RelevancePipeline(object):
             train_metrics = dict()
             test_metrics = dict()
 
+            self.pre_processing_step()
+
             # Build dataset
             relevance_dataset = self.get_relevance_dataset()
             self.logger.info("Relevance Dataset created")
@@ -438,6 +435,14 @@ class RelevancePipeline(object):
         self.finish(job_status, job_info)
 
         return experiment_tracking_dict
+
+    def pre_processing_step(self):
+        """
+        Performs arbitrary pre-processing steps such as copying or transforming data that the rest of the code can not
+        accommodate. It serves as a placeholder without an explicit implementation (returns self) in the base pipeline.
+        We expect that users can extend it in their custom pipelines.
+        """
+        return self
 
     def finish(self, job_status, job_info):
         """
