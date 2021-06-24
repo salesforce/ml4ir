@@ -16,7 +16,7 @@ def getReadMe():
 setup(
     name="ml4ir",
     packages=find_namespace_packages(include=["ml4ir.*"]),
-    version="0.1.2",
+    version="0.1.3",
     description="Machine Learning libraries for Information Retrieval",
     long_description=getReadMe(),
     long_description_content_type="text/markdown",
@@ -28,8 +28,10 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
     ],
     include_package_data=True,
-    data_files=[("ml4ir/build", ["ml4ir/build/Dockerfile", "ml4ir/build/run_driver.sh"])],
     license="ASL 2.0",
     python_requires=">=3.7",
     install_requires=load_dependencies(),
+    extras_require={
+        "all": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
+    }
 )
