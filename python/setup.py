@@ -32,6 +32,6 @@ setup(
     python_requires=">=3.7",
     install_requires=load_dependencies(),
     extras_require={
-        "spark": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
+        "full": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
     }
 )
