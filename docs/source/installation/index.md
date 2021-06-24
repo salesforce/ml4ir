@@ -13,7 +13,13 @@ ml4ir can be installed as a pip package by using the following command
 pip install ml4ir
 ```
 
-This will install **[ml4ir-0.0.2](https://pypi.org/project/ml4ir/)** (the current version) from PyPI.
+This will install **[ml4ir-0.1.3](https://pypi.org/project/ml4ir/)** (the current version) from PyPI.
+
+To use pre-built pipelines that come with ml4ir, make sure to install it with the pyspark dependency as follows
+
+```
+pip install ml4ir[spark]
+```
 
 ### Using ml4ir as a toolkit or contributing to ml4ir
 
