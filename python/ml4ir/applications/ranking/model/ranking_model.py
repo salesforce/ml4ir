@@ -281,6 +281,19 @@ class RankingModel(RelevanceModel):
             pad_sequence=pad_sequence,
         )
 
+        # Logging positional biases
+        for layer in self.model.layers:
+            if layer.name == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
+                positional_bias_coefficients = pd.DataFrame(
+                    [{'rank': i + 1, 'positional_bias': layer.get_weights()[0][i][0]}
+                     for i in range(len(layer.get_weights()[0]))]
+                )
+                self.file_io.write_df(
+                    positional_bias_coefficients,
+                    outfile=os.path.join(models_dir, "positional_biases.csv"),
+                    index=False
+                )
+
 
 class LinearRankingModel(RankingModel):
     """
@@ -358,18 +371,6 @@ class LinearRankingModel(RankingModel):
             outfile=os.path.join(models_dir, "coefficients.csv"),
             index=False
         )
-        # Logging positional biases
-        for layer in self.model.layers:
-            if layer.name == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
-                positional_bias_coefficients = pd.DataFrame(
-                    [{'rank': i + 1, 'positional_bias': layer.get_weights()[0][i][0]}
-                     for i in range(len(layer.get_weights()[0]))]
-                )
-                self.file_io.write_df(
-                    positional_bias_coefficients,
-                    outfile=os.path.join(models_dir, "positional_biases.csv"),
-                    index=False
-                )
 
         # Call super save method to persist the SavedModel files
         super().save(
