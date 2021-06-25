@@ -1,10 +1,12 @@
 from setuptools import find_namespace_packages, setup
 
 
-def load_dependencies():
+def load_required_dependencies():
     with open("requirements.txt") as f:
         required = f.read().splitlines()
-    return required
+
+    # Remove pyspark from required
+    return [package for package in required if not package.startswith("pyspark")]
 
 
 def getReadMe():
@@ -30,7 +32,7 @@ setup(
     include_package_data=True,
     license="ASL 2.0",
     python_requires=">=3.7",
-    install_requires=load_dependencies(),
+    install_requires=load_required_dependencies(),
     extras_require={
         "all": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
     }
