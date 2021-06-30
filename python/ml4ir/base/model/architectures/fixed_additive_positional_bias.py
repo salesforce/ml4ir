@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from tensorflow.keras import regularizers, initializers
+from tensorflow.keras import regularizers
 
 
 class FixedAdditivePositionalBias(layers.Layer):
@@ -32,7 +32,6 @@ class FixedAdditivePositionalBias(layers.Layer):
                      kernel_regularizer=regularizers.l1_l2(l1=l1_coeff, l2=l2_coeff),
                      activation=None,
                      use_bias=False)
-        assert type(self.dense.kernel_initializer) == type(initializers.get(kernel_initializer))
         self.max_ranks = max_ranks
 
     def call(self, inputs, training=False):
