@@ -1,12 +1,18 @@
 from setuptools import find_namespace_packages, setup
+import yaml
+from itertools import chain
+
+
+optional_requirements_spec = yaml.safe_load(open("optional_requirements.yaml"))
 
 
 def load_required_dependencies():
     with open("requirements.txt") as f:
         required = f.read().splitlines()
 
-    # Remove pyspark from required
-    return [package for package in required if not package.startswith("pyspark")]
+    # Remove optional requirements from required dependencies
+    optional_requirements = set(chain(*optional_requirements_spec.values()))
+    return [package for package in required if not optional_requirements]
 
 
 def getReadMe():
@@ -33,7 +39,5 @@ setup(
     license="ASL 2.0",
     python_requires=">=3.7",
     install_requires=load_required_dependencies(),
-    extras_require={
-        "all": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
-    }
+    extras_require=optional_requirements_spec
 )
