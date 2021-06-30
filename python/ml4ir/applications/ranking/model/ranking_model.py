@@ -3,7 +3,6 @@ from tensorflow import data
 import os
 import pandas as pd
 import numpy as np
-import scipy
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
@@ -291,7 +290,7 @@ class RankingModel(RelevanceModel):
                      for i in range(len(layer.get_weights()[0]))]
                 )
                 positional_biases = positional_bias_coefficients['positional_bias']
-                softmax_positional_biases = scipy.special.softmax(positional_biases)
+                softmax_positional_biases = np.exp(positional_biases) / np.sum(np.exp(positional_biases), axis=0)
                 positional_bias_coefficients['softmax_positional_bias'] = softmax_positional_biases
                 self.file_io.write_df(
                     positional_bias_coefficients,
