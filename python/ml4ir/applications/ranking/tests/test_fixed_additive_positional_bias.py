@@ -27,12 +27,19 @@ class TestFixedAdditivePositionalBias(unittest.TestCase):
         self.apply_additive_positional_bias([2], 2, False)
         self.apply_additive_positional_bias([2,4,6,8], 10, True)
 
-    def test_weight_initialization(self):
+    def test_zeros_weight_initialization(self):
         """Testing weight initializations to zeros"""
         positional_bias = FixedAdditivePositionalBias(max_ranks=5, kernel_initializer='Zeros')
         positional_bias(tf.constant([1.]))
         weights = positional_bias.dense.get_weights()
         assert all([w == 0. for w in weights[0]])
+
+    def test_non_zeros_weight_initialization(self):
+        """Testing weight initializations to non zeros"""
+        positional_bias = FixedAdditivePositionalBias(max_ranks=5, kernel_initializer='glorot_uniform')
+        positional_bias(tf.constant([1.]))
+        weights = positional_bias.dense.get_weights()
+        assert any([w != 0. for w in weights[0]])
 
 
 
