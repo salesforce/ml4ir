@@ -9,6 +9,7 @@ from tensorflow.keras import metrics as kmetrics
 import pandas as pd
 import tensorflow as tf
 import numpy as np
+from scipy import stats
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -31,6 +32,28 @@ class RelevanceModelConstants:
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
     CHECKPOINT_FNAME = "checkpoint.tf"
 
+
+def perform_click_rank_dist_paired_t_test(mean, std, n):
+    """
+    Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+    """
+    t_test_stat = mean / (std/np.sqrt(n))
+    df = n - 1
+    pvalue = 1 - stats.t.cdf(np.abs(t_test_stat), df=df)
+    return t_test_stat, pvalue
+
+def compute_stats_from_stream(diff, count, mean, M2):
+    """
+    Compute the running mean, variance for a stream of data.
+    src: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+    """
+    for i in range(len(diff)):
+        count += 1
+        delta = diff[i] - mean
+        mean += delta / count
+        delta2 = diff[i] - mean
+        M2 += delta * delta2
+    return count, mean, M2
 
 class RelevanceModel:
     def __init__(
@@ -489,6 +512,8 @@ class RelevanceModel:
 
         predictions_df_list = list()
         batch_count = 0
+        # defining variables to compute running mean and variance for t-test computations
+        agg_count, agg_mean, agg_M2 = 0, 0, 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
             if logs_dir:
@@ -504,6 +529,12 @@ class RelevanceModel:
                 else:
                     # If writing first time, write headers to CSV file
                     predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+
+                # Accumulating statistics for t-test calculation
+                clicked_records = predictions_df[predictions_df['clicked'] == 1.0]
+                diff = (clicked_records['new_rank'] - clicked_records['fr']).to_list()
+                agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+
             else:
                 predictions_df_list.append(predictions_df)
 
@@ -517,6 +548,15 @@ class RelevanceModel:
         else:
             predictions_df = pd.concat(predictions_df_list)
 
+        # performing click rank distribution t-test
+        self.logger.info("Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternate hypothesis: There is a difference between the two click distributions")
+        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(self.logger, agg_mean, np.sqrt(agg_M2/agg_count), agg_count)
+        p_val_threshold = 0.1
+        self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
+        if pvalue < p_val_threshold:
+            self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(p_val_threshold))
+        else:
+            self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(p_val_threshold))
         return predictions_df
 
     def evaluate(
