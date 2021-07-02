@@ -1,0 +1,26 @@
+# NOTE: Add dependencies here which the base ml4ir library can run without.
+# Packages mentioned here will be removed from the install_requires for ml4ir setup
+# and instead will be specified under the extras_require argument for an optional install
+#
+# Each item in this YAML file defines a unique version of ml4ir that can be installed
+#
+# Syntax
+# ------
+# Define an optional version of ml4ir in this file as below
+# optional_version:
+#   - package==version
+#   - package==version
+#   ...
+#   - package==version
+#
+# To install a specific optional version of ml4ir, run
+# pip install ml4ir[optional_version]
+#
+# Example
+# ------- 
+# To install ml4ir `all`, run pip install ml4ir[all]
+all:
+  - pyspark==3.0.1  # required to run ml4ir.base.pipeline
+pyspark:
+  - pyspark==3.0.1  # required to support pyspark data read
+# Add other optional ml4ir dependencies here

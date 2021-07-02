@@ -1,1 +1,5 @@
 include README.md LICENSE.txt
+include ml4ir/build/*
+include ml4ir/base/config/*.yaml
+include ml4ir/applications/ranking/tests/data/*
+include ml4ir/applications/classification/tests/data/*
