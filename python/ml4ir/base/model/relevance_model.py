@@ -549,14 +549,15 @@ class RelevanceModel:
             predictions_df = pd.concat(predictions_df_list)
 
         # performing click rank distribution t-test
-        self.logger.info("Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternate hypothesis: There is a difference between the two click distributions")
-        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, np.sqrt(agg_M2/agg_count), agg_count)
-        p_val_threshold = 0.1
-        self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
-        if pvalue < p_val_threshold:
-            self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(p_val_threshold))
-        else:
-            self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(p_val_threshold))
+        if agg_count >= 2:
+            self.logger.info("Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternate hypothesis: There is a difference between the two click distributions")
+            t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, np.sqrt(agg_M2/agg_count), agg_count)
+            p_val_threshold = 0.1
+            self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
+            if pvalue < p_val_threshold:
+                self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(p_val_threshold))
+            else:
+                self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(p_val_threshold))
         return predictions_df
 
     def evaluate(
