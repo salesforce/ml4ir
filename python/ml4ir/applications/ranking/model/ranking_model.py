@@ -1,7 +1,10 @@
 import tensorflow as tf
 from tensorflow import data
 import os
+import sys
 import pandas as pd
+from scipy import stats
+import numpy as np
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
@@ -17,6 +20,65 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
+
+
+def perform_click_rank_dist_paired_t_test(mean, variance, n):
+    """
+    Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+    Parameters
+    ----------
+    mean: float
+        The mean of the rank differences for the entire dataset
+    variance: float
+        The variance of the rank differences for the entire dataset
+    n: int
+        The number of samples in the entire dataset
+
+    Returns
+    -------
+    t_test_stat: float
+        The t-test statistic
+    pvalue: float
+        The p-value of the t-test statistic
+    """
+    t_test_stat = mean / (np.sqrt(variance/n))
+    df = n - 1
+    pvalue = 1 - stats.t.cdf(np.abs(t_test_stat), df=df)
+    return t_test_stat*2, pvalue*2  # multiplying by 2 for two sided t-test
+
+
+def compute_stats_from_stream(diff, count, mean, M2):
+    """
+    Compute the running mean, variance for a stream of data.
+    src: Welford's online algorithm: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+
+    Parameters
+    ----------
+    diff: List
+        A batch of differences in rankings
+    count: int
+        Aggregates the number of samples seen so far
+    mean: float
+        Accumulates the mean of the rank differences so far
+    M2: float
+        Aggregates the squared distance from the mean
+
+    Returns
+    -------
+    count: int
+        The updated aggregate sample count
+    mean: float
+        The updated mean of the rank differences so far
+    M2: float
+        The updated squared distance from the mean
+    """
+    for i in range(len(diff)):
+        count += 1
+        delta = diff[i] - mean
+        mean += delta / count
+        delta2 = diff[i] - mean
+        M2 += delta * delta2
+    return count, mean, M2
 
 
 class RankingModel(RelevanceModel):
@@ -55,13 +117,72 @@ class RankingModel(RelevanceModel):
         """
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
-        return super().predict(
-            test_dataset=test_dataset,
+        if logs_dir:
+            outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
+            # Delete file if it exists
+            self.file_io.rm_file(outfile)
+
+        _predict_fn = get_predict_fn(
+            model=self.model,
+            tfrecord_type=self.tfrecord_type,
+            feature_config=self.feature_config,
             inference_signature=inference_signature,
+            is_compiled=self.is_compiled,
+            output_name=self.output_name,
+            features_to_return=self.feature_config.get_features_to_log(),
             additional_features=additional_features,
-            logs_dir=logs_dir,
-            logging_frequency=logging_frequency,
+            max_sequence_size=self.max_sequence_size,
         )
+
+        predictions_df_list = list()
+        batch_count = 0
+        # defining variables to compute running mean and variance for t-test computations
+        agg_count, agg_mean, agg_M2 = 0, 0, 0
+        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+            predictions_df = pd.DataFrame(predictions_dict)
+            if logs_dir:
+                np.set_printoptions(
+                    formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+                for col in predictions_df.columns:
+                    if isinstance(predictions_df[col].values[0], bytes):
+                        predictions_df[col] = predictions_df[col].str.decode('utf8')
+
+                if os.path.isfile(outfile):
+                    predictions_df.to_csv(outfile, mode="a", header=False, index=False)
+                else:
+                    # If writing first time, write headers to CSV file
+                    predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+
+                # Accumulating statistics for t-test calculation
+                clicked_records = predictions_df[predictions_df['clicked'] == 1.0]
+                diff = (clicked_records['new_rank'] - clicked_records['fr']).to_list()
+                agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+
+            else:
+                predictions_df_list.append(predictions_df)
+
+            batch_count += 1
+            if batch_count % logging_frequency == 0:
+                self.logger.info("Finished predicting scores for {} batches".format(batch_count))
+
+        predictions_df = None
+        if logs_dir:
+            self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            predictions_df = pd.concat(predictions_df_list)
+
+        # performing click rank distribution t-test
+        if agg_count >= 2:
+            self.logger.info("Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
+            t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, np.sqrt(agg_M2/(agg_count-1)), agg_count)
+            p_val_threshold = 0.1
+            self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
+            if pvalue < p_val_threshold:
+                self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(p_val_threshold))
+            else:
+                self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(p_val_threshold))
+        return predictions_df
 
     def evaluate(
         self,
