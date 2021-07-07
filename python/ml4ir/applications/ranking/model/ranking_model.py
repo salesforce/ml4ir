@@ -155,8 +155,8 @@ class RankingModel(RelevanceModel):
                     predictions_df.to_csv(outfile, mode="w", header=True, index=False)
 
                 # Accumulating statistics for t-test calculation
-                clicked_records = predictions_df[predictions_df['clicked'] == 1.0]
-                diff = (clicked_records['new_rank'] - clicked_records['fr']).to_list()
+                clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
+                diff = (clicked_records[RankingConstants.NEW_RANK] - clicked_records[self.feature_config.get_rank("node_name")]).to_list()
                 agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             else:
