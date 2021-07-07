@@ -137,6 +137,10 @@ class RelevancePipeline(object):
         # Set random seeds
         self.set_seeds()
 
+        self.logger.info("Running pre-processing step.")
+        self.pre_processing_step()
+        self.logger.info("pre-processing step done")
+
         # Read/Parse feature_config and model_config YAML
         feature_config_dict = self.file_io.read_yaml(args.feature_config)
         model_config_dict = self.file_io.read_yaml(args.model_config)
@@ -282,8 +286,6 @@ class RelevancePipeline(object):
             job_info = ""
             train_metrics = dict()
             test_metrics = dict()
-
-            self.pre_processing_step()
 
             # Build dataset
             relevance_dataset = self.get_relevance_dataset()

@@ -1,10 +1,18 @@
 from setuptools import find_namespace_packages, setup
+import yaml
+from itertools import chain
 
 
-def load_dependencies():
+optional_requirements_spec = yaml.safe_load(open("optional_requirements.yaml"))
+
+
+def load_required_dependencies():
     with open("requirements.txt") as f:
         required = f.read().splitlines()
-    return required
+
+    # Remove optional requirements from required dependencies
+    optional_requirements = set(chain(*optional_requirements_spec.values()))
+    return [package for package in required if not optional_requirements]
 
 
 def getReadMe():
@@ -16,7 +24,7 @@ def getReadMe():
 setup(
     name="ml4ir",
     packages=find_namespace_packages(include=["ml4ir.*"]),
-    version="0.1.3",
+    version="0.1.4",
     description="Machine Learning libraries for Information Retrieval",
     long_description=getReadMe(),
     long_description_content_type="text/markdown",
@@ -30,8 +38,6 @@ setup(
     include_package_data=True,
     license="ASL 2.0",
     python_requires=">=3.7",
-    install_requires=load_dependencies(),
-    extras_require={
-        "all": ["pyspark==3.0.1"]  # Used by ml4ir.base.io.spark_io
-    }
+    install_requires=load_required_dependencies(),
+    extras_require=optional_requirements_spec
 )
