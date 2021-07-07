@@ -115,6 +115,5 @@ class TestTtestCalculation(unittest.TestCase):
         self.t_test_calculation(batch_a, batch_b, batch_size)
 
 
-
 if __name__ == "__main__":
     unittest.main()
