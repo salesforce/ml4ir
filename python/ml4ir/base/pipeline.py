@@ -344,6 +344,7 @@ class RelevancePipeline(object):
                     additional_features={},
                     logs_dir=self.logs_dir_local,
                     logging_frequency=self.args.logging_frequency,
+                    rank_distribution_t_test_pvalue_threshold=self.args.rank_distribution_t_test_pvalue_threshold,
                 )
 
             # Save model
