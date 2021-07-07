@@ -3,8 +3,8 @@ from tensorflow import data
 import os
 import sys
 import pandas as pd
-from scipy import stats
 import numpy as np
+from scipy import stats
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
