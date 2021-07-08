@@ -179,9 +179,9 @@ class RankingModel(RelevanceModel):
             t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, np.sqrt(agg_M2/(agg_count-1)), agg_count)
             self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
             if pvalue < RankingConstants.rank_distribution_t_test_pvalue_threshold:
-                self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(rank_distribution_t_test_pvalue_threshold))
+                self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(RankingConstants.rank_distribution_t_test_pvalue_threshold))
             else:
-                self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(rank_distribution_t_test_pvalue_threshold))
+                self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(RankingConstants.rank_distribution_t_test_pvalue_threshold))
         return predictions_df
 
     def evaluate(
