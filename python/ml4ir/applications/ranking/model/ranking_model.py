@@ -90,7 +90,7 @@ class RankingModel(RelevanceModel):
         additional_features: dict = {},
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
-        rank_distribution_t_test_pvalue_threshold: float = 0.1,
+        #rank_distribution_t_test_pvalue_threshold: float = 0.1,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -120,7 +120,7 @@ class RankingModel(RelevanceModel):
             made with the `RelevanceModel`
         """
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
-
+        rank_distribution_t_test_pvalue_threshold = 0.1
         if logs_dir:
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
