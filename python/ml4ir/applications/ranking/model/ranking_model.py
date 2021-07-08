@@ -21,6 +21,7 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
+    rank_distribution_t_test_pvalue_threshold = 0.1
 
 
 def perform_click_rank_dist_paired_t_test(mean, variance, n):
@@ -90,7 +91,6 @@ class RankingModel(RelevanceModel):
         additional_features: dict = {},
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
-        #rank_distribution_t_test_pvalue_threshold: float = 0.1,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -110,8 +110,6 @@ class RankingModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
-        rank_distribution_t_test_pvalue_threshold: float
-            The p-value threshold for measuring the t-test difference between the rank distribution of the new model Vs. the old model.
 
         Returns
         -------
@@ -120,7 +118,6 @@ class RankingModel(RelevanceModel):
             made with the `RelevanceModel`
         """
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
-        rank_distribution_t_test_pvalue_threshold = 0.1
         if logs_dir:
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
@@ -181,7 +178,7 @@ class RankingModel(RelevanceModel):
             self.logger.info("Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
             t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, np.sqrt(agg_M2/(agg_count-1)), agg_count)
             self.logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
-            if pvalue < rank_distribution_t_test_pvalue_threshold:
+            if pvalue < RankingConstants.rank_distribution_t_test_pvalue_threshold:
                 self.logger.info("With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(rank_distribution_t_test_pvalue_threshold))
             else:
                 self.logger.info("With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(rank_distribution_t_test_pvalue_threshold))
