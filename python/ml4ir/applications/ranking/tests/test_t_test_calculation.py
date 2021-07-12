@@ -2,7 +2,7 @@ import numpy as np
 from scipy import stats
 import unittest
 import warnings
-from ml4ir.applications.ranking.model.ranking_model import perform_click_rank_dist_paired_t_test, compute_stats_from_stream
+from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream
 
 warnings.filterwarnings("ignore")
 
