@@ -6,7 +6,7 @@ from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_t
 
 warnings.filterwarnings("ignore")
 
-
+np.random.seed(123)
 class TestTtestCalculation(unittest.TestCase):
     """
     Testing the calculation of paired t-test statistic and its p-value.
@@ -21,9 +21,6 @@ class TestTtestCalculation(unittest.TestCase):
             batch_b = b_bucket[bcount*batch_size : (bcount+1)*(batch_size)]
             d = batch_a - batch_b
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(d, agg_count, agg_mean, agg_M2)
-
-            assert np.isclose(d.mean(), agg_mean, atol=0.0001)
-            assert np.isclose(d.var(), agg_M2/(agg_count), atol=0.0001)
 
         t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, (agg_M2/(agg_count-1)), agg_count)
         assert np.isclose(expected_pvalue, pvalue, atol=0.0001)

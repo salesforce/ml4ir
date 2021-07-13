@@ -82,7 +82,7 @@ def t_test_log_results(agg_count, agg_mean, agg_M2, rank_distribution_t_test_pva
        logger.info(
             "Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean,
-                                                                    np.sqrt(agg_M2 / (agg_count - 1)),
+                                                                    (agg_M2 / (agg_count - 1)),
                                                                     agg_count)
        logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
        if pvalue < rank_distribution_t_test_pvalue_threshold:
