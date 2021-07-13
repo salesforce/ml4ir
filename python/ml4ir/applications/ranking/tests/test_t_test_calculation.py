@@ -22,6 +22,9 @@ class TestTtestCalculation(unittest.TestCase):
             d = batch_a - batch_b
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(d, agg_count, agg_mean, agg_M2)
 
+            assert np.isclose(d.mean(), agg_mean, atol=0.0001)
+            assert np.isclose(d.var(), agg_M2/(agg_count), atol=0.0001)
+
         t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, (agg_M2/(agg_count-1)), agg_count)
         assert np.isclose(expected_pvalue, pvalue, atol=0.0001)
 
