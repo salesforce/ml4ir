@@ -312,7 +312,6 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
-                    #kfold=self.args.kfold,
                 )
 
             if self.args.execution_mode in {

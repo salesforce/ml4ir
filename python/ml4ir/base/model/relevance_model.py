@@ -404,7 +404,6 @@ class RelevanceModel:
         )
 
         if self.is_compiled:
-
             history = self.model.fit(
                 x=dataset.train,
                 validation_data=dataset.validation,

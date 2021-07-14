@@ -30,7 +30,7 @@ class RankingPipeline(RelevancePipeline):
     """Base class that defines a pipeline to train, evaluate and save
     a RankingModel using ml4ir"""
 
-    def __init__(self, args: Namespace,):
+    def __init__(self, args: Namespace):
         """
         Constructor to create a RelevancePipeline object to train, evaluate
         and save a model on ml4ir.
