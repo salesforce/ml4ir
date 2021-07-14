@@ -265,7 +265,7 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    def run(self):
+    def run(self, relevance_dataset=None):
         """
         Run the pipeline to train, evaluate and save the model
 
@@ -288,8 +288,9 @@ class RelevancePipeline(object):
             test_metrics = dict()
 
             # Build dataset
-            relevance_dataset = self.get_relevance_dataset()
-            self.logger.info("Relevance Dataset created")
+            if not relevance_dataset:
+                relevance_dataset = self.get_relevance_dataset()
+                self.logger.info("Relevance Dataset created")
 
             # Build model
             relevance_model = self.get_relevance_model()
@@ -311,6 +312,7 @@ class RelevancePipeline(object):
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
+                    #kfold=self.args.kfold,
                 )
 
             if self.args.execution_mode in {
@@ -469,7 +471,7 @@ class RelevancePipeline(object):
             f.write(job_info)
 
         # Delete temp data directories
-        if self.data_format == DataFormatKey.CSV:
+        if self.data_format == DataFormatKey.CSV and self.args.kfold <= 1:
             self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_DATA)
         self.local_io.rm_dir(DefaultDirectoryKey.TEMP_MODELS)

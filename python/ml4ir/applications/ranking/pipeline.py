@@ -1,5 +1,9 @@
 import sys
 import ast
+import os
+import pathlib
+import pandas as pd
+from scipy import stats
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
@@ -26,7 +30,7 @@ class RankingPipeline(RelevancePipeline):
     """Base class that defines a pipeline to train, evaluate and save
     a RankingModel using ml4ir"""
 
-    def __init__(self, args: Namespace):
+    def __init__(self, args: Namespace,):
         """
         Constructor to create a RelevancePipeline object to train, evaluate
         and save a model on ml4ir.
@@ -150,13 +154,81 @@ class RankingPipeline(RelevancePipeline):
             )
 
 
+def kfold_analysis(original_logs_dir, run_id, num_folds, logger):
+    """
+    Aggregate results of the k-fold runs and perform t-test on the results.
+    """
+    rows = []
+    pvalue_threshold = 0.1
+    metrics = ['train_old_MRR', 'train_new_MRR', 'val_old_MRR', 'val_new_MRR', 'test_old_MRR', 'test_new_MRR']
+    for i in range(num_folds):
+        row = {"fold":i}
+        logs_dir = pathlib.Path(original_logs_dir) / run_id / "fold_{}".format(i) / run_id
+        with open(logs_dir/"_SUCCESS", 'r') as f:
+            for line in f:
+                parts = line.split(',')
+                if parts[0] in metrics:
+                    row[parts[0]] = float(parts[1])
+        rows.append(row)
+    results = pd.DataFrame(rows)
+    logger.info(results)
+    # calculate statistical paired t-test
+    for dataset in ['train', 'val', 'test']:
+        t_test_stat, pvalue = stats.ttest_rel(results["{}_old_MRR".format(dataset)], results["{}_new_MRR".format(dataset)])
+        logger.info("{}_t_test_stat={}".format(dataset, t_test_stat))
+        logger.info("{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue<pvalue_threshold))
+
+
+def kfold_cross_validation_run(args):
+    """
+    Performs K-fold cross validation
+    """
+    rp = RankingPipeline(args=args)
+    rp.logger.info("K-fold Cross Validation mode starting with k={}".format(args.kfold))
+    rp.logger.info("Reading datasets ...")
+    relevance_dataset = rp.get_relevance_dataset()
+    rp.logger.info("Relevance Dataset created")
+    all_data = relevance_dataset.train.concatenate(relevance_dataset.validation)
+    all_data = all_data.unbatch()
+    folds = args.kfold
+    original_logs_dir = str(rp.args.logs_dir)
+    original_models_dir = str(rp.args.models_dir)
+    original_run_id = rp.run_id
+    rp.logger.info("Starting K-fold Cross Validation with k={}".format(args.kfold))
+    for i in range(folds):  # indexes (folds)
+        rp.logger.info("fold={}".format(i))
+        logs_dir = pathlib.Path(original_logs_dir) / rp.args.run_id / "fold_{}".format(i)
+        models_dir = pathlib.Path(original_models_dir) / rp.args.run_id / "fold_{}".format(i)
+        args.logs_dir = pathlib.Path(logs_dir).as_posix()
+        args.models_dir = pathlib.Path(models_dir).as_posix()
+        validation = all_data.shard(folds, i)
+        training_idx = list(range(folds))
+        training_idx.remove(i)
+        training = None
+        for j in training_idx:
+            if not training:
+                training = all_data.shard(folds, j)
+            else:
+                training = training.concatenate(all_data.shard(folds, j))
+
+        relevance_dataset.validation = validation.batch(args.batch_size, drop_remainder=False)
+        relevance_dataset.train = training.batch(args.batch_size, drop_remainder=False)
+
+        pipeline = RankingPipeline(args=args)
+        pipeline.run(relevance_dataset=relevance_dataset)
+    rp.local_io.rm_dir(os.path.join(rp.data_dir_local, "tfrecord"))
+    kfold_analysis(original_logs_dir, original_run_id, folds, rp.logger)
+
+
 def main(argv):
     # Define args
     args: Namespace = get_args(argv)
-
-    # Initialize Relevance Pipeline and run in train/inference mode
-    rp = RankingPipeline(args=args)
-    rp.run()
+    if args.kfold > 1:
+        kfold_cross_validation_run(args=args)
+    else:
+        # Initialize Relevance Pipeline and run in train/inference mode
+        rp = RankingPipeline(args=args)
+        rp.run()
 
 
 if __name__ == "__main__":

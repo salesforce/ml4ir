@@ -353,6 +353,13 @@ class RelevanceArgParser(ArgumentParser):
                  "(All info after the '#' in the format [key = val]).",
         )
 
+        self.add_argument(
+            "--kfold",
+            type=int,
+            default=1,
+            help="The number of folds for K-fold Cross Validation.",
+        )
+
     def set_default_args(self):
         pass
 
