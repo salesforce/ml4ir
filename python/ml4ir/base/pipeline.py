@@ -139,7 +139,7 @@ class RelevancePipeline(object):
 
         self.logger.info("Running pre-processing step.")
         self.pre_processing_step()
-        self.logger.info("pre-processing step done")
+        self.logger.info("Pre-processing step done.")
 
         # Read/Parse feature_config and model_config YAML
         feature_config_dict = self.file_io.read_yaml(args.feature_config)
