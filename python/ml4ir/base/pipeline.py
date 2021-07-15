@@ -446,6 +446,14 @@ class RelevancePipeline(object):
         """
         return self
 
+    def post_training_step(self):
+        """
+        Performs arbitrary post-training steps such as copying or transforming data that the rest of the code can not
+        accommodate. It serves as a placeholder without an explicit implementation (returns self) in the base pipeline.
+        We expect that users can extend it in their custom pipelines.
+        """
+        return self
+
     def finish(self, job_status, job_info):
         """
         Wrap up the model training pipeline.
@@ -480,6 +488,10 @@ class RelevancePipeline(object):
                 self.models_dir_local, self.models_dir, overwrite=True)
             self.file_io.copy_to_hdfs(
                 self.logs_dir_local, self.logs_dir, overwrite=True)
+
+        self.logger.info("Running post-training step.")
+        self.post_training_step()
+        self.logger.info("Post-training step done.")
 
         e = int(time.time() - self.start_time)
         self.logger.info(
