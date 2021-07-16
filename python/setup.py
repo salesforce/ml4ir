@@ -12,7 +12,7 @@ def load_required_dependencies():
 
     # Remove optional requirements from required dependencies
     optional_requirements = set(chain(*optional_requirements_spec.values()))
-    return [package for package in required if not optional_requirements]
+    return [package for package in required if package not in optional_requirements]
 
 
 def getReadMe():
