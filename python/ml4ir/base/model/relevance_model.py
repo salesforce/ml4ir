@@ -529,6 +529,7 @@ class RelevanceModel:
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
+        rank_distribution_t_test_pvalue_threshold: float = 0.1,
     ):
         """
         Evaluate the RelevanceModel

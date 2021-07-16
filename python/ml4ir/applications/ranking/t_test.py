@@ -61,35 +61,30 @@ def compute_stats_from_stream(diff, count, mean, M2):
     return count, mean, M2
 
 
-def t_test_log_results(agg_count, agg_mean, agg_M2, rank_distribution_t_test_pvalue_threshold, logger):
+def t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_threshold, logger):
     """
     performing click rank distribution t-test
 
     Parameters
     ----------
-    agg_count: int
-        Aggregates the number of samples
-    agg_mean: float
-        The updated mean of the rank differences
-    agg_M2: float
-        The squared distance from the mean
+    t_test_stat: float
+        The t-test statistic
+    pvalue: float
+        The p-value of the t-test statistic
     rank_distribution_t_test_pvalue_threshold: float
         The p-value threshold
-    logger:
+    logger: Logger
+        Logger object to log t-test significance decision
 
     """
-    if agg_count >= 2:
+    logger.info(
+        "Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
+    logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
+    if pvalue < rank_distribution_t_test_pvalue_threshold:
        logger.info(
-            "Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
-       t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean,
-                                                                    (agg_M2 / (agg_count - 1)),
-                                                                    agg_count)
-       logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
-       if pvalue < rank_distribution_t_test_pvalue_threshold:
-           logger.info(
-                "With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(
-                    rank_distribution_t_test_pvalue_threshold))
-       else:
-           logger.info(
-                "With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(
-                    rank_distribution_t_test_pvalue_threshold))
+            "With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(
+                rank_distribution_t_test_pvalue_threshold))
+    else:
+       logger.info(
+            "With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(
+                rank_distribution_t_test_pvalue_threshold))

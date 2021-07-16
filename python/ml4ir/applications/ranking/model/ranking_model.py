@@ -21,7 +21,6 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
-    rank_distribution_t_test_pvalue_threshold = 0.1
 
 
 class RankingModel(RelevanceModel):
@@ -75,6 +74,7 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
+        rank_distribution_t_test_pvalue_threshold: float = 0.1,
     ):
         """
         Evaluate the RelevanceModel
@@ -183,8 +183,14 @@ class RankingModel(RelevanceModel):
                     "Finished evaluating {} batches".format(batch_count))
 
         # performing click rank distribution t-test
-        if RankingConstants.rank_distribution_t_test_pvalue_threshold > 0:
-            t_test_log_results(agg_count, agg_mean, agg_M2, RankingConstants.rank_distribution_t_test_pvalue_threshold, self.logger)
+        if rank_distribution_t_test_pvalue_threshold > 0:
+            t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, (agg_M2 / (agg_count - 1)), agg_count)
+            t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_threshold, self.logger)
+
+            # Log t-test statistic and p-value
+            metrics_dict['Rank distribution t-test statistic'] = t_test_stat
+            metrics_dict['Rank distribution t-test pvalue'] = pvalue
+            metrics_dict['Rank distribution t-test statistical significant'] = pvalue < rank_distribution_t_test_pvalue_threshold
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
