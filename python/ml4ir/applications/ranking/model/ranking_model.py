@@ -1,7 +1,7 @@
-import tensorflow as tf
-from tensorflow import data
 import os
 import sys
+import tensorflow as tf
+from tensorflow import data
 import pandas as pd
 import numpy as np
 
@@ -65,6 +65,39 @@ class RankingModel(RelevanceModel):
             logging_frequency=logging_frequency,
         )
 
+
+    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold, metrics_dict):
+        """
+        Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+        Parameters
+        ----------
+        mean: float
+            The mean of the rank differences for the entire dataset
+        variance: float
+            The variance of the rank differences for the entire dataset
+        n: int
+            The number of samples in the entire dataset
+        ttest_pvalue_threshold: float
+            P-value threshold for student t-test
+        metrics_dict: dict
+            dictonary of metrics to keep track
+
+        Returns
+        -------
+        t_test_stat: float
+            The t-test statistic
+        pvalue: float
+            The p-value of the t-test statistic
+        """
+        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
+        t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, self.logger)
+
+        # Log t-test statistic and p-value
+        metrics_dict['Rank distribution t-test statistic'] = t_test_stat
+        metrics_dict['Rank distribution t-test pvalue'] = pvalue
+        metrics_dict[
+            'Rank distribution t-test difference is statistically significant'] = pvalue < ttest_pvalue_threshold
+
     def evaluate(
         self,
         test_dataset: data.TFRecordDataset,
@@ -74,7 +107,7 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
-        rank_distribution_t_test_pvalue_threshold: float = 0.1,
+        ttest_pvalue_threshold: float = 0.1,
     ):
         """
         Evaluate the RelevanceModel
@@ -98,6 +131,8 @@ class RankingModel(RelevanceModel):
             Value representing how often(in batches) to log status
         compute_intermediate_stats : bool
             [Currently ignored] Determines if group metrics and other intermediate stats on the test set should be computed
+        ttest_pvalue_threshold: float
+            P-value threshold for student t-test
 
         Returns
         -------
@@ -157,7 +192,7 @@ class RankingModel(RelevanceModel):
 
             # Accumulating statistics for t-test calculation
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            diff = (clicked_records[RankingConstants.NEW_RANK] - clicked_records[
+            diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
                 self.feature_config.get_rank("node_name")]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
@@ -183,14 +218,8 @@ class RankingModel(RelevanceModel):
                     "Finished evaluating {} batches".format(batch_count))
 
         # performing click rank distribution t-test
-        if rank_distribution_t_test_pvalue_threshold > 0:
-            t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(agg_mean, (agg_M2 / (agg_count - 1)), agg_count)
-            t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_threshold, self.logger)
-
-            # Log t-test statistic and p-value
-            metrics_dict['Rank distribution t-test statistic'] = t_test_stat
-            metrics_dict['Rank distribution t-test pvalue'] = pvalue
-            metrics_dict['Rank distribution t-test statistical significant'] = pvalue < rank_distribution_t_test_pvalue_threshold
+        if ttest_pvalue_threshold > 0:
+            self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, ttest_pvalue_threshold, metrics_dict)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(

@@ -28,12 +28,6 @@ class RankingArgParser(RelevanceArgParser):
             "applications/ranking/config/keys.py",
         )
 
-        self.add_argument(
-            "--rank_distribution_t_test_pvalue_threshold",
-            type=float,
-            default=0.1,
-            help="The p-value threshold for measuring the t-test difference between the rank distribution of the new model Vs. the old model. -1 to turn it off",
-        )
 
     def set_default_args(self):
         super().set_default_args()

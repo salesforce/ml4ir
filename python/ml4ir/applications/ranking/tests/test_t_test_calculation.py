@@ -7,6 +7,8 @@ from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_t
 warnings.filterwarnings("ignore")
 
 np.random.seed(123)
+
+
 class TestTtestCalculation(unittest.TestCase):
     """
     Testing the calculation of paired t-test statistic and its p-value.

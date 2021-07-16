@@ -61,7 +61,7 @@ def compute_stats_from_stream(diff, count, mean, M2):
     return count, mean, M2
 
 
-def t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_threshold, logger):
+def t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger):
     """
     performing click rank distribution t-test
 
@@ -71,7 +71,7 @@ def t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_thre
         The t-test statistic
     pvalue: float
         The p-value of the t-test statistic
-    rank_distribution_t_test_pvalue_threshold: float
+    ttest_pvalue_threshold: float
         The p-value threshold
     logger: Logger
         Logger object to log t-test significance decision
@@ -80,11 +80,11 @@ def t_test_log_results(t_test_stat, pvalue, rank_distribution_t_test_pvalue_thre
     logger.info(
         "Performing a paired t-test between the click rank distribution of new model and the old model:\n\tNull hypothesis: There is no difference between the two click distributions.\n\tAlternative hypothesis: There is a difference between the two click distributions")
     logger.info("t-test statistic={}, p-value={}".format(t_test_stat, pvalue))
-    if pvalue < rank_distribution_t_test_pvalue_threshold:
+    if pvalue < ttest_pvalue_threshold:
        logger.info(
             "With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(
-                rank_distribution_t_test_pvalue_threshold))
+                ttest_pvalue_threshold))
     else:
        logger.info(
             "With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(
-                rank_distribution_t_test_pvalue_threshold))
+                ttest_pvalue_threshold))
