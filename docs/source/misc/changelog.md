@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2021-07-15
+
+### Added
+
+- Adding support for performing post-training steps (such as copying data) by custom class inheriting RelevancePipeline.
+
+
+## [0.1.4] - 2021-06-30
+
+### Changed
+
+- Performing pre-processing step in `__init__()` to be able to copy files before model_config and feature_config are 
+  initiated.
+
 ## [0.1.3] - 2021-06-24
 
 ### Changed

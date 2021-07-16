@@ -28,7 +28,10 @@ class DNN:
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
         if 'positional_bias_handler' in self.model_config and self.model_config['positional_bias_handler'][
             'key'] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
-            self.positional_bias_layer = FixedAdditivePositionalBias(max_ranks=self.model_config['positional_bias_handler']['max_ranks'])
+            self.positional_bias_layer = FixedAdditivePositionalBias(max_ranks=self.model_config['positional_bias_handler']['max_ranks'],
+                                                                     kernel_initializer=self.model_config['positional_bias_handler'].get('kernel_initializer', 'Zeros'),
+                                                                     l1_coeff=self.model_config['positional_bias_handler'].get('l1_coeff', 0),
+                                                                     l2_coeff=self.model_config['positional_bias_handler'].get('l2_coeff', 0))
 
     def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
         """

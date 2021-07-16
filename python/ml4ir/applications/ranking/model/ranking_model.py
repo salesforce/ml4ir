@@ -2,12 +2,14 @@ import tensorflow as tf
 from tensorflow import data
 import os
 import pandas as pd
+import numpy as np
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
+from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 
 from typing import Optional
 
@@ -279,6 +281,22 @@ class RankingModel(RelevanceModel):
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
         )
+
+        # Logging positional biases
+        for layer in self.model.layers:
+            if layer.name == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
+                positional_bias_coefficients = pd.DataFrame(
+                    [{'rank': i + 1, 'positional_bias': layer.get_weights()[0][i][0]}
+                     for i in range(len(layer.get_weights()[0]))]
+                )
+                positional_biases = positional_bias_coefficients['positional_bias']
+                softmax_positional_biases = np.exp(positional_biases) / np.sum(np.exp(positional_biases), axis=0)
+                positional_bias_coefficients['softmax_positional_bias'] = softmax_positional_biases
+                self.file_io.write_df(
+                    positional_bias_coefficients,
+                    outfile=os.path.join(models_dir, "positional_biases.csv"),
+                    index=False
+                )
 
 
 class LinearRankingModel(RankingModel):
