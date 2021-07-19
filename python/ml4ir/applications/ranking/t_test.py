@@ -27,7 +27,7 @@ def perform_click_rank_dist_paired_t_test(mean, variance, n):
     return t_test_stat*2, pvalue*2  # multiplying by 2 for two sided t-test
 
 
-def compute_stats_from_stream(diff, count, mean, M2):
+def compute_stats_from_stream(diff, count, mean, m2):
     """
     Compute the running mean, variance for a stream of data.
     src: Welford's online algorithm: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
@@ -40,7 +40,7 @@ def compute_stats_from_stream(diff, count, mean, M2):
         Aggregates the number of samples seen so far
     mean: float
         Accumulates the mean of the rank differences so far
-    M2: float
+    m2: float
         Aggregates the squared distance from the mean
 
     Returns
@@ -49,7 +49,7 @@ def compute_stats_from_stream(diff, count, mean, M2):
         The updated aggregate sample count
     mean: float
         The updated mean of the rank differences so far
-    M2: float
+    m2: float
         The updated squared distance from the mean
     """
     for i in range(len(diff)):
@@ -57,8 +57,8 @@ def compute_stats_from_stream(diff, count, mean, M2):
         delta = diff[i] - mean
         mean += delta / count
         delta2 = diff[i] - mean
-        M2 += delta * delta2
-    return count, mean, M2
+        m2 += delta * delta2
+    return count, mean, m2
 
 
 def t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger):
@@ -85,6 +85,6 @@ def t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger):
             "With p-value threshold={} > p-value --> we reject the null hypothesis. The click rank distribution of the new model is significantly different from the old model".format(
                 ttest_pvalue_threshold))
     else:
-       logger.info(
+       logger.warning(
             "With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(
                 ttest_pvalue_threshold))

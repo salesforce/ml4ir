@@ -576,7 +576,7 @@ class RelevanceModel:
             raise NotImplementedError
 
 
-    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold, metrics_dict):
+    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
         """
         Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
         Parameters
@@ -590,14 +590,12 @@ class RelevanceModel:
         ttest_pvalue_threshold: float
             P-value threshold for student t-test
         metrics_dict: dict
-            dictonary of metrics to keep track
+            dictionary of metrics to keep track
 
         Returns
         -------
-        t_test_stat: float
-            The t-test statistic
-        pvalue: float
-            The p-value of the t-test statistic
+        t_test_metrics_dict: Dictionary
+            A dictionary with the t-test metrics recorded.
         """
         raise NotImplementedError
 

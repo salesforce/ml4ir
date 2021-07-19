@@ -66,7 +66,7 @@ class RankingModel(RelevanceModel):
         )
 
 
-    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold, metrics_dict):
+    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
         """
         Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
         Parameters
@@ -79,24 +79,20 @@ class RankingModel(RelevanceModel):
             The number of samples in the entire dataset
         ttest_pvalue_threshold: float
             P-value threshold for student t-test
-        metrics_dict: dict
-            dictonary of metrics to keep track
 
         Returns
         -------
-        t_test_stat: float
-            The t-test statistic
-        pvalue: float
-            The p-value of the t-test statistic
+        t_test_metrics_dict: Dictionary
+            A dictionary with the t-test metrics recorded.
         """
         t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
         t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, self.logger)
 
         # Log t-test statistic and p-value
-        metrics_dict['Rank distribution t-test statistic'] = t_test_stat
-        metrics_dict['Rank distribution t-test pvalue'] = pvalue
-        metrics_dict[
-            'Rank distribution t-test difference is statistically significant'] = pvalue < ttest_pvalue_threshold
+        t_test_metrics_dict = {'Rank distribution t-test statistic': t_test_stat,
+                               'Rank distribution t-test pvalue': pvalue,
+                               'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
+        return t_test_metrics_dict
 
     def evaluate(
         self,
@@ -190,7 +186,7 @@ class RankingModel(RelevanceModel):
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
-            # Accumulating statistics for t-test calculation
+            # Accumulating statistics for t-test calculation using 1/rank
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
             diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
                 self.feature_config.get_rank("node_name")]).to_list()
@@ -219,7 +215,8 @@ class RankingModel(RelevanceModel):
 
         # performing click rank distribution t-test
         if ttest_pvalue_threshold > 0:
-            self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, ttest_pvalue_threshold, metrics_dict)
+            t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, ttest_pvalue_threshold)
+            metrics_dict.update(t_test_metrics_dict)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
