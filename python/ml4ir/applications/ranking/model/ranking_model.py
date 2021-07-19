@@ -187,10 +187,11 @@ class RankingModel(RelevanceModel):
             predictions_df = pd.DataFrame(predictions_dict)
 
             # Accumulating statistics for t-test calculation using 1/rank
-            clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
-                self.feature_config.get_rank("node_name")]).to_list()
-            agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+            if ttest_pvalue_threshold > 0:
+                clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
+                diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
+                    self.feature_config.get_rank("node_name")]).to_list()
+                agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
                 df=predictions_df,
