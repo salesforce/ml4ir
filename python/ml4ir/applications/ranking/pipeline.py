@@ -176,7 +176,7 @@ def kfold_analysis(original_logs_dir, run_id, num_folds, logger):
     for dataset in ['train', 'val', 'test']:
         t_test_stat, pvalue = stats.ttest_rel(results["{}_old_MRR".format(dataset)], results["{}_new_MRR".format(dataset)])
         logger.info("{}_t_test_stat={}".format(dataset, t_test_stat))
-        logger.info("{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue<pvalue_threshold))
+        logger.info("{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue < pvalue_threshold))
 
 
 def kfold_cross_validation_run(args):
@@ -188,21 +188,34 @@ def kfold_cross_validation_run(args):
     rp.logger.info("Reading datasets ...")
     relevance_dataset = rp.get_relevance_dataset()
     rp.logger.info("Relevance Dataset created")
-    all_data = relevance_dataset.train.concatenate(relevance_dataset.validation)
+    if args.include_testset_in_kfold:
+        all_data = relevance_dataset.train.concatenate(relevance_dataset.validation).concatenate(relevance_dataset.test)
+    else:
+        all_data = relevance_dataset.train.concatenate(relevance_dataset.validation)
     all_data = all_data.unbatch()
+    all_data = all_data.shuffle(args.batch_size * 2)
     folds = args.kfold
     original_logs_dir = str(rp.args.logs_dir)
     original_models_dir = str(rp.args.models_dir)
     original_run_id = rp.run_id
     rp.logger.info("Starting K-fold Cross Validation with k={}".format(args.kfold))
+    rp.logger.info("Include testset in the folds={}".format(str(args.include_testset_in_kfold)))
     for i in range(folds):  # indexes (folds)
         rp.logger.info("fold={}".format(i))
         logs_dir = pathlib.Path(original_logs_dir) / rp.args.run_id / "fold_{}".format(i)
         models_dir = pathlib.Path(original_models_dir) / rp.args.run_id / "fold_{}".format(i)
         args.logs_dir = pathlib.Path(logs_dir).as_posix()
         args.models_dir = pathlib.Path(models_dir).as_posix()
-        validation = all_data.shard(folds, i)
         training_idx = list(range(folds))
+        if args.include_testset_in_kfold:
+            validation = all_data.shard(folds, i)
+            test_idx = i+1
+            if i+1 >= folds:
+                test_idx = 0
+            test = all_data.shard(folds, test_idx)
+            training_idx.remove(test_idx)
+        else:
+            validation = all_data.shard(folds, i)
         training_idx.remove(i)
         training = None
         for j in training_idx:
@@ -224,6 +237,7 @@ def main(argv):
     # Define args
     args: Namespace = get_args(argv)
     if args.kfold > 1:
+        # Run ml4ir with kfold cross validation
         kfold_cross_validation_run(args=args)
     else:
         # Initialize Relevance Pipeline and run in train/inference mode

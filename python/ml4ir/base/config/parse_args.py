@@ -360,6 +360,13 @@ class RelevanceArgParser(ArgumentParser):
             help="The number of folds for K-fold Cross Validation.",
         )
 
+        self.add_argument(
+            "--include_testset_in_kfold",
+            type=ast.literal_eval,
+            default=False,
+            help="Merge the testset with the training and validation sets and perform kfold on the merged dataset.",
+        )
+
     def set_default_args(self):
         pass
 
