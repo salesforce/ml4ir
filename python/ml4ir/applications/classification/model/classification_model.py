@@ -25,7 +25,6 @@ class ClassificationModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
-        ttest_pvalue_threshold: float = 0.1,
     ):
         """
         Evaluate the Classification Model
@@ -54,8 +53,6 @@ class ClassificationModel(RelevanceModel):
             Value representing how often(in batches) to log status
         compute_intermediate_stats : bool
             Determines if group metrics and other intermediate stats on the test set should be computed
-        ttest_pvalue_threshold: float
-            P-value threshold for student t-test
 
         Returns
         -------

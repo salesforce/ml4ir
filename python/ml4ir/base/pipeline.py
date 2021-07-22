@@ -329,7 +329,6 @@ class RelevancePipeline(object):
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
                     compute_intermediate_stats=self.args.compute_intermediate_stats,
-                    ttest_pvalue_threshold=self.args.ttest_pvalue_threshold,
                 )
 
             if self.args.execution_mode in {

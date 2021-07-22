@@ -28,7 +28,6 @@ class RankingArgParser(RelevanceArgParser):
             "applications/ranking/config/keys.py",
         )
 
-
     def set_default_args(self):
         super().set_default_args()
 

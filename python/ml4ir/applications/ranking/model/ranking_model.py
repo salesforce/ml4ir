@@ -21,6 +21,7 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
+    TTEST_PVALUE_THRESHOLD = 0.1
 
 
 class RankingModel(RelevanceModel):
@@ -103,7 +104,6 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
-        ttest_pvalue_threshold: float = 0.1,
     ):
         """
         Evaluate the RelevanceModel
@@ -127,8 +127,6 @@ class RankingModel(RelevanceModel):
             Value representing how often(in batches) to log status
         compute_intermediate_stats : bool
             [Currently ignored] Determines if group metrics and other intermediate stats on the test set should be computed
-        ttest_pvalue_threshold: float
-            P-value threshold for student t-test
 
         Returns
         -------
@@ -187,11 +185,10 @@ class RankingModel(RelevanceModel):
             predictions_df = pd.DataFrame(predictions_dict)
 
             # Accumulating statistics for t-test calculation using 1/rank
-            if ttest_pvalue_threshold > 0:
-                clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-                diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
-                    self.feature_config.get_rank("node_name")]).to_list()
-                agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+            clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
+            diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
+                self.feature_config.get_rank("node_name")]).to_list()
+            agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
                 df=predictions_df,
@@ -215,9 +212,8 @@ class RankingModel(RelevanceModel):
                     "Finished evaluating {} batches".format(batch_count))
 
         # performing click rank distribution t-test
-        if ttest_pvalue_threshold > 0:
-            t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, ttest_pvalue_threshold)
-            metrics_dict.update(t_test_metrics_dict)
+        t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, RankingConstants.TTEST_PVALUE_THRESHOLD)
+        metrics_dict.update(t_test_metrics_dict)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
