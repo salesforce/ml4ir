@@ -504,6 +504,7 @@ class RelevanceModel:
                 else:
                     # If writing first time, write headers to CSV file
                     predictions_df.to_csv(outfile, mode="w", header=True, index=False)
+
             else:
                 predictions_df_list.append(predictions_df)
 
@@ -573,6 +574,31 @@ class RelevanceModel:
             return None, None, dict(zip(self.model.metrics_names, metrics_dict))
         else:
             raise NotImplementedError
+
+
+    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
+        """
+        Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+        Parameters
+        ----------
+        mean: float
+            The mean of the rank differences for the entire dataset
+        variance: float
+            The variance of the rank differences for the entire dataset
+        n: int
+            The number of samples in the entire dataset
+        ttest_pvalue_threshold: float
+            P-value threshold for student t-test
+        metrics_dict: dict
+            dictionary of metrics to keep track
+
+        Returns
+        -------
+        t_test_metrics_dict: Dictionary
+            A dictionary with the t-test metrics recorded.
+        """
+        raise NotImplementedError
+
 
     def save(
         self,
