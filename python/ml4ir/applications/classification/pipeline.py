@@ -160,6 +160,16 @@ class ClassificationPipeline(RelevancePipeline):
 
         return relevance_dataset
 
+    def create_pipeline_for_kfold(self, args):
+        """
+        Create a ClassificationPipeline object used in running kfold cross validation.
+        """
+        return ClassificationPipeline(args=args)
+
+    def run_kfold_analysis(self, base_logs_dir, base_run_id, num_folds):
+        # TODO: Implement the kfold CV analysis for classification
+        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds)
+
 
 def main(argv):
     # Define args

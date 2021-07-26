@@ -357,7 +357,7 @@ class RelevanceArgParser(ArgumentParser):
             "--kfold",
             type=int,
             default=1,
-            help="The number of folds for K-fold Cross Validation.",
+            help="The number of folds for K-fold Cross Validation. Must be > 2 if testset is included in folds and > 1 otherwise.",
         )
 
         self.add_argument(

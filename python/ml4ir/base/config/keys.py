@@ -138,3 +138,8 @@ class CalibrationKey(Key):
     TEMPERATURE_SCALING = "temperature_scaling"
     TEMPERATURE = "temperature"
     ARGS = "args"
+
+
+class PipelineType(Key):
+    RANKING_PIPELINE = "RankingPipeline"
+    CLASSIFICATION_PIPELINE = "ClassificationPipeline"

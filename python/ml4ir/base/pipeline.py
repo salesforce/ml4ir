@@ -10,6 +10,8 @@ import sys
 import time
 from argparse import Namespace
 from logging import Logger
+import pathlib
+from scipy import stats
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -25,6 +27,8 @@ from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
 from typing import List
+import copy
+
 
 
 class RelevancePipeline(object):
@@ -265,9 +269,209 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    def run(self, relevance_dataset=None):
+    def kfold_analysis(self, base_logs_dir, run_id, num_folds):
         """
-        Run the pipeline to train, evaluate and save the model
+        Aggregate results of the k-fold runs and perform t-test on the results.
+        """
+        raise NotImplementedError
+
+    def create_folds(self, num_folds, fold_id, include_testset_in_kfold, all_data):
+        """
+        Create training, validation and test set according to the passed fold number.
+
+        Parameters
+        ----------
+        num_folds : int
+            Total number of folds
+        fold_id : int
+            current fold number
+        include_testset_in_kfold: bool
+            whether to include testset in creating folds
+        all_data: Tensorflow Dataset
+            the dataset used to create folds
+
+        Returns
+        -------
+        training: Tensorflow Shard Dataset
+            training set corresponding to the current fold number
+        validation: Tensorflow Shard Dataset
+            validation set corresponding to the current fold number
+        validation: Tensorflow Shard Dataset
+            test set corresponding to the current fold number
+        """
+        test = None
+        training_idx = list(range(num_folds))
+        if include_testset_in_kfold:
+            validation = all_data.shard(num_folds, fold_id)
+            test_idx = fold_id + 1
+            if fold_id + 1 >= num_folds:
+                test_idx = 0
+            test = all_data.shard(num_folds, test_idx)
+            training_idx.remove(test_idx)
+        else:
+            validation = all_data.shard(num_folds, fold_id)
+        training_idx.remove(fold_id)
+        training = None
+        for j in training_idx:
+            if not training:
+                training = all_data.shard(num_folds, j)
+            else:
+                training = training.concatenate(all_data.shard(num_folds, j))
+        return training, validation, test
+
+    def merge_datasets(self, relevance_dataset, include_testset_in_kfold):
+        """
+        Concat the datasets (training, validation, test) together
+
+        Parameters
+        ----------
+        relevance_dataset : RelevanceDataset
+            RelevanceDataset object holding the training, validation and test datasets.
+        include_testset_in_kfold : bool
+            whether to include testset in creating folds
+
+
+        Returns
+        -------
+        all_data: Tensorflow Dataset
+            The final concatenated dataset.
+        """
+
+        if include_testset_in_kfold:
+            all_data = relevance_dataset.train.concatenate(relevance_dataset.validation).concatenate(
+                relevance_dataset.test)
+        else:
+            all_data = relevance_dataset.train.concatenate(relevance_dataset.validation)
+
+        # un-batch and shuffle all queries
+        all_data = all_data.unbatch()
+        # shuffling before using the shard method gives unexpected results. Should be avoided
+        # all_data = all_data.shuffle(batch_size * 2)
+        return all_data
+
+    def create_pipeline_for_kfold(self, args):
+        raise NotImplementedError
+
+    def kfold_analysis(self, base_logs_dir, run_id, num_folds, metrics=None):
+        """
+        Aggregate results of the k-fold runs and perform t-test on the results between old(prod model) and
+        new model's w.r.t the specified metrics.
+
+        Parameters
+        ----------
+        base_logs_dir : int
+            Total number of folds
+        run_id : int
+            current fold number
+        num_folds: int
+            Total number of folds
+        metrics: set()
+            Set of metrics to include in the kfold analysis
+        """
+        if not metrics:
+            return
+        rows = []
+        pvalue_threshold = 0.1
+        for i in range(num_folds):
+            row = {"fold": i}
+            logs_dir = pathlib.Path(base_logs_dir) / run_id / "fold_{}".format(i) / run_id
+            with open(logs_dir / "_SUCCESS", 'r') as f:
+                for line in f:
+                    parts = line.split(',')
+                    if parts[0] in metrics:
+                        row[parts[0]] = float(parts[1])
+            rows.append(row)
+        results = pd.DataFrame(rows)
+        self.logger.info(results)
+        # calculate statistical paired t-test
+        for dataset in ['train', 'val', 'test']:
+            t_test_stat, pvalue = stats.ttest_rel(results["{}_old_MRR".format(dataset)],
+                                                  results["{}_new_MRR".format(dataset)])
+            self.logger.info("{}_t_test_stat={}".format(dataset, t_test_stat))
+            self.logger.info(
+                "{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue < pvalue_threshold))
+
+    def run(self):
+        """
+        Run the pipeline to train, evaluate and save the model. It also runs the pipeline in kfold cross validation
+        mode if specified.
+
+        Returns
+        -------
+        dict
+            Experiment tracking dictionary with metrics and metadata for the run.
+            Used for model selection and hyperparameter optimization
+
+        Notes
+        -----
+        Also populates a experiment tracking dictionary containing
+        the metadata, model architecture and metrics generated by the model
+        """
+        if self.args.kfold <= 1:
+            # Run ml4ir without kfold cross validation
+            return self.run_pipeline()
+
+        if self.args.include_testset_in_kfold:
+            if self.args.kfold < 3:
+                raise Exception("Number of folds must be > 2")
+        else:
+            if self.args.kfold < 2:
+                raise Exception("Number of folds must be > 1")
+
+        args = copy.deepcopy(self.args)
+
+        # reading, parsing the dataset (train, validation, test)
+        self.logger.info("Reading datasets ...")
+        relevance_dataset = self.get_relevance_dataset()
+        self.logger.info("Relevance Dataset created")
+
+        all_data = self.merge_datasets(relevance_dataset, args.include_testset_in_kfold)
+
+        num_folds = self.args.kfold
+        base_logs_dir = str(self.args.logs_dir)
+        base_models_dir = str(self.args.models_dir)
+        base_run_id = self.run_id
+        self.logger.info("K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
+        self.logger.info("Include testset in the folds={}".format(str(self.args.include_testset_in_kfold)))
+
+        # when creating folds, the validation set is assigned fold i, test fold i+1 and training get the rest of folds
+        for i in range(num_folds):
+            self.logger.info("fold={}".format(i))
+            logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(i)
+            models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(i)
+            args.logs_dir = pathlib.Path(logs_dir).as_posix()
+            args.models_dir = pathlib.Path(models_dir).as_posix()
+
+            training, validation, test = self.create_folds(num_folds, i, args.include_testset_in_kfold, all_data)
+
+            # batchify training, validation and test sets.
+            validation = validation.batch(args.batch_size, drop_remainder=False)
+            training = training.batch(args.batch_size, drop_remainder=False)
+            # We apply prefetch as it improved train/test/validation throughput by 30% in some real model training.
+            relevance_dataset.training = training.prefetch(tf.data.experimental.AUTOTUNE)
+            relevance_dataset.validation = validation.prefetch(tf.data.experimental.AUTOTUNE)
+            if args.include_testset_in_kfold:
+                test = test.batch(args.batch_size, drop_remainder=False)
+                relevance_dataset.test = test.prefetch(tf.data.experimental.AUTOTUNE)
+
+            # run the pipeline over the created folds.
+            pipeline = self.create_pipeline_for_kfold(args)
+            pipeline.run_pipeline(relevance_dataset=relevance_dataset)
+
+        # removing intermediate directory and run kfold analysis
+        self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+        self.run_kfold_analysis(base_logs_dir, base_run_id, num_folds)
+
+
+
+    def run_pipeline(self, relevance_dataset=None):
+        """
+        Run the pipeline to train, evaluate and save the model.
+
+        Parameters
+        ----------
+        relevance_dataset: RelevanceDataset
+            RelevanceDataset used for running the pipeline. If none, the relevance dataset will be created.
 
         Returns
         -------

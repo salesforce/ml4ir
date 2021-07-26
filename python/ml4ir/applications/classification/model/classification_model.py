@@ -90,6 +90,18 @@ class ClassificationModel(RelevanceModel):
             # instead of calculating measure with a single update_state (can result in a call with
             # thousands of examples at once, we use the same batch size used during training.
             # Helps prevent OOM issues.
+
+            '''
+            type(test_dataset._input_dataset)
+            Out[4]: tensorflow.python.data.ops.dataset_ops.ShardDataset
+            type(test_dataset)
+            Out[10]: tensorflow.python.data.ops.dataset_ops.BatchDataset
+            
+            type(test_dataset)
+            Out[3]: tensorflow.python.data.ops.dataset_ops.PrefetchDataset
+            type(test_dataset._input_dataset)
+            Out[4]: tensorflow.python.data.ops.dataset_ops.BatchDataset
+            '''
             batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
             # Letting metrics in the outer loop to avoid tracing
             for metric in self.model.metrics:
