@@ -11,7 +11,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
-from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel, RankingConstants
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import MetricKey
 from ml4ir.applications.ranking.config.keys import ScoringTypeKey
@@ -160,8 +160,7 @@ class RankingPipeline(RelevancePipeline):
         """
         Running the kfold analysis for ranking.
         """
-        metrics = {'train_old_MRR', 'train_new_MRR', 'val_old_MRR', 'val_new_MRR', 'test_old_MRR', 'test_new_MRR'}
-        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds, metrics)
+        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds, RankingConstants.KFOLD_METRICS)
 
 
 def main(argv):

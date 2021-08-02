@@ -19,6 +19,7 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
+    KFOLD_METRICS = {'train_old_MRR', 'train_new_MRR', 'val_old_MRR', 'val_new_MRR', 'test_old_MRR', 'test_new_MRR'}
 
 
 class RankingModel(RelevanceModel):

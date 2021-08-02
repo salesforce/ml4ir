@@ -12,6 +12,7 @@ from argparse import Namespace
 from logging import Logger
 import pathlib
 from scipy import stats
+import multiprocessing as mp
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -20,6 +21,7 @@ from ml4ir.base.io import logging_utils
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.io.spark_io import SparkIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.base.data.kfold_relevance_dataset import KfoldRelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
@@ -247,6 +249,53 @@ class RelevancePipeline(object):
 
         return relevance_dataset
 
+    def get_kfold_relevance_dataset(self, num_folds, include_testset_in_kfold, read_data_sets, preprocessing_keys_to_fns={}) -> RelevanceDataset:
+        """
+        Create RelevanceDataset object by loading train, test data as tensorflow datasets
+
+        Parameters
+        ----------
+        preprocessing_keys_to_fns : dict of (str, function)
+            dictionary of function names mapped to function definitions
+            that can now be used for preprocessing while loading the
+            TFRecordDataset to create the RelevanceDataset object
+
+        Returns
+        -------
+        `KfoldRelevanceDataset` object
+            RelevanceDataset object that can be used for training and evaluating
+            the model
+
+        Notes
+        -----
+        Override this method to create custom dataset objects
+        """
+
+        # Prepare Dataset
+        relevance_dataset = KfoldRelevanceDataset(
+            data_dir=self.data_dir_local,
+            data_format=self.data_format,
+            feature_config=self.feature_config,
+            tfrecord_type=self.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+            train_pcent_split=self.args.train_pcent_split,
+            val_pcent_split=self.args.val_pcent_split,
+            test_pcent_split=self.args.test_pcent_split,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=True,
+            file_io=self.local_io,
+            logger=self.logger,
+            non_zero_features_only=self.non_zero_features_only,
+            keep_additional_info=self.keep_additional_info,
+            num_folds=num_folds,
+            include_testset_in_kfold=include_testset_in_kfold,
+            read_data_sets=read_data_sets
+        )
+
+        return relevance_dataset
+
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
         Creates RelevanceModel that can be used for training and evaluating
@@ -274,80 +323,6 @@ class RelevancePipeline(object):
         Aggregate results of the k-fold runs and perform t-test on the results.
         """
         raise NotImplementedError
-
-    def create_folds(self, num_folds, fold_id, include_testset_in_kfold, all_data):
-        """
-        Create training, validation and test set according to the passed fold number.
-
-        Parameters
-        ----------
-        num_folds : int
-            Total number of folds
-        fold_id : int
-            current fold number
-        include_testset_in_kfold: bool
-            whether to include testset in creating folds
-        all_data: Tensorflow Dataset
-            the dataset used to create folds
-
-        Returns
-        -------
-        training: Tensorflow Shard Dataset
-            training set corresponding to the current fold number
-        validation: Tensorflow Shard Dataset
-            validation set corresponding to the current fold number
-        validation: Tensorflow Shard Dataset
-            test set corresponding to the current fold number
-        """
-        test = None
-        training_idx = list(range(num_folds))
-        if include_testset_in_kfold:
-            validation = all_data.shard(num_folds, fold_id)
-            test_idx = fold_id + 1
-            if fold_id + 1 >= num_folds:
-                test_idx = 0
-            test = all_data.shard(num_folds, test_idx)
-            training_idx.remove(test_idx)
-        else:
-            validation = all_data.shard(num_folds, fold_id)
-        training_idx.remove(fold_id)
-        training = None
-        for j in training_idx:
-            if not training:
-                training = all_data.shard(num_folds, j)
-            else:
-                training = training.concatenate(all_data.shard(num_folds, j))
-        return training, validation, test
-
-    def merge_datasets(self, relevance_dataset, include_testset_in_kfold):
-        """
-        Concat the datasets (training, validation, test) together
-
-        Parameters
-        ----------
-        relevance_dataset : RelevanceDataset
-            RelevanceDataset object holding the training, validation and test datasets.
-        include_testset_in_kfold : bool
-            whether to include testset in creating folds
-
-
-        Returns
-        -------
-        all_data: Tensorflow Dataset
-            The final concatenated dataset.
-        """
-
-        if include_testset_in_kfold:
-            all_data = relevance_dataset.train.concatenate(relevance_dataset.validation).concatenate(
-                relevance_dataset.test)
-        else:
-            all_data = relevance_dataset.train.concatenate(relevance_dataset.validation)
-
-        # un-batch and shuffle all queries
-        all_data = all_data.unbatch()
-        # shuffling before using the shard method gives unexpected results. Should be avoided
-        # all_data = all_data.shuffle(batch_size * 2)
-        return all_data
 
     def create_pipeline_for_kfold(self, args):
         raise NotImplementedError
@@ -425,7 +400,7 @@ class RelevancePipeline(object):
         relevance_dataset = self.get_relevance_dataset()
         self.logger.info("Relevance Dataset created")
 
-        all_data = self.merge_datasets(relevance_dataset, args.include_testset_in_kfold)
+        all_data = relevance_dataset.merge_datasets(include_testset_in_merge=args.include_testset_in_kfold)
 
         num_folds = self.args.kfold
         base_logs_dir = str(self.args.logs_dir)
@@ -434,35 +409,28 @@ class RelevancePipeline(object):
         self.logger.info("K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
         self.logger.info("Include testset in the folds={}".format(str(self.args.include_testset_in_kfold)))
 
+        folds_results = {}
         # when creating folds, the validation set is assigned fold i, test fold i+1 and training get the rest of folds
-        for i in range(num_folds):
-            self.logger.info("fold={}".format(i))
-            logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(i)
-            models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(i)
+        for fold_id in range(num_folds):
+            self.logger.info("fold={}".format(fold_id))
+            logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(fold_id)
+            models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(fold_id)
             args.logs_dir = pathlib.Path(logs_dir).as_posix()
             args.models_dir = pathlib.Path(models_dir).as_posix()
 
-            training, validation, test = self.create_folds(num_folds, i, args.include_testset_in_kfold, all_data)
-
-            # batchify training, validation and test sets.
-            validation = validation.batch(args.batch_size, drop_remainder=False)
-            training = training.batch(args.batch_size, drop_remainder=False)
-            # We apply prefetch as it improved train/test/validation throughput by 30% in some real model training.
-            relevance_dataset.training = training.prefetch(tf.data.experimental.AUTOTUNE)
-            relevance_dataset.validation = validation.prefetch(tf.data.experimental.AUTOTUNE)
-            if args.include_testset_in_kfold:
-                test = test.batch(args.batch_size, drop_remainder=False)
-                relevance_dataset.test = test.prefetch(tf.data.experimental.AUTOTUNE)
-
-            # run the pipeline over the created folds.
+            fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
+                                                                      args.include_testset_in_kfold,
+                                                                      read_data_sets=False)
+            fold_relevance_dataset.create_folds(fold_id, all_data)
             pipeline = self.create_pipeline_for_kfold(args)
-            pipeline.run_pipeline(relevance_dataset=relevance_dataset)
+            fold_result = pipeline.run_pipeline(fold_relevance_dataset)
+            folds_results[fold_id] = fold_result
 
         # removing intermediate directory and run kfold analysis
         self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+
         self.run_kfold_analysis(base_logs_dir, base_run_id, num_folds)
-
-
+        return folds_results
 
     def run_pipeline(self, relevance_dataset=None):
         """
@@ -526,6 +494,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
                 ExecutionModeKey.EVALUATE_RESAVE,
             }:
+
                 # Evaluate
                 _, _, test_metrics = relevance_model.evaluate(
                     test_dataset=relevance_dataset.test,
@@ -544,6 +513,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
+
                 # Predict relevance scores
                 relevance_model.predict(
                     test_dataset=relevance_dataset.test,

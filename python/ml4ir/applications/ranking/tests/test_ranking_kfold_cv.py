@@ -75,9 +75,10 @@ class TestML4IRKfoldCV(unittest.TestCase):
         args = self.setup_data(dataset_name, num_features, num_folds, use_testset_in_folds)
 
         rp = RankingPipeline(args=args)
-        relevance_dataset = rp.get_relevance_dataset()
+        relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
+                                                           read_data_sets=True)
 
-        all_data = rp.merge_datasets(relevance_dataset, args.include_testset_in_kfold)
+        all_data = relevance_dataset.merge_datasets(args.include_testset_in_kfold)
         query_ids = set([q[0]['query_id'].numpy()[0] for q in all_data])
         assert len(query_ids) == expected_num_queries
 
@@ -85,11 +86,18 @@ class TestML4IRKfoldCV(unittest.TestCase):
         args = self.setup_data(dataset_name, num_features, num_folds, use_testset_in_folds)
 
         rp = RankingPipeline(args=args)
-        relevance_dataset = rp.get_relevance_dataset()
+        relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
+                                                           read_data_sets=True)
 
-        all_data = rp.merge_datasets(relevance_dataset, use_testset_in_folds)
+        all_data = relevance_dataset.merge_datasets(args.include_testset_in_kfold)
         for i in range(num_folds):
-            train, validation, test = rp.create_folds(num_folds, i, use_testset_in_folds, all_data)
+            fold_relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
+                                                               read_data_sets=False)
+            fold_relevance_dataset.create_folds(i, all_data)
+            train = fold_relevance_dataset.train.unbatch()
+            validation = fold_relevance_dataset.validation.unbatch()
+            if use_testset_in_folds:
+                test = fold_relevance_dataset.test.unbatch()
             train_qids = set([q[0]['query_id'].numpy()[0] for q in train])
             validation_qids = set([q[0]['query_id'].numpy()[0] for q in validation])
             if use_testset_in_folds:
