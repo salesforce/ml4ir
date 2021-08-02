@@ -12,7 +12,7 @@ def load_required_dependencies():
 
     # Remove optional requirements from required dependencies
     optional_requirements = set(chain(*optional_requirements_spec.values()))
-    return [package for package in required if not optional_requirements]
+    return [package for package in required if package not in optional_requirements]
 
 
 def getReadMe():
@@ -24,7 +24,7 @@ def getReadMe():
 setup(
     name="ml4ir",
     packages=find_namespace_packages(include=["ml4ir.*"]),
-    version="0.1.4",
+    version="0.1.6",
     description="Machine Learning libraries for Information Retrieval",
     long_description=getReadMe(),
     long_description_content_type="text/markdown",

@@ -1,6 +1,7 @@
+import os
+import sys
 import tensorflow as tf
 from tensorflow import data
-import os
 import pandas as pd
 import numpy as np
 
@@ -10,6 +11,7 @@ from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, t_test_log_results
 
 from typing import Optional
 
@@ -20,6 +22,7 @@ pd.set_option("display.max_columns", 500)
 class RankingConstants:
     NEW_RANK = "new_rank"
     KFOLD_METRICS = {'train_old_MRR', 'train_new_MRR', 'val_old_MRR', 'val_new_MRR', 'test_old_MRR', 'test_new_MRR'}
+    TTEST_PVALUE_THRESHOLD = 0.1
 
 
 class RankingModel(RelevanceModel):
@@ -65,6 +68,35 @@ class RankingModel(RelevanceModel):
             logs_dir=logs_dir,
             logging_frequency=logging_frequency,
         )
+
+
+    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
+        """
+        Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+        Parameters
+        ----------
+        mean: float
+            The mean of the rank differences for the entire dataset
+        variance: float
+            The variance of the rank differences for the entire dataset
+        n: int
+            The number of samples in the entire dataset
+        ttest_pvalue_threshold: float
+            P-value threshold for student t-test
+
+        Returns
+        -------
+        t_test_metrics_dict: Dictionary
+            A dictionary with the t-test metrics recorded.
+        """
+        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
+        t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, self.logger)
+
+        # Log t-test statistic and p-value
+        t_test_metrics_dict = {'Rank distribution t-test statistic': t_test_stat,
+                               'Rank distribution t-test pvalue': pvalue,
+                               'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
+        return t_test_metrics_dict
 
     def evaluate(
         self,
@@ -150,8 +182,16 @@ class RankingModel(RelevanceModel):
 
         batch_count = 0
         df_grouped_stats = pd.DataFrame()
+        # defining variables to compute running mean and variance for t-test computations
+        agg_count, agg_mean, agg_M2 = 0, 0, 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
+
+            # Accumulating statistics for t-test calculation using 1/rank
+            clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
+            diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
+                self.feature_config.get_rank("node_name")]).to_list()
+            agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
                 df=predictions_df,
@@ -173,6 +213,10 @@ class RankingModel(RelevanceModel):
             if batch_count % logging_frequency == 0:
                 self.logger.info(
                     "Finished evaluating {} batches".format(batch_count))
+
+        # performing click rank distribution t-test
+        t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, RankingConstants.TTEST_PVALUE_THRESHOLD)
+        metrics_dict.update(t_test_metrics_dict)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
