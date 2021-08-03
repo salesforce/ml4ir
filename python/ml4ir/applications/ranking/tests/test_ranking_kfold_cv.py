@@ -51,6 +51,19 @@ class TestML4IRKfoldCV(unittest.TestCase):
         TempDirectory.cleanup_all()
 
     def setup_data(self, dataset_name, num_features, num_folds, use_testset_in_folds):
+        """
+        reading dataset and splitting it into 3 groups: train, validation and test.
+        Parameters
+        ----------
+        dataset_name: str
+            dataset to load (from the sanity tests datasets)
+        num_features: int
+            number of features in the dataset
+        num_folds: int
+            number of folds
+        use_testset_in_folds: bool
+            whether to include the testset in the merge
+        """
         working_dir = pathlib.Path(self.working_dir.path)
         log_dir = pathlib.Path(self.log_dir)
 
@@ -72,6 +85,23 @@ class TestML4IRKfoldCV(unittest.TestCase):
                                  use_testset_in_folds=use_testset_in_folds)
 
     def run_merge_datasets_test(self, dataset_name, num_features, num_folds, use_testset_in_folds, expected_num_queries):
+        """
+        With the specified input parameters, merge the datasets together and compare against the expected number of
+        queries.
+
+        Parameters
+        ----------
+        dataset_name: str
+            dataset to load (from the sanity tests datasets)
+        num_features: int
+            number of features in the dataset
+        num_folds: int
+            number of folds
+        use_testset_in_folds: bool
+            whether to include the testset in the merge
+        expected_num_queries: int
+            expected number of queries ion the final merge.
+        """
         args = self.setup_data(dataset_name, num_features, num_folds, use_testset_in_folds)
 
         rp = RankingPipeline(args=args)
@@ -83,6 +113,21 @@ class TestML4IRKfoldCV(unittest.TestCase):
         assert len(query_ids) == expected_num_queries
 
     def run_folds_creation_test(self, dataset_name, num_features, num_folds, use_testset_in_folds):
+        """
+        Read and merge datasets, then create folds. A successful fold creation should have different, non
+        overlapping train, validation and test sets.
+
+        Parameters
+        ----------
+        dataset_name: str
+            dataset to load (from the sanity tests datasets)
+        num_features: int
+            number of features in the dataset
+        num_folds: int
+            number of folds
+        use_testset_in_folds: bool
+            whether to include the testset in the merge
+        """
         args = self.setup_data(dataset_name, num_features, num_folds, use_testset_in_folds)
 
         rp = RankingPipeline(args=args)
@@ -108,6 +153,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
             assert len(set.intersection(train_qids, validation_qids)) == 0
 
     def test_merge_datasets_1(self):
+        """
+        Testing the dataset merge function with testset included in the merge.
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = True
@@ -116,6 +164,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_merge_datasets_test(dataset_name, num_features, num_folds, use_testset_in_folds, expected_num_queries)
 
     def test_merge_datasets_2(self):
+        """
+        Testing the dataset merge function without including testset in the merge
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = False
@@ -124,6 +175,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_merge_datasets_test(dataset_name, num_features, num_folds, use_testset_in_folds, expected_num_queries)
 
     def test_folds_creation_1(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = True
@@ -131,6 +185,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_folds_creation_test(dataset_name, num_features, num_folds, use_testset_in_folds)
 
     def test_folds_creation_2(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = False
@@ -138,6 +195,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_folds_creation_test(dataset_name, num_features, num_folds, use_testset_in_folds)
 
     def test_folds_creation_3(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = False
@@ -145,6 +205,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_folds_creation_test(dataset_name, num_features, num_folds, use_testset_in_folds)
 
     def test_folds_creation_4(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset1.csv"
         num_features = 2
         use_testset_in_folds = False
@@ -152,6 +215,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_folds_creation_test(dataset_name, num_features, num_folds, use_testset_in_folds)
 
     def test_folds_creation_5(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset2.csv"
         num_features = 2
         use_testset_in_folds = True
@@ -159,6 +225,9 @@ class TestML4IRKfoldCV(unittest.TestCase):
         self.run_folds_creation_test(dataset_name, num_features, num_folds, use_testset_in_folds)
 
     def test_folds_creation_6(self):
+        """
+        Testing creating folds. Train, validation and test sets should be different with no over lap
+        """
         dataset_name = "dataset2.csv"
         num_features = 2
         use_testset_in_folds = False

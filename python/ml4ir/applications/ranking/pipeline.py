@@ -160,7 +160,8 @@ class RankingPipeline(RelevancePipeline):
         """
         Running the kfold analysis for ranking.
         """
-        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds, RankingConstants.KFOLD_METRICS)
+        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds, RankingConstants.TTEST_PVALUE_THRESHOLD,
+                               RankingConstants.KFOLD_METRICS)
 
 
 def main(argv):

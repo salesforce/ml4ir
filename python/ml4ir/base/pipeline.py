@@ -255,6 +255,12 @@ class RelevancePipeline(object):
 
         Parameters
         ----------
+        num_folds: int
+            number of folds in kfold
+        include_testset_in_kfold: bool
+            whether to include the testset in the folds
+        read_data_sets: bool
+            whether to call `create_dataset` which reads data from files.
         preprocessing_keys_to_fns : dict of (str, function)
             dictionary of function names mapped to function definitions
             that can now be used for preprocessing while loading the
@@ -318,16 +324,10 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    def kfold_analysis(self, base_logs_dir, run_id, num_folds):
-        """
-        Aggregate results of the k-fold runs and perform t-test on the results.
-        """
-        raise NotImplementedError
-
     def create_pipeline_for_kfold(self, args):
         raise NotImplementedError
 
-    def kfold_analysis(self, base_logs_dir, run_id, num_folds, metrics=None):
+    def kfold_analysis(self, base_logs_dir, run_id, num_folds, pvalue_threshold=0.1, metrics=None):
         """
         Aggregate results of the k-fold runs and perform t-test on the results between old(prod model) and
         new model's w.r.t the specified metrics.
@@ -344,9 +344,9 @@ class RelevancePipeline(object):
             Set of metrics to include in the kfold analysis
         """
         if not metrics:
+            self.logger.warning("No metrics specified for Kfold CV analysis")
             return
         rows = []
-        pvalue_threshold = 0.1
         for i in range(num_folds):
             row = {"fold": i}
             logs_dir = pathlib.Path(base_logs_dir) / run_id / "fold_{}".format(i) / run_id
@@ -400,7 +400,7 @@ class RelevancePipeline(object):
         relevance_dataset = self.get_relevance_dataset()
         self.logger.info("Relevance Dataset created")
 
-        all_data = relevance_dataset.merge_datasets(include_testset_in_merge=args.include_testset_in_kfold)
+        all_data = relevance_dataset.merge_datasets(include_testset_in_merge=self.args.include_testset_in_kfold)
 
         num_folds = self.args.kfold
         base_logs_dir = str(self.args.logs_dir)
