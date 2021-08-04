@@ -57,6 +57,28 @@ class KfoldRelevanceDataset(RelevanceDataset):
         if read_data_sets:
             self.create_dataset(parse_tfrecord)
 
+    def merge_datasets(self):
+        """
+        Concat the datasets (training, validation, test) together
+
+        Returns
+        -------
+        all_data: Tensorflow Dataset
+            The final concatenated dataset.
+        """
+
+        if self.include_testset_in_kfold:
+            all_data = self.train.concatenate(self.validation).concatenate(
+                self.test)
+        else:
+            all_data = self.train.concatenate(self.validation)
+
+        # un-batch and shuffle all queries
+        all_data = all_data.unbatch()
+        # shuffling before using the shard method gives unexpected results. Should be avoided
+        # all_data = all_data.shuffle(batch_size * 2)
+        return all_data
+
     def create_folds(self, fold_id, all_data):
         """
         Create training, validation and test set according to the passed fold id.

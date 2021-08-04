@@ -3,6 +3,9 @@ import ast
 from argparse import Namespace
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
+import pandas as pd
+import pathlib
+from scipy import stats
 
 from ml4ir.base.pipeline import RelevancePipeline
 from ml4ir.base.config.keys import ArchitectureKey
@@ -156,12 +159,81 @@ class RankingPipeline(RelevancePipeline):
         """
         return RankingPipeline(args=args)
 
-    def run_kfold_analysis(self, base_logs_dir, base_run_id, num_folds):
+    def kfold_analysis(self, base_logs_dir, run_id, num_folds, pvalue_threshold=0.1, metrics=None):
+        """
+        Aggregate results of the k-fold runs and perform t-test on the results between old(prod model) and
+        new model's w.r.t the specified metrics.
+
+        Parameters
+        ----------
+        base_logs_dir : int
+            Total number of folds
+        run_id : int
+            current fold number
+        num_folds: int
+            Total number of folds
+        pvalue_threshold: float
+            the threshold used for pvalue to assess significance
+        metrics: list
+            List of metrics to include in the kfold analysis
+        """
+        if not metrics:
+            return
+        metrics_formated = []
+        datasets = ['train', 'val', 'test']
+        for dataset in datasets:
+            for metric in metrics:
+                metrics_formated.append("{}_old_{}".format(dataset, metric))
+                metrics_formated.append("{}_new_{}".format(dataset, metric))
+        rows = []
+        for i in range(num_folds):
+            row = {"fold": i}
+            logs_dir = pathlib.Path(base_logs_dir) / run_id / "fold_{}".format(i) / run_id
+            with open(logs_dir / "_SUCCESS", 'r') as f:
+                for line in f:
+                    parts = line.split(',')
+                    if parts[0] in metrics_formated:
+                        row[parts[0]] = float(parts[1])
+            rows.append(row)
+        results = pd.DataFrame(rows)
+        self.logger.info(results)
+        ttest_result = []
+        # calculate statistical paired t-test
+        for metric in metrics:
+            for dataset in ['train', 'val', 'test']:
+                t_test_stat, pvalue = stats.ttest_rel(results["{}_old_{}".format(dataset, metric)],
+                                                      results["{}_new_{}".format(dataset, metric)])
+                ttest = {"metric":metric, "dataset": dataset, "t_test_stat": t_test_stat, "p_value": pvalue,
+                         "is_stat_sig": pvalue < pvalue_threshold}
+                self.logger.info("{}_t_test_stat={}".format(dataset, t_test_stat))
+                self.logger.info(
+                    "{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue < pvalue_threshold))
+                ttest_result.append(ttest)
+        return pd.DataFrame(ttest_result)
+
+    def run_kfold_analysis(self, logs_dir, run_id, num_folds, metrics):
         """
         Running the kfold analysis for ranking.
+
+        Parameters:
+        -----------
+        logs_dir: str
+            path to logs directory
+        run_id: str
+            string run_id
+        num_folds: int
+            number of folds
+        metrics: list
+            list of metrics to include in the kfold analysis
+
+        Returns:
+        --------
+        summary of the kfold analysis
         """
-        return self.kfold_analysis(base_logs_dir, base_run_id, num_folds, RankingConstants.TTEST_PVALUE_THRESHOLD,
-                               RankingConstants.KFOLD_METRICS)
+        #TODO:Choose the best model among the folds
+
+        return str(self.kfold_analysis(logs_dir, run_id, num_folds, RankingConstants.TTEST_PVALUE_THRESHOLD,
+                               metrics))
 
 
 def main(argv):

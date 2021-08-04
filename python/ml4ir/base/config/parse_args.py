@@ -367,6 +367,14 @@ class RelevanceArgParser(ArgumentParser):
             help="Merge the testset with the training and validation sets and perform kfold on the merged dataset.",
         )
 
+        self.add_argument(
+            "--kfold_analysis_metrics",
+            type=str,
+            default=[],
+            nargs='*',
+            help="Metric to use for post Kfold CV analysis.",
+        )
+
     def set_default_args(self):
         pass
 

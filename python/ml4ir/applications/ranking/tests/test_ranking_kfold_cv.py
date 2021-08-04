@@ -108,7 +108,7 @@ class TestML4IRKfoldCV(unittest.TestCase):
         relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
                                                            read_data_sets=True)
 
-        all_data = relevance_dataset.merge_datasets(args.include_testset_in_kfold)
+        all_data = relevance_dataset.merge_datasets()
         query_ids = set([q[0]['query_id'].numpy()[0] for q in all_data])
         assert len(query_ids) == expected_num_queries
 
@@ -134,7 +134,7 @@ class TestML4IRKfoldCV(unittest.TestCase):
         relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
                                                            read_data_sets=True)
 
-        all_data = relevance_dataset.merge_datasets(args.include_testset_in_kfold)
+        all_data = relevance_dataset.merge_datasets()
         for i in range(num_folds):
             fold_relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
                                                                read_data_sets=False)

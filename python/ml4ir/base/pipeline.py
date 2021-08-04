@@ -11,8 +11,6 @@ import time
 from argparse import Namespace
 from logging import Logger
 import pathlib
-from scipy import stats
-import multiprocessing as mp
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -327,45 +325,6 @@ class RelevancePipeline(object):
     def create_pipeline_for_kfold(self, args):
         raise NotImplementedError
 
-    def kfold_analysis(self, base_logs_dir, run_id, num_folds, pvalue_threshold=0.1, metrics=None):
-        """
-        Aggregate results of the k-fold runs and perform t-test on the results between old(prod model) and
-        new model's w.r.t the specified metrics.
-
-        Parameters
-        ----------
-        base_logs_dir : int
-            Total number of folds
-        run_id : int
-            current fold number
-        num_folds: int
-            Total number of folds
-        metrics: set()
-            Set of metrics to include in the kfold analysis
-        """
-        if not metrics:
-            self.logger.warning("No metrics specified for Kfold CV analysis")
-            return
-        rows = []
-        for i in range(num_folds):
-            row = {"fold": i}
-            logs_dir = pathlib.Path(base_logs_dir) / run_id / "fold_{}".format(i) / run_id
-            with open(logs_dir / "_SUCCESS", 'r') as f:
-                for line in f:
-                    parts = line.split(',')
-                    if parts[0] in metrics:
-                        row[parts[0]] = float(parts[1])
-            rows.append(row)
-        results = pd.DataFrame(rows)
-        self.logger.info(results)
-        # calculate statistical paired t-test
-        for dataset in ['train', 'val', 'test']:
-            t_test_stat, pvalue = stats.ttest_rel(results["{}_old_MRR".format(dataset)],
-                                                  results["{}_new_MRR".format(dataset)])
-            self.logger.info("{}_t_test_stat={}".format(dataset, t_test_stat))
-            self.logger.info(
-                "{}_pvalue={} --> (statistically significant={})".format(dataset, pvalue, pvalue < pvalue_threshold))
-
     def run(self):
         """
         Run the pipeline to train, evaluate and save the model. It also runs the pipeline in kfold cross validation
@@ -393,44 +352,53 @@ class RelevancePipeline(object):
             if self.args.kfold < 2:
                 raise Exception("Number of folds must be > 1")
 
-        args = copy.deepcopy(self.args)
+        job_status = "_SUCCESS"
+        try:
+            args = copy.deepcopy(self.args)
 
-        # reading, parsing the dataset (train, validation, test)
-        self.logger.info("Reading datasets ...")
-        relevance_dataset = self.get_relevance_dataset()
-        self.logger.info("Relevance Dataset created")
+            # reading, parsing the dataset (train, validation, test)
+            self.logger.info("Reading datasets ...")
+            relevance_dataset = self.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
+                                                                 read_data_sets=True)
+            self.logger.info("Relevance Dataset created")
 
-        all_data = relevance_dataset.merge_datasets(include_testset_in_merge=self.args.include_testset_in_kfold)
+            all_data = relevance_dataset.merge_datasets()
 
-        num_folds = self.args.kfold
-        base_logs_dir = str(self.args.logs_dir)
-        base_models_dir = str(self.args.models_dir)
-        base_run_id = self.run_id
-        self.logger.info("K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
-        self.logger.info("Include testset in the folds={}".format(str(self.args.include_testset_in_kfold)))
+            num_folds = self.args.kfold
+            base_logs_dir = str(self.args.logs_dir)
+            base_models_dir = str(self.args.models_dir)
+            base_run_id = self.run_id
+            self.logger.info("K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
+            self.logger.info("Include testset in the folds={}".format(str(self.args.include_testset_in_kfold)))
 
-        folds_results = {}
-        # when creating folds, the validation set is assigned fold i, test fold i+1 and training get the rest of folds
-        for fold_id in range(num_folds):
-            self.logger.info("fold={}".format(fold_id))
-            logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(fold_id)
-            models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(fold_id)
-            args.logs_dir = pathlib.Path(logs_dir).as_posix()
-            args.models_dir = pathlib.Path(models_dir).as_posix()
+            # when creating folds, the validation set is assigned fold i, test fold i+1 and training get the rest of folds
+            for fold_id in range(num_folds):
+                self.logger.info("fold={}".format(fold_id))
+                logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(fold_id)
+                models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(fold_id)
+                args.logs_dir = pathlib.Path(logs_dir).as_posix()
+                args.models_dir = pathlib.Path(models_dir).as_posix()
 
-            fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
-                                                                      args.include_testset_in_kfold,
-                                                                      read_data_sets=False)
-            fold_relevance_dataset.create_folds(fold_id, all_data)
-            pipeline = self.create_pipeline_for_kfold(args)
-            fold_result = pipeline.run_pipeline(fold_relevance_dataset)
-            folds_results[fold_id] = fold_result
+                fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
+                                                                          args.include_testset_in_kfold,
+                                                                          read_data_sets=False)
+                fold_relevance_dataset.create_folds(fold_id, all_data)
+                pipeline = self.create_pipeline_for_kfold(args)
+                pipeline.run_pipeline(fold_relevance_dataset)
 
-        # removing intermediate directory and run kfold analysis
-        self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+            # removing intermediate directory and run kfold analysis
+            self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
+            job_info = self.run_kfold_analysis(base_logs_dir, base_run_id, num_folds, args.kfold_analysis_metrics)
 
-        self.run_kfold_analysis(base_logs_dir, base_run_id, num_folds)
-        return folds_results
+        except Exception as e:
+            self.logger.error(
+                "!!! Error in running Kfold CV !!!\n{}".format(str(e)))
+            traceback.print_exc()
+            job_status = "_FAILURE"
+            job_info = "{}\n{}".format(str(e), traceback.format_exc())
+
+        # Finish
+        self.finish(job_status, job_info)
 
     def run_pipeline(self, relevance_dataset=None):
         """

@@ -211,28 +211,6 @@ class RelevanceDataset:
                 non_zero_features_only=self.non_zero_features_only,
             )
 
-    def merge_datasets(self, include_testset_in_merge):
-        """
-        Concat the datasets (training, validation, test) together
-
-        Returns
-        -------
-        all_data: Tensorflow Dataset
-            The final concatenated dataset.
-        """
-
-        if include_testset_in_merge:
-            all_data = self.train.concatenate(self.validation).concatenate(
-                self.test)
-        else:
-            all_data = self.train.concatenate(self.validation)
-
-        # un-batch and shuffle all queries
-        all_data = all_data.unbatch()
-        # shuffling before using the shard method gives unexpected results. Should be avoided
-        # all_data = all_data.shuffle(batch_size * 2)
-        return all_data
-
     def balance_classes(self):
         """
         Balance class labels in the train dataset
