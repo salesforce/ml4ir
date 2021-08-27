@@ -35,6 +35,7 @@ class RankingModel(RelevanceModel):
     ):
         """
         Predict the scores on the test dataset using the trained model
+
         Parameters
         ----------
         test_dataset : `Dataset` object
@@ -50,6 +51,7 @@ class RankingModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+
         Returns
         -------
         `pd.DataFrame`

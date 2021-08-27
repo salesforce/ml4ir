@@ -10,3 +10,4 @@ Advanced Guide
    feature_layer
    predicting_with_a_trained_model
    transfer_learning
+   kfold_cross_validation
