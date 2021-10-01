@@ -14,7 +14,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         Returns
         -------
         function
-            Function to compute top 1 listnet loss
+            Function to compute softmax cross entropy loss
 
         Notes
         -----
