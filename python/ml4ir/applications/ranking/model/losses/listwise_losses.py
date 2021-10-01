@@ -9,8 +9,7 @@ from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 class SoftmaxCrossEntropy(ListwiseLossBase):
     def get_loss_fn(self, **kwargs):
         """
-        Define a masked rank 1 ListNet loss
-        Additionally can pass in record positions to handle positional bias
+        Define a softmax cross entropy loss
 
         Returns
         -------
@@ -78,7 +77,6 @@ class RankOneListNet(SoftmaxCrossEntropy):
     def get_loss_fn(self, **kwargs):
         """
         Define a masked rank 1 ListNet loss
-        Additionally can pass in record positions to handle positional bias
 
         Returns
         -------
