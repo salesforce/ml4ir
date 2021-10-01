@@ -62,3 +62,12 @@ class RankingModelTest(RankingTestBase):
         loss = self.run_default_pipeline(loss_key="rank_one_listnet")
 
         assert np.isclose(loss, 2.00879, rtol=0.05)
+
+    def test_softmax_cross_entropy(self):
+        """
+        Test model training and evaluate Rank One ListNet loss
+        """
+
+        loss = self.run_default_pipeline(loss_key="softmax_cross_entropy")
+
+        assert np.isclose(loss, 1.19955, rtol=0.05)

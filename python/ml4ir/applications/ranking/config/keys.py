@@ -7,6 +7,7 @@ class LossKey(Key):
     CATEGORICAL_CROSS_ENTROPY = "categorical_cross_entropy"
     SIGMOID_CROSS_ENTROPY = "sigmoid_cross_entropy"
     RANK_ONE_LISTNET = "rank_one_listnet"
+    SOFTMAX_CROSS_ENTROPY = "softmax_cross_entropy"
 
 
 class ScoringTypeKey(Key):

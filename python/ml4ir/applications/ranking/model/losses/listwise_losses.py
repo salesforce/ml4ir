@@ -6,7 +6,7 @@ from tensorflow.keras.losses import Reduction
 from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 
 
-class SoftmaxCrossEntropyLoss(ListwiseLossBase):
+class SoftmaxCrossEntropy(ListwiseLossBase):
     def get_loss_fn(self, **kwargs):
         """
         Define a masked rank 1 ListNet loss
@@ -74,7 +74,7 @@ class SoftmaxCrossEntropyLoss(ListwiseLossBase):
         return masked_softmax
 
 
-class RankOneListNet(SoftmaxCrossEntropyLoss):
+class RankOneListNet(SoftmaxCrossEntropy):
     def get_loss_fn(self, **kwargs):
         """
         Define a masked rank 1 ListNet loss
