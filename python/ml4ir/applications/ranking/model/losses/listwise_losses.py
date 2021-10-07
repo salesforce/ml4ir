@@ -28,9 +28,9 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             """
             Shapes
             ------
-            y_true : [batch_size, num_classes, 1]
-            y_pred : [batch_size, num_classes, 1]
-            mask : [batch_size, num_classes, 1]
+            y_true : [batch_size, num_classes]
+            y_pred : [batch_size, num_classes]
+            mask : [batch_size, num_classes]
             """
             return cce(y_true, tf.math.multiply(y_pred, mask))
 
@@ -38,7 +38,11 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
 
     def get_final_activation_op(self, output_name):
         """
-        Define a masked softmax activation function
+        Define a masked softmax activation function.
+        This is one of the simplest and most effective loss functions
+        for training ranking models with single click label.
+
+        Ref -> https://dl.acm.org/doi/10.1145/3341981.3344221
 
         Parameters
         ----------
@@ -76,7 +80,10 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
 class RankOneListNet(SoftmaxCrossEntropy):
     def get_loss_fn(self, **kwargs):
         """
-        Define a masked rank 1 ListNet loss
+        Define a masked rank 1 ListNet loss.
+        This loss is useful for multi-label classification when we have multiple
+        click labels per document. This is because the loss breaks down the comparison
+        between y_pred and y_true into individual binary assessments.
 
         Returns
         -------
@@ -95,9 +102,9 @@ class RankOneListNet(SoftmaxCrossEntropy):
             """
             Shapes
             ------
-            y_true : [batch_size, num_classes, 1]
-            y_pred : [batch_size, num_classes, 1]
-            mask : [batch_size, num_classes, 1]
+            y_true : [batch_size, num_classes]
+            y_pred : [batch_size, num_classes]
+            mask : [batch_size, num_classes]
             """
             batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 

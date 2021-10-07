@@ -30,7 +30,7 @@ class PointwiseLossBase(RankingLossBase):
     Abstract class that defines a pointwise ranking loss function
     """
 
-    def __init__(self, loss_key, scoring_type):
+    def __init__(self, loss_key="pointwise", scoring_type=""):
         """
         Instantiate a PointwiseLossBase object
 
@@ -51,7 +51,7 @@ class PairwiseLossBase(RankingLossBase):
     Abstract class that defines a pairwise ranking loss function
     """
 
-    def __init__(self, loss_key, scoring_type):
+    def __init__(self, loss_key="pairwise", scoring_type=""):
         """
         Instantiate a PairwiseLossBase object
 
@@ -72,7 +72,7 @@ class ListwiseLossBase(RankingLossBase):
     Abstract class that defines a listwise ranking loss function
     """
 
-    def __init__(self, loss_key, scoring_type):
+    def __init__(self, loss_key="listwise", scoring_type=""):
         """
         Instantiate a ListwiseLossBase object
 

@@ -29,9 +29,9 @@ class SigmoidCrossEntropy(PointwiseLossBase):
             """
             Shapes
             ------
-            y_true : [batch_size, num_classes, 1]
-            y_pred : [batch_size, num_classes, 1]
-            mask : [batch_size, num_classes, 1]
+            y_true : [batch_size, num_classes]
+            y_pred : [batch_size, num_classes]
+            mask : [batch_size, num_classes]
             """
             # Mask the padded records
             y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
