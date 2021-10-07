@@ -85,6 +85,8 @@ class RankOneListNet(SoftmaxCrossEntropy):
         click labels per document. This is because the loss breaks down the comparison
         between y_pred and y_true into individual binary assessments.
 
+        Ref -> https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2007-40.pdf
+
         Returns
         -------
         function
