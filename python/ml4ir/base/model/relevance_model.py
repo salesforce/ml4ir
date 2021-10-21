@@ -492,13 +492,17 @@ class RelevanceModel:
         batch_count = 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
+
+            # Decode bytes features to strings
+            for col in predictions_df.columns:
+                if isinstance(predictions_df[col].values[0], bytes):
+                    predictions_df[col] = predictions_df[col].str.decode("utf8")
+
             if logs_dir:
                 np.set_printoptions(
-                    formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                    formatter={"all": lambda x: str(x.decode("utf-8"))
+                               if isinstance(x, bytes) else str(x)},
                     linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
-                for col in predictions_df.columns:
-                    if isinstance(predictions_df[col].values[0], bytes):
-                        predictions_df[col] = predictions_df[col].str.decode('utf8')
 
                 if os.path.isfile(outfile):
                     predictions_df.to_csv(outfile, mode="a", header=False, index=False)
@@ -576,7 +580,6 @@ class RelevanceModel:
         else:
             raise NotImplementedError
 
-
     def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
         """
         Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
@@ -599,7 +602,6 @@ class RelevanceModel:
             A dictionary with the t-test metrics recorded.
         """
         raise NotImplementedError
-
 
     def save(
         self,
@@ -686,7 +688,8 @@ class RelevanceModel:
                     zip=True,
                 )
             except FileNotFoundError:
-                self.logger.warning("Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
+                self.logger.warning(
+                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
 
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -882,8 +885,8 @@ class RelevanceModel:
             # creating new activation layer
             activation_layer_name = self.model.get_layer(index=idx_activation).name
             activation_function = self.model.get_layer(index=idx_activation).activation
-            activation_layer = tf.keras.layers.Activation\
-                (activation_function, name=activation_layer_name)(temperature_layer)
+            activation_layer = tf.keras.layers.Activation(
+                activation_function, name=activation_layer_name)(temperature_layer)
             # creating new keras Functional API model
             self.model = Model(self.model.inputs, activation_layer)
             self.logger.info(f'Temperature Scaling layer added and new Functional API model'
@@ -891,4 +894,3 @@ class RelevanceModel:
         else:
             self.logger.info("Skipping adding Temperature Scaling layer because no activation "
                              "exist in the last layer of Keras original model!")
-
