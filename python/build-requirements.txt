@@ -12,7 +12,7 @@ mypy
 tensorflow==2.0.4
 numpy==1.18.5
 pandas==1.2.1
-scipy==1.5.4
+scipy==1.6.0
 
 # pytest
 pytest==6.2.1
