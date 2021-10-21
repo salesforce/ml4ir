@@ -4,8 +4,10 @@ import tensorflow as tf
 from tensorflow import data
 import pandas as pd
 import numpy as np
+from typing import Optional
 
 from ml4ir.base.model.relevance_model import RelevanceModel
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.applications.ranking.model.scoring import prediction_helper
@@ -13,7 +15,6 @@ from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, t_test_log_results
 
-from typing import Optional
 
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
@@ -274,6 +275,7 @@ class RankingModel(RelevanceModel):
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
+        dataset: Optional[RelevanceDataset] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -302,6 +304,8 @@ class RankingModel(RelevanceModel):
         pad_sequence: bool, optional
             Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
             Set this to False if you want to not handle padded scores.
+        dataset : `RelevanceDataset` object
+            RelevanceDataset object that can optionally be used for saving
 
         Notes
         -----

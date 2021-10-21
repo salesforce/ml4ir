@@ -9,6 +9,7 @@ from tensorflow.keras import metrics as kmetrics
 import pandas as pd
 import tensorflow as tf
 import numpy as np
+
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -607,7 +608,8 @@ class RelevanceModel:
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
-        sub_dir: str = 'final'
+        sub_dir: str = "final",
+        dataset: Optional[RelevanceDataset] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -640,6 +642,8 @@ class RelevanceModel:
             Set this to False if you want to not handle padded scores.
         sub_dir: str, optional
             sub directory name to save the model into
+        dataset : `RelevanceDataset` object
+            RelevanceDataset object that can optionally be used for saving
 
         Notes
         -----
