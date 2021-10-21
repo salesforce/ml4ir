@@ -361,6 +361,7 @@ class LinearRankingModel(RankingModel):
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
+        dataset: Optional[RelevanceDataset] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -386,6 +387,8 @@ class LinearRankingModel(RankingModel):
         pad_sequence: bool, optional
             Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
             Set this to False if you want to not handle padded scores.
+        dataset : `RelevanceDataset` object
+            RelevanceDataset object that can optionally be used for saving
 
         Notes
         -----
