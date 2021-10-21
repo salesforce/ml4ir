@@ -275,7 +275,8 @@ class RankingModel(RelevanceModel):
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
-        dataset: Optional[RelevanceDataset] = None
+        dataset: Optional[RelevanceDataset] = None,
+        experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -306,6 +307,8 @@ class RankingModel(RelevanceModel):
             Set this to False if you want to not handle padded scores.
         dataset : `RelevanceDataset` object
             RelevanceDataset object that can optionally be used for saving
+        experiment_details: dict
+            Dictionary containing metadata and results about the current experiment
 
         Notes
         -----

@@ -492,6 +492,22 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                 )
 
+            # Write experiment details to experiment tracking dictionary
+            # Add command line script arguments
+            experiment_tracking_dict.update(vars(self.args))
+
+            # Add feature config information
+            experiment_tracking_dict.update(
+                self.feature_config.get_hyperparameter_dict())
+
+            # Add train and test metrics
+            experiment_tracking_dict.update(train_metrics)
+            experiment_tracking_dict.update(test_metrics)
+
+            # Add optimizer and lr schedule
+            experiment_tracking_dict.update(
+                relevance_model.model.optimizer.get_config())
+
             # Save model
             # NOTE: Model will be saved with the latest serving signatures
             if self.args.execution_mode in {
@@ -511,24 +527,10 @@ class RelevancePipeline(object):
                     postprocessing_fn=None,
                     required_fields_only=not self.args.use_all_fields_at_inference,
                     pad_sequence=self.args.pad_sequence_at_inference,
-                    dataset=relevance_dataset
+                    dataset=relevance_dataset,
+                    experiment_details=experiment_tracking_dict
                 )
 
-            # Write experiment details to experiment tracking dictionary
-            # Add command line script arguments
-            experiment_tracking_dict.update(vars(self.args))
-
-            # Add feature config information
-            experiment_tracking_dict.update(
-                self.feature_config.get_hyperparameter_dict())
-
-            # Add train and test metrics
-            experiment_tracking_dict.update(train_metrics)
-            experiment_tracking_dict.update(test_metrics)
-
-            # Add optimizer and lr schedule
-            experiment_tracking_dict.update(
-                relevance_model.model.optimizer.get_config())
 
             # temperature scaling
             if self.args.execution_mode in {
@@ -565,7 +567,8 @@ class RelevancePipeline(object):
                             required_fields_only=not self.args.use_all_fields_at_inference,
                             pad_sequence=self.args.pad_sequence_at_inference,
                             sub_dir="final_calibrated",
-                            dataset=relevance_dataset
+                            dataset=relevance_dataset,
+                            experiment_details=experiment_tracking_dict
                         )
 
             job_info = pd.DataFrame.from_dict(
