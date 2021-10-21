@@ -1,6 +1,7 @@
 import sys
 import ast
 from argparse import Namespace
+import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 import pandas as pd
@@ -21,6 +22,7 @@ from ml4ir.applications.ranking.config.keys import ScoringTypeKey
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
+from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
 from typing import Union, List, Type
@@ -122,6 +124,29 @@ class RankingPipeline(RelevancePipeline):
             file_io=self.local_io,
             logger=self.logger,
         )
+
+        # building callbacks
+        if not self.args.monitor_metric.startswith("val_"):
+            monitor_metric = "val_{}".format(self.args.monitor_metric)
+        callbacks_list: list = relevance_model._build_callback_hooks(
+            models_dir=self.models_dir_local,
+            logs_dir=self.logs_dir_local,
+            is_training=True,
+            logging_frequency=self.args.logging_frequency,
+            monitor_mode=self.args.monitor_mode,
+            monitor_metric=self.args.monitor_metric,
+            patience=self.args.early_stopping_patience,
+        )
+
+        lr_schedule = self.model_config['lr_schedule']
+        lr_schedule_key = lr_schedule['key']
+        if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
+                                                             factor=lr_schedule.get('factor', 0.5),
+                                                             patience=lr_schedule.get('patience', 1),
+                                                             min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
+            callbacks_list.append(reduce_lr)
+        relevance_model.callbacks_list = callbacks_list
 
         return relevance_model
 

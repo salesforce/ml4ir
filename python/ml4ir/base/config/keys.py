@@ -38,6 +38,7 @@ class LearningRateScheduleKey(Key):
     EXPONENTIAL = "exponential"
     CYCLIC = "cyclic"
     CONSTANT = 'constant'
+    REDUCE_LR_ON_PLATEAU = 'reduce_lr_on_plateau'
 
 class CyclicLearningRateType(Key):
     """Cyclic learning rate schedule type keys"""

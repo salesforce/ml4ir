@@ -103,6 +103,8 @@ def choose_scheduler(model_config):
                 decay_steps=10000000,
                 decay_rate=1.0,
             )
+        elif lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+            learning_rate_schedule = lr_schedule.get('learning_rate', OptimizerDefaultValues.CONSTANT_LR)
 
         elif lr_schedule_key == LearningRateScheduleKey.CYCLIC:
             lr_schedule_type = lr_schedule['type']
