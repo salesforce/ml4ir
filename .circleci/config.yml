@@ -71,7 +71,7 @@ jobs:
   build_test_python_ranking:
     docker:
       - image: circleci/python:3.7.7
-    resource_class: 2xlarge
+    resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
