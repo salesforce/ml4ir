@@ -4,6 +4,10 @@ import pandas as pd
 import numpy as np
 import pathlib
 from testfixtures import TempDirectory
+import gc
+
+import tensorflow.keras.backend as K
+
 from ml4ir.applications.ranking.pipeline import RankingPipeline
 from ml4ir.applications.ranking.config.parse_args import get_args
 
@@ -98,6 +102,10 @@ class TestML4IRSanity(unittest.TestCase):
 
     def tearDown(self):
         TempDirectory.cleanup_all()
+
+        # Explicitly clear keras memory
+        gc.collect()
+        K.clear_session()
 
     def test_linear_ml4ir_sanity_1(self):
         """
