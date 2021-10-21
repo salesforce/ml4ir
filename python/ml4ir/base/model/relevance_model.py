@@ -646,7 +646,10 @@ class RelevanceModel:
         sub_dir: str, optional
             sub directory name to save the model into
         dataset : `RelevanceDataset` object
-            RelevanceDataset object that can optionally be used for saving
+            RelevanceDataset object that can optionally be passed to be used by downstream jobs
+            that want to save the data along with the model.
+            Note that this feature is currently unimplemented and is upto the users to override
+            and customize.
         experiment_details: dict
             Dictionary containing metadata and results about the current experiment
 

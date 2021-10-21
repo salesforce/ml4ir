@@ -306,7 +306,10 @@ class RankingModel(RelevanceModel):
             Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
             Set this to False if you want to not handle padded scores.
         dataset : `RelevanceDataset` object
-            RelevanceDataset object that can optionally be used for saving
+            RelevanceDataset object that can optionally be passed to be used by downstream jobs
+            that want to save the data along with the model.
+            Note that this feature is currently unimplemented and is upto the users to override
+            and customize.
         experiment_details: dict
             Dictionary containing metadata and results about the current experiment
 
@@ -392,7 +395,10 @@ class LinearRankingModel(RankingModel):
             Value defining if sequences should be padded for SequenceExample proto inputs at serving time.
             Set this to False if you want to not handle padded scores.
         dataset : `RelevanceDataset` object
-            RelevanceDataset object that can optionally be used for saving
+            RelevanceDataset object that can optionally be passed to be used by downstream jobs
+            that want to save the data along with the model.
+            Note that this feature is currently unimplemented and is upto the users to override
+            and customize.
         experiment_details: dict
             Dictionary containing metadata and results about the current experiment
 
