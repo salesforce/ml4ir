@@ -391,6 +391,20 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+        if not hasattr(self, 'callbacks_list'):
+            if not monitor_metric.startswith("val_"):
+                monitor_metric = "val_{}".format(monitor_metric)
+            callbacks_list: list = self._build_callback_hooks(
+                models_dir=models_dir,
+                logs_dir=logs_dir,
+                is_training=True,
+                logging_frequency=logging_frequency,
+                monitor_mode=monitor_mode,
+                monitor_metric=monitor_metric,
+                patience=patience,
+            )
+            self.callbacks_list = callbacks_list
+
         if self.is_compiled:
             history = self.model.fit(
                 x=dataset.train,
