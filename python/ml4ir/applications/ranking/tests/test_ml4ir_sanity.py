@@ -41,7 +41,7 @@ def train_ml4ir(data_dir, feature_config, model_config, logs_dir):
             "--scoring_type", "listwise",
             "--run_id", "test_command_line",
             "--data_format", "csv",
-            "--execution_mode", "train_inference_evaluate",
+            "--execution_mode", "train_evaluate",
             "--loss_key", "rank_one_listnet",
             "--num_epochs", "150",
             "--model_config", model_config,
