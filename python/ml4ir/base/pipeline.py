@@ -382,7 +382,7 @@ class RelevancePipeline(object):
                 fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
                                                                           args.include_testset_in_kfold,
                                                                           read_data_sets=False)
-                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset)
+                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset) 
                 pipeline = self.create_pipeline_for_kfold(args)
                 pipeline.run_pipeline(fold_relevance_dataset, fold_id)
 
