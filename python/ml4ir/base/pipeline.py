@@ -26,6 +26,7 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
+from ml4ir.base.config.keys import LearningRateScheduleKey
 from typing import List
 import copy
 
@@ -442,6 +443,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.TRAIN_INFERENCE,
                 ExecutionModeKey.TRAIN_ONLY,
             }:
+
                 # Train
                 train_metrics = relevance_model.fit(
                     dataset=relevance_dataset,
@@ -451,7 +453,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     monitor_metric=self.args.monitor_metric,
                     monitor_mode=self.args.monitor_mode,
-                    patience=self.args.early_stopping_patience,
+                    patience=self.args.early_stopping_patience
                 )
 
             if self.args.execution_mode in {

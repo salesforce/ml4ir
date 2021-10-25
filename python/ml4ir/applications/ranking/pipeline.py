@@ -125,28 +125,16 @@ class RankingPipeline(RelevancePipeline):
             logger=self.logger,
         )
 
-        # building callbacks
-        if not self.args.monitor_metric.startswith("val_"):
-            monitor_metric = "val_{}".format(self.args.monitor_metric)
-        callbacks_list: list = relevance_model._build_callback_hooks(
-            models_dir=self.models_dir_local,
-            logs_dir=self.logs_dir_local,
-            is_training=True,
-            logging_frequency=self.args.logging_frequency,
-            monitor_mode=self.args.monitor_mode,
-            monitor_metric=self.args.monitor_metric,
-            patience=self.args.early_stopping_patience,
-        )
-
-        lr_schedule = self.model_config['lr_schedule']
-        lr_schedule_key = lr_schedule['key']
-        if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
-            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
-                                                             factor=lr_schedule.get('factor', 0.5),
-                                                             patience=lr_schedule.get('patience', 1),
-                                                             min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
-            callbacks_list.append(reduce_lr)
-        relevance_model.callbacks_list = callbacks_list
+        # Adding REDUCE_LR_ON_PLATEAU as a callback
+        if 'lr_schedule' in self.model_config['lr_schedule']:
+            lr_schedule = self.model_config['lr_schedule']
+            lr_schedule_key = lr_schedule['key']
+            if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+                reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=self.args.monitor_metric,
+                                                                 factor=lr_schedule.get('factor', 0.5),
+                                                                 patience=lr_schedule.get('patience', 1),
+                                                                 min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
+                relevance_model.callbacks_list.append(reduce_lr)
 
         return relevance_model
 

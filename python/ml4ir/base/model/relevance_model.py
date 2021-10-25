@@ -90,6 +90,7 @@ class RelevanceModel:
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
+        self.callbacks_list = []
 
         if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
@@ -391,19 +392,22 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        if not hasattr(self, 'callbacks_list'):
-            if not monitor_metric.startswith("val_"):
-                monitor_metric = "val_{}".format(monitor_metric)
-            callbacks_list: list = self._build_callback_hooks(
-                models_dir=models_dir,
-                logs_dir=logs_dir,
-                is_training=True,
-                logging_frequency=logging_frequency,
-                monitor_mode=monitor_mode,
-                monitor_metric=monitor_metric,
-                patience=patience,
-            )
-            self.callbacks_list = callbacks_list
+
+        if not monitor_metric.startswith("val_"):
+            monitor_metric = "val_{}".format(monitor_metric)
+        callbacks_list: list = self._build_callback_hooks(
+            models_dir=models_dir,
+            logs_dir=logs_dir,
+            is_training=True,
+            logging_frequency=logging_frequency,
+            monitor_mode=monitor_mode,
+            monitor_metric=monitor_metric,
+            patience=patience,
+        )
+
+        if hasattr(self, 'callbacks_list'):
+            callbacks_list.extend(self.callbacks_list)
+            self.callbacks_list = []
 
         if self.is_compiled:
             history = self.model.fit(
@@ -411,7 +415,7 @@ class RelevanceModel:
                 validation_data=dataset.validation,
                 epochs=num_epochs,
                 verbose=True,
-                callbacks=self.callbacks_list,
+                callbacks=callbacks_list,
             )
 
             # Write metrics for experiment tracking
