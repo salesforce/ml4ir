@@ -1,6 +1,8 @@
 import sys
 import ast
 from argparse import Namespace
+from typing import Union, List, Type, Optional
+
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 from ml4ir.applications.classification.config.parse_args import get_args
@@ -16,7 +18,6 @@ from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
 from ml4ir.applications.classification.model.classification_model import ClassificationModel
-from typing import Union, List, Type
 
 
 class ClassificationPipeline(RelevancePipeline):

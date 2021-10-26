@@ -11,6 +11,8 @@ import time
 from argparse import Namespace
 from logging import Logger
 import pathlib
+from typing import List
+import copy
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -26,9 +28,6 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
-from typing import List
-import copy
-
 
 
 class RelevancePipeline(object):
@@ -368,14 +367,18 @@ class RelevancePipeline(object):
             base_logs_dir = str(self.args.logs_dir)
             base_models_dir = str(self.args.models_dir)
             base_run_id = self.run_id
-            self.logger.info("K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
-            self.logger.info("Include testset in the folds={}".format(str(self.args.include_testset_in_kfold)))
+            self.logger.info(
+                "K-fold Cross Validation mode starting with k={}".format(self.args.kfold))
+            self.logger.info("Include testset in the folds={}".format(
+                str(self.args.include_testset_in_kfold)))
 
             # when creating folds, the validation set is assigned fold i, test fold i+1 and training get the rest of folds
             for fold_id in range(num_folds):
                 self.logger.info("fold={}".format(fold_id))
-                logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / "fold_{}".format(fold_id)
-                models_dir = pathlib.Path(base_models_dir) / self.args.run_id / "fold_{}".format(fold_id)
+                logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / \
+                    "fold_{}".format(fold_id)
+                models_dir = pathlib.Path(base_models_dir) / \
+                    self.args.run_id / "fold_{}".format(fold_id)
                 args.logs_dir = pathlib.Path(logs_dir).as_posix()
                 args.models_dir = pathlib.Path(models_dir).as_posix()
 
@@ -388,7 +391,8 @@ class RelevancePipeline(object):
 
             # removing intermediate directory and run kfold analysis
             self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
-            job_info = self.run_kfold_analysis(base_logs_dir, base_run_id, num_folds, args.kfold_analysis_metrics)
+            job_info = self.run_kfold_analysis(
+                base_logs_dir, base_run_id, num_folds, args.kfold_analysis_metrics)
 
         except Exception as e:
             self.logger.error(
@@ -396,9 +400,6 @@ class RelevancePipeline(object):
             traceback.print_exc()
             job_status = "_FAILURE"
             job_info = "{}\n{}".format(str(e), traceback.format_exc())
-
-        # Finish
-        self.finish(job_status, job_info)
 
     def run_pipeline(self, relevance_dataset=None):
         """
@@ -492,6 +493,22 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                 )
 
+            # Write experiment details to experiment tracking dictionary
+            # Add command line script arguments
+            experiment_tracking_dict.update(vars(self.args))
+
+            # Add feature config information
+            experiment_tracking_dict.update(
+                self.feature_config.get_hyperparameter_dict())
+
+            # Add train and test metrics
+            experiment_tracking_dict.update(train_metrics)
+            experiment_tracking_dict.update(test_metrics)
+
+            # Add optimizer and lr schedule
+            experiment_tracking_dict.update(
+                relevance_model.model.optimizer.get_config())
+
             # Save model
             # NOTE: Model will be saved with the latest serving signatures
             if self.args.execution_mode in {
@@ -511,23 +528,10 @@ class RelevancePipeline(object):
                     postprocessing_fn=None,
                     required_fields_only=not self.args.use_all_fields_at_inference,
                     pad_sequence=self.args.pad_sequence_at_inference,
+                    dataset=relevance_dataset,
+                    experiment_details=experiment_tracking_dict
                 )
 
-            # Write experiment details to experiment tracking dictionary
-            # Add command line script arguments
-            experiment_tracking_dict.update(vars(self.args))
-
-            # Add feature config information
-            experiment_tracking_dict.update(
-                self.feature_config.get_hyperparameter_dict())
-
-            # Add train and test metrics
-            experiment_tracking_dict.update(train_metrics)
-            experiment_tracking_dict.update(test_metrics)
-
-            # Add optimizer and lr schedule
-            experiment_tracking_dict.update(
-                relevance_model.model.optimizer.get_config())
 
             # temperature scaling
             if self.args.execution_mode in {
@@ -552,7 +556,7 @@ class RelevancePipeline(object):
                                                             **kwargs)
 
                         experiment_tracking_dict.update({CalibrationKey.TEMPERATURE:
-                                                             results.position[0]})
+                                                         results.position[0]})
                         # replacing the existing keras functional API model with the model with
                         # temperature scaling layer
                         relevance_model.add_temperature_layer(results.position[0])
@@ -563,7 +567,9 @@ class RelevancePipeline(object):
                             postprocessing_fn=None,
                             required_fields_only=not self.args.use_all_fields_at_inference,
                             pad_sequence=self.args.pad_sequence_at_inference,
-                            sub_dir='final_calibrated'
+                            sub_dir="final_calibrated",
+                            dataset=relevance_dataset,
+                            experiment_details=experiment_tracking_dict
                         )
 
             job_info = pd.DataFrame.from_dict(

@@ -9,6 +9,7 @@ from tensorflow.keras import metrics as kmetrics
 import pandas as pd
 import tensorflow as tf
 import numpy as np
+
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -497,13 +498,17 @@ class RelevanceModel:
         batch_count = 0
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
+
             if logs_dir:
                 np.set_printoptions(
-                    formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                    formatter={"all": lambda x: str(x.decode("utf-8"))
+                               if isinstance(x, bytes) else str(x)},
                     linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+
+                # Decode bytes features to strings
                 for col in predictions_df.columns:
                     if isinstance(predictions_df[col].values[0], bytes):
-                        predictions_df[col] = predictions_df[col].str.decode('utf8')
+                        predictions_df[col] = predictions_df[col].str.decode("utf8")
 
                 if os.path.isfile(outfile):
                     predictions_df.to_csv(outfile, mode="a", header=False, index=False)
@@ -581,7 +586,6 @@ class RelevanceModel:
         else:
             raise NotImplementedError
 
-
     def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
         """
         Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
@@ -605,7 +609,6 @@ class RelevanceModel:
         """
         raise NotImplementedError
 
-
     def save(
         self,
         models_dir: str,
@@ -613,7 +616,9 @@ class RelevanceModel:
         postprocessing_fn=None,
         required_fields_only: bool = True,
         pad_sequence: bool = False,
-        sub_dir: str = 'final'
+        sub_dir: str = "final",
+        dataset: Optional[RelevanceDataset] = None,
+        experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -646,6 +651,13 @@ class RelevanceModel:
             Set this to False if you want to not handle padded scores.
         sub_dir: str, optional
             sub directory name to save the model into
+        dataset : `RelevanceDataset` object
+            RelevanceDataset object that can optionally be passed to be used by downstream jobs
+            that want to save the data along with the model.
+            Note that this feature is currently unimplemented and is upto the users to override
+            and customize.
+        experiment_details: dict
+            Dictionary containing metadata and results about the current experiment
 
         Notes
         -----
@@ -688,7 +700,8 @@ class RelevanceModel:
                     zip=True,
                 )
             except FileNotFoundError:
-                self.logger.warning("Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
+                self.logger.warning(
+                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
 
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -884,8 +897,8 @@ class RelevanceModel:
             # creating new activation layer
             activation_layer_name = self.model.get_layer(index=idx_activation).name
             activation_function = self.model.get_layer(index=idx_activation).activation
-            activation_layer = tf.keras.layers.Activation\
-                (activation_function, name=activation_layer_name)(temperature_layer)
+            activation_layer = tf.keras.layers.Activation(
+                activation_function, name=activation_layer_name)(temperature_layer)
             # creating new keras Functional API model
             self.model = Model(self.model.inputs, activation_layer)
             self.logger.info(f'Temperature Scaling layer added and new Functional API model'
@@ -893,4 +906,3 @@ class RelevanceModel:
         else:
             self.logger.info("Skipping adding Temperature Scaling layer because no activation "
                              "exist in the last layer of Keras original model!")
-
