@@ -1,0 +1,15 @@
+architecture_key: linear
+layers:
+  - type: dense
+    name: linear_layer
+    units: 1
+    kernel_initializer: Ones
+    use_bias: False
+    activation:
+optimizer:
+  key: sgd
+  gradient_clip_value: 100.0
+lr_schedule:
+  key: reduce_lr_on_plateau
+  learning_rate: 50.0
+  min_lr: 1.0

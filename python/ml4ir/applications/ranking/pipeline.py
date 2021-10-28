@@ -127,11 +127,14 @@ class RankingPipeline(RelevancePipeline):
         )
 
         # Adding REDUCE_LR_ON_PLATEAU as a callback
-        if 'lr_schedule' in self.model_config['lr_schedule']:
+        if 'lr_schedule' in self.model_config:
             lr_schedule = self.model_config['lr_schedule']
             lr_schedule_key = lr_schedule['key']
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
-                reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=self.args.monitor_metric,
+                monitor_metric = self.args.monitor_metric
+                if not monitor_metric.startswith("val_"):
+                    monitor_metric = "val_{}".format(monitor_metric)
+                reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
                                                                  factor=lr_schedule.get('factor', 0.5),
                                                                  patience=lr_schedule.get('patience', 1),
                                                                  min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
