@@ -49,6 +49,11 @@ class RankingPipeline(RelevancePipeline):
 
         super().__init__(args)
 
+        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
+            self.ranking_model_cls = LinearRankingModel
+        else:
+            self.ranking_model_cls = RankingModel
+
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
         Creates a RankingModel that can be used for training and evaluating
@@ -104,11 +109,7 @@ class RankingPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
-            RankingModelClass = LinearRankingModel
-        else:
-            RankingModelClass = RankingModel
-        relevance_model: RelevanceModel = RankingModelClass(
+        relevance_model: RelevanceModel = self.ranking_model_cls(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             scorer=scorer,
