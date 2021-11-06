@@ -290,21 +290,6 @@ class TestLrSchedules(unittest.TestCase):
             model_config=model_config,
         )
 
-
-        # callbacks_list = []
-        # my_callback_object = LrCallback()
-        # callbacks_list.append(my_callback_object)
-        #
-        # # Adding REDUCE_LR_ON_PLATEAU as a callback
-        # if 'lr_schedule' in model_config:
-        #     lr_schedule = model_config['lr_schedule']
-        #     lr_schedule_key = lr_schedule['key']
-        #     if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
-        #         reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-        #                                                          patience=lr_schedule.get('patience', 1),
-        #                                                          min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
-        #         callbacks_list.append(reduce_lr)
-
         my_callback_object = LrCallback()
         relevance_model.callbacks_list.append(my_callback_object)
         history = relevance_model.model.fit(

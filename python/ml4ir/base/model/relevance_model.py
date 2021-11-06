@@ -131,6 +131,9 @@ class RelevanceModel:
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
             self.model.output_names = [self.output_name]
 
+            # Adding lr scheduler as ReduceLrOnPlateau as a callback
+            self.add_scheduler_as_callback()
+
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
 
@@ -359,7 +362,25 @@ class RelevanceModel:
         )
 
     def add_scheduler_as_callback(self):
-        pass
+        """Adding reduce lr on plateau as a callback if specified"""
+        if 'lr_schedule' in self.model_config:
+            lr_schedule = self.model_config['lr_schedule']
+            lr_schedule_key = lr_schedule['key']
+            if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+                monitor_metric = self.monitor_metric
+                if monitor_metric is None:
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
+                                                                     patience=lr_schedule.get('patience', 1),
+                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
+                                                                     verbose=1)
+                elif not monitor_metric.startswith("val_"):
+                    monitor_metric = "val_{}".format(monitor_metric)
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
+                                                                     factor=lr_schedule.get('factor', 0.5),
+                                                                     patience=lr_schedule.get('patience', 1),
+                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
+                                                                     verbose=1)
+                self.callbacks_list.append(reduce_lr)
 
     def fit(
         self,
