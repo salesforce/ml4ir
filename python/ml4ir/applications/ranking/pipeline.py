@@ -22,7 +22,6 @@ from ml4ir.applications.ranking.config.keys import ScoringTypeKey
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
-from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
 from typing import Union, List, Type
@@ -124,21 +123,9 @@ class RankingPipeline(RelevancePipeline):
             output_name=self.args.output_name,
             file_io=self.local_io,
             logger=self.logger,
+            model_config=self.model_config,
+            monitor_metric=self.args.monitor_metric
         )
-
-        # Adding REDUCE_LR_ON_PLATEAU as a callback
-        if 'lr_schedule' in self.model_config:
-            lr_schedule = self.model_config['lr_schedule']
-            lr_schedule_key = lr_schedule['key']
-            if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
-                monitor_metric = self.args.monitor_metric
-                if not monitor_metric.startswith("val_"):
-                    monitor_metric = "val_{}".format(monitor_metric)
-                reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
-                                                                 factor=lr_schedule.get('factor', 0.5),
-                                                                 patience=lr_schedule.get('patience', 1),
-                                                                 min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
-                relevance_model.callbacks_list.append(reduce_lr)
 
         return relevance_model
 

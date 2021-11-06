@@ -23,6 +23,7 @@ from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
     TemperatureScalingLayer
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
 class RelevanceModelConstants:
@@ -48,6 +49,8 @@ class RelevanceModel:
         compile_keras_model: bool = False,
         output_name: str = "score",
         logger=None,
+        model_config=None,
+        monitor_metric=None,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -84,6 +87,8 @@ class RelevanceModel:
             Name of the output tensorflow node that captures the score
         logger : `Logger`, optional
             logging handler for status messages
+        model_config : path to the model config file, optional
+            logging handler for status messages
         """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
@@ -92,6 +97,8 @@ class RelevanceModel:
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
         self.callbacks_list = []
+        self.model_config = model_config
+        self.monitor_metric = monitor_metric
 
         if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
@@ -351,6 +358,9 @@ class RelevanceModel:
             logger=logger,
         )
 
+    def add_scheduler_as_callback(self):
+        pass
+
     def fit(
         self,
         dataset: RelevanceDataset,
@@ -406,9 +416,8 @@ class RelevanceModel:
             patience=patience,
         )
 
-        if hasattr(self, 'callbacks_list'):
-            callbacks_list.extend(self.callbacks_list)
-            self.callbacks_list = []
+        callbacks_list.extend(self.callbacks_list)
+        self.callbacks_list = []
 
         if self.is_compiled:
             history = self.model.fit(

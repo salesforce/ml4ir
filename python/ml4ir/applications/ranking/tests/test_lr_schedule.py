@@ -287,29 +287,32 @@ class TestLrSchedules(unittest.TestCase):
             model_file=None,
             file_io=io,
             logger=Logger,
+            model_config=model_config,
         )
 
 
-        callbacks_list = []
+        # callbacks_list = []
+        # my_callback_object = LrCallback()
+        # callbacks_list.append(my_callback_object)
+        #
+        # # Adding REDUCE_LR_ON_PLATEAU as a callback
+        # if 'lr_schedule' in model_config:
+        #     lr_schedule = model_config['lr_schedule']
+        #     lr_schedule_key = lr_schedule['key']
+        #     if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+        #         reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
+        #                                                          patience=lr_schedule.get('patience', 1),
+        #                                                          min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
+        #         callbacks_list.append(reduce_lr)
+
         my_callback_object = LrCallback()
-        callbacks_list.append(my_callback_object)
-
-        # Adding REDUCE_LR_ON_PLATEAU as a callback
-        if 'lr_schedule' in model_config:
-            lr_schedule = model_config['lr_schedule']
-            lr_schedule_key = lr_schedule['key']
-            if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
-                reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-                                                                 patience=lr_schedule.get('patience', 1),
-                                                                 min_lr=lr_schedule.get('min_lr', 0.0001), verbose=1)
-                callbacks_list.append(reduce_lr)
-
+        relevance_model.callbacks_list.append(my_callback_object)
         history = relevance_model.model.fit(
             x=dataset.train.shard(2, 0),
             validation_data=dataset.validation.shard(2, 1),
             epochs=10,
             verbose=True,
-            callbacks=callbacks_list,
+            callbacks=relevance_model.callbacks_list,
         )
         lr_list = my_callback_object.get_lr_reduce_on_plateau_list()
         lr_gold = [50.0, 50.0, 25.0, 12.5, 6.25, 3.125, 1.5625, 1.0, 1.0, 1.0]
