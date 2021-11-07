@@ -363,7 +363,7 @@ class RelevanceModel:
 
     def add_scheduler_as_callback(self):
         """Adding reduce lr on plateau as a callback if specified"""
-        if 'lr_schedule' in self.model_config:
+        if self.model_config and 'lr_schedule' in self.model_config:
             lr_schedule = self.model_config['lr_schedule']
             lr_schedule_key = lr_schedule['key']
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
