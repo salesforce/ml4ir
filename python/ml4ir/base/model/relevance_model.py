@@ -96,7 +96,6 @@ class RelevanceModel:
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
-        self.callbacks_list = []
         self.model_config = model_config
         self.monitor_metric = monitor_metric
 
@@ -130,9 +129,6 @@ class RelevanceModel:
             # Create model with functional Keras API
             self.model = Model(inputs=inputs, outputs={self.output_name: scores})
             self.model.output_names = [self.output_name]
-
-            # Adding lr scheduler as ReduceLrOnPlateau as a callback
-            self.add_scheduler_as_callback()
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
@@ -380,7 +376,7 @@ class RelevanceModel:
                                                                      patience=lr_schedule.get('patience', 1),
                                                                      min_lr=lr_schedule.get('min_lr', 0.0001),
                                                                      verbose=1)
-                self.callbacks_list.append(reduce_lr)
+                return reduce_lr
 
     def fit(
         self,
@@ -436,9 +432,6 @@ class RelevanceModel:
             monitor_metric=monitor_metric,
             patience=patience,
         )
-
-        callbacks_list.extend(self.callbacks_list)
-        self.callbacks_list = []
 
         if self.is_compiled:
             history = self.model.fit(
@@ -863,6 +856,11 @@ class RelevanceModel:
 
         # Debugging/Logging
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
+
+        # Adding lr scheduler as a callback
+        scheduler_callback = self.add_scheduler_as_callback()
+        if scheduler_callback:
+            callbacks_list.append(scheduler_callback)
 
         # Add more here
 

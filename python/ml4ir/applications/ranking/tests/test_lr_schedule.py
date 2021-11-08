@@ -16,7 +16,6 @@ from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import ScoringTypeKey
 from ml4ir.applications.ranking.model.losses import loss_factory
-from ml4ir.base.config.keys import LearningRateScheduleKey
 import yaml
 from ml4ir.base.features.feature_config import ExampleFeatureConfig, SequenceExampleFeatureConfig
 import tensorflow as tf
@@ -289,15 +288,17 @@ class TestLrSchedules(unittest.TestCase):
             logger=Logger,
             model_config=model_config,
         )
-
+        callback_list = []
+        callback_list.append(relevance_model.add_scheduler_as_callback())
         my_callback_object = LrCallback()
-        relevance_model.callbacks_list.append(my_callback_object)
+        callback_list.append(my_callback_object)
+
         history = relevance_model.model.fit(
             x=dataset.train.shard(2, 0),
             validation_data=dataset.validation.shard(2, 1),
             epochs=10,
             verbose=True,
-            callbacks=relevance_model.callbacks_list,
+            callbacks=callback_list,
         )
         lr_list = my_callback_object.get_lr_reduce_on_plateau_list()
         lr_gold = [50.0, 50.0, 25.0, 12.5, 6.25, 3.125, 1.5625, 1.0, 1.0, 1.0]
