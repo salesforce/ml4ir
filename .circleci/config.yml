@@ -162,7 +162,7 @@ jobs:
             . venv/bin/activate
             coverage combine reports/.coverage.ranking reports/.coverage.classif
             coverage report
-            coverage html --fail-under=85
+            coverage html --fail-under=75
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
           path: /home/circleci/project/htmlcov
