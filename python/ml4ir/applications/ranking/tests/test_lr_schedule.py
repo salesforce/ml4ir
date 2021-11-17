@@ -289,7 +289,7 @@ class TestLrSchedules(unittest.TestCase):
             model_config=model_config,
         )
         callback_list = []
-        callback_list.append(relevance_model.add_scheduler_as_callback())
+        callback_list.append(relevance_model.add_scheduler_as_callback(None, model_config))
         my_callback_object = LrCallback()
         callback_list.append(my_callback_object)
 
