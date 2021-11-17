@@ -35,6 +35,39 @@ jobs:
       - store_test_results:
           path: jvm/ml4ir-inference/target
 
+  build_test_python_base:
+    docker:
+      - image: circleci/python:3.7.7
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+      - run:
+          name: Install Python deps in a venv
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            cd python
+            pip install -r build-requirements.txt
+      - save_cache:
+          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          paths:
+            - "venv"
+      - run:
+          name: Run Python tests
+          command: |
+            . venv/bin/activate
+            cd python
+            COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/base/tests/ --junitxml=test_results/results.xml
+          no_output_timeout: 45m  # Time for running the tests before we timeout
+      - persist_to_workspace:
+          root: python/reports
+          paths:
+            - .coverage.ranking
+      - store_test_results:
+          path: python/test_results
+
   build_test_python_classification:
     docker:
       - image: circleci/python:3.7.7

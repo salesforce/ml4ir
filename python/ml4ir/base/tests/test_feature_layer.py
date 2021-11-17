@@ -1,14 +1,14 @@
-from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.base.features.feature_fns import categorical as categorical_fns
 from ml4ir.base.features.feature_fns import sequence as sequence_fns
 from ml4ir.base.features.feature_fns import tf_native as tf_native_fns
 from ml4ir.base.config.keys import SequenceExampleTypeKey
+from ml4ir.base.tests.test_base import RelevanceTestBase
 
 import tensorflow as tf
 import numpy as np
 
 
-class RankingModelTest(RankingTestBase):
+class RankingModelTest(RelevanceTestBase):
     def test_bytes_sequence_to_encoding_bilstm(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
