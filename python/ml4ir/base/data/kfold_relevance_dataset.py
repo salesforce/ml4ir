@@ -79,7 +79,7 @@ class KfoldRelevanceDataset(RelevanceDataset):
         # all_data = all_data.shuffle(batch_size * 2)
         return all_data
 
-    def create_folds(self, fold_id, all_data):
+    def create_folds(self, fold_id, merged_data, relevance_dataset):
         """
         Create training, validation and test set according to the passed fold id.
 
@@ -87,27 +87,29 @@ class KfoldRelevanceDataset(RelevanceDataset):
         ----------
         fold_id : int
             current fold number
-        all_data: Tensorflow Dataset
+        merged_data: Tensorflow Dataset
             the dataset used to create folds
+        relevance_dataset: RelevanceDataset object
+            Used to access the test set to setup folds
         """
         test = None
         training_idx = list(range(self.num_folds))
         if self.include_testset_in_kfold:
-            validation = all_data.shard(self.num_folds, fold_id)
+            validation = merged_data.shard(self.num_folds, fold_id)
             test_idx = fold_id + 1
             if fold_id + 1 >= self.num_folds:
                 test_idx = 0
-            test = all_data.shard(self.num_folds, test_idx)
+            test = merged_data.shard(self.num_folds, test_idx)
             training_idx.remove(test_idx)
         else:
-            validation = all_data.shard(self.num_folds, fold_id)
+            validation = merged_data.shard(self.num_folds, fold_id)
         training_idx.remove(fold_id)
         train = None
         for f_id in training_idx:
             if not train:
-                train = all_data.shard(self.num_folds, f_id)
+                train = merged_data.shard(self.num_folds, f_id)
             else:
-                train = train.concatenate(all_data.shard(self.num_folds, f_id))
+                train = train.concatenate(merged_data.shard(self.num_folds, f_id))
 
         # batchify training, validation and test sets.
         validation = validation.batch(self.batch_size, drop_remainder=False)
@@ -118,3 +120,5 @@ class KfoldRelevanceDataset(RelevanceDataset):
         if self.include_testset_in_kfold:
             test = test.batch(self.batch_size, drop_remainder=False)
             self.test = test.prefetch(tf.data.experimental.AUTOTUNE)
+        else:
+            self.test = relevance_dataset.test

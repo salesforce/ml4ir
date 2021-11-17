@@ -138,7 +138,7 @@ class TestML4IRKfoldCV(unittest.TestCase):
         for i in range(num_folds):
             fold_relevance_dataset = rp.get_kfold_relevance_dataset(args.kfold, args.include_testset_in_kfold,
                                                                read_data_sets=False)
-            fold_relevance_dataset.create_folds(i, all_data)
+            fold_relevance_dataset.create_folds(i, all_data, relevance_dataset)
             train = fold_relevance_dataset.train.unbatch()
             validation = fold_relevance_dataset.validation.unbatch()
             if use_testset_in_folds:

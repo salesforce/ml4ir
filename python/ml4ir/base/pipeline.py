@@ -361,7 +361,7 @@ class RelevancePipeline(object):
                                                                  read_data_sets=True)
             self.logger.info("Relevance Dataset created")
 
-            all_data = relevance_dataset.merge_datasets()
+            merged_data = relevance_dataset.merge_datasets()
 
             num_folds = self.args.kfold
             base_logs_dir = str(self.args.logs_dir)
@@ -385,9 +385,9 @@ class RelevancePipeline(object):
                 fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
                                                                           args.include_testset_in_kfold,
                                                                           read_data_sets=False)
-                fold_relevance_dataset.create_folds(fold_id, all_data)
+                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset) 
                 pipeline = self.create_pipeline_for_kfold(args)
-                pipeline.run_pipeline(fold_relevance_dataset)
+                pipeline.run_pipeline(fold_relevance_dataset, fold_id)
 
             # removing intermediate directory and run kfold analysis
             self.local_io.rm_dir(os.path.join(self.data_dir_local, "tfrecord"))
