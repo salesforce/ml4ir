@@ -34,6 +34,11 @@ FEATURE_CONFIG_FNAME = "feature_config.yaml"
 
 
 class RelevanceTestBase(unittest.TestCase):
+    """
+    This is the base test class for the common relevance code under ml4ir/base/
+
+    Inherit this class to define tests which need the default pipeline args and configs.
+    """
     def setUp(
         self,
         output_dir: str = OUTPUT_DIR,

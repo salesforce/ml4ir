@@ -8,7 +8,7 @@ import tensorflow as tf
 import numpy as np
 
 
-class RankingModelTest(RelevanceTestBase):
+class FeatureLayerTest(RelevanceTestBase):
     def test_bytes_sequence_to_encoding_bilstm(self):
         """
         Asserts the conversion of a string tensor to its corresponding sequence encoding
