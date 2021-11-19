@@ -357,7 +357,7 @@ class RelevanceModel:
             logger=logger,
         )
 
-    def add_scheduler_as_callback(self, monitor_metric, model_config):
+    def define_scheduler_as_callback(self, monitor_metric, model_config):
         """Adding reduce lr on plateau as a callback if specified"""
         if model_config and 'lr_schedule' in model_config:
             lr_schedule = model_config['lr_schedule']
@@ -369,8 +369,9 @@ class RelevanceModel:
                                                                      min_lr=lr_schedule.get('min_lr', 0.0001),
                                                                      mode=lr_schedule.get('mode', 'auto'),
                                                                      verbose=1)
-                elif not monitor_metric.startswith("val_"):
-                    monitor_metric = "val_{}".format(monitor_metric)
+                else:
+                    if not monitor_metric.startswith("val_"):
+                        monitor_metric = "val_{}".format(monitor_metric)
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
                                                                      factor=lr_schedule.get('factor', 0.5),
                                                                      patience=lr_schedule.get('patience', 1),
@@ -858,8 +859,8 @@ class RelevanceModel:
         # Debugging/Logging
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
 
-        # Adding lr scheduler as a callback
-        scheduler_callback = self.add_scheduler_as_callback(monitor_metric, self.scorer.model_config)
+        # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
+        scheduler_callback = self.define_scheduler_as_callback(monitor_metric, self.scorer.model_config)
         if scheduler_callback:
             callbacks_list.append(scheduler_callback)
 

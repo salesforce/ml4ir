@@ -289,7 +289,7 @@ class TestLrSchedules(unittest.TestCase):
             model_config=model_config,
         )
         callback_list = []
-        callback_list.append(relevance_model.add_scheduler_as_callback(None, model_config))
+        callback_list.append(relevance_model.define_scheduler_as_callback(None, model_config))
         my_callback_object = LrCallback()
         callback_list.append(my_callback_object)
 
@@ -304,9 +304,6 @@ class TestLrSchedules(unittest.TestCase):
         lr_gold = [50.0, 50.0, 25.0, 12.5, 6.25, 3.125, 1.5625, 1.0, 1.0, 1.0]
 
         assert np.all(np.isclose(lr_gold, lr_list))
-
-    def tearDown(self):
-        pass
 
 
 if __name__ == "__main__":
