@@ -12,4 +12,5 @@ optimizer:
 lr_schedule:
   key: reduce_lr_on_plateau
   learning_rate: 50.0
+  patience: 1
   min_lr: 1.0

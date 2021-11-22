@@ -286,7 +286,6 @@ class TestLrSchedules(unittest.TestCase):
             model_file=None,
             file_io=io,
             logger=Logger,
-            model_config=model_config,
         )
         callback_list = []
         callback_list.append(relevance_model.define_scheduler_as_callback(None, model_config))
