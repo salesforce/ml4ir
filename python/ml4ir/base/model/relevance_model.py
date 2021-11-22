@@ -49,8 +49,6 @@ class RelevanceModel:
         compile_keras_model: bool = False,
         output_name: str = "score",
         logger=None,
-        model_config=None,
-        monitor_metric=None,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -87,8 +85,6 @@ class RelevanceModel:
             Name of the output tensorflow node that captures the score
         logger : `Logger`, optional
             logging handler for status messages
-        model_config : path to the model config file, optional
-            logging handler for status messages
         """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
@@ -96,8 +92,6 @@ class RelevanceModel:
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
-        self.model_config = model_config
-        self.monitor_metric = monitor_metric
 
         if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
