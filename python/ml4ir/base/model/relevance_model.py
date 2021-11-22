@@ -358,14 +358,29 @@ class RelevanceModel:
         )
 
     def define_scheduler_as_callback(self, monitor_metric, model_config):
-        """Adding reduce lr on plateau as a callback if specified"""
+        """
+        Adding reduce lr on plateau as a callback if specified
+
+        Parameters
+        ----------
+        monitor_metric : string
+           The metric to be monitored by the callback
+        model_config : dict
+            dictionary defining the dense model architecture
+
+        Returns
+        -------
+        reduce_lr
+            The created scheduler callback object.
+        """
+
         if model_config and 'lr_schedule' in model_config:
             lr_schedule = model_config['lr_schedule']
             lr_schedule_key = lr_schedule['key']
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
                 if monitor_metric is None:
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 1),
+                                                                     patience=lr_schedule.get('patience', 5),
                                                                      min_lr=lr_schedule.get('min_lr', 0.0001),
                                                                      mode=lr_schedule.get('mode', 'auto'),
                                                                      verbose=1)
@@ -374,7 +389,7 @@ class RelevanceModel:
                         monitor_metric = "val_{}".format(monitor_metric)
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
                                                                      factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 1),
+                                                                     patience=lr_schedule.get('patience', 5),
                                                                      min_lr=lr_schedule.get('min_lr', 0.0001),
                                                                      mode=lr_schedule.get('mode', 'auto'),
                                                                      verbose=1)
