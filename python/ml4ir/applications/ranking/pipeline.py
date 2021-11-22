@@ -123,8 +123,6 @@ class RankingPipeline(RelevancePipeline):
             output_name=self.args.output_name,
             file_io=self.local_io,
             logger=self.logger,
-            model_config=self.model_config,
-            monitor_metric=self.args.monitor_metric
         )
 
         return relevance_model
