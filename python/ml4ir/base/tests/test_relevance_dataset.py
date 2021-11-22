@@ -1,11 +1,11 @@
 import os
 
-from ml4ir.applications.ranking.tests.test_base import RankingTestBase
+from ml4ir.base.tests.test_base import RelevanceTestBase
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.feature_config import FeatureConfig
 
 
-class RankingDatasetTest(RankingTestBase):
+class RelevanceDatasetTest(RelevanceTestBase):
     def validate_dataset(self, ranking_dataset):
         # Check if the datasets were populated
         assert ranking_dataset.train is not None
