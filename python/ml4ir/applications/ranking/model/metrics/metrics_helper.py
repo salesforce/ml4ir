@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from typing import List, Union
 
@@ -17,6 +18,14 @@ NEGATIVE_METRIC_SUFFIXES = [
     "failure_any_count_mean",
     "failure_any_fraction_mean"
 ]
+
+
+def compute_dcg(relevance_grades: List[float]):
+    return np.sum([(np.power(2, relevance_grades[i] - 1.) / np.log2(i + 1 + 1)) for i in range(len(relevance_grades))])
+
+
+def compute_ndcg(relevance_grades: List[float]):
+    return compute_dcg(relevance_grades) / compute_dcg(sorted(relevance_grades, reverse=True))
 
 
 def compute_secondary_label_metrics(
@@ -54,7 +63,13 @@ def compute_secondary_label_metrics(
         # Normalizing to fraction of potential records
         failure_fraction = failure_count / (click_rank - 1)
 
+    # Compute NDCG metric on the secondary label
+    # NOTE: Here we are passing the relevance grades ordered by the ranking
+    secondary_label_ndcg = compute_ndcg(
+        secondary_label_values.values[np.argsort(ranks.values)])
+
     return {
+        "{}{}_NDCG".format(prefix, secondary_label): secondary_label_ndcg,
         "{}{}_failure_all".format(prefix, secondary_label): failure_all,
         "{}{}_failure_any".format(prefix, secondary_label): failure_any,
         "{}{}_failure_all_rank".format(prefix, secondary_label): click_rank
