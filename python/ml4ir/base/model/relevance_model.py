@@ -23,6 +23,7 @@ from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
     TemperatureScalingLayer
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
 class RelevanceModelConstants:
@@ -350,6 +351,44 @@ class RelevanceModel:
             logger=logger,
         )
 
+    def define_scheduler_as_callback(self, monitor_metric, model_config):
+        """
+        Adding reduce lr on plateau as a callback if specified
+
+        Parameters
+        ----------
+        monitor_metric : string
+           The metric to be monitored by the callback
+        model_config : dict
+            dictionary defining the dense model architecture
+
+        Returns
+        -------
+        reduce_lr
+            The created scheduler callback object.
+        """
+
+        if model_config and 'lr_schedule' in model_config:
+            lr_schedule = model_config['lr_schedule']
+            lr_schedule_key = lr_schedule['key']
+            if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
+                if monitor_metric is None:
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
+                                                                     patience=lr_schedule.get('patience', 5),
+                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
+                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     verbose=1)
+                else:
+                    if not monitor_metric.startswith("val_"):
+                        monitor_metric = "val_{}".format(monitor_metric)
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
+                                                                     factor=lr_schedule.get('factor', 0.5),
+                                                                     patience=lr_schedule.get('patience', 5),
+                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
+                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     verbose=1)
+                return reduce_lr
+
     def fit(
         self,
         dataset: RelevanceDataset,
@@ -392,6 +431,7 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
@@ -827,6 +867,11 @@ class RelevanceModel:
 
         # Debugging/Logging
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
+
+        # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
+        scheduler_callback = self.define_scheduler_as_callback(monitor_metric, self.scorer.model_config)
+        if scheduler_callback:
+            callbacks_list.append(scheduler_callback)
 
         # Add more here
 
