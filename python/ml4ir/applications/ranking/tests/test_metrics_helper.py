@@ -260,5 +260,3 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
                 "test_label_failure_any_fraction": 0.5
             }),
             check_less_precise=True)
-
-    
