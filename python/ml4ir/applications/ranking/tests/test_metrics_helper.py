@@ -19,6 +19,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 1.,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 0,
                 "test_label_failure_all_rank": 0,
@@ -36,6 +37,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.307,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 9,
@@ -54,6 +56,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 1.,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 0,
                 "test_label_failure_all_rank": 0,
@@ -72,6 +75,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.434,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 4,
@@ -90,6 +94,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.514,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 4,
@@ -108,6 +113,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.474,
                 "test_label_failure_all": 1.0,
                 "test_label_failure_any": 1.0,
                 "test_label_failure_all_rank": 4.0,
@@ -126,6 +132,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.329,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 9,
@@ -144,6 +151,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.361,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 9,
@@ -162,6 +170,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.338,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 9,
@@ -180,6 +189,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.351,
                 "test_label_failure_all": 1,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 9,
@@ -198,6 +208,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.546,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 0,
@@ -216,6 +227,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.999,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 0,
@@ -234,6 +246,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.678,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 0,
@@ -252,6 +265,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.867,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 1,
                 "test_label_failure_all_rank": 0,
@@ -261,4 +275,29 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    
+    def test_compute_dcg(self):
+        with self.subTest("Worst ordering of grade values"):
+            self.assertTrue(np.isclose(compute_dcg([1., 2., 3.]), 4.261, atol=3))
+
+        with self.subTest("Best ordering of grade values"):
+            self.assertTrue(np.isclose(compute_dcg([3., 2., 1.]), 5.761, atol=3))
+
+        with self.subTest("Equal grade values"):
+            self.assertTrue(np.isclose(compute_dcg([1., 1., 1.]), 2.130, atol=3))
+
+        with self.subTest("Zero grade values"):
+            self.assertTrue(np.isclose(compute_dcg([0., 0., 0.]), 1.065, atol=3))
+
+    def test_compute_ndcg(self):
+        with self.subTest("Worst ordering of grade values"):
+            self.assertTrue(np.isclose(compute_ndcg([1., 2., 3.]), 0.739, atol=3))
+
+        with self.subTest("Best ordering of grade values"):
+            self.assertTrue(np.isclose(compute_ndcg([3., 2., 1.]), 1., atol=3))
+
+        with self.subTest("Equal grade values"):
+            self.assertTrue(np.isclose(compute_ndcg([1., 1., 1.]), 1., atol=3))
+
+        with self.subTest("Zero grade values"):
+            self.assertTrue(np.isclose(compute_ndcg([0., 0., 0.]), 1., atol=3))
+        
