@@ -300,4 +300,3 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
 
         with self.subTest("Zero grade values"):
             self.assertTrue(np.isclose(compute_ndcg([0., 0., 0.]), 1., atol=3))
-        
