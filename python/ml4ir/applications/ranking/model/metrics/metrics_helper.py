@@ -92,34 +92,48 @@ def compute_secondary_label_metrics(
     dict
         Key value pairs of the metric names and the associated computed values
         using the secondary label
+
+    Notes
+    -----
+    A secondary label is any feature/value that serves as a proxy relevance assessment that
+    the user might be interested to measure on the dataset in addition to the primary click labels.
+    For example, this could be used with an exact query match feature. In that case, the metric
+    sheds light on scenarios where the records with an exact match are ranked lower than those without.
+    This would provide the user with complimentary information (to typical click metrics such as MRR and ACR)
+    about the model to help make better trade-off decisions w.r.t. best model selection.
     """
     failure_all = 0
     failure_any = 0
     failure_count = 0
     failure_fraction = 0.0
 
-    click_secondary_label_value = secondary_label_values[ranks == click_rank].values[0]
-    pre_click_secondary_label_values = secondary_label_values[ranks < click_rank]
+    try:
+        click_secondary_label_value = secondary_label_values[ranks == click_rank].values[0]
+        pre_click_secondary_label_values = secondary_label_values[ranks < click_rank]
 
-    if pre_click_secondary_label_values.size > 0:
-        # Query failure only if failure on all records
-        failure_all = (
-            1
-            if (pre_click_secondary_label_values < click_secondary_label_value).all()
-            else 0
-        )
-        # Query failure if failure on at least one record
-        failure_any = (
-            1
-            if (pre_click_secondary_label_values < click_secondary_label_value).any()
-            else 0
-        )
-        # Count of failure records
-        failure_count = (
-            pre_click_secondary_label_values < click_secondary_label_value
-        ).sum()
-        # Normalizing to fraction of potential records
-        failure_fraction = failure_count / (click_rank - 1)
+        if pre_click_secondary_label_values.size > 0:
+            # Query failure only if failure on all records
+            failure_all = (
+                1
+                if (pre_click_secondary_label_values < click_secondary_label_value).all()
+                else 0
+            )
+            # Query failure if failure on at least one record
+            failure_any = (
+                1
+                if (pre_click_secondary_label_values < click_secondary_label_value).any()
+                else 0
+            )
+            # Count of failure records
+            failure_count = (
+                pre_click_secondary_label_values < click_secondary_label_value
+            ).sum()
+            # Normalizing to fraction of potential records
+            failure_fraction = failure_count / (click_rank - 1)
+
+    except IndexError:
+        # Ignore queries with missing or invalid click labels
+        pass
 
     # Compute NDCG metric on the secondary label
     # NOTE: Here we are passing the relevance grades ordered by the ranking
@@ -146,8 +160,8 @@ def compute_secondary_labels_metrics_on_query_group(
     label_col: str,
     old_rank_col: str,
     new_rank_col: str,
-    group_keys: List[str] = [],
-    secondary_labels: List[str] = [],
+    secondary_labels: List[str],
+    group_keys: List[str] = []
 ):
     """
     Compute the old and new secondary ranking metrics for a given
@@ -164,10 +178,10 @@ def compute_secondary_labels_metrics_on_query_group(
     new_rank_col : str
         Name of the column that represents the newly computed rank of the records
         after reordering based on new model scores
+    secondary_labels : list
+        List of features used to compute secondary metrics
     group_keys : list, optional
         List of features used to compute groupwise metrics
-    secondary_labels : list, optional
-        List of features used to compute secondary metrics
 
     Returns
     -------
@@ -182,25 +196,29 @@ def compute_secondary_labels_metrics_on_query_group(
         k: v[0] for k, v in query_group[group_keys].to_dict(orient="list").items()
     }
     for secondary_label in secondary_labels:
-        # Compute failure stats for before and after ranking with model
-        secondary_labels_metrics_dict.update(
-            compute_secondary_label_metrics(
-                secondary_label_values=query_group[secondary_label],
-                ranks=query_group[old_rank_col],
-                click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0],
-                secondary_label=secondary_label,
-                prefix="old_",
+        try:
+            # Compute failure stats for before and after ranking with model
+            secondary_labels_metrics_dict.update(
+                compute_secondary_label_metrics(
+                    secondary_label_values=query_group[secondary_label],
+                    ranks=query_group[old_rank_col],
+                    click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0],
+                    secondary_label=secondary_label,
+                    prefix="old_",
+                )
             )
-        )
-        secondary_labels_metrics_dict.update(
-            compute_secondary_label_metrics(
-                secondary_label_values=query_group[secondary_label],
-                ranks=query_group[new_rank_col],
-                click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0],
-                secondary_label=secondary_label,
-                prefix="new_",
+            secondary_labels_metrics_dict.update(
+                compute_secondary_label_metrics(
+                    secondary_label_values=query_group[secondary_label],
+                    ranks=query_group[new_rank_col],
+                    click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0],
+                    secondary_label=secondary_label,
+                    prefix="new_",
+                )
             )
-        )
+        except IndexError:
+            # Ignore queries with no/invalid click ranks
+            continue
 
     return pd.Series(secondary_labels_metrics_dict)
 
@@ -252,8 +270,8 @@ def get_grouped_stats(
                 label_col=label_col,
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
-                group_keys=group_keys,
                 secondary_labels=secondary_labels,
+                group_keys=group_keys
             ))
 
     # Select clicked records

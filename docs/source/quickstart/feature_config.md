@@ -111,6 +111,10 @@ Value representing if the feature should be used for computing groupwise metrics
 
 Value representing if the feature is used as a secondary label to compute failure metrics. The usage of the feature to compute the failure metrics is left to the user to be customized. The Ranking models come prepackaged with failure metrics computation that can be used, for example, to compute rate of clicks on documents without a match on the subject field.
 
+In Ranking applications,
+
+A secondary label is any feature/value that serves as a proxy relevance assessment that the user might be interested to measure on the dataset in addition to the primary click labels. For example, this could be used with an exact query match feature. In that case, the metric sheds light on scenarios where the records with an exact match are ranked lower than those without. This would provide the user with complimentary information (to typical click metrics such as MRR and ACR) about the model to help make better trade-off decisions w.r.t. best model selection.
+
 -----
 
 The `FeatureConfig` can be extended to support additional attributes as necessary.
