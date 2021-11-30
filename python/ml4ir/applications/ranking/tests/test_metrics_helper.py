@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 import json
 
 import pandas as pd
@@ -260,3 +261,71 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
                 "test_label_failure_any_fraction": 0.5
             }),
             check_less_precise=True)
+
+    def test_compute_secondary_label_metrics_invalid_click(self):
+        computed_metrics = compute_secondary_label_metrics(
+            secondary_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
+            ranks=pd.Series(list(range(1, 10))),
+            click_rank=15,
+            secondary_label="test_label")
+        pd_testing.assert_series_equal(
+            pd.Series(computed_metrics),
+            pd.Series({
+                "test_label_failure_all": 0,
+                "test_label_failure_any": 0,
+                "test_label_failure_all_rank": 0,
+                "test_label_failure_any_rank": 0,
+                "test_label_failure_any_count": 0,
+                "test_label_failure_any_fraction": 0.
+            }),
+            check_less_precise=True)
+
+    @patch("ml4ir.applications.ranking.model.metrics.metrics_helper.compute_secondary_label_metrics")
+    def test_compute_secondary_labels_metrics_on_query_group(self, mock_compute_secondary_label_metrics):
+        query_group = pd.DataFrame({
+            "old_rank": [1, 2, 3, 4, 5],
+            "new_rank": [3, 2, 1, 5, 4],
+            "click": [0, 0, 1, 0, 0],
+            "secondary_label_1": [5, 5, 5, 2, 2],
+            "secondary_label_2": [3, 1, 2, 2, 5]
+        })
+        mock_compute_secondary_label_metrics.return_value = {}
+        compute_secondary_labels_metrics_on_query_group(
+            query_group=query_group,
+            label_col="click",
+            old_rank_col="old_rank",
+            new_rank_col="new_rank",
+            secondary_labels=["secondary_label_1", "secondary_label_2"])
+
+        assert mock_compute_secondary_label_metrics.call_count == 2 * 2
+
+        call_args = [args[1] for args in mock_compute_secondary_label_metrics.call_args_list]
+        i = 0
+        for secondary_label in ["secondary_label_1", "secondary_label_2"]:
+            for state in ["old", "new"]:
+                assert pd.Series.equals(
+                    call_args[i]["secondary_label_values"], query_group[secondary_label])
+                assert pd.Series.equals(call_args[i]["ranks"], query_group["{}_rank".format(state)])
+                assert call_args[i]["click_rank"] == query_group[query_group["click"]
+                                                                 == 1]["{}_rank".format(state)].values[0]
+                assert call_args[i]["secondary_label"] == secondary_label
+                assert call_args[i]["prefix"] == "{}_".format(state)
+
+                i += 1
+
+    def test_compute_secondary_labels_metrics_on_query_group_invalid_click(self):
+        query_group = pd.DataFrame({
+            "old_rank": [1, 2, 3, 4, 5],
+            "new_rank": [3, 2, 1, 5, 4],
+            "click": [0, 0, 0, 0, 0],
+            "secondary_label_1": [5, 5, 5, 2, 2],
+            "secondary_label_2": [3, 1, 2, 2, 5]
+        })
+
+        secondary_labels_metrics = compute_secondary_labels_metrics_on_query_group(
+            query_group=query_group,
+            label_col="click",
+            old_rank_col="old_rank",
+            new_rank_col="new_rank",
+            secondary_labels=["secondary_label_1", "secondary_label_2"])
+        assert secondary_labels_metrics.empty
