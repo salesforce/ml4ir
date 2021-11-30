@@ -285,6 +285,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
+                "test_label_NDCG": 0.867,
                 "test_label_failure_all": 0,
                 "test_label_failure_any": 0,
                 "test_label_failure_all_rank": 0,
@@ -342,6 +343,7 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             old_rank_col="old_rank",
             new_rank_col="new_rank",
             secondary_labels=["secondary_label_1", "secondary_label_2"])
+        import pdb; pdb.set_trace()
         assert secondary_labels_metrics.empty
 
     def test_compute_dcg(self):
