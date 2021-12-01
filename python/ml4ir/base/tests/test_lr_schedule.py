@@ -27,6 +27,7 @@ warnings.filterwarnings("ignore")
 
 INPUT_DIR = "ml4ir/applications/ranking/tests/data/"
 MODEL_CONFIG = "ml4ir/applications/ranking/tests/data/configs/model_config_cyclic_lr.yaml"
+MODEL_CONFIG_REDUCE_LR_ON_PLATEAU = "ml4ir/applications/ranking/tests/data/configs/model_config_reduce_lr_on_plateau.yaml"
 KEEP_ADDITIONAL_INFO = 0
 NON_ZERO_FEATURES_ONLY = 0
 
@@ -35,12 +36,19 @@ class LrCallback(keras.callbacks.Callback):
 
     def __init__(self):
         self.lr_list = []
+        self.lr_reduce_on_plateau_list = []
 
     def on_train_batch_begin(self, batch, logs=None):
         self.lr_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
 
+    def on_epoch_begin(self, epoch, logs=None):
+        self.lr_reduce_on_plateau_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
+
     def get_lr_list(self):
         return self.lr_list
+
+    def get_lr_reduce_on_plateau_list(self):
+        return self.lr_reduce_on_plateau_list
 
 class TestLrSchedules(unittest.TestCase):
     """Testing different learning rate schedules"""
@@ -216,8 +224,86 @@ class TestLrSchedules(unittest.TestCase):
 
         assert np.all(np.isclose(lr_gold, lr_list))
 
-    def tearDown(self):
-        pass
+    def test_reduce_lr_on_plateau_in_training_pipeline(self):
+        """Test reduce lr on plateau"""
+        self.model_config_file = MODEL_CONFIG_REDUCE_LR_ON_PLATEAU
+        Logger = logging_utils.setup_logging(
+            reset=True,
+            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv"),
+            log_to_file=True,
+        )
+
+        io = LocalIO()
+        feature_config = self.parse_config(TFRecordTypeKey.SEQUENCE_EXAMPLE, self.feature_config_yaml_convert_to_clicks,
+                                           io)
+        model_config = io.read_yaml(self.model_config_file)
+
+        dataset = RelevanceDataset(
+            data_dir=INPUT_DIR + '/ranklib',
+            data_format=DataFormatKey.RANKLIB,
+            feature_config=feature_config,
+            tfrecord_type=TFRecordTypeKey.SEQUENCE_EXAMPLE,
+            batch_size=32,
+            file_io=io,
+            preprocessing_keys_to_fns={},
+            logger=Logger,
+            keep_additional_info=KEEP_ADDITIONAL_INFO,
+            non_zero_features_only=NON_ZERO_FEATURES_ONLY,
+            max_sequence_size=319,
+        )
+
+        # Define interaction model
+        interaction_model: InteractionModel = UnivariateInteractionModel(
+            feature_config=feature_config,
+            feature_layer_keys_to_fns={},
+            tfrecord_type=TFRecordTypeKey.SEQUENCE_EXAMPLE,
+            max_sequence_size=319,
+            file_io=io,
+        )
+
+        # Define loss object from loss key
+        loss: RelevanceLossBase = loss_factory.get_loss(
+            loss_key=LossKey.RANK_ONE_LISTNET, scoring_type=ScoringTypeKey.POINTWISE
+        )
+
+        # Define scorer
+        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+            model_config_file=self.model_config_file,
+            interaction_model=interaction_model,
+            loss=loss,
+            logger=Logger,
+            file_io=io,
+        )
+
+        optimizer: Optimizer = get_optimizer(model_config=model_config)
+
+        # Combine the above to define a RelevanceModel
+        relevance_model: RelevanceModel = RankingModel(
+            feature_config=feature_config,
+            tfrecord_type=TFRecordTypeKey.SEQUENCE_EXAMPLE,
+            scorer=scorer,
+            optimizer=optimizer,
+            model_file=None,
+            file_io=io,
+            logger=Logger,
+        )
+        callback_list = []
+        callback_list.append(relevance_model.define_scheduler_as_callback(None, model_config))
+        my_callback_object = LrCallback()
+        callback_list.append(my_callback_object)
+
+        history = relevance_model.model.fit(
+            x=dataset.train.shard(2, 0),
+            validation_data=dataset.validation.shard(2, 1),
+            epochs=10,
+            verbose=True,
+            callbacks=callback_list,
+        )
+        lr_list = my_callback_object.get_lr_reduce_on_plateau_list()
+        lr_gold = [50.0, 50.0, 25.0, 12.5, 6.25, 3.125, 1.5625, 1.0, 1.0, 1.0]
+
+        assert np.all(np.isclose(lr_gold, lr_list))
+
 
 if __name__ == "__main__":
     unittest.main()

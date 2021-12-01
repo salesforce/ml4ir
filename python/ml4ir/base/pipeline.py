@@ -443,6 +443,7 @@ class RelevancePipeline(object):
                 ExecutionModeKey.TRAIN_INFERENCE,
                 ExecutionModeKey.TRAIN_ONLY,
             }:
+
                 # Train
                 train_metrics = relevance_model.fit(
                     dataset=relevance_dataset,
