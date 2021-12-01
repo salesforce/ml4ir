@@ -343,7 +343,6 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             old_rank_col="old_rank",
             new_rank_col="new_rank",
             secondary_labels=["secondary_label_1", "secondary_label_2"])
-        import pdb; pdb.set_trace()
         assert secondary_labels_metrics.empty
 
     def test_compute_dcg(self):
