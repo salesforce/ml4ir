@@ -1,6 +1,7 @@
 import sys
 import ast
 from argparse import Namespace
+import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 from tensorflow.keras.optimizers import Optimizer
 import pandas as pd
