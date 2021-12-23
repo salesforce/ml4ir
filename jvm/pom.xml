@@ -13,7 +13,7 @@
     <scala.version>2.11.12</scala.version>
     <scala.artifact.suffix>2.11</scala.artifact.suffix>
     <tensorflow.version>1.15.0</tensorflow.version>
-    <jackson.version>2.10.0</jackson.version>
+    <jackson.version>2.13.0</jackson.version>
   </properties>
 
   <modules>
