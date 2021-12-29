@@ -455,7 +455,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if feature_info.get("name") == self.feature_config.get_mask("name"):
                 continue
             serving_info = feature_info["serving_info"]
-            if not self.required_fields_only or serving_info.get("required", feature_info["trainable"]):
+            if not self.required_fields_only or serving_info.get(
+                "required", feature_info["trainable"]) or feature_info["trainable"]:
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
                 default_value = self.feature_config.get_default_value(
