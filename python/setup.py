@@ -24,7 +24,7 @@ def getReadMe():
 setup(
     name="ml4ir",
     packages=find_namespace_packages(include=["ml4ir.*"]),
-    version="0.1.9",
+    version="0.1.10",
     description="Machine Learning libraries for Information Retrieval",
     long_description=getReadMe(),
     long_description_content_type="text/markdown",
