@@ -287,8 +287,7 @@ class TFRecordExampleParser(TFRecordParser):
         for feature_info in self.feature_config.get_all_features():
             serving_info = feature_info["serving_info"]
             if not self.required_fields_only or serving_info.get(
-                "required", feature_info["trainable"]
-            ):
+                "required", feature_info["trainable"]) or feature_info["trainable"]:
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
                 default_value = self.feature_config.get_default_value(feature_info)
