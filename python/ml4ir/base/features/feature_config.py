@@ -1013,12 +1013,12 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         context_features = [
             f
             for f in self.get_context_features()
-            if ((not required_only) or (f["serving_info"].get("required", False)))
+            if ((not required_only) or (f["serving_info"].get("required", False)) or f["trainable"])
         ]
         sequence_features = [
             f
             for f in self.get_sequence_features()
-            if ((not required_only) or (f["serving_info"].get("required", False)))
+            if ((not required_only) or (f["serving_info"].get("required", False)) or f["trainable"])
         ]
 
         dummy_query = dict()
