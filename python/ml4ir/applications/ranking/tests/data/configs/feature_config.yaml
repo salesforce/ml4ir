@@ -90,8 +90,7 @@ features:
       shape: null
     serving_info:
       name: qualityScore
-      required: true
-      default_value: 0.0
+      required: false
     tfrecord_type: sequence
   - name: name_match
     node_name: name_match
