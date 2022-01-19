@@ -21,6 +21,7 @@ rank:
     shape: null
   serving_info:
     name: originalRank
+    default_value: 0
   tfrecord_type: sequence
 label:
   name: clicked
