@@ -456,10 +456,9 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if feature_info.get("name") == self.feature_config.get_mask("name"):
                 continue
             serving_info = feature_info["serving_info"]
-            if not self.required_fields_only or \
+            if not self.required_fields_only or feature_info["trainable"] or \
                 (serving_info.get("required", feature_info["trainable"])) or \
-                feature_info["trainable"] or \
-                    (feature_info.get("name") == self.feature_config.get_rank("name")):
+                (feature_info.get("name") == self.feature_config.get_rank("name")):
 
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
@@ -562,7 +561,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if isinstance(feature_tensor, sparse.SparseTensor):
                 feature_tensor = sparse.reset_shape(feature_tensor)
                 feature_tensor = sparse.to_dense(feature_tensor)
-                feature_tensor = tf.squeeze(feature_tensor, axis=0)
+                feature_tensor = tf.squeeze(feature_tensor, axis=0, name="booyah")
 
         return feature_tensor
 
@@ -587,7 +586,6 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Number of elements in the sequence of the TFRecord
         """
         context_features, sequence_features = extracted_features
-        import pdb; pdb.set_trace()
         if (
             self.required_fields_only
             and not self.feature_config.get_rank("serving_info").get("required", True)
