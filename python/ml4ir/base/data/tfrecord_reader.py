@@ -561,7 +561,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if isinstance(feature_tensor, sparse.SparseTensor):
                 feature_tensor = sparse.reset_shape(feature_tensor)
                 feature_tensor = sparse.to_dense(feature_tensor)
-                feature_tensor = tf.squeeze(feature_tensor, axis=0, name="booyah")
+                feature_tensor = tf.squeeze(feature_tensor, axis=0)
 
         return feature_tensor
 
