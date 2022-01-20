@@ -287,11 +287,12 @@ class TFRecordExampleParser(TFRecordParser):
         for feature_info in self.feature_config.get_all_features():
             serving_info = feature_info["serving_info"]
             if not self.required_fields_only or serving_info.get(
-                "required", feature_info["trainable"]) or feature_info["trainable"]:
+                    "required", feature_info["trainable"]) or feature_info["trainable"]:
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
                 default_value = self.feature_config.get_default_value(feature_info)
-                features_spec[feature_name] = io.FixedLenFeature([], dtype, default_value=default_value)
+                features_spec[feature_name] = io.FixedLenFeature(
+                    [], dtype, default_value=default_value)
 
         return features_spec
 
@@ -354,7 +355,7 @@ class TFRecordExampleParser(TFRecordParser):
         default_tensor = self.get_default_tensor(feature_info, sequence_size)
 
         feature_tensor = extracted_features.get(feature_info["name"], default_tensor)
-        
+
         # Adjust shape
         feature_tensor = tf.expand_dims(feature_tensor, axis=0)
 
@@ -455,8 +456,10 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             if feature_info.get("name") == self.feature_config.get_mask("name"):
                 continue
             serving_info = feature_info["serving_info"]
-            if not self.required_fields_only or serving_info.get(
-                "required", feature_info["trainable"]) or feature_info["trainable"]:
+            if not self.required_fields_only or feature_info["trainable"] or \
+                (serving_info.get("required", feature_info["trainable"])) or \
+                (feature_info.get("name") == self.feature_config.get_rank("name")):
+
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
                 default_value = self.feature_config.get_default_value(
@@ -585,7 +588,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         context_features, sequence_features = extracted_features
         if (
             self.required_fields_only
-            and not self.feature_config.get_rank("serving_info")["required"]
+            and not self.feature_config.get_rank("serving_info").get("required", True)
         ):
             """
             Define dummy mask if the rank field is not a required field for serving

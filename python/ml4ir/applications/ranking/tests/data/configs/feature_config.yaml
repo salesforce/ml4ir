@@ -9,8 +9,6 @@ query_key:
     shape: null
   serving_info:
     name: queryId
-    required: false
-    default_value: ""
   tfrecord_type: context
 rank:
   name: rank
@@ -23,7 +21,6 @@ rank:
     shape: null
   serving_info:
     name: originalRank
-    required: true
     default_value: 0
   tfrecord_type: sequence
 label:
@@ -37,8 +34,6 @@ label:
     shape: null
   serving_info:
     name: clicked
-    required: false
-    default_value: 0
   tfrecord_type: sequence
 features:
   - name: text_match_score
@@ -51,8 +46,6 @@ features:
       shape: null
     serving_info:
       name: textMatchScore
-      required: true
-      default_value: 0.0
     tfrecord_type: sequence
   - name: page_views_score
     node_name: page_views_score
@@ -77,8 +70,6 @@ features:
               clip_value_max: 1000000.
     serving_info:
       name: pageViewsScore
-      required: true
-      default_value: 0.0
     tfrecord_type: sequence
   - name: quality_score
     node_name: quality_score
@@ -90,7 +81,6 @@ features:
       shape: null
     serving_info:
       name: qualityScore
-      required: false
     tfrecord_type: sequence
   - name: name_match
     node_name: name_match
@@ -103,8 +93,6 @@ features:
       shape: null
     serving_info:
       name: nameMatch
-      required: true
-      default_value: 0.0
     tfrecord_type: sequence
   - name: query_text
     node_name: query_text
@@ -127,8 +115,6 @@ features:
           to_lower: true
     serving_info:
       name: q
-      required: true
-      default_value: ""
     tfrecord_type: context
   - name: domain_id
     node_name: domain_id
@@ -146,8 +132,6 @@ features:
         default_value: null
     serving_info:
       name: domainID
-      required: true
-      default_value: 0
     tfrecord_type: context
   - name: domain_name
     node_name: domain_name
@@ -166,7 +150,5 @@ features:
         num_oov_buckets: 1
     serving_info:
       name: domainName
-      required: true
-      default_value: ""
     tfrecord_type: context
   
