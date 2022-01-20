@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Adding rank feature to serving parse fn by default and removing depenedence on required serving_info attribute
+- Adding rank feature to serving parse fn by default and removing dependence on required serving_info attribute
 
 ## [0.1.10] - 2021-12-29
 
