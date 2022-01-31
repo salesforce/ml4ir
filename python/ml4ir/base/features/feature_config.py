@@ -1018,7 +1018,10 @@ class SequenceExampleFeatureConfig(FeatureConfig):
         sequence_features = [
             f
             for f in self.get_sequence_features()
-            if ((not required_only) or (f["serving_info"].get("required", False)) or f["trainable"])
+            if ((not required_only) or \
+                (f["serving_info"].get("required", False)) or \
+                f["trainable"] or \
+                (f["name"] == self.get_rank("name")))
         ]
 
         dummy_query = dict()
