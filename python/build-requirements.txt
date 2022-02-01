@@ -13,8 +13,8 @@ tensorflow==2.7.0
 numpy==1.18.5
 pandas==1.2.1
 scipy==1.5.4
-transformers==4.15.0
 tensorflow-text==2.7.3
+transformers==4.15.0
 # sentence-transformers==2.1.0
 # sentencepiece==0.1.96
 
@@ -22,7 +22,7 @@ tensorflow-text==2.7.3
 pytest==6.2.1
 pytest-cov==2.11.0
 pytest-html==3.1.1
-PyYAML==5.4.1
+testfixtures==6.17.1
 
 # Pyspark for spark_io
 pyspark==3.0.1
