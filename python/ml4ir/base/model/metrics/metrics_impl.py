@@ -49,12 +49,12 @@ def get_metrics_impl(
             try:
                 metrics_impl.extend(
                     [
-                        metric(
-                            state=MetricState.OLD,
-                            feature_config=feature_config,
-                            metadata_features=metadata_features,
-                            **kwargs
-                        ),
+                        # metric(
+                        #     state=MetricState.OLD,
+                        #     feature_config=feature_config,
+                        #     metadata_features=metadata_features,
+                        #     **kwargs
+                        # ),
                         metric(
                             state=MetricState.NEW,
                             feature_config=feature_config,

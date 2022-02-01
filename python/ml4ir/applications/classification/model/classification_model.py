@@ -238,7 +238,7 @@ class ClassificationModel(RelevanceModel):
             self.file_io.rm_file(outfile)
         predictions_df = self._create_prediction_dataframe(logging_frequency,
                                                            test_dataset)
-        predictions_ = np.squeeze(self.model.predict(test_dataset))
+        predictions_ = np.squeeze(self.model.predict(test_dataset)["category_label"])
         # Below, avoid doing predictions.tolist() as it explodes the memory
         # tolist() will create a list of lists, which consumes more memory
         # than a list on numpy arrays
