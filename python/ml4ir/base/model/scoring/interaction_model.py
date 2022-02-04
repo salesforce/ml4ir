@@ -9,7 +9,7 @@ from ml4ir.base.io.file_io import FileIO
 from typing import Dict
 
 
-class InteractionModel:
+class FeatureLayer:
     """
     InteractionModel class that defines tensorflow layers that act on input features to
     convert them into numeric features to be fed into further neural network layers

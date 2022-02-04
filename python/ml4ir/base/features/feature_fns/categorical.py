@@ -6,92 +6,175 @@ from tensorflow import lookup
 import copy
 
 from ml4ir.base.features.feature_fns.sequence import get_bilstm_encoding
+from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.io.file_io import FileIO
 
 
 CATEGORICAL_VARIABLE = "categorical_variable"
 
 
-def categorical_embedding_with_hash_buckets(feature_tensor, feature_info, file_io: FileIO):
+# TODO
+# Tensorflow has a new recommended (and more stable) alternative to feature_columns called 
+# Keras Preprocessing Layer. This helps with saving and serving the model without errors.
+#
+# Reference -> https://github.com/tensorflow/community/blob/master/rfcs/20191212-keras-categorical-inputs.md
+# Issue -> https://github.com/tensorflow/tensorflow/issues/43628
+
+class CategoricalEmbeddingWithHashBuckets(BaseFeatureLayerOp):
     """
     Converts a string feature tensor into a categorical embedding.
     Works by first converting the string into num_hash_buckets buckets
     each of size hash_bucket_size, then converting each hash bucket into
-    a categorical embdding of dimension embedding_size. Finally, these embeddings
+    a categorical embedding of dimension embedding_size. Finally, these embeddings
     are combined either through mean, sum or concat operations to generate the final
     embedding based on the feature_info.
-
-    Parameters
-    ----------
-    feature_tensor : Tensor
-        String feature tensor
-    feature_info : dict
-        Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-    file_io : FileIO object
-        FileIO handler object for reading and writing
-
-    Returns
-    -------
-    Tensor object
-        categorical embedding for the input feature_tensor
-
-    Notes
-    -----
-    Args under feature_layer_info:
-        num_hash_buckets : int
-            number of different hash buckets to convert the input string into
-        hash_bucket_size : int
-            the size of each hash bucket
-        embedding_size : int
-            dimension size of the categorical embedding
-        merge_mode : str
-            can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
     """
-    feature_layer_info = feature_info.get("feature_layer_info")
-    embeddings_list = list()
-    for i in range(feature_layer_info["args"]["num_hash_buckets"]):
-        augmented_string = layers.Lambda(lambda x: tf.add(x, str(i)))(feature_tensor)
+    LAYER_NAME = "categorical_embedding_with_hash_buckets"
 
-        hash_bucket = tf.strings.to_hash_bucket_fast(
-            augmented_string, num_buckets=feature_layer_info["args"]["hash_bucket_size"]
-        )
-        embeddings_list.append(
-            layers.Embedding(
-                input_dim=feature_layer_info["args"]["hash_bucket_size"],
-                output_dim=feature_layer_info["args"]["embedding_size"],
-                name="categorical_embedding_{}_{}".format(feature_info.get("name"), i),
-            )(hash_bucket)
-        )
+    NUM_HASH_BUCKETS = "num_hash_buckets"
+    HASH_BUCKET_SIZE = "hash_bucket_size"
+    EMBEDDING_SIZE = "embedding_size"
+    MERGE_MODE = "merge_mode"
 
-    embedding = None
-    if feature_layer_info["args"]["merge_mode"] == "mean":
-        embedding = tf.reduce_mean(
-            embeddings_list,
-            axis=0,
-            name="categorical_embedding_{}".format(feature_info.get("name")),
-        )
-    elif feature_layer_info["args"]["merge_mode"] == "sum":
-        embedding = tf.reduce_sum(
-            embeddings_list,
-            axis=0,
-            name="categorical_embedding_{}".format(feature_info.get("name")),
-        )
-    elif feature_layer_info["args"]["merge_mode"] == "concat":
-        embedding = tf.concat(
-            embeddings_list,
-            axis=-1,
-            name="categorical_embedding_{}".format(feature_info.get("name")),
-        )
-    else:
-        raise KeyError(
-            "The merge_mode currently supported under categorical_embedding_with_hash_buckets are ['mean', 'sum', 'concat']. merge_mode specified in the feature config: {}".format(
-                feature_layer_info["args"]["merge_mode"]
+    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
+        """
+        Initialize the layer to get categorical embedding with hash buckets
+
+        Parameters
+        ----------
+        feature_info : dict
+            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+        file_io : FileIO object
+            FileIO handler object for reading and writing
+
+        Notes
+        -----
+        Args under feature_layer_info:
+            num_hash_buckets : int
+                number of different hash buckets to convert the input string into
+            hash_bucket_size : int
+                the size of each hash bucket
+            embedding_size : int
+                dimension size of the categorical embedding
+            merge_mode : str
+                can be one of "mean", "sum", "concat" representing the mode of combining embeddings from each categorical embedding
+        """
+        super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
+
+        self.num_hash_buckets = self.feature_layer_args[self.NUM_HASH_BUCKETS]
+        self.hash_bucket_size = self.feature_layer_args[self.HASH_BUCKET_SIZE]
+        self.embedding_size = self.feature_layer_args[self.EMBEDDING_SIZE]
+        self.merge_mode = self.feature_layer_args[self.MERGE_MODE]
+
+        self.embeddings_op_list = list()
+        for i in range(self.num_hash_buckets):
+            self.embeddings_op_list.append(
+                layers.Embedding(
+                    input_dim=self.hash_bucket_size,
+                    output_dim=self.embedding_size,
+                    name="categorical_embedding_{}_{}".format(self.feature_name, i),
+                )
             )
+
+    def call(self, inputs, training=None):
+        """
+        TODO: Add docstring
+
+        Returns
+        -------
+        Tensor object
+            categorical embedding for the input feature_tensor
+        """
+        embeddings_list = list()
+        for i in range(self.num_hash_buckets):
+            augmented_string = tf.add(inputs, str(i))
+            hash_bucket = tf.strings.to_hash_bucket_fast(
+                augmented_string, num_buckets=self.hash_bucket_size
+            )
+            embeddings_list.append(self.embeddings_op_list[i](hash_bucket))
+
+        embedding = None
+        if self.merge_mode == "mean":
+            embedding = tf.reduce_mean(
+                embeddings_list,
+                axis=0,
+                name="categorical_embedding_{}".format(self.feature_name),
+            )
+        elif self.merge_mode == "sum":
+            embedding = tf.reduce_sum(
+                embeddings_list,
+                axis=0,
+                name="categorical_embedding_{}".format(self.feature_name),
+            )
+        elif self.merge_mode == "concat":
+            embedding = tf.concat(
+                embeddings_list,
+                axis=-1,
+                name="categorical_embedding_{}".format(self.feature_name),
+            )
+        else:
+            raise KeyError(
+                "The merge_mode currently supported under categorical_embedding_with_hash_buckets are ['mean', 'sum', 'concat']. merge_mode specified in the feature config: {}".format(
+                    self.merge_mode
+                )
+            )
+
+        embedding = tf.expand_dims(embedding, axis=1)
+
+        return embedding
+
+
+class CateogircalEmbeddingWithIndices(BaseFeatureLayerOp):
+    """
+    Converts input integer tensor into categorical embedding.
+    Works by converting the categorical indices in the input feature_tensor,
+    represented as integer values, into categorical embeddings based on the feature_info.
+    """
+    LAYER_NAME = "categorical_embedding_with_indices"
+
+    NUM_BUCKETS = "num_buckets"
+    DEFAULT_VALUE = "default_value"
+    EMBEDDING_SIZE = "embedding_size"
+
+    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
+        """
+        Initialize feature layer to convert categorical feature into embedding based on indices
+
+        Parameters
+        ----------
+        feature_info : dict
+            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
+        file_io : FileIO object
+            FileIO handler object for reading and writing
+
+        Notes
+        -----
+        Args under feature_layer_info:
+            num_buckets : int
+                Maximum number of categorical values
+            default_value : int
+                default value to be assigned to indices out of the num_buckets range
+            embedding_size : int
+                dimension size of the categorical embedding
+        """
+        super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
+
+        categorical_fc = feature_column.categorical_column_with_identity(
+            CATEGORICAL_VARIABLE,
+            num_buckets=feature_layer_info["args"]["num_buckets"],
+            default_value=feature_layer_info["args"].get("default_value", None),
+        )
+        embedding_fc = feature_column.embedding_column(
+            categorical_fc, dimension=feature_layer_info["args"]["embedding_size"], trainable=True
         )
 
-    embedding = tf.expand_dims(embedding, axis=1)
+        embedding = layers.DenseFeatures(
+            embedding_fc,
+            name="{}_embedding".format(feature_info.get("node_name", feature_info["name"])),
+        )({CATEGORICAL_VARIABLE: feature_tensor})
+        embedding = tf.expand_dims(embedding, axis=1)
 
-    return embedding
+        return embedding
 
 
 def categorical_embedding_with_indices(feature_tensor, feature_info, file_io: FileIO):
