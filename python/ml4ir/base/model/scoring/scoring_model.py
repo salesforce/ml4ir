@@ -1,4 +1,4 @@
-from tensorflow.keras import Input
+from tensorflow.keras import Model
 
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures import architecture_factory
@@ -10,7 +10,10 @@ from logging import Logger
 from typing import Dict, Optional
 
 
-class ScorerBase(object):
+class KerasModel
+
+
+class ScorerBase(Model):
     """
     Base Scorer class that defines the neural network layers that convert
     the input features into scores
@@ -20,8 +23,9 @@ class ScorerBase(object):
 
     Notes
     -----
-    This is an abstract class. In order to use a Scorer, one must define
-    and override the `architecture_op` and the `final_activation_op` functions
+    - This is a Keras model subclass and is built recursively using keras Layer instances
+    - This is an abstract class. In order to use a Scorer, one must define
+      and override the `architecture_op` and the `final_activation_op` functions
     """
 
     def __init__(
@@ -33,6 +37,7 @@ class ScorerBase(object):
         file_io: FileIO,
         output_name: str = "score",
         logger: Optional[Logger] = None,
+        **kwargs
     ):
         """
         Constructor method for creating a ScorerBase object
@@ -56,6 +61,8 @@ class ScorerBase(object):
         logger : Logger, optional
             Logging handler
         """
+        super().__init__(**kwargs)
+
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
@@ -113,13 +120,13 @@ class ScorerBase(object):
             logger=logger
         )
 
-    def __call__(self, inputs: Dict[str, Input]):
+    def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
         Compute score from input features
 
         Parameters
         --------
-        inputs : dict
+        inputs : dict of tensors
             Dictionary of input feature tensors
 
         Returns
@@ -133,7 +140,7 @@ class ScorerBase(object):
             but can be used for computing loss and metrics
         """
         # Apply feature layer and transform inputs
-        train_features, metadata_features = self.interaction_model(inputs)
+        train_features, metadata_features = self.interaction_model(inputs, training=training)
 
         # Apply architecture op on train_features
         scores = self.architecture_op(train_features, metadata_features)
