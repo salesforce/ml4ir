@@ -10,7 +10,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
     Run a series of tensorflow native operations on the input feature tensor.
     The functions will be applied in the order they are specified.
     """
-    LAYER_NAME = "tf_native_op"
+    __name__ = "tf_native_op"
 
     ARGS = "args"
     OPS = "ops"

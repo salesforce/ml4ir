@@ -2,6 +2,8 @@ from tensorflow.keras import layers
 
 from ml4ir.base.io.file_io import FileIO
 
+DEFAULT_VALUE = "default_value"
+
 
 class BaseFeatureLayerOp(layers.Layer):
     """Abstract feature layer operation class"""
@@ -19,9 +21,13 @@ class BaseFeatureLayerOp(layers.Layer):
         """
         super().__init__(**kwargs)
 
+        self.feature_info = feature_info
         self.feature_layer_args = feature_info["feature_layer_info"]["args"]
+
         self.feature_layer_args["node_name"] = feature_info.get("node_name", feature_info["name"])
         self.feature_name = self.feature_layer_args["node_name"]
+
+        self.default_value = self.feature_info.get(DEFAULT_VALUE)
 
         self.file_io = file_io
 
@@ -29,6 +35,11 @@ class BaseFeatureLayerOp(layers.Layer):
         """
         Get the layer configuration.
         Used for serialization with Functional Keras model
+
+        Returns
+        -------
+        dict
+            Dictionary describing the configuration for the keras layer
         """
         config = super().get_config()
         config.update(self.feature_layer_args)

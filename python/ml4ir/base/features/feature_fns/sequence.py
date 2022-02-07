@@ -14,7 +14,7 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
     a categorical/char embedding for each of the 256 bytes. The char/byte embeddings
     are then combined using a biLSTM
     """
-    LAYER_NAME = "bytes_sequence_to_encoding_bilstm"
+    __name__ = "bytes_sequence_to_encoding_bilstm"
 
     MAX_LENGTH = "max_length"
     EMBEDDING_SIZE = "embedding_size"
@@ -51,6 +51,7 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
         self.max_length = self.feature_layer_args.get(self.MAX_LENGTH, None)
         self.embedding_size = self.feature_layer_args.get(self.EMBEDDING_SIZE)
         self.encoding_size = self.feature_layer_args[self.ENCODING_SIZE]
+        self.kernel_initializer = self.feature_layer_args.get(self.LSTM_KERNEL_INITIALIZER, "glorot_uniform")
 
         if self.EMBEDDING_SIZE in self.feature_layer_args:
             self.char_embedding = layers.Embedding(
@@ -66,7 +67,7 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
                 depth=256,
                 name="{}_bytes_embedding".format(self.feature_name))
 
-        self.encoding = layers.Bidirectional(
+        self.encoding_op = layers.Bidirectional(
             layers.LSTM(
                 units=int(self.encoding_size / 2),
                 return_sequences=False,
@@ -84,8 +85,8 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
         feature_tensor = io.decode_raw(inputs, out_type=tf.uint8, fixed_length=self.max_length)
         feature_tensor = tf.squeeze(feature_tensor, axis=1)
 
-        feature_tensor = self.char_embedding(feature_tensor)
-        feature_tensor = self.encoding(feature_tensor)
+        feature_tensor = self.char_embedding(feature_tensor, training=training)
+        feature_tensor = self.encoding_op(feature_tensor, training=training)
 
         feature_tensor = tf.expand_dims(feature_tensor, axis=1)
 
@@ -98,7 +99,7 @@ class Global1dPooling(BaseFeatureLayerOp)
     value. This method optionally allows users to add multiple such pooling
     operations to produce a fixed dimensional feature vector as well.
     """
-    LAYER_NAME = "global_1d_pooling"
+    __name__ = "global_1d_pooling"
 
     FNS = "fns"
     PADDED_VAL = "padded_val"
