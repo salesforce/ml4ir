@@ -15,7 +15,6 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install --upgrade pip
             pip install -r python/build-requirements.txt
       - run:
           name: Build
@@ -50,7 +49,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -84,7 +82,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -118,7 +115,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -152,7 +148,6 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
-            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
