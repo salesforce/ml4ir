@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import lookup
 
@@ -16,7 +17,7 @@ DROPOUT_RATE = "dropout_rate"
 
 def get_vocabulary_info(feature_layer_args: dict,
                         file_io: FileIO,
-                        default_value: Optional[str, float, int] = None):
+                        default_value = None):
     """
     Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
 
@@ -160,7 +161,7 @@ class VocabLookup(layers.Layer):
 
         Parameters
         ----------
-        input_text : Tensor object
+        inputs : Tensor object
             String categorical tensor
 
         Returns
@@ -168,7 +169,7 @@ class VocabLookup(layers.Layer):
         Tensor object
             Numeric tensor object with corresponding lookup indices
         """
-        return self.lookup_table.lookup(input_text, training=training)
+        return self.lookup_table.lookup(inputs)
 
     def get_config(self):
         """
@@ -321,7 +322,7 @@ class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
         self.lookup_table = VocabLookup(
             vocabulary_keys=vocabulary_keys,
             vocabulary_ids=vocabulary_ids,
-            num_oov_buckets=num_oov_buckets,
+            num_oov_buckets=self.num_oov_buckets,
             default_value=default_value,
             feature_name=self.feature_name,
         )

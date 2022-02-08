@@ -14,7 +14,6 @@ class MetricState:
 def get_metrics_impl(
     metrics: List[Union[str, Type[Metric]]],
     feature_config: FeatureConfig,
-    metadata_features: Dict,
     **kwargs
 ) -> List[Union[Metric, str]]:
     """
@@ -28,9 +27,6 @@ def get_metrics_impl(
     feature_config : `FeatureConfig` object
         FeatureConfig object that defines the configuration for each
         feature used in the RelevanceModel
-    metadata_features : dict
-        Dictionary of feature tensors which are not used for training but can be
-        used for computing custom metrics
 
     Returns
     -------
@@ -49,16 +45,14 @@ def get_metrics_impl(
             try:
                 metrics_impl.extend(
                     [
-                        metric(
-                            state=MetricState.OLD,
-                            feature_config=feature_config,
-                            metadata_features=metadata_features,
-                            **kwargs
-                        ),
+                        # metric(
+                        #     state=MetricState.OLD,
+                        #     feature_config=feature_config,
+                        #     **kwargs
+                        # ),
                         metric(
                             state=MetricState.NEW,
                             feature_config=feature_config,
-                            metadata_features=metadata_features,
                             **kwargs
                         ),
                     ]

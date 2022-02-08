@@ -29,6 +29,17 @@ class RankingLossBase(RelevanceLossBase):
         self.scoring_type = scoring_type
         self.output_name = output_name
 
+    def get_config(self):
+        """Return layer config that is used while serialization"""
+        config = super().get_config()
+        config.update({
+            "loss_type": self.loss_type,
+            "loss_key": self.loss_key,
+            "scoring_type": self.scoring_type,
+            "output_name": self.output_name
+        })
+        return config
+
 
 class PointwiseLossBase(RankingLossBase):
     """

@@ -117,50 +117,28 @@ class RelevanceModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            # inputs: Dict[str, Input] = feature_config.define_inputs()
-            # scores, train_features, metadata_features = scorer(inputs)
-
-            # # Create model with functional Keras API
-            # self.model = Model(inputs=inputs, outputs={self.output_name: scores})
-            # self.model.output_names = [self.output_name]
-
-            # # Get loss fn
-            # loss_fn = scorer.loss.get_loss_fn(**metadata_features)
-
-            # # Get metric objects
-            # metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-            #     metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
-            # )
-
-            # # Compile model
-            # """
-            # NOTE:
-            # Related Github issue: https://github.com/tensorflow/probability/issues/519
-            # """
-            # self.model.compile(
-            #     optimizer=optimizer,
-            #     loss=loss_fn,
-            #     metrics=metrics_impl,
-            #     experimental_run_tf_function=False,
-            # )
             self.model = self.scorer
             self.model.output_names = [self.output_name]
 
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                metrics=metrics,
+                feature_config=feature_config
             )
 
             self.model.compile(
                 optimizer=optimizer,
+                loss=self.scorer.loss_op,
                 metrics=metrics_impl
             )
 
+            # FIXME : We cannot write a summary without defining keras input placeholders
+            #         But defining them causes issues with custom layers
             # Write model summary to logs
-            model_summary = list()
-            self.model.summary(print_fn=lambda x: model_summary.append(x))
-            if self.logger:
-                self.logger.info("\n".join(model_summary))
+            # model_summary = list()
+            # self.model.summary(print_fn=lambda x: model_summary.append(x))
+            # if self.logger:
+            #     self.logger.info("\n".join(model_summary))
 
             if model_file:
                 """

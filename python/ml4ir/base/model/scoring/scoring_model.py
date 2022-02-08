@@ -13,7 +13,7 @@ from logging import Logger
 from typing import Dict, Optional
 
 
-class ScorerBase(Model):
+class ScorerBase(keras.Model):
     """
     Base Scorer class that defines the neural network layers that convert
     the input features into scores
@@ -66,7 +66,7 @@ class ScorerBase(Model):
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
-        self.loss = loss
+        self.loss_op = loss
         self.file_io = file_io
         self.output_name = output_name
 
@@ -133,7 +133,7 @@ class ScorerBase(Model):
 
         Returns
         -------
-        scores : Tensor object
+        scores : dict of Tensor object
             Tensor object of the score computed by the model
         """
         # Apply feature layer and transform inputs
@@ -143,9 +143,9 @@ class ScorerBase(Model):
         features[FeatureTypeKey.LOGITS] = self.architecture_op(features, training=training)
 
         # Apply final activation layer
-        scores = self.loss.final_activation_op(features, training=training)
+        scores = self.loss_op.final_activation_op(features, training=training)
 
-        return scores
+        return {self.output_name: scores}
 
 
 class RelevanceScorer(ScorerBase):
@@ -245,7 +245,7 @@ class RelevanceScorer(ScorerBase):
         X, y = data
 
         with tf.GradientTape() as tape:
-            y_pred = self(X, training=True)
+            y_pred = self(X, training=True)[self.output_name]
             loss_value = self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
@@ -259,7 +259,7 @@ class RelevanceScorer(ScorerBase):
         # self.compiled_metrics.update_state(y, y_pred, features=X)
 
         # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for m in self.metrics}
+        return {metric.name: metric.result() for metric in self.metrics}
 
     def test_step(self, data):
         """
@@ -267,16 +267,16 @@ class RelevanceScorer(ScorerBase):
         """
         X, y = data
 
-        y_pred = self(X, training=False)
+        y_pred = self(X, training=False)[self.output_name]
 
         # Update loss metric
-        self.get_loss_value(y_true=y, y_pred=y_pred, features=X)
+        self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
 
         # Update metrics
         self.compiled_metrics.update_state(y, y_pred)
 
         # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for m in self.metrics}
+        return {metric.name: metric.result() for metric in self.metrics}
 
     @property
     def metrics(self):

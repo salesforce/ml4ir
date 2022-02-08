@@ -64,15 +64,6 @@ class DataSplitKey(Key):
     TEST = "test"
 
 
-class FeatureTypeKey(Key):
-    """Feature Data Type keys"""
-
-    NUMERIC = "numeric"
-    STRING = "string"
-    CATEGORICAL = "categorical"
-    LABEL = "label"
-
-
 class TFRecordTypeKey(Key):
     """Example or SequenceExample"""
 
