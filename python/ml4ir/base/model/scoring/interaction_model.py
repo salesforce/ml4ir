@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 
+from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
 from ml4ir.base.features.feature_layer import define_feature_layer
@@ -56,62 +57,13 @@ class InteractionModel(layers.Layer):
 
         self.feature_config = feature_config
         self.tfrecord_type = tfrecord_type
+        self.feature_layer_keys_to_fns = feature_layer_keys_to_fns
         self.max_sequence_size = max_sequence_size
-
-        self.file_io = file_io
-
-        self.feature_layer_op = FeatureLayer(
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            feature_layer_map=self.feature_layer_map
-            file_io=self.file_io,
-            **kwargs)
-
-        self.feature_config = feature_config
-        self.tfrecord_type = tfrecord_type
-        self.feature_layer_map = feature_layer_map
         self.file_io = file_io
         self.all_features = self.feature_config.get_all_features(include_label=False)
 
-
-class UnivariateInteractionModel(InteractionModel):
-    """
-    Defines an interaction layer that configures feature layer operations
-    on individual features mapping features one-to-one
-
-    TODO: Leaving train features as a dictionary instead of a list
-          allows the overall network to be more robust
-    """
-
-    def transform_features_op(self,
-                              train_features: Dict[str, tf.Tensor],
-                              metadata_features: Dict[str, tf.Tensor]):
-        """
-        Convert train and metadata features which have feature layer
-        functions applied to them into dense numeric tensors.
-        Sorts the features by name and concats the individual features
-        into a dense tensor.
-
-        Parameters
-        ----------
-        train_features : `tf.Tensor`
-            Dense tensor object that is used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
-
-        Returns
-        -------
-        train_features : `tf.Tensor`
-            Dense tensor object that is used for training
-        """
-        # Sorting the train features dictionary so that we control the order
-        train_features_list = [train_features[k] for k in sorted(train_features)]
-
-        # Concat all train features to get a dense feature vector
-        train_features_transformed = tf.concat(train_features_list, axis=-1, name="train_features")
-
-        return train_features_transformed, metadata_features
+        self.feature_layer_map = FeatureLayerMap()
+        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
 
 
 class UnivariateInteractionModel(InteractionModel):
@@ -123,8 +75,7 @@ class UnivariateInteractionModel(InteractionModel):
                  feature_layer_keys_to_fns: dict = {},
                  max_sequence_size: int = 0,
                  file_io: FileIO = None,
-                 **kwargs
-                 ):
+                 **kwargs):
         """
         Constructor for instantiating a UnivariateInteractionModel
 
@@ -150,17 +101,13 @@ class UnivariateInteractionModel(InteractionModel):
                          file_io=file_io,
                          **kwargs)
 
-        self.feature_layer_map = FeatureLayerMap()
-        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
-
-        self.all_features = self.feature_config.get_all_features(include_label=False)
-
+        # Define a one-to-one feature transform mapping
         self.feature_transform_ops = dict()
         for feature_info in self.all_features:
             feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
             feature_layer_info = feature_info.get(FEATURE_LAYER_INFO, {})
             if FN in feature_layer_info:
-                feature_transform_cls = feature_layer_map.get_fn(
+                feature_transform_cls = self.feature_layer_map.get_fn(
                     feature_layer_info[FN])
                 if feature_transform_cls:
                     self.feature_transform_ops[feature_node_name] = feature_transform_cls(
@@ -186,10 +133,11 @@ class UnivariateInteractionModel(InteractionModel):
 
         Returns
         -------
-        train_features: dict of tensors
-            List of transformed features that are used for training
-        metadata_features: dict of tensors
-            List of transformed features that are used as metadata
+        dict of dict of tensors
+            train: dict of tensors
+                List of transformed features that are used for training
+            metadata: dict of tensors
+                List of transformed features that are used as metadata
         """
         train_features = dict()
         metadata_features = dict()
@@ -244,15 +192,7 @@ class UnivariateInteractionModel(InteractionModel):
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
                 metadata_features[feature_node_name] = feature_tensor
 
-        #########################################################################################
-        #
-        # NOTE/TODO: This can be changed to pass a dictionary back and the concatentation
-        #            can happening in the dense network
-        # Sort the train features dictionary so that we control the order
-        # Concat all train features to get a dense feature vector
-        train_features = tf.concat([train_features[k] for k in sorted(train_features)],
-                                   axis=-1,
-                                   name="train_features")
-        #########################################################################################
-
-        return train_features, metadata_features
+        return {
+            FeatureTypeKey.TRAIN: train_features,
+            FeatureTypeKey.METADATA: metadata_features
+        }

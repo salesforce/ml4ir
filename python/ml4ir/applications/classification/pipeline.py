@@ -72,7 +72,8 @@ class ClassificationPipeline(RelevancePipeline):
         )
 
         # Define loss object from loss key
-        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key)
+        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key,
+                                                                     output_name=self.args.output_name)
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer(
