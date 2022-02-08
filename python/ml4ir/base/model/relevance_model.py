@@ -117,31 +117,43 @@ class RelevanceModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = feature_config.define_inputs()
-            scores, train_features, metadata_features = scorer(inputs)
+            # inputs: Dict[str, Input] = feature_config.define_inputs()
+            # scores, train_features, metadata_features = scorer(inputs)
 
-            # Create model with functional Keras API
-            self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+            # # Create model with functional Keras API
+            # self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+            # self.model.output_names = [self.output_name]
+
+            # # Get loss fn
+            # loss_fn = scorer.loss.get_loss_fn(**metadata_features)
+
+            # # Get metric objects
+            # metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+            #     metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+            # )
+
+            # # Compile model
+            # """
+            # NOTE:
+            # Related Github issue: https://github.com/tensorflow/probability/issues/519
+            # """
+            # self.model.compile(
+            #     optimizer=optimizer,
+            #     loss=loss_fn,
+            #     metrics=metrics_impl,
+            #     experimental_run_tf_function=False,
+            # )
+            self.model = self.scorer
             self.model.output_names = [self.output_name]
-
-            # Get loss fn
-            loss_fn = scorer.loss.get_loss_fn(**metadata_features)
 
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
                 metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
             )
 
-            # Compile model
-            """
-            NOTE:
-            Related Github issue: https://github.com/tensorflow/probability/issues/519
-            """
             self.model.compile(
                 optimizer=optimizer,
-                loss=loss_fn,
-                metrics=metrics_impl,
-                experimental_run_tf_function=False,
+                metrics=metrics_impl
             )
 
             # Write model summary to logs
@@ -374,18 +386,25 @@ class RelevanceModel:
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
                 if monitor_metric is None:
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
                                                                      verbose=1)
                 else:
                     if not monitor_metric.startswith("val_"):
                         monitor_metric = "val_{}".format(monitor_metric)
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
-                                                                     factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     factor=lr_schedule.get(
+                                                                         'factor', 0.5),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
                                                                      verbose=1)
                 return reduce_lr
 
@@ -869,7 +888,8 @@ class RelevanceModel:
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
 
         # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
-        scheduler_callback = self.define_scheduler_as_callback(monitor_metric, self.scorer.model_config)
+        scheduler_callback = self.define_scheduler_as_callback(
+            monitor_metric, self.scorer.model_config)
         if scheduler_callback:
             callbacks_list.append(scheduler_callback)
 

@@ -2,11 +2,12 @@
 from tensorflow.keras import layers
 from tensorflow.keras import losses
 
+from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.applications.ranking.config.keys import LossKey
 
 
-def get_loss(loss_key) -> RelevanceLossBase:
+def get_loss(loss_key, output_name) -> RelevanceLossBase:
     """
     Factory to get relevance loss related to classification use-case.
 
@@ -14,6 +15,8 @@ def get_loss(loss_key) -> RelevanceLossBase:
     ----------
     loss_key : str
         LossKey name
+    output_name: str
+        Name of the output node after final activation op
 
     Returns
     -------
@@ -21,40 +24,63 @@ def get_loss(loss_key) -> RelevanceLossBase:
         Corresponding loss object
     """
     if loss_key == LossKey.CATEGORICAL_CROSS_ENTROPY:
-        return CategoricalCrossEntropy()
+        return CategoricalCrossEntropy(output_name=output_name)
     else:
         raise NotImplementedError
 
 
 class CategoricalCrossEntropy(RelevanceLossBase):
-    def get_loss_fn(self, **kwargs):
+
+    def __init__(self, output_name, **kwargs):
         """
-        Define a categorical cross entropy loss
-
-        Returns
-        -------
-        function
-            Categorical cross entropy loss function
-        """
-        cce = losses.CategoricalCrossentropy(reduction=losses.Reduction.SUM_OVER_BATCH_SIZE)
-
-        def _loss_fn(y_true, y_pred):
-            return cce(y_true, y_pred)
-
-        return _loss_fn
-
-    def get_final_activation_op(self, output_name):
-        """
-        Define softmax activation function
+        Initialize categorical cross entropy loss
 
         Parameters
         ----------
-        output_name : str
-            Name of the output to use for final activation layer
+        output_name: str
+            Name of the output node after final activation op
+        """
+        super().__init__(**kwargs)
+
+        self.output_name = output_name
+        self.final_activation_fn = layers.Activation("softmax", name=self.output_name)
+
+        self.loss_fn = losses.CategoricalCrossentropy(reduction=losses.Reduction.SUM_OVER_BATCH_SIZE)
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Define a categorical cross entropy loss
+        
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
 
         Returns
         -------
         function
-            Softmax activation function
+            Categorical cross entropy loss
         """
-        return lambda logits, mask: layers.Activation("softmax", name=output_name)(logits)
+        return self.loss_fn(y_true, y_pred)
+
+    def final_activation_op(self, inputs, training=None):
+        """
+        Get softmax activated scores on logits
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+
+        Returns
+        -------
+        tensor
+            Softmax activated scores
+        """
+        return self.final_activation_fn(inputs[FeatureTypeKey.LOGITS])
