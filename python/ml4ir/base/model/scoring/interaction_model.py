@@ -19,9 +19,9 @@ TFRECORD_TYPE = "tfrecord_type"
 DTYPE = "dtype"
 
 
-class InteractionLayer(layers.Layer):
+class InteractionModel(layers.Layer):
     """
-    InteractionLayer class that defines tensorflow layers that act on input features to
+    InteractionModel class that defines tensorflow layers that act on input features to
     convert them into numeric features to be fed into further neural network layers
     """
 
@@ -35,7 +35,7 @@ class InteractionLayer(layers.Layer):
         **kwargs
     ):
         """
-        Constructor for instantiating a base InteractionLayer
+        Constructor for instantiating a base InteractionModel
 
         Parameters
         ----------
@@ -74,7 +74,7 @@ class InteractionLayer(layers.Layer):
         self.all_features = self.feature_config.get_all_features(include_label=False)
 
 
-class UnivariateInteractionLayer(InteractionLayer):
+class UnivariateInteractionModel(InteractionModel):
     """
     Defines an interaction layer that configures feature layer operations
     on individual features mapping features one-to-one
@@ -114,7 +114,7 @@ class UnivariateInteractionLayer(InteractionLayer):
         return train_features_transformed, metadata_features
 
 
-class UnivariateInteractionLayer(InteractionLayer):
+class UnivariateInteractionModel(InteractionModel):
     """Keras layer that applies in-graph transformations to input feature tensors"""
 
     def __init__(self,
@@ -126,7 +126,7 @@ class UnivariateInteractionLayer(InteractionLayer):
                  **kwargs
                  ):
         """
-        Constructor for instantiating a UnivariateInteractionLayer
+        Constructor for instantiating a UnivariateInteractionModel
 
         Parameters
         ----------
