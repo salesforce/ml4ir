@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras import layers
 from typing import List
 
@@ -22,7 +23,7 @@ class DNNLayerKey:
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
 
 
-class DNN(layers.Layer):
+class DNN(keras.Model):
     """Dense Neural Network architecture layer that maps features -> logits"""
 
     def __init__(self,

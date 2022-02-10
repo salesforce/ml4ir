@@ -428,6 +428,11 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+        # Sanity check the model with a forward pass before training
+        # NOTE: This allows for all layers to be properly initialized
+        #       and also allows for printing the model.summary()
+        self.model(next(iter(dataset.train))[0])
+        self.model.summary(print_fn=self.logger.info, expand_nested=True)
 
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)

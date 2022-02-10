@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow import keras
 
 from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -19,7 +19,7 @@ TFRECORD_TYPE = "tfrecord_type"
 DTYPE = "dtype"
 
 
-class InteractionModel(layers.Layer):
+class InteractionModel(keras.Model):
     """
     InteractionModel class that defines tensorflow layers that act on input features to
     convert them into numeric features to be fed into further neural network layers
