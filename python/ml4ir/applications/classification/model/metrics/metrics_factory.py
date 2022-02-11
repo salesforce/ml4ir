@@ -1,10 +1,7 @@
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.classification.config.keys import MetricKey
-from ml4ir.applications.classification.model.metrics.metrics_impl import (
-    CategoricalAccuracy,
-    Top5CategoricalAccuracy,
-)
+from ml4ir.applications.classification.model.metrics.metrics_impl import Top5CategoricalAccuracy
 
 
 def get_metric(metric_key: str) -> Metric:

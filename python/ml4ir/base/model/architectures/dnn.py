@@ -12,15 +12,16 @@ from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedA
 
 
 OOV = 1
-TRAIN_FEATURES = "train_features"
 
 
 class DNNLayerKey:
+    MODEL_NAME = "dnn"
     DENSE = "dense"
     BATCH_NORMALIZATION = "batch_norm"
     DROPOUT = "dropout"
     ACTIVATION = "activation"
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
+    CONCATENATED_INPUT = "concatenated_input"
 
 
 class DNN(keras.Model):
@@ -51,7 +52,7 @@ class DNN(keras.Model):
 
         # Sort the train features dictionary so that we control the order
         # Concat all train features to get a dense feature vector
-        self.train_features_op = layers.Concatenate(axis=-1, name="")
+        self.train_features_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
 
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER][
@@ -99,6 +100,10 @@ class DNN(keras.Model):
             get_op(layer_args["type"], {k: v for k, v in layer_args.items() if k not in "type"})
             for layer_args in model_config["layers"]
         ]
+
+    def build(self, input_shape):
+        """Build the DNN model"""
+        self.train_features = sorted(input_shape[FeatureTypeKey.TRAIN])
 
     def call(self, inputs, training=None):
         """
