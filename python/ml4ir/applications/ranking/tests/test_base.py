@@ -63,7 +63,9 @@ class RankingTestBase(RelevanceTestBase):
 
         # Define loss object from loss key
         loss: RelevanceLossBase = loss_factory.get_loss(
-            loss_key=loss_key, scoring_type=self.args.scoring_type
+            loss_key=loss_key,
+            scoring_type=self.args.scoring_type,
+            output_name=self.args.output_name
         )
 
         # Define scorer

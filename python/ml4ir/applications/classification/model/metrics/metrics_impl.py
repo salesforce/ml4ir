@@ -6,34 +6,6 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from typing import Optional, Dict
 
 
-class CategoricalAccuracy(metrics.CategoricalAccuracy):
-    """
-    Custom metric class to compute the Categorical Accuracy.
-
-    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
-    to maintain consistency of arguments to __init__
-    """
-
-    def __init__(
-        self,
-        feature_config: FeatureConfig,
-        name="categorical_accuracy",
-        **kwargs
-    ):
-        """
-        Creates a CategoricalAccuracy instance
-
-        Parameters
-        ----------
-        feature_config : FeatureConfig object
-            FeatureConfig object that defines the configuration for each model
-            feature
-        name : str
-            Name of the metric
-        """
-        super(CategoricalAccuracy, self).__init__(name=name)
-
-
 class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
     Custom metric class to compute the Top K Categorical Accuracy.
@@ -45,7 +17,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
     def __init__(
         self,
-        feature_config: Optional[FeatureConfig] = None,
         name="top_5_categorical_accuracy",
         **kwargs
     ):
