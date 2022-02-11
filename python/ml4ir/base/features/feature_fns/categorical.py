@@ -4,7 +4,6 @@ from tensorflow import feature_column
 
 import copy
 
-from ml4ir.base.features.feature_fns.sequence import get_bilstm_encoding
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.features.feature_fns.utils import get_vocabulary_info
 from ml4ir.base.features.feature_fns.utils import VocabLookup, CategoricalDropout
@@ -260,7 +259,7 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
             input_dim=self.input_dim,
             output_dim=self.embedding_size,
             mask_zero=True,
-            input_length=self.feature_layer_args[self.MAX_LENGTH],
+            input_length=self.feature_layer_args.get(self.MAX_LENGTH),
         )
 
         self.encoding_op = layers.Bidirectional(
@@ -381,6 +380,7 @@ class CategoricalEmbeddingWithVocabularyFileAndDropout(BaseFeatureLayerOp):
     DROPOUT_RATE = "dropout_rate"
     EMBEDDING_SIZE = "embedding_size"
     NUM_BUCKETS = "num_buckets"
+    DEFAULT_VALUE = "default_value"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """

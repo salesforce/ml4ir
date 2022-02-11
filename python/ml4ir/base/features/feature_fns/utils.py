@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import lookup
 
@@ -160,7 +161,7 @@ class VocabLookup(layers.Layer):
 
         Parameters
         ----------
-        input_text : Tensor object
+        inputs : Tensor object
             String categorical tensor
 
         Returns
@@ -168,7 +169,7 @@ class VocabLookup(layers.Layer):
         Tensor object
             Numeric tensor object with corresponding lookup indices
         """
-        return self.lookup_table.lookup(input_text)
+        return self.lookup_table.lookup(inputs)
 
     def get_config(self):
         """

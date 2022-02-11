@@ -57,6 +57,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
         if not self.tf_ops:
             return inputs
 
+        feature_tensor = inputs
         for tf_op in self.tf_ops:
             try:
                 fn_, fn_args = eval(tf_op[self.FN]), tf_op.get(self.ARGS, {})
@@ -65,7 +66,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
                     "Invalid fn specified for tf_native_op : {}\n{}".format(tf_op[self.FN], e))
 
             try:
-                feature_tensor = fn_(inputs, **fn_args)
+                feature_tensor = fn_(feature_tensor, **fn_args)
             except Exception as e:
                 raise Exception("Error while applying {} to {} feature:\n{}".format(
                     tf_op[self.FN], self.feature_name, e))

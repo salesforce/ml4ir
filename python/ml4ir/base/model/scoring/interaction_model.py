@@ -5,7 +5,6 @@ from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExam
 
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
-from ml4ir.base.features.feature_layer import define_feature_layer
 from ml4ir.base.io.file_io import FileIO
 
 from typing import Dict
@@ -65,7 +64,7 @@ class InteractionModel(keras.Model):
         self.feature_layer_op = FeatureLayer(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
-            feature_layer_map=self.feature_layer_map
+            feature_layer_map=self.feature_layer_map,
             file_io=self.file_io,
             **kwargs)
 

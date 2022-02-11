@@ -135,3 +135,12 @@ class CalibrationKey(Key):
 class PipelineType(Key):
     RANKING_PIPELINE = "RankingPipeline"
     CLASSIFICATION_PIPELINE = "ClassificationPipeline"
+
+
+class FeatureTypeKey(Key):
+    """Type of feature"""
+    TRAIN = "train"  # Features used as inputs to the network architecture
+    METADATA = "metadata"  # Features used as metadata to learn the weights
+    MASK = "mask"
+    LOGITS = "logits"
+    SCORES = "scores"
