@@ -117,50 +117,20 @@ class RelevanceModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            # inputs: Dict[str, Input] = feature_config.define_inputs()
-            # scores, train_features, metadata_features = scorer(inputs)
-
-            # # Create model with functional Keras API
-            # self.model = Model(inputs=inputs, outputs={self.output_name: scores})
-            # self.model.output_names = [self.output_name]
-
-            # # Get loss fn
-            # loss_fn = scorer.loss.get_loss_fn(**metadata_features)
-
-            # # Get metric objects
-            # metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-            #     metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
-            # )
-
-            # # Compile model
-            # """
-            # NOTE:
-            # Related Github issue: https://github.com/tensorflow/probability/issues/519
-            # """
-            # self.model.compile(
-            #     optimizer=optimizer,
-            #     loss=loss_fn,
-            #     metrics=metrics_impl,
-            #     experimental_run_tf_function=False,
-            # )
             self.model = self.scorer
             self.model.output_names = [self.output_name]
 
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                metrics=metrics,
+                feature_config=feature_config
             )
 
             self.model.compile(
                 optimizer=optimizer,
+                loss=self.scorer.loss_op,
                 metrics=metrics_impl
             )
-
-            # Write model summary to logs
-            model_summary = list()
-            self.model.summary(print_fn=lambda x: model_summary.append(x))
-            if self.logger:
-                self.logger.info("\n".join(model_summary))
 
             if model_file:
                 """
@@ -450,6 +420,11 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+        # Sanity check the model with a forward pass before training
+        # NOTE: This allows for all layers to be properly initialized
+        #       and also allows for printing the model.summary()
+        self.model(next(iter(dataset.train))[0])
+        self.model.summary(print_fn=self.logger.info, expand_nested=True)
 
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)

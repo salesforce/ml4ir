@@ -84,3 +84,12 @@ class CategoricalCrossEntropy(RelevanceLossBase):
             Softmax activated scores
         """
         return self.final_activation_fn(inputs[FeatureTypeKey.LOGITS])
+
+    def get_config(self):
+        """Return layer config that is used while serialization"""
+        config = super().get_config()
+        config.update({
+            "loss_fn": "categorical_cross_entropy",
+            "output_name": self.output_name
+        })
+        return config

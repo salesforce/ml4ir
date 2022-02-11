@@ -18,7 +18,6 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
     def __init__(
         self,
         feature_config: FeatureConfig,
-        metadata_features: Dict,
         name="categorical_accuracy",
         state=MetricState.NEW,
         **kwargs
@@ -31,9 +30,6 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         feature_config : FeatureConfig object
             FeatureConfig object that defines the configuration for each model
             feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
         name : str
             Name of the metric
         state : {"new", "old"}
@@ -54,7 +50,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     def __init__(
         self,
         feature_config: Optional[FeatureConfig] = None,
-        metadata_features: Dict = {},
         name="top_5_categorical_accuracy",
         state=MetricState.NEW,
         **kwargs
@@ -67,9 +62,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         feature_config : FeatureConfig object
             FeatureConfig object that defines the configuration for each model
             feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
         name : str
             Name of the metric
         state : {"new", "old"}

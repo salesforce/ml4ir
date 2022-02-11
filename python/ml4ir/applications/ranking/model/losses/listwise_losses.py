@@ -42,7 +42,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the loss
         """
-        mask = inputs[FeatureTypeKey.MASK]
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
 
         return self.loss_fn(y_true, tf.math.multiply(y_pred, mask))
 
@@ -65,7 +65,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             Uses `mask` field to exclude padded records from contributing
             to the softmax activation
         """
-        mask = inputs[FeatureTypeKey.MASK]
+        mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
         logits = inputs[FeatureTypeKey.LOGITS]
 
         # NOTE:
@@ -116,7 +116,7 @@ class RankOneListNet(SoftmaxCrossEntropy):
             Uses `mask` field to exclude padded records from contributing
             to the loss
         """
-        mask = inputs[FeatureTypeKey.MASK]
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
         batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 
         # Mask the padded records

@@ -13,7 +13,7 @@ from logging import Logger
 from typing import Dict, Optional
 
 
-class ScorerBase(Model):
+class ScorerBase(keras.Model):
     """
     Base Scorer class that defines the neural network layers that convert
     the input features into scores
@@ -66,7 +66,7 @@ class ScorerBase(Model):
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
-        self.loss = loss
+        self.loss_op = loss
         self.file_io = file_io
         self.output_name = output_name
 
@@ -133,7 +133,7 @@ class ScorerBase(Model):
 
         Returns
         -------
-        scores : Tensor object
+        scores : dict of tensor object
             Tensor object of the score computed by the model
         """
         # Apply feature layer and transform inputs
@@ -143,9 +143,9 @@ class ScorerBase(Model):
         features[FeatureTypeKey.LOGITS] = self.architecture_op(features, training=training)
 
         # Apply final activation layer
-        scores = self.loss.final_activation_op(features, training=training)
+        scores = self.loss_op.final_activation_op(features, training=training)
 
-        return scores
+        return {self.output_name: scores}
 
 
 class RelevanceScorer(ScorerBase):
@@ -200,7 +200,7 @@ class RelevanceScorer(ScorerBase):
         )
 
     def compile(self, **kwargs):
-        """Compile the keras model"""
+        """Compile the keras model and defining a loss metric to track any custom loss"""
         # Define metric to track loss
         self.loss_metric = keras.metrics.Mean(name="loss")
         super().compile(**kwargs)
@@ -240,12 +240,24 @@ class RelevanceScorer(ScorerBase):
 
     def train_step(self, data):
         """
-        TODO: Add docs
+        Defines the operations performed within a single training step.
+        Called implicitly by tensorflow-keras when using model.fit()
+
+        Parameters
+        ----------
+        data: tuple of tensor objects
+            Tuple of features and corresponding labels to be used to learn the
+            model weights
+
+        Returns
+        -------
+        dict
+            Dictionary of metrics and loss computed for this training step
         """
         X, y = data
 
         with tf.GradientTape() as tape:
-            y_pred = self(X, training=True)
+            y_pred = self(X, training=True)[self.output_name]
             loss_value = self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
@@ -259,26 +271,37 @@ class RelevanceScorer(ScorerBase):
         # self.compiled_metrics.update_state(y, y_pred, features=X)
 
         # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for m in self.metrics}
+        return {metric.name: metric.result() for metric in self.metrics}
 
     def test_step(self, data):
         """
-        TODO: Add docs
+        Defines the operations performed within a single prediction or evaluation step.
+        Called implicitly by tensorflow-keras when using model.predict() or model.evaluate()
+
+        Parameters
+        ----------
+        data: tuple of tensor objects
+            Tuple of features and corresponding labels to be used to evaluate the model
+
+        Returns
+        -------
+        dict
+            Dictionary of metrics and loss computed for this evaluation step
         """
         X, y = data
 
-        y_pred = self(X, training=False)
+        y_pred = self(X, training=False)[self.output_name]
 
         # Update loss metric
-        self.get_loss_value(y_true=y, y_pred=y_pred, features=X)
+        self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
 
         # Update metrics
         self.compiled_metrics.update_state(y, y_pred)
 
         # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for m in self.metrics}
+        return {metric.name: metric.result() for metric in self.metrics}
 
     @property
     def metrics(self):
-        """Add loss metric to keras model metrics"""
+        """Get the metrics for the keras model along with the custom loss metric"""
         return [self.loss_metric] + super().metrics
