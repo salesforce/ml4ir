@@ -1,11 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
-<<<<<<< HEAD
-from ml4ir.base.config.keys import FeatureTypeKey
-=======
 from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
->>>>>>> fd42dbe1c1cfdb8cf911f35848b22b40d4e8d3db
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
 from ml4ir.base.io.file_io import FileIO
