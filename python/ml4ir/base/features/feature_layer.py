@@ -24,15 +24,15 @@ class FeatureLayerMap:
         Define ml4ir's predefined feature transformation functions
         """
         self.key_to_fn = {
-            BytesSequenceToEncodingBiLSTM.__name__: BytesSequenceToEncodingBiLSTM,
-            Global1dPooling.__name__: Global1dPooling,
-            CategoricalEmbeddingToEncodingBiLSTM.__name__: CategoricalEmbeddingToEncodingBiLSTM,
-            CategoricalEmbeddingWithHashBuckets.__name__: CategoricalEmbeddingWithHashBuckets,
-            CategoricalEmbeddingWithIndices.__name__: CategoricalEmbeddingWithIndices,
-            CategoricalEmbeddingWithVocabularyFile.__name__: CategoricalEmbeddingWithVocabularyFile,
-            CategoricalEmbeddingWithVocabularyFileAndDropout.__name__: CategoricalEmbeddingWithVocabularyFileAndDropout,
-            CategoricalIndicatorWithVocabularyFile.__name__: CategoricalIndicatorWithVocabularyFile,
-            TFNativeOpLayer.__name__: TFNativeOpLayer
+            BytesSequenceToEncodingBiLSTM.LAYER_NAME: BytesSequenceToEncodingBiLSTM,
+            Global1dPooling.LAYER_NAME: Global1dPooling,
+            CategoricalEmbeddingToEncodingBiLSTM.LAYER_NAME: CategoricalEmbeddingToEncodingBiLSTM,
+            CategoricalEmbeddingWithHashBuckets.LAYER_NAME: CategoricalEmbeddingWithHashBuckets,
+            CategoricalEmbeddingWithIndices.LAYER_NAME: CategoricalEmbeddingWithIndices,
+            CategoricalEmbeddingWithVocabularyFile.LAYER_NAME: CategoricalEmbeddingWithVocabularyFile,
+            CategoricalEmbeddingWithVocabularyFileAndDropout.LAYER_NAME: CategoricalEmbeddingWithVocabularyFileAndDropout,
+            CategoricalIndicatorWithVocabularyFile.LAYER_NAME: CategoricalIndicatorWithVocabularyFile,
+            TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer
         }
 
     def add_fn(self, key, fn):

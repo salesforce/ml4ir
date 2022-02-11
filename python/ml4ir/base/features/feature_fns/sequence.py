@@ -14,7 +14,7 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
     a categorical/char embedding for each of the 256 bytes. The char/byte embeddings
     are then combined using a biLSTM
     """
-    __name__ = "bytes_sequence_to_encoding_bilstm"
+    LAYER_NAME = "bytes_sequence_to_encoding_bilstm"
 
     MAX_LENGTH = "max_length"
     EMBEDDING_SIZE = "embedding_size"
@@ -93,13 +93,13 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
         return feature_tensor
 
 
-class Global1dPooling(BaseFeatureLayerOp)
+class Global1dPooling(BaseFeatureLayerOp):
     """
     1D pooling to reduce a variable length sequence feature into a scalar
     value. This method optionally allows users to add multiple such pooling
     operations to produce a fixed dimensional feature vector as well.
     """
-    __name__ = "global_1d_pooling"
+    LAYER_NAME = "global_1d_pooling"
 
     FNS = "fns"
     PADDED_VAL = "padded_val"

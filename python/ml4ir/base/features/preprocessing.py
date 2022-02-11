@@ -2,7 +2,7 @@ import string
 import re
 import tensorflow as tf
 
-from ml4ir.base.features.feature_fns.categorical import categorical_indicator_with_vocabulary_file
+from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWithVocabularyFile
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -176,11 +176,7 @@ def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     Output:
         >>> [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
     """
-    label_str = tf.keras.Input(shape=(1,), dtype=tf.string)
-    label_one_hot = categorical_indicator_with_vocabulary_file(label_str, feature_info, file_io)
-    # FIXME: we should avoid use another keras Model here (we are wrapping two Keras models here, which cause issues at
-    #  saving time).
-    one_hot_vectorizer = tf.keras.Model(inputs=label_str, outputs=label_one_hot)
+    one_hot_vectorizer = CategoricalIndicatorWithVocabularyFile(feature_info, file_io)
 
     @tf.function
     def one_hot_vectorize(feature_tensor):

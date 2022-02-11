@@ -6,7 +6,6 @@ import tensorflow as tf
 
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto
 from ml4ir.base.config.keys import (
-    FeatureTypeKey,
     TFRecordTypeKey,
     SequenceExampleTypeKey,
 )
@@ -925,7 +924,7 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             "node_name": "mask",
             "trainable": False,
             "dtype": self.get_rank("dtype"),
-            "feature_layer_info": {"type": FeatureTypeKey.NUMERIC, "shape": None},
+            "feature_layer_info": {"type": "numeric", "shape": None},
             "serving_info": {"name": "mask", "required": False},
             "tfrecord_type": SequenceExampleTypeKey.SEQUENCE,
         }
