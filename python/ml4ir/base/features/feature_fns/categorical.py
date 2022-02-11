@@ -4,7 +4,6 @@ from tensorflow import feature_column
 
 import copy
 
-from ml4ir.base.features.feature_fns.sequence import get_bilstm_encoding
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.features.feature_fns.utils import get_vocabulary_info
 from ml4ir.base.features.feature_fns.utils import VocabLookup, CategoricalDropout
@@ -31,7 +30,7 @@ class CategoricalEmbeddingWithHashBuckets(BaseFeatureLayerOp):
     are combined either through mean, sum or concat operations to generate the final
     embedding based on the feature_info.
     """
-    __name__ = "categorical_embedding_with_hash_buckets"
+    LAYER_NAME = "categorical_embedding_with_hash_buckets"
 
     NUM_HASH_BUCKETS = "num_hash_buckets"
     HASH_BUCKET_SIZE = "hash_bucket_size"
@@ -80,12 +79,19 @@ class CategoricalEmbeddingWithHashBuckets(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            categorical embedding for the input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         embeddings_list = list()
         for i in range(self.num_hash_buckets):
@@ -126,13 +132,13 @@ class CategoricalEmbeddingWithHashBuckets(BaseFeatureLayerOp):
         return embedding
 
 
-class CategoircalEmbeddingWithIndices(BaseFeatureLayerOp):
+class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
     """
     Converts input integer tensor into categorical embedding.
     Works by converting the categorical indices in the input feature_tensor,
     represented as integer values, into categorical embeddings based on the feature_info.
     """
-    __name__ = "categorical_embedding_with_indices"
+    LAYER_NAME = "categorical_embedding_with_indices"
 
     NUM_BUCKETS = "num_buckets"
     DEFAULT_VALUE = "default_value"
@@ -181,12 +187,19 @@ class CategoircalEmbeddingWithIndices(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            categorical embedding for the input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         embedding = self.embedding_op({CATEGORICAL_VARIABLE: inputs}, training=training)
         embedding = tf.expand_dims(embedding, axis=1)
@@ -202,7 +215,7 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
     vocabulary_file.
     The char/byte embeddings are then combined using a biLSTM.
     """
-    __name__ = "categorical_embedding_to_encoding_bilstm"
+    LAYER_NAME = "categorical_embedding_to_encoding_bilstm"
 
     VOCABULARY_FILE = "vocabulary_file"
     MAX_LENGTH = "max_length"
@@ -260,7 +273,7 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
             input_dim=self.input_dim,
             output_dim=self.embedding_size,
             mask_zero=True,
-            input_length=self.feature_layer_args[self.MAX_LENGTH],
+            input_length=self.feature_layer_args.get(self.MAX_LENGTH),
         )
 
         self.encoding_op = layers.Bidirectional(
@@ -275,7 +288,19 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
 
@@ -283,7 +308,7 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
         categorical_embeddings = tf.squeeze(categorical_embeddings, axis=1)
 
         encoding = self.encoding_op(categorical_embeddings, training=training)
-        encoding = tf.expand_dims(feature_tensor, axis=1)
+        encoding = tf.expand_dims(encoding, axis=1)
 
         return encoding
 
@@ -294,13 +319,14 @@ class CategoricalEmbeddingWithVocabularyFile(BaseFeatureLayerOp):
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then converting the categories into embeddings based on the feature_info.
     """
-    __name__ = "categorical_embedding_with_vocabulary_file"
+    LAYER_NAME = "categorical_embedding_with_vocabulary_file"
 
     VOCABULARY_FILE = "vocabulary_file"
     MAX_LENGTH = "max_length"
     NUM_OOV_BUCKETS = "num_oov_buckets"
     NUM_BUCKETS = "num_buckets"
     EMBEDDING_SIZE = "embedding_size"
+    DEFAULT_VALUE = "default_value"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -348,18 +374,25 @@ class CategoricalEmbeddingWithVocabularyFile(BaseFeatureLayerOp):
         )
         feature_info_new["feature_layer_info"]["args"][self.DEFAULT_VALUE] = self.vocabulary_size
 
-        self.embedding_op = CategoircalEmbeddingWithIndices(
+        self.embedding_op = CategoricalEmbeddingWithIndices(
             feature_info=feature_info_new, file_io=file_io, **kwargs
         )
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Categorical embedding representation of input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
         embedding = self.embedding_op(categorical_indices, training=training)
@@ -374,12 +407,13 @@ class CategoricalEmbeddingWithVocabularyFileAndDropout(BaseFeatureLayerOp):
     and then converting the categories into embeddings based on the feature_info.
     Also uses a dropout to convert categorical indices to the OOV index of 0 at a rate of dropout_rate
     """
-    __name__ = "categorical_embedding_with_vocabulary_file_and_dropout"
+    LAYER_NAME = "categorical_embedding_with_vocabulary_file_and_dropout"
 
     VOCABULARY_FILE = "vocabulary_file"
     DROPOUT_RATE = "dropout_rate"
     EMBEDDING_SIZE = "embedding_size"
     NUM_BUCKETS = "num_buckets"
+    DEFAULT_VALUE = "default_value"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -425,18 +459,25 @@ class CategoricalEmbeddingWithVocabularyFileAndDropout(BaseFeatureLayerOp):
         feature_info_new["feature_layer_info"]["args"][self.NUM_BUCKETS] = self.vocabulary_size
         feature_info_new["feature_layer_info"]["args"][self.DEFAULT_VALUE] = 0
 
-        self.embedding_op = CategoircalEmbeddingWithIndices(
+        self.embedding_op = CategoricalEmbeddingWithIndices(
             feature_info=feature_info_new, file_io=file_io, **kwargs
         )
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Categorical embedding representation of input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
         categorical_indices = self.categorical_dropout_op(categorical_indices, training=training)
@@ -451,7 +492,7 @@ class CategoricalIndicatorWithVocabularyFile(BaseFeatureLayerOp):
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then converting the categories into one-hot representation.
     """
-    __name__ = "categorical_indicator_with_vocabulary_file"
+    LAYER_NAME = "categorical_indicator_with_vocabulary_file"
 
     VOCABULARY_FILE = "vocabulary_file"
     MAX_LENGTH = "max_length"
@@ -504,7 +545,19 @@ class CategoricalIndicatorWithVocabularyFile(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         #
         ##########################################################################

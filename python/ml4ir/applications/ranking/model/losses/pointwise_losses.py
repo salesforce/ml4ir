@@ -43,7 +43,7 @@ class SigmoidCrossEntropy(PointwiseLossBase):
             to the loss
         """
 
-        mask = inputs[FeatureTypeKey.MASK]
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
 
         y_true = tf.gather_nd(y_true, tf.where(tf.equal(mask, tf.constant(1.0))))
         y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
@@ -64,4 +64,11 @@ class SigmoidCrossEntropy(PointwiseLossBase):
         tensor
             sigmoid activated scores
         """
-        return self.final_activation_fn(inputs[FeatureTypeKey.LOGITS])
+        mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
+        logits = inputs[FeatureTypeKey.LOGITS]
+
+        logits = tf.where(
+            tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
+        )
+
+        return self.final_activation_fn(logits)

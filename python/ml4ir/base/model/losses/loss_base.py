@@ -46,3 +46,11 @@ class RelevanceLossBase(layers.Layer):
             Resulting score tensor after applying the function on the logits
         """
         raise NotImplementedError
+
+    def get_config(self):
+        """Return layer config that is used while serialization"""
+        config = super().get_config()
+        config.update({
+            "output_name": self.output_name
+        })
+        return config

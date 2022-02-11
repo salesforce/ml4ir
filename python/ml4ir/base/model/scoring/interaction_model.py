@@ -1,10 +1,9 @@
 import tensorflow as tf
-from tensorflow.keras import layers
+from tensorflow import keras
 
-from ml4ir.base.config.keys import FeatureTypeKey
+from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
-from ml4ir.base.features.feature_layer import define_feature_layer
 from ml4ir.base.io.file_io import FileIO
 
 from typing import Dict
@@ -20,7 +19,7 @@ TFRECORD_TYPE = "tfrecord_type"
 DTYPE = "dtype"
 
 
-class InteractionModel(layers.Layer):
+class InteractionModel(keras.Model):
     """
     InteractionModel class that defines tensorflow layers that act on input features to
     convert them into numeric features to be fed into further neural network layers
@@ -177,7 +176,7 @@ class UnivariateInteractionModel(InteractionModel):
             the values for all examples of the sequence
             """
             if (
-                tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
                 and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
             ):
                 if feature_info[TRAINABLE]:

@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras import layers
 from typing import List
 
@@ -22,7 +23,7 @@ class DNNLayerKey:
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
 
 
-class DNN(layers.Layer):
+class DNN(keras.Model):
     """Dense Neural Network architecture layer that maps features -> logits"""
 
     def __init__(self,
@@ -68,7 +69,7 @@ class DNN(layers.Layer):
 
         :param model_config: dict corresponding to the model config
         :param feature_config: dict corresponding to the feature config, only used in case of classification if the last
-            layer of the model_config doesn"t have a units number defined (or set to -1). In which case we retrieve the
+            layer of the model_config doesn't have a units number defined (or set to -1). In which case we retrieve the
             label vocabulary defined in the feature_config to deduce the number of units.
         :return: List[layers]: list of keras layer corresponding to each of the layers defined in the model_config.
         """
@@ -78,7 +79,7 @@ class DNN(layers.Layer):
                     try:
                         label_feature_info = feature_config.get_label()
                         vocabulary_keys, vocabulary_ids = get_vocabulary_info(
-                            label_feature_info, self.file_io)
+                            label_feature_info["feature_layer_info"]["args"], self.file_io)
                         layer_args["units"] = len(vocabulary_keys) + OOV
                     except:
                         raise KeyError("We were not able to find information for the output layer of your DNN. "

@@ -21,9 +21,7 @@ def get_metric(metric_key: str) -> Metric:
     Metric class
         Class defining the metric computation logic
     """
-    if metric_key == MetricKey.CATEGORICAL_ACCURACY:
-        return CategoricalAccuracy
-    elif metric_key == MetricKey.TOP_5_CATEGORICAL_ACCURACY:
-        return Top5CategoricalAccuracy
+    if metric_key == MetricKey.TOP_5_CATEGORICAL_ACCURACY:
+        return Top5CategoricalAccuracy(name="top_5_categorical_accuracy")
     else:
         return metric_key
