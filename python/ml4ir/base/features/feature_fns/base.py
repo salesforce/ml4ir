@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from tensorflow.keras import layers
 
 from ml4ir.base.io.file_io import FileIO
@@ -44,3 +46,8 @@ class BaseFeatureLayerOp(layers.Layer):
         config = super().get_config()
         config.update(self.feature_layer_args)
         return config
+
+    @property
+    @abstractmethod
+    def LAYER_NAME(self):
+        raise AttributeError
