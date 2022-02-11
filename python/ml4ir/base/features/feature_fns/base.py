@@ -22,7 +22,7 @@ class BaseFeatureLayerOp(layers.Layer):
         super().__init__(**kwargs)
 
         self.feature_info = feature_info
-        self.feature_layer_args = feature_info["feature_layer_info"]["args"]
+        self.feature_layer_args = feature_info["feature_layer_info"].get("args", {})
 
         self.feature_layer_args["node_name"] = feature_info.get("node_name", feature_info["name"])
         self.feature_name = self.feature_layer_args["node_name"]

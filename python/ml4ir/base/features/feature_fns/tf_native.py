@@ -10,7 +10,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
     Run a series of tensorflow native operations on the input feature tensor.
     The functions will be applied in the order they are specified.
     """
-    __name__ = "tf_native_op"
+    LAYER_NAME = "tf_native_op"
 
     ARGS = "args"
     OPS = "ops"
@@ -42,7 +42,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
-        self.tf_ops = self.feature_layer_args.get(self.ARGS, {}).get(self.OPS, {})
+        self.tf_ops = self.feature_layer_args.get(self.OPS, {})
 
     def call(self, inputs, training=None):
         """
@@ -57,6 +57,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
         if not self.tf_ops:
             return inputs
 
+        feature_tensor = inputs
         for tf_op in self.tf_ops:
             try:
                 fn_, fn_args = eval(tf_op[self.FN]), tf_op.get(self.ARGS, {})
@@ -65,7 +66,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
                     "Invalid fn specified for tf_native_op : {}\n{}".format(tf_op[self.FN], e))
 
             try:
-                feature_tensor = fn_(inputs, **fn_args)
+                feature_tensor = fn_(feature_tensor, **fn_args)
             except Exception as e:
                 raise Exception("Error while applying {} to {} feature:\n{}".format(
                     tf_op[self.FN], self.feature_name, e))
