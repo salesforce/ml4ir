@@ -5,7 +5,7 @@ import ml4ir.applications.ranking.model.losses.listwise_losses as listwise_losse
 from ml4ir.applications.ranking.config.keys import LossKey
 
 
-def get_loss(loss_key, scoring_type, output_name) -> RelevanceLossBase:
+def get_loss(loss_key, scoring_type, output_name="score") -> RelevanceLossBase:
     """
     Factor method to get Loss function object
 
