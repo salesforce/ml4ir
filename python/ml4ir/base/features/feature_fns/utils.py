@@ -323,7 +323,19 @@ class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.lookup_table(inputs, training=training)
 

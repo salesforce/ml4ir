@@ -79,12 +79,19 @@ class CategoricalEmbeddingWithHashBuckets(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            categorical embedding for the input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         embeddings_list = list()
         for i in range(self.num_hash_buckets):
@@ -180,12 +187,19 @@ class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            categorical embedding for the input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         embedding = self.embedding_op({CATEGORICAL_VARIABLE: inputs}, training=training)
         embedding = tf.expand_dims(embedding, axis=1)
@@ -274,7 +288,19 @@ class CategoricalEmbeddingToEncodingBiLSTM(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
 
@@ -354,12 +380,19 @@ class CategoricalEmbeddingWithVocabularyFile(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Categorical embedding representation of input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
         embedding = self.embedding_op(categorical_indices, training=training)
@@ -432,12 +465,19 @@ class CategoricalEmbeddingWithVocabularyFileAndDropout(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Categorical embedding representation of input feature_tensor
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         categorical_indices = self.categorical_indices_op(inputs, training=training)
         categorical_indices = self.categorical_dropout_op(categorical_indices, training=training)
@@ -505,7 +545,19 @@ class CategoricalIndicatorWithVocabularyFile(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         #
         ##########################################################################
