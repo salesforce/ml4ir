@@ -6,11 +6,6 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from typing import Dict
 
 
-class MetricState:
-    OLD = "old"
-    NEW = "new"
-
-
 def get_metrics_impl(
     metrics: List[Union[str, Type[Metric]]],
     feature_config: FeatureConfig,
@@ -43,13 +38,7 @@ def get_metrics_impl(
         else:
             # If metric is a class of type Metric
             try:
-                metrics_impl.append(
-                    metric(
-                        state=MetricState.NEW,
-                        feature_config=feature_config,
-                        **kwargs
-                    )
-                )
+                metrics_impl.append(metric(feature_config=feature_config, **kwargs))
             except TypeError:
                 metrics_impl.append(metric())
 

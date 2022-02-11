@@ -939,4 +939,4 @@ class RelevanceModel:
                              f' replaced; temperature = {temperature}.')
         else:
             self.logger.info("Skipping adding Temperature Scaling layer because no activation "
-                             "exist in the last layer of Keras original model!")
+                             "found in the last layer of Keras original model!")

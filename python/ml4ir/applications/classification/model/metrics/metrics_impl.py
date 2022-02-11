@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 
-from ml4ir.base.model.metrics.metrics_impl import MetricState
 from ml4ir.base.features.feature_config import FeatureConfig
 
 from typing import Optional, Dict
@@ -19,7 +18,6 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         self,
         feature_config: FeatureConfig,
         name="categorical_accuracy",
-        state=MetricState.NEW,
         **kwargs
     ):
         """
@@ -32,8 +30,6 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
             feature
         name : str
             Name of the metric
-        state : {"new", "old"}
-            State of the metric
         """
         super(CategoricalAccuracy, self).__init__(name=name)
 
@@ -51,7 +47,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         self,
         feature_config: Optional[FeatureConfig] = None,
         name="top_5_categorical_accuracy",
-        state=MetricState.NEW,
         **kwargs
     ):
         """
@@ -64,8 +59,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
             feature
         name : str
             Name of the metric
-        state : {"new", "old"}
-            State of the metric
         """
         super(Top5CategoricalAccuracy, self).__init__(name=name, k=5)
 
