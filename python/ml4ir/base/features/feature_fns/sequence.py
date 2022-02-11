@@ -79,7 +79,19 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         # Decode string tensor to bytes
         feature_tensor = io.decode_raw(inputs, out_type=tf.uint8, fixed_length=self.max_length)
@@ -155,7 +167,19 @@ class Global1dPooling(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         pooled_tensors = list()
         padded_val_tensor = None

@@ -46,14 +46,20 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Modified feature tensor after applying all the specified ops
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
-
         if not self.tf_ops:
             return inputs
 

@@ -561,32 +561,6 @@ class FeatureConfig:
         else:
             raise Exception("Unknown dtype {}".format(feature_info["dtype"]))
 
-    def define_inputs(self) -> Dict[str, Input]:
-        """
-        Define the keras input placeholder tensors for the tensorflow model
-
-        Returns
-        -------
-        dict
-            Dictionary of tensorflow graph input nodes
-        """
-
-        def get_shape(feature_info: dict):
-            return feature_info.get("shape", (1,))
-
-        inputs: Dict[str, Input] = dict()
-        for feature_info in self.get_all_features(include_label=False):
-            """
-                NOTE: We currently do NOT define label as an input node in the model
-                We could do this in the future, to help define more complex loss functions
-            """
-            node_name = feature_info.get("node_name", feature_info["name"])
-            inputs[node_name] = Input(
-                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
-            )
-
-        return inputs
-
     def create_dummy_protobuf(self, num_records=1, required_only=False):
         """
         Generate a dummy TFRecord protobuffer with dummy values
@@ -962,35 +936,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
             Mask value or entire config dictionary based on if the key is passed
         """
         return self._get_key_or_dict(self.mask, key=key)
-
-    def define_inputs(self) -> Dict[str, Input]:
-        """
-        Define the keras input placeholder tensors for the tensorflow model
-
-        Returns
-        -------
-        dict
-            Dictionary of tensorflow graph input nodes
-        """
-
-        def get_shape(feature_info: dict):
-            # Setting size to None for sequence features as the num_records is variable
-            if feature_info["tfrecord_type"] == SequenceExampleTypeKey.SEQUENCE:
-                return feature_info.get("shape", (None,))
-            else:
-                return feature_info.get("shape", (1,))
-
-        inputs: Dict[str, Input] = dict()
-        for feature_info in self.get_all_features(include_label=False):
-            """
-                NOTE: We currently do NOT define label as an input node in the model
-                We could do this in the future, to help define more complex loss functions
-            """
-            node_name = feature_info.get("node_name", feature_info["name"])
-            inputs[node_name] = Input(
-                shape=get_shape(feature_info), name=node_name, dtype=self.get_dtype(feature_info),
-            )
-        return inputs
 
     def create_dummy_protobuf(self, num_records=1, required_only=False):
         """
