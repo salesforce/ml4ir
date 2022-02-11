@@ -133,7 +133,11 @@ class ScorerBase(keras.Model):
 
         Returns
         -------
+<<<<<<< HEAD
         scores : dict of Tensor object
+=======
+        scores : dict of tensor object
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
             Tensor object of the score computed by the model
         """
         # Apply feature layer and transform inputs
@@ -200,7 +204,7 @@ class RelevanceScorer(ScorerBase):
         )
 
     def compile(self, **kwargs):
-        """Compile the keras model"""
+        """Compile the keras model and defining a loss metric to track any custom loss"""
         # Define metric to track loss
         self.loss_metric = keras.metrics.Mean(name="loss")
         super().compile(**kwargs)
@@ -240,7 +244,19 @@ class RelevanceScorer(ScorerBase):
 
     def train_step(self, data):
         """
-        TODO: Add docs
+        Defines the operations performed within a single training step.
+        Called implicitly by tensorflow-keras when using model.fit()
+
+        Parameters
+        ----------
+        data: tuple of tensor objects
+            Tuple of features and corresponding labels to be used to learn the
+            model weights
+
+        Returns
+        -------
+        dict
+            Dictionary of metrics and loss computed for this training step
         """
         X, y = data
 
@@ -263,7 +279,18 @@ class RelevanceScorer(ScorerBase):
 
     def test_step(self, data):
         """
-        TODO: Add docs
+        Defines the operations performed within a single prediction or evaluation step.
+        Called implicitly by tensorflow-keras when using model.predict() or model.evaluate()
+
+        Parameters
+        ----------
+        data: tuple of tensor objects
+            Tuple of features and corresponding labels to be used to evaluate the model
+
+        Returns
+        -------
+        dict
+            Dictionary of metrics and loss computed for this evaluation step
         """
         X, y = data
 
@@ -280,5 +307,5 @@ class RelevanceScorer(ScorerBase):
 
     @property
     def metrics(self):
-        """Add loss metric to keras model metrics"""
+        """Get the metrics for the keras model along with the custom loss metric"""
         return [self.loss_metric] + super().metrics

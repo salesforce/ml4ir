@@ -68,10 +68,6 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
         logits = inputs[FeatureTypeKey.LOGITS]
 
-        # NOTE:
-        # Tried to manually compute softmax with tf operations,
-        # but tf.keras.layers.Softmax() is more stable when working with
-        # cross_entropy layers
         logits = tf.where(
             tf.equal(mask, tf.constant(1.0)), logits, tf.constant(tf.float32.min)
         )

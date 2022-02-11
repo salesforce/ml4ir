@@ -46,17 +46,24 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docs
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
 
         Returns
         -------
-        Tensor object
-            Modified feature tensor after applying all the specified ops
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
-
         if not self.tf_ops:
             return inputs
 
+        feature_tensor = inputs
         for tf_op in self.tf_ops:
             try:
                 fn_, fn_args = eval(tf_op[self.FN]), tf_op.get(self.ARGS, {})
@@ -65,7 +72,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
                     "Invalid fn specified for tf_native_op : {}\n{}".format(tf_op[self.FN], e))
 
             try:
-                feature_tensor = fn_(inputs, **fn_args)
+                feature_tensor = fn_(feature_tensor, **fn_args)
             except Exception as e:
                 raise Exception("Error while applying {} to {} feature:\n{}".format(
                     tf_op[self.FN], self.feature_name, e))

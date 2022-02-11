@@ -6,7 +6,6 @@ import tensorflow as tf
 
 from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto
 from ml4ir.base.config.keys import (
-    FeatureTypeKey,
     TFRecordTypeKey,
     SequenceExampleTypeKey,
 )

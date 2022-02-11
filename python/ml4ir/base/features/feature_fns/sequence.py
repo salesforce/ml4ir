@@ -79,7 +79,19 @@ class BytesSequenceToEncodingBiLSTM(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         # Decode string tensor to bytes
         feature_tensor = io.decode_raw(inputs, out_type=tf.uint8, fixed_length=self.max_length)
@@ -155,7 +167,19 @@ class Global1dPooling(BaseFeatureLayerOp):
 
     def call(self, inputs, training=None):
         """
-        TODO: Add docstring
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
         """
         pooled_tensors = list()
         padded_val_tensor = None
@@ -168,7 +192,7 @@ class Global1dPooling(BaseFeatureLayerOp):
             # If padded_val is passed, mask the padded values appropriately
             if self.padded_val:
                 masked_feature_tensor = tf.where(
-                    tf.equal(inputs, padded_val_tensor), masked_val_lookup[fn], inputs
+                    tf.equal(inputs, padded_val_tensor), self.masked_val_lookup[fn], inputs
                 )
             else:
                 masked_feature_tensor = inputs
@@ -178,16 +202,16 @@ class Global1dPooling(BaseFeatureLayerOp):
                 pooled_tensors.append(tf.math.reduce_sum(masked_feature_tensor, axis=-1))
 
             elif fn == "mean":
-                if "padded_val" in args:
+                if "padded_val" in self.feature_layer_args:
                     # NOTE: To avoid division by zero, we set 0 to a small value of 1e-10
                     pooled_tensors.append(
                         tf.math.divide(
                             tf.math.reduce_sum(masked_feature_tensor, axis=-1),
                             tf.math.reduce_sum(
                                 tf.where(
-                                    tf.equal(feature_tensor, padded_val_tensor),
-                                    tf.constant(1e-10, dtype=feature_tensor.dtype),
-                                    tf.constant(1, dtype=feature_tensor.dtype),
+                                    tf.equal(inputs, padded_val_tensor),
+                                    tf.constant(1e-10, dtype=inputs.dtype),
+                                    tf.constant(1, dtype=inputs.dtype),
                                 ),
                                 axis=-1,
                             ),

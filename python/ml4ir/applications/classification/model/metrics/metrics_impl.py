@@ -1,12 +1,12 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 
-from ml4ir.base.model.metrics.metrics_impl import MetricState
 from ml4ir.base.features.feature_config import FeatureConfig
 
 from typing import Optional, Dict
 
 
+<<<<<<< HEAD
 class CategoricalAccuracy(metrics.CategoricalAccuracy):
     """
     Custom metric class to compute the Categorical Accuracy.
@@ -41,6 +41,8 @@ class CategoricalAccuracy(metrics.CategoricalAccuracy):
         super(CategoricalAccuracy, self).__init__(name=name)
 
 
+=======
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
 class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
     Custom metric class to compute the Top K Categorical Accuracy.
@@ -52,9 +54,11 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
     def __init__(
         self,
+<<<<<<< HEAD
         feature_config: Optional[FeatureConfig] = None,
+=======
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
         name="top_5_categorical_accuracy",
-        state=MetricState.NEW,
         **kwargs
     ):
         """
@@ -65,13 +69,8 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         feature_config : FeatureConfig object
             FeatureConfig object that defines the configuration for each model
             feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
         name : str
             Name of the metric
-        state : {"new", "old"}
-            State of the metric
         """
         super(Top5CategoricalAccuracy, self).__init__(name=name, k=5)
 

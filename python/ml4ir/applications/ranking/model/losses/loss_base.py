@@ -35,8 +35,12 @@ class RankingLossBase(RelevanceLossBase):
         config.update({
             "loss_type": self.loss_type,
             "loss_key": self.loss_key,
+<<<<<<< HEAD
             "scoring_type": self.scoring_type,
             "output_name": self.output_name
+=======
+            "scoring_type": self.scoring_type
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
         })
         return config
 

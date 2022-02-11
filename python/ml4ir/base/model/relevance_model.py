@@ -14,7 +14,6 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.metrics.metrics_impl import get_metrics_impl
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.serving import define_serving_signatures
@@ -41,7 +40,7 @@ class RelevanceModel:
         tfrecord_type: str,
         file_io: FileIO,
         scorer: Optional[ScorerBase] = None,
-        metrics: List[Union[Type[kmetrics.Metric], str]] = [],
+        metrics: List[Union[kmetrics.Metric, str]] = [],
         optimizer: Optional[Optimizer] = None,
         model_file: Optional[str] = None,
         initialize_layers_dict: dict = {},
@@ -67,7 +66,7 @@ class RelevanceModel:
             Scorer object that wraps an InteractionModel and converts
             input features into scores
         metrics : list
-            List of keras Metric classes that will be used for evaluating the trained model
+            List of keras Metric objects/strings that will be used for evaluating the trained model
         optimizer : `Optimizer`
             Tensorflow keras optimizer to be used for training the model
         model_file : str, optional
@@ -120,6 +119,7 @@ class RelevanceModel:
             self.model = self.scorer
             self.model.output_names = [self.output_name]
 
+<<<<<<< HEAD
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
                 metrics=metrics,
@@ -140,6 +140,14 @@ class RelevanceModel:
             # if self.logger:
             #     self.logger.info("\n".join(model_summary))
 
+=======
+            self.model.compile(
+                optimizer=optimizer,
+                loss=self.scorer.loss_op,
+                metrics=metrics
+            )
+
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
             if model_file:
                 """
                 If model file is specified, load the weights from the SavedModel
@@ -947,4 +955,4 @@ class RelevanceModel:
                              f' replaced; temperature = {temperature}.')
         else:
             self.logger.info("Skipping adding Temperature Scaling layer because no activation "
-                             "exist in the last layer of Keras original model!")
+                             "found in the last layer of Keras original model!")

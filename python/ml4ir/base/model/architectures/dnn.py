@@ -69,7 +69,7 @@ class DNN(keras.Model):
 
         :param model_config: dict corresponding to the model config
         :param feature_config: dict corresponding to the feature config, only used in case of classification if the last
-            layer of the model_config doesn"t have a units number defined (or set to -1). In which case we retrieve the
+            layer of the model_config doesn't have a units number defined (or set to -1). In which case we retrieve the
             label vocabulary defined in the feature_config to deduce the number of units.
         :return: List[layers]: list of keras layer corresponding to each of the layers defined in the model_config.
         """

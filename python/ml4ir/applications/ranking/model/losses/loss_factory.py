@@ -15,8 +15,13 @@ def get_loss(loss_key, scoring_type, output_name) -> RelevanceLossBase:
         Name of the loss function as specified by LossKey
     scoring_type : str
         Type of scoring function - pointwise, pairwise, groupwise
+<<<<<<< HEAD
     output_name : str
         Name of the output node
+=======
+    output_name: str
+        Name of the output node for the predicted scores
+>>>>>>> 32598b0e8ef8b937228dbc0cc6a1fc239fd45283
 
     Returns
     -------
