@@ -3,16 +3,10 @@ from tensorflow.keras import layers
 from tensorflow import lookup
 
 from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.config.keys import VocabularyInfoArgsKey
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 
 from typing import Optional
-
-VOCABULARY_FILE = "vocabulary_file"
-KEY = "key"
-ID = "id"
-DEFAULT_VALUE = "default_value"
-MAX_LENGTH = "max_length"
-DROPOUT_RATE = "dropout_rate"
 
 
 def get_vocabulary_info(feature_layer_args: dict,
@@ -48,22 +42,22 @@ def get_vocabulary_info(feature_layer_args: dict,
         default_value : int
             default stated value in the configure used to replace missing data points.
     """
-    vocabulary_df = file_io.read_df(feature_layer_args[VOCABULARY_FILE])
-    if KEY in vocabulary_df.columns:
-        vocabulary_keys = vocabulary_df[KEY]
+    vocabulary_df = file_io.read_df(feature_layer_args[VocabularyInfoArgsKey.VOCABULARY_FILE])
+    if VocabularyInfoArgsKey.KEY in vocabulary_df.columns:
+        vocabulary_keys = vocabulary_df[VocabularyInfoArgsKey.KEY]
     else:
         vocabulary_keys = vocabulary_df.iloc[:, 0]
-    if MAX_LENGTH in feature_layer_args:
-        vocabulary_keys = vocabulary_keys[: feature_layer_args[MAX_LENGTH]]
-    if default_value or DEFAULT_VALUE in feature_layer_args:
-        default_value = default_value if default_value else feature_layer_args[DEFAULT_VALUE]
+    if VocabularyInfoArgsKey.MAX_LENGTH in feature_layer_args:
+        vocabulary_keys = vocabulary_keys[: feature_layer_args[VocabularyInfoArgsKey.MAX_LENGTH]]
+    if default_value or VocabularyInfoArgsKey.DEFAULT_VALUE in feature_layer_args:
+        default_value = default_value if default_value else feature_layer_args[VocabularyInfoArgsKey.DEFAULT_VALUE]
         vocabulary_keys = vocabulary_keys.fillna(default_value)
     vocabulary_keys = vocabulary_keys.values
-    if DROPOUT_RATE in feature_layer_args:
+    if VocabularyInfoArgsKey.DROPOUT_RATE in feature_layer_args:
         # NOTE: If a dropout_rate is specified, then reserve 0 as the OOV index
         vocabulary_ids = (
-            vocabulary_df[ID].values
-            if ID in vocabulary_df
+            vocabulary_df[VocabularyInfoArgsKey.ID].values
+            if VocabularyInfoArgsKey.ID in vocabulary_df
             else list(range(1, len(vocabulary_keys) + 1))
         )
         if 0 in vocabulary_ids:
@@ -72,8 +66,8 @@ def get_vocabulary_info(feature_layer_args: dict,
             )
     else:
         vocabulary_ids = (
-            vocabulary_df[ID].values
-            if ID in vocabulary_df
+            vocabulary_df[VocabularyInfoArgsKey.ID].values
+            if VocabularyInfoArgsKey.ID in vocabulary_df
             else list(range(len(vocabulary_keys)))
         )
     return vocabulary_keys, vocabulary_ids

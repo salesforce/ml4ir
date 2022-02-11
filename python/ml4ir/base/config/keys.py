@@ -144,3 +144,13 @@ class FeatureTypeKey(Key):
     MASK = "mask"
     LOGITS = "logits"
     SCORES = "scores"
+
+
+class VocabularyInfoArgsKey(Key):
+    """Argument values for fetching vocabulary from a file using get_vocabulary_info()"""
+    VOCABULARY_FILE = "vocabulary_file"
+    KEY = "key"
+    ID = "id"
+    DEFAULT_VALUE = "default_value"
+    MAX_LENGTH = "max_length"
+    DROPOUT_RATE = "dropout_rate"
