@@ -88,7 +88,9 @@ class RankingPipeline(RelevancePipeline):
 
         # Define loss object from loss key
         loss: RelevanceLossBase = loss_factory.get_loss(
-            loss_key=self.loss_key, scoring_type=self.scoring_type
+            loss_key=self.loss_key,
+            scoring_type=self.scoring_type,
+            output_name=self.args.output_name
         )
 
         # Define scorer

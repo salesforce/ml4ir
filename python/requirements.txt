@@ -1,8 +1,13 @@
 # ml4ir dependencies
-tensorflow==2.0.4
+tensorflow==2.7.0
 numpy==1.18.5
 pandas==1.2.1
 scipy==1.5.4
+tensorflow-text==2.7.3
+transformers==4.15.0
+sentence-transformers==2.1.0
+sentencepiece==0.1.96
+tensorflow-hub==0.12.0
 
 # pytest
 pytest==6.2.1
@@ -14,4 +19,4 @@ PyYAML==5.4.1
 pyspark==3.0.1
 
 #calibration
-tensorflow_probability==0.8.0
+tensorflow-probability==0.15.0

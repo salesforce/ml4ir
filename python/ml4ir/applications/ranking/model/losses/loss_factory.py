@@ -5,7 +5,7 @@ import ml4ir.applications.ranking.model.losses.listwise_losses as listwise_losse
 from ml4ir.applications.ranking.config.keys import LossKey
 
 
-def get_loss(loss_key, scoring_type) -> RelevanceLossBase:
+def get_loss(loss_key, scoring_type, output_name="score") -> RelevanceLossBase:
     """
     Factor method to get Loss function object
 
@@ -15,6 +15,8 @@ def get_loss(loss_key, scoring_type) -> RelevanceLossBase:
         Name of the loss function as specified by LossKey
     scoring_type : str
         Type of scoring function - pointwise, pairwise, groupwise
+    output_name: str
+        Name of the output node for the predicted scores
 
     Returns
     -------
@@ -23,10 +25,16 @@ def get_loss(loss_key, scoring_type) -> RelevanceLossBase:
         and computes the loss function from the model score
     """
     if loss_key == LossKey.SIGMOID_CROSS_ENTROPY:
-        return pointwise_losses.SigmoidCrossEntropy(loss_key=loss_key, scoring_type=scoring_type)
+        return pointwise_losses.SigmoidCrossEntropy(loss_key=loss_key,
+                                                    scoring_type=scoring_type,
+                                                    output_name=output_name)
     elif loss_key == LossKey.RANK_ONE_LISTNET:
-        return listwise_losses.RankOneListNet(loss_key=loss_key, scoring_type=scoring_type)
+        return listwise_losses.RankOneListNet(loss_key=loss_key,
+                                              scoring_type=scoring_type,
+                                              output_name=output_name)
     elif loss_key == LossKey.SOFTMAX_CROSS_ENTROPY:
-        return listwise_losses.SoftmaxCrossEntropy(loss_key=loss_key, scoring_type=scoring_type)
+        return listwise_losses.SoftmaxCrossEntropy(loss_key=loss_key,
+                                                   scoring_type=scoring_type,
+                                                   output_name=output_name)
     else:
         raise NotImplementedError

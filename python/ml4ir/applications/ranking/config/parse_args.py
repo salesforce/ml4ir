@@ -35,7 +35,7 @@ class RankingArgParser(RelevanceArgParser):
             tfrecord_type="sequence_example",
             loss_key="sigmoid_cross_entropy",
             metrics_keys=['MRR', 'ACR'],
-            monitor_metric="new_MRR",
+            monitor_metric="MRR",
             monitor_mode="max",
             max_sequence_size=25,
             group_metrics_min_queries=25,
