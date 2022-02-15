@@ -1,39 +1,56 @@
-class RelevanceLossBase(object):
+from tensorflow.keras import layers
+
+
+class RelevanceLossBase(layers.Layer):
     """
     Abstract class that defines the loss and final activation function
     used to train a RelevanceModel
     """
 
-    def get_loss_fn(self, **kwargs):
+    def call(self, inputs, y_true, y_pred, training=None):
         """
-        Returns the loss function _loss_fn()
+        Compute the loss using predicted probabilities and expected labels
 
         Parameters
         ----------
-        kwargs : dict
-            Additional key value arguments can be passed as needed.
-            For example, metadata features can be passed to compute custom losses
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
 
         Returns
         -------
-        function
-            Loss function that computes the loss from predicted scores
-            and true labels
-        """
-
-        def _loss_fn(y_true, y_pred):
-            pass
-
-        return _loss_fn
-
-    def get_final_activation_op(self):
-        """
-        Returns the final activation layer
-
-        Returns
-        -------
-        function
-            Final activation function that is applied on the scores
-            before computing losses
+        tensor
+            Resulting loss tensor after applying comparing the y_pred and y_true values
         """
         raise NotImplementedError
+
+    def final_activation_op(self, inputs, training=None):
+        """
+        Final activation layer that is applied to the logits tensor to get the scores
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors with scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Resulting score tensor after applying the function on the logits
+        """
+        raise NotImplementedError
+
+    def get_config(self):
+        """Return layer config that is used while serialization"""
+        config = super().get_config()
+        config.update({
+            "output_name": self.output_name
+        })
+        return config

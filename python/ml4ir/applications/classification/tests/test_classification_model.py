@@ -42,7 +42,7 @@ class ClassificationModelTest(ClassificationTestBase):
         Test the dimensions of the grouped metrics
         """
         # Metrics cardinality and names
-        metrics = self.classification_pipeline.metrics_keys  # Metrics during training
+        metrics = ["loss"] + self.classification_pipeline.metrics_keys  # Metrics during training
         df = self.grouped_metrics
         self.assertTrue(df.metric.nunique() == len(metrics))  # number of metrics
         self.assertTrue(set(df.metric.unique()) == set(metrics))  # metrics per se

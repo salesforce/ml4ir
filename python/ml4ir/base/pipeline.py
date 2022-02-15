@@ -1,11 +1,8 @@
+import os
 import socket
-import tensorflow as tf
-import numpy as np
-import pandas as pd
 import json
 import random
 import traceback
-import os
 import sys
 import time
 from argparse import Namespace
@@ -13,6 +10,10 @@ from logging import Logger
 import pathlib
 from typing import List
 import copy
+
+import tensorflow as tf
+import numpy as np
+import pandas as pd
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -435,7 +436,7 @@ class RelevancePipeline(object):
 
             # Build model
             relevance_model = self.get_relevance_model()
-            self.logger.info("Relevance Model created")
+            self.logger.info("Relevance Model created successfully")
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,

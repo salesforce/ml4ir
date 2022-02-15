@@ -14,7 +14,6 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.metrics.metrics_impl import get_metrics_impl
 from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.serving import define_serving_signatures
@@ -41,7 +40,7 @@ class RelevanceModel:
         tfrecord_type: str,
         file_io: FileIO,
         scorer: Optional[ScorerBase] = None,
-        metrics: List[Union[Type[kmetrics.Metric], str]] = [],
+        metrics: List[Union[kmetrics.Metric, str]] = [],
         optimizer: Optional[Optimizer] = None,
         model_file: Optional[str] = None,
         initialize_layers_dict: dict = {},
@@ -67,7 +66,7 @@ class RelevanceModel:
             Scorer object that wraps an InteractionModel and converts
             input features into scores
         metrics : list
-            List of keras Metric classes that will be used for evaluating the trained model
+            List of keras Metric objects/strings that will be used for evaluating the trained model
         optimizer : `Optimizer`
             Tensorflow keras optimizer to be used for training the model
         model_file : str, optional
@@ -117,38 +116,16 @@ class RelevanceModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = feature_config.define_inputs()
-            scores, train_features, metadata_features = scorer(inputs)
-
-            # Create model with functional Keras API
-            self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+            self.model = self.scorer
             self.model.output_names = [self.output_name]
 
-            # Get loss fn
-            loss_fn = scorer.loss.get_loss_fn(**metadata_features)
-
-            # Get metric objects
-            metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
-            )
-
-            # Compile model
-            """
-            NOTE:
-            Related Github issue: https://github.com/tensorflow/probability/issues/519
-            """
             self.model.compile(
                 optimizer=optimizer,
-                loss=loss_fn,
-                metrics=metrics_impl,
-                experimental_run_tf_function=False,
+                loss=self.scorer.loss_op,
+                metrics=metrics
             )
-
-            # Write model summary to logs
-            model_summary = list()
-            self.model.summary(print_fn=lambda x: model_summary.append(x))
-            if self.logger:
-                self.logger.info("\n".join(model_summary))
+            # NOTE: We need to do one forward pass to build the network
+            self.is_built = False
 
             if model_file:
                 """
@@ -351,6 +328,27 @@ class RelevanceModel:
             logger=logger,
         )
 
+    def build(self, dataset: RelevanceDataset):
+        """
+        Build the model layers and connect them to form a network
+
+        Parameters
+        ----------
+        dataset: RelevanceDataset
+            RelevanceDataset object used to initialize the weights and input/output
+            spec for the network
+
+        Notes
+        -----
+        Because we build the model using keras model subclassing API, it has no understanding
+        of the actual inputs to expect. So we do one forward pass to initialize all the internal
+        weights and connections
+        """
+        self.model(next(iter(dataset.train))[0])
+        self.model.summary(print_fn=self.logger.info, expand_nested=True)
+
+        self.is_built = True
+
     def define_scheduler_as_callback(self, monitor_metric, model_config):
         """
         Adding reduce lr on plateau as a callback if specified
@@ -374,18 +372,25 @@ class RelevanceModel:
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
                 if monitor_metric is None:
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
                                                                      verbose=1)
                 else:
                     if not monitor_metric.startswith("val_"):
                         monitor_metric = "val_{}".format(monitor_metric)
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
-                                                                     factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
+                                                                     factor=lr_schedule.get(
+                                                                         'factor', 0.5),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
                                                                      verbose=1)
                 return reduce_lr
 
@@ -431,6 +436,9 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
+        # Build the network if it hasn't been built yet
+        if not self.is_built:
+            self.build(dataset)
 
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -869,7 +877,8 @@ class RelevanceModel:
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
 
         # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
-        scheduler_callback = self.define_scheduler_as_callback(monitor_metric, self.scorer.model_config)
+        scheduler_callback = self.define_scheduler_as_callback(
+            monitor_metric, self.scorer.model_config)
         if scheduler_callback:
             callbacks_list.append(scheduler_callback)
 
@@ -944,4 +953,4 @@ class RelevanceModel:
                              f' replaced; temperature = {temperature}.')
         else:
             self.logger.info("Skipping adding Temperature Scaling layer because no activation "
-                             "exist in the last layer of Keras original model!")
+                             "found in the last layer of Keras original model!")

@@ -12,41 +12,41 @@ from ml4ir.base.config.keys import ServingSignatureKey
 
 
 class RankingModelTest(RankingTestBase):
+
+    FEATURE_CONFIG_FNAME = "feature_config_integration_test.yaml"
+
+    def get_dataset(self, parse_tfrecord=True):
+        return RelevanceDataset(
+            data_dir=os.path.join(self.root_data_dir, "tfrecord"),
+            data_format=DataFormatKey.TFRECORD,
+            feature_config=self.get_feature_config(),
+            tfrecord_type=self.args.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns={},
+            train_pcent_split=self.args.train_pcent_split,
+            val_pcent_split=self.args.val_pcent_split,
+            test_pcent_split=self.args.test_pcent_split,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=parse_tfrecord,
+            file_io=self.file_io,
+            logger=self.logger,
+        )
+
     def test_model_serving(self):
         """
         Train a simple model and test serving flow by loading the SavedModel
         """
 
         # Test model training on TFRecord SequenceExample data
-        data_dir = os.path.join(self.root_data_dir, "tfrecord")
-        self.feature_config_fname = "feature_config_integration_test.yaml"
-        feature_config: FeatureConfig = self.get_feature_config()
-
+        feature_config = self.get_feature_config()
         metrics_keys = ["categorical_accuracy"]
 
-        def get_dataset(parse_tfrecord):
-            return RelevanceDataset(
-                data_dir=data_dir,
-                data_format=DataFormatKey.TFRECORD,
-                feature_config=feature_config,
-                tfrecord_type=self.args.tfrecord_type,
-                max_sequence_size=self.args.max_sequence_size,
-                batch_size=self.args.batch_size,
-                preprocessing_keys_to_fns={},
-                train_pcent_split=self.args.train_pcent_split,
-                val_pcent_split=self.args.val_pcent_split,
-                test_pcent_split=self.args.test_pcent_split,
-                use_part_files=self.args.use_part_files,
-                parse_tfrecord=parse_tfrecord,
-                file_io=self.file_io,
-                logger=self.logger,
-            )
-
         # Get raw TFRecord dataset
-        raw_dataset = get_dataset(parse_tfrecord=False)
+        raw_dataset = self.get_dataset(parse_tfrecord=False)
 
         # Parse the raw TFRecord dataset
-        parsed_dataset = get_dataset(parse_tfrecord=True)
+        parsed_dataset = self.get_dataset(parse_tfrecord=True)
 
         model: RankingModel = self.get_ranking_model(
             loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
@@ -129,7 +129,7 @@ class RankingModelTest(RankingTestBase):
 
     def get_feature_config(self):
         feature_config_path = os.path.join(
-            self.root_data_dir, "configs", self.feature_config_fname
+            self.root_data_dir, "configs", self.FEATURE_CONFIG_FNAME
         )
 
         feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -145,6 +145,8 @@ class RankingModelTest(RankingTestBase):
         model: RankingModel = self.get_ranking_model(
             loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
         )
+        dataset = self.get_dataset()
+        model.build(dataset)
         model.save(
             models_dir=self.args.models_dir,
             preprocessing_keys_to_fns={},

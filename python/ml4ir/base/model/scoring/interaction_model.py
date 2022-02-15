@@ -61,6 +61,9 @@ class InteractionModel(keras.Model):
         self.file_io = file_io
         self.all_features = self.feature_config.get_all_features(include_label=False)
 
+        self.feature_layer_map = FeatureLayerMap()
+        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
+
 
 class UnivariateInteractionModel(InteractionModel):
     """Keras layer that applies in-graph transformations to input feature tensors"""
@@ -96,11 +99,6 @@ class UnivariateInteractionModel(InteractionModel):
                          max_sequence_size=max_sequence_size,
                          file_io=file_io,
                          **kwargs)
-
-        self.feature_layer_map = FeatureLayerMap()
-        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
-
-        self.all_features = self.feature_config.get_all_features(include_label=False)
 
         # Define a one-to-one feature transform mapping
         self.feature_transform_ops = dict()
