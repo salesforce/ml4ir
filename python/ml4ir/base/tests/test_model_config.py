@@ -1,10 +1,10 @@
 import yaml
-from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
+from ml4ir.base.tests.test_base import RelevanceTestBase
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
 
 
-class DNNModelTest(ClassificationTestBase):
+class DNNModelTest(RelevanceTestBase):
 
     def test_num_classes_from_units(self):
         feature_config = None

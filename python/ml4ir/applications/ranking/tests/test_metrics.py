@@ -94,7 +94,7 @@ class RankingModelTest(RankingTestBase):
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
-            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.02)
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
 
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""

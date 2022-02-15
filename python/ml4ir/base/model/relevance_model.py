@@ -124,6 +124,8 @@ class RelevanceModel:
                 loss=self.scorer.loss_op,
                 metrics=metrics
             )
+            # NOTE: We need to do one forward pass to build the network
+            self.is_built = False
 
             if model_file:
                 """
@@ -326,6 +328,27 @@ class RelevanceModel:
             logger=logger,
         )
 
+    def build(self, dataset: RelevanceDataset):
+        """
+        Build the model layers and connect them to form a network
+
+        Parameters
+        ----------
+        dataset: RelevanceDataset
+            RelevanceDataset object used to initialize the weights and input/output
+            spec for the network
+
+        Notes
+        -----
+        Because we build the model using keras model subclassing API, it has no understanding
+        of the actual inputs to expect. So we do one forward pass to initialize all the internal
+        weights and connections
+        """
+        self.model(next(iter(dataset.train))[0])
+        self.model.summary(print_fn=self.logger.info, expand_nested=True)
+
+        self.is_built = True
+
     def define_scheduler_as_callback(self, monitor_metric, model_config):
         """
         Adding reduce lr on plateau as a callback if specified
@@ -413,11 +436,9 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        # Sanity check the model with a forward pass before training
-        # NOTE: This allows for all layers to be properly initialized
-        #       and also allows for printing the model.summary()
-        self.model(next(iter(dataset.train))[0])
-        self.model.summary(print_fn=self.logger.info, expand_nested=True)
+        # Build the network if it hasn't been built yet
+        if not self.is_built:
+            self.build(dataset)
 
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)

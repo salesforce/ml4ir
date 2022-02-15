@@ -1,4 +1,5 @@
 import os
+import socket
 import json
 import random
 import traceback
@@ -435,7 +436,7 @@ class RelevancePipeline(object):
 
             # Build model
             relevance_model = self.get_relevance_model()
-            self.logger.info("Relevance Model created")
+            self.logger.info("Relevance Model created successfully")
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
