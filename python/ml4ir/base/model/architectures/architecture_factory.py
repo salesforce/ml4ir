@@ -1,7 +1,7 @@
 from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
-from ml4ir.applications.ranking.model.architectures.setrank import SetRank
+from ml4ir.applications.ranking.model.architectures.set_rank import SetRank
 
 
 def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io):
