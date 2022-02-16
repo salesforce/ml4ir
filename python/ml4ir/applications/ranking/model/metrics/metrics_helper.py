@@ -137,11 +137,11 @@ def compute_secondary_label_metrics(
 
     # Compute NDCG metric on the secondary label
     # NOTE: Here we are passing the relevance grades ordered by the ranking
-    secondary_label_ndcg = compute_ndcg(
+    intrinsic_failure = 1. - compute_ndcg(
         secondary_label_values.values[np.argsort(ranks.values)])
 
     return {
-        "{}{}_intrinsic_failure".format(prefix, secondary_label): (1. - secondary_label_ndcg),
+        "{}{}_intrinsic_failure".format(prefix, secondary_label): intrinsic_failure,
         "{}{}_failure_all".format(prefix, secondary_label): failure_all,
         "{}{}_failure_any".format(prefix, secondary_label): failure_any,
         "{}{}_failure_all_rank".format(prefix, secondary_label): click_rank
@@ -260,6 +260,9 @@ def get_grouped_stats(
         computed from the old and new ranks and secondary labels generated
         by the model
     """
+    # Filter unclicked queries
+    df_clicked = df[df[label_col] == 1.0]
+    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
     # Compute metrics on secondary labels
     df_secondary_labels_metrics = pd.DataFrame()
@@ -273,9 +276,6 @@ def get_grouped_stats(
                 secondary_labels=secondary_labels,
                 group_keys=group_keys
             ))
-
-    # Select clicked records
-    df_clicked = df[df[label_col] == 1.0]
 
     if group_keys:
         df_grouped_batch = df_clicked.groupby(group_keys)
