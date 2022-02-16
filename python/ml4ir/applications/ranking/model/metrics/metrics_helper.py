@@ -5,12 +5,12 @@ from typing import List, Union
 
 # Metrics where higher value is better/desirable
 POSITIVE_METRIC_SUFFIXES = [
-    "MRR",
-    "NDCG_mean"
+    "MRR"
 ]
 # Metrics where lower value is better/desirable
 NEGATIVE_METRIC_SUFFIXES = [
     "ACR",
+    "intrinsic_failure_mean",
     "failure_all_mean",
     "failure_any_mean",
     "failure_all_rank_mean",
@@ -141,7 +141,7 @@ def compute_secondary_label_metrics(
         secondary_label_values.values[np.argsort(ranks.values)])
 
     return {
-        "{}{}_NDCG".format(prefix, secondary_label): secondary_label_ndcg,
+        "{}{}_intrinsic_failure".format(prefix, secondary_label): (1. - secondary_label_ndcg),
         "{}{}_failure_all".format(prefix, secondary_label): failure_all,
         "{}{}_failure_any".format(prefix, secondary_label): failure_any,
         "{}{}_failure_all_rank".format(prefix, secondary_label): click_rank
