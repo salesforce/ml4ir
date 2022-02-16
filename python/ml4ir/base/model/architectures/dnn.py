@@ -16,6 +16,7 @@ OOV = 1
 
 class DNNLayerKey:
     MODEL_NAME = "dnn"
+    LAYERS = "layers"
     DENSE = "dense"
     BATCH_NORMALIZATION = "batch_norm"
     DROPOUT = "dropout"
@@ -52,7 +53,7 @@ class DNN(keras.Model):
 
         # Sort the train features dictionary so that we control the order
         # Concat all train features to get a dense feature vector
-        self.train_features_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
+        self.concat_input_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
 
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER][
@@ -63,6 +64,12 @@ class DNN(keras.Model):
                                                                      l1_coeff=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get(
                                                                          "l1_coeff", 0),
                                                                      l2_coeff=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get("l2_coeff", 0))
+
+    def get_config(self):
+        """Get config for the model"""
+        config = super().get_config()
+        config[DNNLayerKey.LAYERS] = model_config[DNNLayerKey.LAYERS]
+        return config
 
     def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
         """
@@ -98,12 +105,36 @@ class DNN(keras.Model):
 
         return [
             get_op(layer_args["type"], {k: v for k, v in layer_args.items() if k not in "type"})
-            for layer_args in model_config["layers"]
+            for layer_args in model_config[DNNLayerKey.LAYERS]
         ]
 
     def build(self, input_shape):
         """Build the DNN model"""
         self.train_features = sorted(input_shape[FeatureTypeKey.TRAIN])
+
+    def layer_input_op(self, inputs, training=None):
+        """
+        Generate the input tensor to the DNN layer
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Input feature tensors divided as train and metadata
+        training: bool
+            Boolean to indicate if the layer is used in training or inference mode
+
+        Returns
+        -------
+        tf.Tensor
+            Dense tensor that can be input to the layers of the DNN
+        """
+        train_features = inputs[FeatureTypeKey.TRAIN]
+
+        # Sort the train features dictionary so that we control the order
+        # Concat all train features to get a dense feature vector
+        layer_input = self.concat_input_op([train_features[k] for k in sorted(train_features)])
+
+        return layer_input
 
     def call(self, inputs, training=None):
         """
@@ -121,11 +152,7 @@ class DNN(keras.Model):
         tf.Tensor
             Logits tensor computed with the forward pass of the architecture layer
         """
-        train_features = inputs[FeatureTypeKey.TRAIN]
-
-        # Sort the train features dictionary so that we control the order
-        # Concat all train features to get a dense feature vector
-        layer_input = self.train_features_op([train_features[k] for k in sorted(train_features)])
+        layer_input = self.layer_input_op(inputs, training)
 
         # Pass ranking features through all the layers of the DNN
         for layer_op in self.layer_ops:

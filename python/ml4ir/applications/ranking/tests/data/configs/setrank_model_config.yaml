@@ -1,0 +1,32 @@
+architecture_key: set_rank
+transformer_encoder:
+  num_layers: 4
+  model_dim: 128
+  num_heads: 8
+  feed_forward_dim: 128
+  dropout_rate: 0.1
+layers:
+  - type: dense
+    name: first_dense
+    units: 256
+    activation: relu
+  - type: dropout
+    name: first_dropout
+    rate: 0.0
+  - type: dense
+    name: second_dense
+    units: 64
+    activation: relu
+  - type: dropout
+    name: second_dropout
+    rate: 0.0
+  - type: dense
+    name: final_dense
+    units: 1
+    activation: null
+optimizer:
+  key: adam
+  gradient_clip_value: 5.0
+lr_schedule:
+  key: constant
+  learning_rate: 0.001

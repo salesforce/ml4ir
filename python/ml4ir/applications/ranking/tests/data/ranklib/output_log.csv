@@ -1,0 +1,24 @@
+INFO: 2022-02-11 03:21:59.043 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/train/file_0.tfrecord
+INFO: 2022-02-11 03:22:00.031 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
+INFO: 2022-02-11 03:22:00.802 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/validation/file_0.tfrecord
+INFO: 2022-02-11 03:22:00.939 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
+INFO: 2022-02-11 03:22:01.711 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/test/file_0.tfrecord
+INFO: 2022-02-11 03:22:01.852 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
+INFO: 2022-02-11 03:22:05.537 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/train/file_0.tfrecord
+INFO: 2022-02-11 03:22:05.676 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
+INFO: 2022-02-11 03:22:06.449 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/validation/file_0.tfrecord
+INFO: 2022-02-11 03:22:06.589 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
+INFO: 2022-02-11 03:22:07.358 
+Writing SequenceExample protobufs to : ml4ir/applications/ranking/tests/data//ranklib/tfrecord/test/file_0.tfrecord
+INFO: 2022-02-11 03:22:07.500 
+Created TFRecordDataset from SequenceExample protobufs from 1 files : ['ml4ir/applications/ranking/tests/data//ranklib/t
