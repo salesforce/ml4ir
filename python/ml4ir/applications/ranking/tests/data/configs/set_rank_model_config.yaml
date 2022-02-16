@@ -4,7 +4,7 @@ transformer_encoder:
   model_dim: 128
   num_heads: 8
   feed_forward_dim: 128
-  dropout_rate: 0.0
+  dropout_rate: 0.1
 layers:
   - type: dense
     name: first_dense
