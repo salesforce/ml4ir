@@ -260,6 +260,9 @@ def get_grouped_stats(
         computed from the old and new ranks and secondary labels generated
         by the model
     """
+    # Filter unclicked queries
+    df_clicked = df[df[label_col] == 1.0]
+    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
     # Compute metrics on secondary labels
     df_secondary_labels_metrics = pd.DataFrame()
@@ -273,9 +276,6 @@ def get_grouped_stats(
                 secondary_labels=secondary_labels,
                 group_keys=group_keys
             ))
-
-    # Select clicked records
-    df_clicked = df[df[label_col] == 1.0]
 
     if group_keys:
         df_grouped_batch = df_clicked.groupby(group_keys)
