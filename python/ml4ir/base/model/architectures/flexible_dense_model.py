@@ -122,9 +122,7 @@ class LayerGraph:
 class DenseModel(keras.Model):
     """Dense Model architecture that dynamically maps features -> logits"""
     INPUTS = "inputs"
-    LAYER_OP_NAME = "layer_op_name"
     INPUTS_AS_LIST = "aslist"
-    LEVELS_IDENTIFIER = "levels"
     LAYERS_IDENTIFIER = "layers"
     LAYER_TYPE = "type"
     NAME = "name"
@@ -157,8 +155,14 @@ class DenseModel(keras.Model):
         self.available_layers = get_layer_subclasses()
         model_graph = self.define_architecture(model_config)
         self.execution_order: List[LayerNode] = model_graph.topological_sort()
+        # The line below is important for tensorflow to register the available params for the model
+        # An alternative is to do this in build()
+        # If removed, no layers will be present in the DenseModel (in the model summary)
+        # TODO: Need to confirm the layers here are referencing the ones in the LayerNode instance
+        self.register_layers: List[keras.Layer] = [layer_node.layer for layer_node in self.execution_order if not layer_node.is_input_node]
         print("Execution order: ", self.execution_order)
         self.output_node = model_graph.output_node
+        self.dense = layers.Dense(1)
 
     def instantiate_op(self, current_layer_type, current_layer_args):
         """
@@ -219,7 +223,8 @@ class DenseModel(keras.Model):
         """
         train_features = inputs[FeatureTypeKey.TRAIN]
 
-        self.outputs = {k: v for k, v in train_features.items()}
+        # Do not modify the input
+        outputs = {k: v for k, v in train_features.items()}
 
         # Pass features through all the layers of the Model
         for node in self.execution_order:
@@ -228,18 +233,18 @@ class DenseModel(keras.Model):
                 if node.name not in train_features:
                     raise KeyError(f"Input feature {node.name} cannot be found in the feature ops outputs")
             else:
-                layer_input = {k: self.outputs[k] for k in node.inputs}
+                layer_input = {k: outputs[k] for k in node.inputs}
                 if node.inputs_as_list or len(layer_input) == 1:
                     layer_input = list(layer_input.values())
                     if len(layer_input) == 1:
                         layer_input = layer_input[0]
-                self.outputs[node.name] = node.layer(layer_input, training=training)
+                outputs[node.name] = node.layer(layer_input, training=training)
                 # tf.print(f"node: {node.name} with inputs: {node.inputs} [{node.layer}] has output:",
                 #          tf.shape(outputs[node.name]))
 
         # Collapse extra dimensions
         output_layer = self.output_node
-        model_output = self.outputs[output_layer.name]
+        model_output = outputs[output_layer.name]
         if isinstance(output_layer.layer, layers.Dense) and (output_layer.layer.units == 1):
             scores = tf.squeeze(model_output, axis=-1)
         else:
