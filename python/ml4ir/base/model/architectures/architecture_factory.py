@@ -1,6 +1,7 @@
 from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
+from ml4ir.base.model.architectures.flexible_dense_model import DenseModel
 
 
 def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io):
@@ -8,7 +9,9 @@ def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io)
     Return the architecture operation based on the model_config YAML specified
     """
     architecture_key = model_config.get("architecture_key")
-    if architecture_key == ArchitectureKey.DNN:
+    if architecture_key == ArchitectureKey.DENSE_MODEL:
+        return DenseModel(model_config, feature_config, file_io)
+    elif architecture_key == ArchitectureKey.DNN:
         return DNN(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.LINEAR:
         # Validate the model config
@@ -21,6 +24,5 @@ def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io)
             return DNN(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.RNN:
         raise NotImplementedError
-
     else:
         raise NotImplementedError

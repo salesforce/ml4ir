@@ -21,6 +21,7 @@ class ArchitectureKey(Key):
     DNN = "dnn"
     LINEAR = "linear"
     RNN = "rnn"
+    DENSE_MODEL = "dense-model"
 
 
 class OptimizerKey(Key):
