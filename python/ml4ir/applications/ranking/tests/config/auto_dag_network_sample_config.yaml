@@ -1,0 +1,38 @@
+architecture_key: auto-dag-network
+layers:
+  - type: keras.layers.merge.Concatenate
+    name: features_concat
+    inputs:
+      - query_text
+      - text_match_score
+      - page_views_score
+    aslist: true
+    axis: -1
+  - type: keras.layers.core.dense.Dense
+    name: first_dense
+    inputs:
+      - features_concat
+    units: 128
+    activation: relu
+  - type: keras.layers.core.dense.Dense
+    name: second_dense
+    inputs:
+      - first_dense
+    units: 64
+    activation: relu
+  - type: keras.layers.core.dense.Dense
+    name: final_dense
+    inputs:
+      - second_dense
+    units: 1
+    activation: null
+optimizer:
+  key: sgd
+  gradient_clip_value: 0.25
+lr_schedule:
+  key: reduce_lr_on_plateau
+  learning_rate: 0.1
+  factor: 0.5
+  patience: 2
+  min_lr: 0.0001
+  mode: max

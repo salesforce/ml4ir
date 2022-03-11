@@ -106,7 +106,7 @@ class LayerGraph:
             All inputs to the model from the interaction model
         """
         self.nodes = self.create_nodes(layer_ops, inputs)
-        self.create_dependency_graph(layer_ops)
+        self.create_dependency_graph()
         # TODO: Add graph visualization for easier debugging
         output_nodes = self.get_output_nodes()
         if len(output_nodes) > 1:
@@ -150,8 +150,9 @@ class LayerGraph:
     def create_dependency_graph(self):
         """Create a dependency graph using the nodes and corresponding inputs"""
         for node_name, curr_node in self.nodes.items():
-            for input_node in curr_node.inputs:
-                self.nodes[input_node].dependent_children.append(curr_node)
+            if not curr_node.is_input_node:
+                for input_node in curr_node.inputs:
+                    self.nodes[input_node].dependent_children.append(curr_node)
 
     def get_output_nodes(self) -> List[LayerNode]:
         """Get a list of all output nodes"""
@@ -229,7 +230,7 @@ class AutoDagNetwork(keras.Model):
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
         # TODO: Need to confirm the layers here are referencing the ones in the LayerNode instance
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
-                                                   not layer_node.is_input_node]
+                                                    not layer_node.is_input_node]
         self.file_io.logger.info("Execution order: %s", self.execution_order)
         self.output_node = model_graph.output_node
 
