@@ -40,7 +40,7 @@ class CycleFoundException(Exception):
 
 
 class LayerNode:
-    """Defines a nodel in the `LayerGraph`"""
+    """Defines a node in the `LayerGraph`"""
 
     def __init__(
             self,
@@ -98,9 +98,12 @@ class LayerGraph:
         layer_ops: dict
             Dictionary which contains information for all the layer nodes in the graph. Expected schema:
             {
-                "name": "NodeName",  # Name of the layer node and layer
-                "op": keras.layers.Layer.ChildClass(),  # Layer instance which defines the operation of the node
-                "aslist": True  # If inputs to the "op" should be a list of tensors
+                "NodeName":  # Name of the layer node
+                {
+                    "inputs": ["InputNodeName1", "InputNodeName2"],  # Name of the input layer nodes for this layer
+                    "op": keras.layers.Layer.ChildClass(),  # Layer instance which defines the operation of the node
+                    "aslist": True  # If inputs to the "op" should be a list of tensors
+                }
             }
         inputs: list of str
             All inputs to the model from the interaction model
@@ -109,8 +112,10 @@ class LayerGraph:
         self.create_dependency_graph()
         # TODO: Add graph visualization for easier debugging
         output_nodes = self.get_output_nodes()
-        if len(output_nodes) > 1:
-            raise NotImplementedError(f"Only 1 output node expected, found {len(output_nodes)}: {output_nodes}")
+        if len(output_nodes) == 0:
+            raise CycleFoundException("No output nodes found because of cycle in DAG")
+        elif len(output_nodes) > 1:
+            raise NotImplementedError(f"1 output node expected, found {len(output_nodes)}: {output_nodes}")
         self.output_node = output_nodes[0]
 
     @staticmethod
@@ -156,8 +161,9 @@ class LayerGraph:
 
     def get_output_nodes(self) -> List[LayerNode]:
         """Get a list of all output nodes"""
-        # Nodes which do not have outgoing edges (no downstream dependencies)
-        return list(filter(lambda node: len(node.dependent_children) == 0, self.nodes.values()))
+        # Nodes which do not have outgoing edges (no downstream dependencies), except the feature nodes
+        return list(filter(lambda node: (not node.is_input_node) and (len(node.dependent_children) == 0),
+                           self.nodes.values()))
 
     def topological_sort(self) -> List[LayerNode]:
         """
@@ -182,7 +188,9 @@ class LayerGraph:
 
         for node in self.nodes.values():
             if node.name not in visited:
+                path.add(node.name)
                 dfs(node)
+                path.remove(node.name)
 
         return order[::-1]
 
