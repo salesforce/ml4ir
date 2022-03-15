@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from logging import FileHandler
+from pathlib import Path
 from typing import List, Dict, Union, Type
 
+import pygraphviz as pgv
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -74,12 +77,8 @@ class LayerNode:
         self.inputs_as_list = inputs_as_list
 
     def __str__(self):
-        """Node is identified by its name"""
-        return self.name
-
-    def __repr__(self):
-        """Get the obj representation"""
-        return self.name
+        """Get a readable representation of the node"""
+        return f"{self.name}" if self.is_input_node else f"{self.name}\n[{self.layer.__class__.__qualname__}]"
 
 
 class LayerGraph:
@@ -159,6 +158,22 @@ class LayerGraph:
                 for input_node in curr_node.inputs:
                     self.nodes[input_node].dependent_children.append(curr_node)
 
+    def get_node(self, name: str) -> LayerNode:
+        """
+        Get a list of all output nodes
+
+        Parameters
+        ----------
+        name: str
+            Name of the node to be retrieved
+
+        Returns
+        -------
+        LayerNode
+            LayerNode instance associated with `name`
+        """
+        return self.nodes[name]
+
     def get_output_nodes(self) -> List[LayerNode]:
         """Get a list of all output nodes"""
         # Nodes which do not have outgoing edges (no downstream dependencies), except the feature nodes
@@ -194,6 +209,23 @@ class LayerGraph:
 
         return order[::-1]
 
+    def visualize(self, path: str):
+        """
+        Utility function to visualize the DAG
+
+        Parameters
+        ----------
+        path: str
+            Path to the output visualization file
+        """
+        vis_graph = pgv.AGraph(directed=True)
+        vis_graph.add_edges_from([
+            (str(from_node), str(to_node))
+            for from_node in self.nodes.values()
+            for to_node in from_node.dependent_children
+        ])
+        vis_graph.draw(path, prog="dot")
+
 
 class AutoDagNetwork(keras.Model):
     """DAG model architecture dynamically inferred from model config that maps features -> logits"""
@@ -203,6 +235,9 @@ class AutoDagNetwork(keras.Model):
     LAYER_TYPE = "type"
     NAME = "name"
     OP_IDENTIFIER = "op"
+    TIED_WEIGHTS = "tie_weights"
+    DEFAULT_VIZ_SAVE_PATH = "./"
+    GRAPH_VIZ_FILE_NAME = "auto_dag_network.png"
 
     def __init__(
             self,
@@ -231,8 +266,17 @@ class AutoDagNetwork(keras.Model):
 
         # Get all available layers (including keras layers)
         self.available_layers = get_layer_subclasses()
-        model_graph = self.define_architecture(model_config)
-        self.execution_order: List[LayerNode] = model_graph.topological_sort()
+        self.model_graph = self.define_architecture(model_config)
+
+        # Get the first file handler for the logger
+        file_handlers = [handler for handler in self.file_io.logger.handlers if isinstance(handler, FileHandler)]
+        logging_dir = Path(file_handlers[0].baseFilename).parent if file_handlers else Path(self.DEFAULT_VIZ_SAVE_PATH)
+        # Save the visualization in the logging directory
+        viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
+        self.model_graph.visualize(viz_path)
+        self.file_io.log("Model DAG visualization saved to: %s", viz_path)
+
+        self.execution_order: List[LayerNode] = self.model_graph.topological_sort()
         # The line below is important for tensorflow to register the available params for the model
         # An alternative is to do this in build()
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
@@ -240,7 +284,7 @@ class AutoDagNetwork(keras.Model):
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
                                                     not layer_node.is_input_node]
         self.file_io.logger.info("Execution order: %s", self.execution_order)
-        self.output_node = model_graph.output_node
+        self.output_node = self.model_graph.output_node
 
     def instantiate_op(self, current_layer_type: str, current_layer_args: Dict) -> layers.Layer:
         """
@@ -267,7 +311,11 @@ class AutoDagNetwork(keras.Model):
             raise KeyError(f"Layer type: '{current_layer_type}' "
                            f"is not supported or not found in subclasses of keras.layers.Layer")
 
-    def get_layer_op(self, layer_args: Dict) -> Dict[str, Union[str, bool, layers.Layer]]:
+    def get_layer_op(
+            self,
+            layer_args: Dict,
+            existing_op: layers.Layer = None
+    ) -> Dict[str, Union[str, bool, layers.Layer]]:
         """
         Define the layer operation for a layer in the model config
 
@@ -275,18 +323,24 @@ class AutoDagNetwork(keras.Model):
         ----------
         layer_args: dict
             All the arguments from model config which are needed to define a layer op
+        existing_op: instance of type keras.layers.Layer
+            If specified, reuse the layer op
 
         Returns
         -------
         dict
             Dictionary with the layer instance, inputs required for the layer and the format of inputs to the layer
         """
+        if existing_op.__class__.__name__ != layer_args[self.LAYER_TYPE].split(".")[-1]:
+            raise TypeError(f"Cannot reuse existing layer of type {existing_op.__class__.__name__}. "
+                            f"{layer_args[self.LAYER_TYPE]} is incompatible")
         return {
             self.INPUTS: layer_args[self.INPUTS],
-            self.OP_IDENTIFIER: self.instantiate_op(layer_args[self.LAYER_TYPE],
-                                                    {k: v for k, v in layer_args.items()
-                                                     # Exclude items which aren't layer params
-                                                     if k not in {self.LAYER_TYPE, self.INPUTS_AS_LIST, self.INPUTS}}),
+            self.OP_IDENTIFIER: existing_op if existing_op
+            else self.instantiate_op(layer_args[self.LAYER_TYPE],
+                                     {k: v for k, v in layer_args.items()
+                                      # Exclude items which aren't layer params
+                                      if k not in {self.LAYER_TYPE, self.INPUTS_AS_LIST, self.INPUTS}}),
             self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
         }
 
@@ -304,9 +358,31 @@ class AutoDagNetwork(keras.Model):
         LayerGraph
             Dependency DAG for the given model config
         """
+        # Handle tied weights
+        tied_weights = self.model_config.get(self.TIED_WEIGHTS, [])
+        layer_group_mapper = {}
+        for group_idx, tied_layers in enumerate(tied_weights):
+            if len(tied_layers) < 2:
+                raise ValueError(f"Expected at least 2 layers to tie weights, "
+                                 f"found {len(tied_layers)} in: {tied_layers}")
+            for layer_name in tied_layers:
+                if layer_name in layer_group_mapper:
+                    raise ValueError(f"Layer {layer_name} found in multiple tied weights lists:\n{tied_weights}")
+                layer_group_mapper[layer_name] = group_idx
+        group_layer_tracker = {}
+        # Get layer ops
+        layer_ops = {}
+        for layer_args in model_config[self.LAYERS_IDENTIFIER]:
+            layer_name = layer_args[self.NAME]
+            if tied_weights:
+                existing_op = group_layer_tracker.get(layer_group_mapper.get(layer_name, None), None)
+                layer_ops[layer_name] = self.get_layer_op(layer_args, existing_op=existing_op)
+                if not existing_op and layer_name in layer_group_mapper:
+                    group_layer_tracker[layer_group_mapper[layer_name]] = layer_ops[layer_name][self.OP_IDENTIFIER]
+            else:
+                layer_ops[layer_name] = self.get_layer_op(layer_args)
 
-        layer_ops = {layer_args[self.NAME]: self.get_layer_op(layer_args) for layer_args in
-                     model_config[self.LAYERS_IDENTIFIER]}
+        # Get all inputs
         # While sorting is not mandatory, I would advise not removing it for the sake of reproducibility
         inputs = sorted(set([input_name for layer_op in layer_ops.values()
                              for input_name in layer_op[self.INPUTS] if input_name not in layer_ops.keys()]))

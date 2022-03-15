@@ -1,9 +1,14 @@
+import copy
+import logging
 import unittest
 
+import yaml
 from tensorflow.keras.layers import Layer
 
-from ml4ir.base.model.architectures.auto_dag_network import LayerNode, get_layer_subclasses, CycleFoundException, \
-    LayerGraph
+from ml4ir.base.features.feature_config import SequenceExampleFeatureConfig
+from ml4ir.base.io.local_io import LocalIO
+from ml4ir.base.model.architectures.auto_dag_network import (LayerNode, get_layer_subclasses, CycleFoundException,
+                                                             LayerGraph, AutoDagNetwork)
 
 
 class UserDefinedTestLayerGlobal(Layer):
@@ -115,3 +120,214 @@ class TestLayerGraph(unittest.TestCase):
         inputs = ["a", "b", "c"]
         sorted_order = LayerGraph(layer_ops, inputs).topological_sort()
         self.assertListEqual(list(map(str, sorted_order)), ["c", "b", "a", "3", "2", "1"])
+
+
+class AutoDagNetworkTests(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model_config = yaml.safe_load(
+            """
+            architecture_key: auto-dag-network
+            layers:
+              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+                name: global1
+                inputs:
+                  - query_text
+                  - text_match_score
+                  - page_views_score
+                aslist: true
+              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+                name: global2
+                inputs:
+                  - Title
+                  - text_match_score
+                  - page_views_score
+                aslist: true
+              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+                name: global3
+                inputs:
+                  - text_match_score
+                  - page_views_score
+                aslist: true
+              - type: keras.layers.merge.Concatenate
+                name: features_concat
+                inputs:
+                  - global1
+                  - global2
+                  - global3
+                aslist: true
+                axis: -1
+              - type: keras.layers.core.dense.Dense
+                name: first_dense
+                inputs:
+                  - features_concat
+                units: 512
+                activation: relu
+              - type: keras.layers.core.dense.Dense
+                name: final_dense
+                inputs:
+                  - first_dense
+                units: 1
+                activation: null
+            optimizer:
+              key: adam
+            tie_weights:
+              - ["global1", "global2"]
+            """
+        )
+        self.file_io = LocalIO(logging.getLogger())
+        self.feat_config = SequenceExampleFeatureConfig(
+            yaml.safe_load(
+                """
+                query_key: 
+                  name: query_id
+                  node_name: query_id
+                  trainable: false
+                  dtype: string
+                  log_at_inference: true
+                  feature_layer_info:
+                    type: numeric
+                    shape: null
+                  serving_info:
+                    name: queryId
+                  tfrecord_type: context
+                rank:
+                  name: rank
+                  node_name: rank
+                  trainable: false
+                  dtype: int64
+                  log_at_inference: true
+                  feature_layer_info:
+                    type: numeric
+                    shape: null
+                  serving_info:
+                    name: originalRank
+                    default_value: 0
+                  tfrecord_type: sequence
+                label:
+                  name: clicked
+                  node_name: clicked
+                  trainable: false
+                  dtype: int64
+                  log_at_inference: true
+                  feature_layer_info:
+                    type: numeric
+                    shape: null
+                  serving_info:
+                    name: clicked
+                  tfrecord_type: sequence
+                features:
+                  - name: text_match_score
+                    node_name: text_match_score
+                    trainable: true
+                    dtype: float
+                    log_at_inference: true
+                    feature_layer_info:
+                      type: numeric
+                      shape: null
+                    serving_info:
+                      name: textMatchScore
+                    tfrecord_type: sequence
+                  - name: page_views_score
+                    node_name: page_views_score
+                    trainable: true
+                    dtype: float
+                    log_at_inference: true
+                    feature_layer_info:
+                      type: numeric
+                      shape: null
+                      fn: tf_native_op
+                      args:
+                        ops:
+                          - fn: tf.math.add
+                            args:
+                              y: 0.
+                          - fn: tf.math.subtract  # The goal here is to see the end-to-end functionality of tf_native_op without modifying the tests
+                            args:
+                              y: 0.
+                          - fn: tf.clip_by_value
+                            args:
+                              clip_value_min: 0.
+                              clip_value_max: 1000000.
+                    serving_info:
+                      name: pageViewsScore
+                    tfrecord_type: sequence
+                  - name: query_text
+                    node_name: query_text
+                    trainable: true
+                    dtype: string
+                    log_at_inference: true
+                    feature_layer_info:
+                      type: numeric
+                      shape: null
+                      fn: bytes_sequence_to_encoding_bilstm
+                      args:
+                        encoding_type: bilstm
+                        encoding_size: 128
+                        embedding_size: 128
+                        max_length: 20
+                    preprocessing_info:
+                      - fn: preprocess_text
+                        args:
+                          remove_punctuation: true
+                          to_lower: true
+                    serving_info:
+                      name: q
+                    tfrecord_type: context
+                  - name: Title
+                    node_name: Title
+                    trainable: true
+                    dtype: string
+                    log_at_inference: true
+                    feature_layer_info:
+                      type: numeric
+                      shape: null
+                      fn: bytes_sequence_to_encoding_bilstm
+                      args:
+                        encoding_type: bilstm
+                        encoding_size: 128
+                        embedding_size: 128
+                        max_length: 20
+                    preprocessing_info:
+                      - fn: preprocess_text
+                        args:
+                          remove_punctuation: true
+                          to_lower: true
+                    serving_info:
+                      name: Title
+                    tfrecord_type: context
+                """
+            ),
+            self.file_io.logger
+        )
+
+    def test_tie_weights(self):
+        model = AutoDagNetwork(model_config=self.model_config, feature_config=self.feat_config, file_io=self.file_io)
+        with self.subTest("Test layers are the same"):
+            self.assertEqual(model.model_graph.get_node("global1").layer, model.model_graph.get_node("global2").layer)
+        with self.subTest("Inputs should be different"):
+            self.assertNotEqual(model.model_graph.get_node("global1").inputs,
+                                model.model_graph.get_node("global2").inputs)
+
+    def test_without_tie_weights(self):
+        model_config = copy.deepcopy(self.model_config)
+        model_config.remove("tie_weights")
+        model = AutoDagNetwork(model_config=model_config, feature_config=self.feat_config, file_io=self.file_io)
+        self.assertIsNotNone(model.model_graph)
+
+    def test_faulty_tie_weights(self):
+        with self.subTest("Single layer not allowed"):
+            model_config = copy.deepcopy(self.model_config)
+            # Adding an entry with only 1 layer
+            model_config["tie_weights"].append(["features_concat"])
+            self.assertRaises(ValueError, AutoDagNetwork, model_config, self.feat_config, self.file_io)
+        with self.subTest("Layer should be in 1 list only"):
+            model_config = copy.deepcopy(self.model_config)
+            # Adding another entry with duplicate layer (global1)
+            model_config["tie_weights"].append(["global1", "global3"])
+            self.assertRaises(ValueError, AutoDagNetwork, model_config, self.feat_config, self.file_io)
+        with self.subTest("Incompatible layers"):
+            model_config = copy.deepcopy(self.model_config)
+            # Adding an entry with incompatible layers
+            model_config["tie_weights"].append(["global3", "features_concat"])
+            self.assertRaises(TypeError, AutoDagNetwork, model_config, self.feat_config, self.file_io)
