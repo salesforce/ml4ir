@@ -42,19 +42,20 @@ Usage example:
 ... --keep-single-files
  """
 
-from tensorflow import io
-from typing import List
-from logging import Logger
-from argparse import ArgumentParser
 import os
-from pandas import DataFrame
+from argparse import ArgumentParser
+from logging import Logger
+from typing import List
 
+from pandas import DataFrame
+from tensorflow import io
+
+from ml4ir.base.config.keys import TFRecordTypeKey
+from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
+from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.io.local_io import LocalIO
-from ml4ir.base.config.keys import TFRecordTypeKey
-from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.logging_utils import setup_logging
-from ml4ir.base.data.tfrecord_helper import get_sequence_example_proto, get_example_proto
 
 MODES = {"example": TFRecordTypeKey.EXAMPLE, "sequence_example": TFRecordTypeKey.SEQUENCE_EXAMPLE}
 
@@ -81,6 +82,8 @@ def write_from_files(
         and the preprocessing functions to be applied to each of them
     tfrecord_type : {"example", "sequence_example"}
         Type of the TFRecord protobuf message to be used for TFRecordDataset
+    file_io : FileIO object
+        FileIO handler object for reading and writing files
     logger : `Logger`, optional
         logging handler for status messages
     """
@@ -113,6 +116,11 @@ def write_from_df(
     logger : `Logger`, optional
         logging handler for status messages
     """
+
+    # Note: Samples with NaN (context) features will be dropped
+    fill_na_mapper = {feat["name"]: feature_config.get_default_value(feat)
+                      for feat in feature_config.get_all_features()}
+    df = df.fillna(fill_na_mapper)
 
     if logger:
         logger.info("Writing SequenceExample protobufs to : {}".format(tfrecord_file))
@@ -179,6 +187,7 @@ def main(args):
                 feature_config=feature_config,
                 logger=logger,
                 tfrecord_type=MODES[args.tfmode],
+                file_io=file_io,
             )
 
     else:
@@ -228,9 +237,9 @@ def define_arguments():
         "--keep-single-files",
         action="store_true",
         help="When passed, converts CSV files individually. "
-        "Results are written to out-dir replacing the filename's extension with .tfrecord."
-        "If not set, a single combined.tfrecord is created."
-        "All occurrences of a query key should be within a single file",
+             "Results are written to out-dir replacing the filename's extension with .tfrecord."
+             "If not set, a single combined.tfrecord is created."
+             "All occurrences of a query key should be within a single file",
     )
     return parser
 
