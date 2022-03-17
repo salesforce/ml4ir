@@ -7,25 +7,29 @@ layers:
       - text_match_score
       - page_views_score
     aslist: true
-    axis: -1
+    args:
+      axis: -1
   - type: keras.layers.core.dense.Dense
     name: first_dense
     inputs:
       - features_concat
-    units: 128
-    activation: relu
+    args:
+      units: 128
+      activation: relu
   - type: keras.layers.core.dense.Dense
     name: second_dense
     inputs:
       - first_dense
-    units: 64
-    activation: relu
+    args:
+      units: 64
+      activation: relu
   - type: keras.layers.core.dense.Dense
     name: final_dense
     inputs:
       - second_dense
-    units: 1
-    activation: null
+    args:
+      units: 1
+      activation: null
 optimizer:
   key: sgd
   gradient_clip_value: 0.25

@@ -18,7 +18,14 @@ def get_layer_subclasses() -> Dict[str, Type[layers.Layer]]:
     """Get mapping of {subclass-name: subclass} for all derivative classes of keras.layers.Layer"""
 
     def full_class_name(cls):
-        """Get {package_name}.{class_name}"""
+        """
+        Get {package_name}.{class_name}
+
+        Examples:
+            - keras: keras.layers.merge.Concatenate, keras.layers.core.dense.Dense
+            - ml4ir: ml4ir.base.features.feature_fns.utils.VocabLookup,
+                     ml4ir.applications.ranking.model.losses.listwise_losses.RankOneListNet
+        """
         module = cls.__module__
         if module == "builtins":
             return cls.__qualname__  # avoid outputs like 'builtins.str'
@@ -235,6 +242,7 @@ class AutoDagNetwork(keras.Model):
     LAYER_TYPE = "type"
     NAME = "name"
     OP_IDENTIFIER = "op"
+    LAYER_KWARGS = "args"
     TIED_WEIGHTS = "tie_weights"
     DEFAULT_VIZ_SAVE_PATH = "./"
     GRAPH_VIZ_FILE_NAME = "auto_dag_network.png"
@@ -280,7 +288,6 @@ class AutoDagNetwork(keras.Model):
         # The line below is important for tensorflow to register the available params for the model
         # An alternative is to do this in build()
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
-        # TODO: Need to confirm the layers here are referencing the ones in the LayerNode instance
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
                                                     not layer_node.is_input_node]
         self.file_io.logger.info("Execution order: %s", self.execution_order)
@@ -338,9 +345,7 @@ class AutoDagNetwork(keras.Model):
             self.INPUTS: layer_args[self.INPUTS],
             self.OP_IDENTIFIER: existing_op if existing_op
             else self.instantiate_op(layer_args[self.LAYER_TYPE],
-                                     {k: v for k, v in layer_args.items()
-                                      # Exclude items which aren't layer params
-                                      if k not in {self.LAYER_TYPE, self.INPUTS_AS_LIST, self.INPUTS}}),
+                                      layer_args.get(self.LAYER_KWARGS, {})),
             self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
         }
 
