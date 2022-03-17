@@ -185,6 +185,8 @@ class UnivariateInteractionModel(InteractionModel):
                     feature_tensor = tf.tile(feature_tensor, metadata_tile_shape)
 
             if feature_info[TRAINABLE]:
+                # Note: All non-string types are converted to float to avoid dtype mismatches.
+                # Strings are left as is to be processed by model layers which expect string inputs
                 if feature_info[DTYPE] != tf.string:
                     train_features[feature_node_name] = tf.cast(feature_tensor, tf.float32)
                 else:
