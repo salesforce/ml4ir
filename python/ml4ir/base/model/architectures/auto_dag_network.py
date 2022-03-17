@@ -15,7 +15,14 @@ def get_layer_subclasses() -> Dict[str, Type[layers.Layer]]:
     """Get mapping of {subclass-name: subclass} for all derivative classes of keras.layers.Layer"""
 
     def full_class_name(cls):
-        """Get {package_name}.{class_name}"""
+        """
+        Get {package_name}.{class_name}
+
+        Examples:
+            - keras: keras.layers.merge.Concatenate, keras.layers.core.dense.Dense
+            - ml4ir: ml4ir.base.features.feature_fns.utils.VocabLookup,
+                     ml4ir.applications.ranking.model.losses.listwise_losses.RankOneListNet
+        """
         module = cls.__module__
         if module == "builtins":
             return cls.__qualname__  # avoid outputs like 'builtins.str'
