@@ -203,6 +203,7 @@ class AutoDagNetwork(keras.Model):
     LAYER_TYPE = "type"
     NAME = "name"
     OP_IDENTIFIER = "op"
+    LAYER_KWARGS = "args"
 
     def __init__(
             self,
@@ -236,7 +237,6 @@ class AutoDagNetwork(keras.Model):
         # The line below is important for tensorflow to register the available params for the model
         # An alternative is to do this in build()
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
-        # TODO: Need to confirm the layers here are referencing the ones in the LayerNode instance
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
                                                     not layer_node.is_input_node]
         self.file_io.logger.info("Execution order: %s", self.execution_order)
@@ -283,10 +283,7 @@ class AutoDagNetwork(keras.Model):
         """
         return {
             self.INPUTS: layer_args[self.INPUTS],
-            self.OP_IDENTIFIER: self.instantiate_op(layer_args[self.LAYER_TYPE],
-                                                    {k: v for k, v in layer_args.items()
-                                                     # Exclude items which aren't layer params
-                                                     if k not in {self.LAYER_TYPE, self.INPUTS_AS_LIST, self.INPUTS}}),
+            self.OP_IDENTIFIER: self.instantiate_op(layer_args[self.LAYER_TYPE], layer_args.get(self.LAYER_KWARGS, {})),
             self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
         }
 
