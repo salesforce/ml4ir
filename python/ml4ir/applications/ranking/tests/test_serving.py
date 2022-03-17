@@ -30,7 +30,7 @@ class RankingModelTest(RankingTestBase):
             use_part_files=self.args.use_part_files,
             parse_tfrecord=parse_tfrecord,
             file_io=self.file_io,
-            logger=self.logger,
+            logger=self.logger
         )
 
     def check_model_serving(self, model_config_path: str = None):
@@ -65,7 +65,7 @@ class RankingModelTest(RankingTestBase):
             preprocessing_keys_to_fns={},
             postprocessing_fn=None,
             required_fields_only=not self.args.use_all_fields_at_inference,
-            pad_sequence=self.args.pad_sequence_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference
         )
 
         # Load SavedModel and get the right serving signature
@@ -125,12 +125,12 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Compare the scores from the different versions of the model
-        assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01, ).all()
+        assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01).all()
 
-        assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01, ).all()
+        assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01).all()
 
         assert np.isclose(
-            default_signature_predictions, tfrecord_signature_predictions, rtol=0.01,
+            default_signature_predictions, tfrecord_signature_predictions, rtol=0.01
         ).all()
 
     def test_model_serving_default(self):
@@ -155,7 +155,7 @@ class RankingModelTest(RankingTestBase):
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
-            logger=self.logger,
+            logger=self.logger
         )
 
         return feature_config
@@ -172,7 +172,7 @@ class RankingModelTest(RankingTestBase):
             preprocessing_keys_to_fns={},
             postprocessing_fn=None,
             required_fields_only=not self.args.use_all_fields_at_inference,
-            pad_sequence=self.args.pad_sequence_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference
         )
 
         # Load SavedModel and get the right serving signature
