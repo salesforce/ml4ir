@@ -13,6 +13,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
             sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
@@ -48,6 +49,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
             sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
@@ -83,6 +85,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
             sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
@@ -118,6 +121,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
             sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
@@ -153,6 +157,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
             sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
