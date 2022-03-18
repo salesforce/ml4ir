@@ -1,11 +1,27 @@
 architecture_key: auto-dag-network
 layers:
+  - type: keras.layers.core.dense.Dense  # Sample layer to test weight tying
+    name: sample_tie_weight_1
+    inputs:
+      - text_match_score
+    aslist: true
+    args:
+      units: 2
+      activation: relu
+  - type: keras.layers.core.dense.Dense  # Sample layer to test weight tying
+    name: sample_tie_weight_2
+    inputs:
+      - page_views_score
+    aslist: true
+    args:
+      units: 2
+      activation: relu
   - type: keras.layers.merge.Concatenate
     name: features_concat
     inputs:
       - query_text
-      - text_match_score
-      - page_views_score
+      - sample_tie_weight_1
+      - sample_tie_weight_2
     aslist: true
     args:
       axis: -1
@@ -40,3 +56,5 @@ lr_schedule:
   patience: 2
   min_lr: 0.0001
   mode: max
+tie_weights:
+  - ["sample_tie_weight_1", "sample_tie_weight_2"]

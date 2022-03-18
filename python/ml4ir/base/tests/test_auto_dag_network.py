@@ -1,12 +1,11 @@
 import copy
-import json
-import logging
 import unittest
 
 import yaml
 from tensorflow.keras.layers import Layer, Dense
 
 from ml4ir.base.features.feature_config import SequenceExampleFeatureConfig
+from ml4ir.base.io import logging_utils
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.model.architectures.auto_dag_network import (LayerNode, get_layer_subclasses, CycleFoundException,
                                                              LayerGraph, AutoDagNetwork)
@@ -139,21 +138,21 @@ class AutoDagNetworkTests(unittest.TestCase):
             """
             architecture_key: auto-dag-network
             layers:
-              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global1
                 inputs:
                   - query_text
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global2
                 inputs:
                   - Title
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global3
                 inputs:
                   - text_match_score
@@ -188,8 +187,7 @@ class AutoDagNetworkTests(unittest.TestCase):
               - ["global1", "global2"]
             """
         )
-        # print(json.dumps(self.model_config, indent=2))
-        self.file_io = LocalIO(logging.getLogger())
+        self.file_io = LocalIO(logging_utils.setup_logging())
         self.feat_config = SequenceExampleFeatureConfig(
             yaml.safe_load(
                 """
@@ -325,7 +323,7 @@ class AutoDagNetworkTests(unittest.TestCase):
 
     def test_without_tie_weights(self):
         model_config = copy.deepcopy(self.model_config)
-        model_config.remove("tie_weights")
+        model_config.pop("tie_weights")
         model = AutoDagNetwork(model_config=model_config, feature_config=self.feat_config, file_io=self.file_io)
         self.assertIsNotNone(model.model_graph)
 
