@@ -9,6 +9,8 @@ ENV PYTHONPATH=/home/ml4ir/python
 
 # Install python dependencies
 COPY requirements.txt /home/ml4ir/python/
+RUN sudo apt-get --allow-releaseinfo-change update
+RUN sudo apt-get install graphviz graphviz-dev
 RUN pip install --upgrade pip
 RUN pip config set global.extra-index-url https://pypi.python.org/simple
 RUN pip install --upgrade setuptools
