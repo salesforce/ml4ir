@@ -338,14 +338,13 @@ class AutoDagNetwork(keras.Model):
         dict
             Dictionary with the layer instance, inputs required for the layer and the format of inputs to the layer
         """
-        if existing_op.__class__.__name__ != layer_args[self.LAYER_TYPE].split(".")[-1]:
+        if existing_op and existing_op.__class__.__name__ != layer_args[self.LAYER_TYPE].split(".")[-1]:
             raise TypeError(f"Cannot reuse existing layer of type {existing_op.__class__.__name__}. "
                             f"{layer_args[self.LAYER_TYPE]} is incompatible")
         return {
             self.INPUTS: layer_args[self.INPUTS],
             self.OP_IDENTIFIER: existing_op if existing_op
-            else self.instantiate_op(layer_args[self.LAYER_TYPE],
-                                      layer_args.get(self.LAYER_KWARGS, {})),
+            else self.instantiate_op(layer_args[self.LAYER_TYPE], layer_args.get(self.LAYER_KWARGS, {})),
             self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
         }
 

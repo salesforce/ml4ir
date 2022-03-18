@@ -1,4 +1,5 @@
 import copy
+import json
 import logging
 import unittest
 
@@ -119,7 +120,7 @@ class TestLayerGraph(unittest.TestCase):
         }
         inputs = ["a", "b", "c"]
         sorted_order = LayerGraph(layer_ops, inputs).topological_sort()
-        self.assertListEqual(list(map(str, sorted_order)), ["c", "b", "a", "3", "2", "1"])
+        self.assertListEqual(list(map(lambda node: node.name, sorted_order)), ["c", "b", "a", "3", "2", "1"])
 
 
 class AutoDagNetworkTests(unittest.TestCase):
@@ -156,25 +157,29 @@ class AutoDagNetworkTests(unittest.TestCase):
                   - global2
                   - global3
                 aslist: true
-                axis: -1
+                args:
+                  axis: -1
               - type: keras.layers.core.dense.Dense
                 name: first_dense
                 inputs:
                   - features_concat
-                units: 512
-                activation: relu
+                args:
+                  units: 512
+                  activation: relu
               - type: keras.layers.core.dense.Dense
                 name: final_dense
                 inputs:
                   - first_dense
-                units: 1
-                activation: null
+                args:
+                  units: 1
+                  activation: null
             optimizer:
               key: adam
             tie_weights:
               - ["global1", "global2"]
             """
         )
+        # print(json.dumps(self.model_config, indent=2))
         self.file_io = LocalIO(logging.getLogger())
         self.feat_config = SequenceExampleFeatureConfig(
             yaml.safe_load(
