@@ -387,7 +387,7 @@ class AutoDagNetwork(keras.Model):
                 layer_ops[layer_name] = self.get_layer_op(layer_args)
 
         # Get all inputs
-        # While sorting is not mandatory, I would advise not removing it for the sake of reproducibility
+        # While sorting is not mandatory, it is highly recommended for the sake of reproducibility
         inputs = sorted(set([input_name for layer_op in layer_ops.values()
                              for input_name in layer_op[self.INPUTS] if input_name not in layer_ops.keys()]))
         return LayerGraph(layer_ops, inputs)
@@ -420,9 +420,12 @@ class AutoDagNetwork(keras.Model):
                 if node.name not in train_features:
                     raise KeyError(f"Input feature {node.name} cannot be found in the feature ops outputs")
             else:
+                # Dict inputs is the default
                 layer_input = {k: outputs[k] for k in node.inputs}
+                # Handle tensor/list[tensors] as inputs
                 if node.inputs_as_list or len(layer_input) == 1:
                     layer_input = list(layer_input.values())
+                    # Single input is always sent as a tensor
                     if len(layer_input) == 1:
                         layer_input = layer_input[0]
                 outputs[node.name] = node.layer(layer_input, training=training)
