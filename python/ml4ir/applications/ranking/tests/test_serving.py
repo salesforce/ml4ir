@@ -144,7 +144,7 @@ class RankingModelTest(RankingTestBase):
         Train a simple auto-dag-network model and test serving flow by loading the SavedModel
         """
         self.check_model_serving(
-            model_config_path="ml4ir/applications/ranking/tests/config/auto_dag_network_sample_config.yaml"
+            model_config_path="ml4ir/applications/ranking/tests/data/configs/auto_dag_network_sample_config.yaml"
         )
 
     def get_feature_config(self):
