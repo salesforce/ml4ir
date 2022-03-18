@@ -1,18 +1,18 @@
 import os
-import numpy as np
-from tensorflow.keras import models as kmodels
-import tensorflow as tf
 
-from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.config.keys import DataFormatKey
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import models as kmodels
+
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
-from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.applications.ranking.tests.test_base import RankingTestBase
+from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ServingSignatureKey
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
+from ml4ir.base.features.feature_config import FeatureConfig
 
 
 class RankingModelTest(RankingTestBase):
-
     FEATURE_CONFIG_FNAME = "feature_config_integration_test.yaml"
 
     def get_dataset(self, parse_tfrecord=True):
@@ -30,13 +30,16 @@ class RankingModelTest(RankingTestBase):
             use_part_files=self.args.use_part_files,
             parse_tfrecord=parse_tfrecord,
             file_io=self.file_io,
-            logger=self.logger,
+            logger=self.logger
         )
 
-    def test_model_serving(self):
+    def check_model_serving(self, model_config_path: str = None):
         """
         Train a simple model and test serving flow by loading the SavedModel
         """
+        model_config = None
+        if model_config_path:
+            model_config = self.file_io.read_yaml(model_config_path)
 
         # Test model training on TFRecord SequenceExample data
         feature_config = self.get_feature_config()
@@ -49,7 +52,10 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset = self.get_dataset(parse_tfrecord=True)
 
         model: RankingModel = self.get_ranking_model(
-            loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
+            loss_key=self.args.loss_key,
+            feature_config=feature_config,
+            metrics_keys=metrics_keys,
+            model_config=model_config
         )
 
         model.fit(dataset=parsed_dataset, num_epochs=1, models_dir=self.output_dir)
@@ -59,7 +65,7 @@ class RankingModelTest(RankingTestBase):
             preprocessing_keys_to_fns={},
             postprocessing_fn=None,
             required_fields_only=not self.args.use_all_fields_at_inference,
-            pad_sequence=self.args.pad_sequence_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference
         )
 
         # Load SavedModel and get the right serving signature
@@ -119,13 +125,27 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Compare the scores from the different versions of the model
-        assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01,).all()
+        assert np.isclose(model_predictions, default_signature_predictions, rtol=0.01).all()
 
-        assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01,).all()
+        assert np.isclose(model_predictions, tfrecord_signature_predictions, rtol=0.01).all()
 
         assert np.isclose(
-            default_signature_predictions, tfrecord_signature_predictions, rtol=0.01,
+            default_signature_predictions, tfrecord_signature_predictions, rtol=0.01
         ).all()
+
+    def test_model_serving_default(self):
+        """
+        Train a simple dnn model and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving()
+
+    def test_model_serving_auto_dag_network(self):
+        """
+        Train a simple auto-dag-network model and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving(
+            model_config_path="ml4ir/applications/ranking/tests/data/configs/auto_dag_network_sample_config.yaml"
+        )
 
     def get_feature_config(self):
         feature_config_path = os.path.join(
@@ -135,7 +155,7 @@ class RankingModelTest(RankingTestBase):
         feature_config: FeatureConfig = FeatureConfig.get_instance(
             tfrecord_type=self.args.tfrecord_type,
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
-            logger=self.logger,
+            logger=self.logger
         )
 
         return feature_config
@@ -152,7 +172,7 @@ class RankingModelTest(RankingTestBase):
             preprocessing_keys_to_fns={},
             postprocessing_fn=None,
             required_fields_only=not self.args.use_all_fields_at_inference,
-            pad_sequence=self.args.pad_sequence_at_inference,
+            pad_sequence=self.args.pad_sequence_at_inference
         )
 
         # Load SavedModel and get the right serving signature

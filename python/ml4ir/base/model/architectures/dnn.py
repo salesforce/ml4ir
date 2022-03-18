@@ -122,6 +122,7 @@ class DNN(keras.Model):
             Logits tensor computed with the forward pass of the architecture layer
         """
         train_features = inputs[FeatureTypeKey.TRAIN]
+        metadata_features = inputs[FeatureTypeKey.METADATA]
 
         # Sort the train features dictionary so that we control the order
         # Concat all train features to get a dense feature vector

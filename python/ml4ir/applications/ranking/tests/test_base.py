@@ -41,7 +41,7 @@ class RankingTestBase(RelevanceTestBase):
         loss_key: str,
         metrics_keys: List,
         feature_config: FeatureConfig,
-        model_config: dict = {},
+        model_config: dict = None,
         feature_layer_keys_to_fns={},
         initialize_layers_dict={},
         freeze_layers_list=[],
@@ -51,6 +51,7 @@ class RankingTestBase(RelevanceTestBase):
 
         NOTE: Override this method to create custom loss, scorer, model objects
         """
+        self.model_config = model_config if model_config else self.model_config
 
         # Define interaction model
         interaction_model: InteractionModel = UnivariateInteractionModel(
@@ -86,7 +87,7 @@ class RankingTestBase(RelevanceTestBase):
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            model_config=self.file_io.read_yaml(self.args.model_config),
+            model_config=self.model_config,
         )
 
         # Combine the above to define a RelevanceModel

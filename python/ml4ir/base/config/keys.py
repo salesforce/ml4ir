@@ -21,6 +21,7 @@ class ArchitectureKey(Key):
     DNN = "dnn"
     LINEAR = "linear"
     RNN = "rnn"
+    AUTO_DAG_NETWORK = "auto-dag-network"
 
 
 class OptimizerKey(Key):
