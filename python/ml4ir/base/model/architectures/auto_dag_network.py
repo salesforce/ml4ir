@@ -4,7 +4,11 @@ from logging import FileHandler
 from pathlib import Path
 from typing import List, Dict, Union, Type
 
-import pygraphviz as pgv
+try:
+    import pygraphviz as pgv
+except ImportError:
+    pgv = None
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -276,13 +280,18 @@ class AutoDagNetwork(keras.Model):
         self.available_layers = get_layer_subclasses()
         self.model_graph = self.define_architecture(model_config)
 
-        # Get the first file handler for the logger
-        file_handlers = [handler for handler in self.file_io.logger.handlers if isinstance(handler, FileHandler)]
-        logging_dir = Path(file_handlers[0].baseFilename).parent if file_handlers else Path(self.DEFAULT_VIZ_SAVE_PATH)
-        # Save the visualization in the logging directory
-        viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
-        self.model_graph.visualize(viz_path)
-        self.file_io.log("Model DAG visualization saved to: %s", viz_path)
+        # Visualize with pygraphviz if available
+        if pgv:
+            # Get the first file handler for the logger
+            file_handlers = [handler for handler in self.file_io.logger.handlers if isinstance(handler, FileHandler)]
+            logging_dir = Path(file_handlers[0].baseFilename).parent if file_handlers else Path(self.DEFAULT_VIZ_SAVE_PATH)
+            # Save the visualization in the logging directory
+            viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
+            self.model_graph.visualize(viz_path)
+            self.file_io.log(f"Model DAG visualization saved to: {viz_path}")
+        else:
+            self.file_io.log("Skipping visualization. Dependency pygraphviz not found. "
+                             "Try installing ml4ir with visualization dependency: pip install ml4ir[visualization]")
 
         self.execution_order: List[LayerNode] = self.model_graph.topological_sort()
         # The line below is important for tensorflow to register the available params for the model
