@@ -274,26 +274,6 @@ class AutoDagNetwork(keras.Model):
             raise KeyError(f"Layer type: '{current_layer_type}' "
                            f"is not supported or not found in subclasses of keras.layers.Layer")
 
-    def get_layer_op(self, layer_args: Dict) -> Dict[str, Union[str, bool, layers.Layer]]:
-        """
-        Define the layer operation for a layer in the model config
-
-        Parameters
-        ----------
-        layer_args: dict
-            All the arguments from model config which are needed to define a layer op
-
-        Returns
-        -------
-        dict
-            Dictionary with the layer instance, inputs required for the layer and the format of inputs to the layer
-        """
-        return {
-            self.INPUTS: layer_args[self.INPUTS],
-            self.OP_IDENTIFIER: self.instantiate_op(layer_args[self.LAYER_TYPE], layer_args.get(self.LAYER_KWARGS, {})),
-            self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
-        }
-
     def define_architecture(self, model_config: dict) -> LayerGraph:
         """
         Convert the model from model_config to a LayerGraph
@@ -309,9 +289,16 @@ class AutoDagNetwork(keras.Model):
             Dependency DAG for the given model config
         """
 
-        layer_ops = {layer_args[self.NAME]: self.get_layer_op(layer_args) for layer_args in
-                     model_config[self.LAYERS_IDENTIFIER]}
-        # While sorting is not mandatory, I would advise not removing it for the sake of reproducibility
+        layer_ops = {
+            layer_args[self.NAME]: {
+                self.INPUTS: layer_args[self.INPUTS],
+                self.OP_IDENTIFIER: self.instantiate_op(layer_args[self.LAYER_TYPE],
+                                                        layer_args.get(self.LAYER_KWARGS, {})),
+                self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
+            }
+            for layer_args in model_config[self.LAYERS_IDENTIFIER]
+        }
+        # While sorting is not mandatory, it is highly recommended for the sake of reproducibility
         inputs = sorted(set([input_name for layer_op in layer_ops.values()
                              for input_name in layer_op[self.INPUTS] if input_name not in layer_ops.keys()]))
         return LayerGraph(layer_ops, inputs)
@@ -344,9 +331,12 @@ class AutoDagNetwork(keras.Model):
                 if node.name not in train_features:
                     raise KeyError(f"Input feature {node.name} cannot be found in the feature ops outputs")
             else:
+                # Dict inputs is the default
                 layer_input = {k: outputs[k] for k in node.inputs}
+                # Handle tensor/list[tensors] as inputs
                 if node.inputs_as_list or len(layer_input) == 1:
                     layer_input = list(layer_input.values())
+                    # Single input is always sent as a tensor
                     if len(layer_input) == 1:
                         layer_input = layer_input[0]
                 outputs[node.name] = node.layer(layer_input, training=training)

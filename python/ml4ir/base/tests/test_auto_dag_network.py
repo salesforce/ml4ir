@@ -1,6 +1,6 @@
 import unittest
 
-from tensorflow.keras.layers import Layer
+from tensorflow.keras.layers import Layer, Dense
 
 from ml4ir.base.model.architectures.auto_dag_network import LayerNode, get_layer_subclasses, CycleFoundException, \
     LayerGraph
@@ -22,11 +22,20 @@ class TestGetLayerSubclasses(unittest.TestCase):
             pass
 
         self.assertNotIn(UserDefinedTestLayerLocal, self.layer_subclasses.values())
-        self.assertIn(UserDefinedTestLayerLocal, get_layer_subclasses().values())
+        local_layer_subclasses = get_layer_subclasses()
+        self.assertIn("tests.test_auto_dag_network.TestGetLayerSubclasses.test_local_userdefined_subclass."
+                      "<locals>.UserDefinedTestLayerLocal", local_layer_subclasses)
+        self.assertIn(UserDefinedTestLayerLocal, local_layer_subclasses.values())
 
     def test_global_userdefined_subclass(self):
         """Test that all globally defined classes are accessible"""
+        self.assertIn("tests.test_auto_dag_network.UserDefinedTestLayerGlobal", self.layer_subclasses)
         self.assertIn(UserDefinedTestLayerGlobal, self.layer_subclasses.values())
+
+    def test_keras_native_subclass(self):
+        """Test that all globally defined classes are accessible"""
+        self.assertIn("keras.layers.core.dense.Dense", self.layer_subclasses)
+        self.assertIn(Dense, self.layer_subclasses.values())
 
 
 class LayerNodeTest(unittest.TestCase):
