@@ -98,7 +98,8 @@ class LayerGraph:
     def __init__(
             self,
             layer_ops: Dict[str, Union[str, bool, layers.Layer]],
-            inputs: List[str]
+            inputs: List[str],
+            visualization_path: str = None
     ):
         """
         Constructor to create a Graph. It creates a dependency graph and identifies the output node.
@@ -120,7 +121,8 @@ class LayerGraph:
         """
         self.nodes = self.create_nodes(layer_ops, inputs)
         self.create_dependency_graph()
-        # TODO: Add graph visualization for easier debugging
+        if visualization_path:
+            self.visualize(visualization_path)
         output_nodes = self.get_output_nodes()
         if len(output_nodes) == 0:
             raise CycleFoundException("No output nodes found because of cycle in DAG")
@@ -278,20 +280,20 @@ class AutoDagNetwork(keras.Model):
 
         # Get all available layers (including keras layers)
         self.available_layers = get_layer_subclasses()
-        self.model_graph = self.define_architecture(model_config)
 
         # Visualize with pygraphviz if available
+        self.viz_path = None
         if pgv:
             # Get the first file handler for the logger
             file_handlers = [handler for handler in self.file_io.logger.handlers if isinstance(handler, FileHandler)]
             logging_dir = Path(file_handlers[0].baseFilename).parent if file_handlers else Path(self.DEFAULT_VIZ_SAVE_PATH)
             # Save the visualization in the logging directory
-            viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
-            self.model_graph.visualize(viz_path)
-            self.file_io.log(f"Model DAG visualization saved to: {viz_path}")
+            self.viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
+            self.file_io.log(f"Model DAG visualization can be found here: {self.viz_path}")
         else:
             self.file_io.log("Skipping visualization. Dependency pygraphviz not found. "
                              "Try installing ml4ir with visualization dependency: pip install ml4ir[visualization]")
+        self.model_graph = self.define_architecture(model_config)
 
         self.execution_order: List[LayerNode] = self.model_graph.topological_sort()
         # The line below is important for tensorflow to register the available params for the model
@@ -400,7 +402,7 @@ class AutoDagNetwork(keras.Model):
         # While sorting is not mandatory, it is highly recommended for the sake of reproducibility
         inputs = sorted(set([input_name for layer_op in layer_ops.values()
                              for input_name in layer_op[self.INPUTS] if input_name not in layer_ops.keys()]))
-        return LayerGraph(layer_ops, inputs)
+        return LayerGraph(layer_ops, inputs, self.viz_path)
 
     def call(self, inputs, training=None):
         """
