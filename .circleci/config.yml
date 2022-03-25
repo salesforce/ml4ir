@@ -13,8 +13,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
+            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
+            pip install --upgrade pip
             pip install -r python/build-requirements.txt
       - run:
           name: Build
@@ -46,9 +49,12 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
+            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -79,9 +85,12 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
+            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -112,9 +121,12 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
+            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -145,9 +157,12 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            sudo apt-get --allow-releaseinfo-change update
+            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
