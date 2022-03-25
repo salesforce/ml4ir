@@ -2,13 +2,12 @@ import copy
 import unittest
 
 import yaml
-from tensorflow.keras.layers import Layer, Dense
-
 from ml4ir.base.features.feature_config import SequenceExampleFeatureConfig
 from ml4ir.base.io import logging_utils
 from ml4ir.base.io.local_io import LocalIO
 from ml4ir.base.model.architectures.auto_dag_network import (LayerNode, get_layer_subclasses, CycleFoundException,
                                                              LayerGraph, AutoDagNetwork)
+from tensorflow.keras.layers import Layer, Dense
 
 
 class UserDefinedTestLayerGlobal(Layer):
@@ -312,6 +311,34 @@ class AutoDagNetworkTests(unittest.TestCase):
             ),
             self.file_io.logger
         )
+
+    def test_model_creation(self):
+        model = AutoDagNetwork(model_config=self.model_config, feature_config=self.feat_config, file_io=self.file_io)
+        first_dense = model.model_graph.get_node("first_dense")
+        self.assertEqual(first_dense.layer.units, 512)
+        self.assertEqual(first_dense.layer.activation.__name__, "relu")
+        final_dense = model.model_graph.get_node("final_dense")
+        self.assertEqual(final_dense.layer.units, 1)
+
+    def test_graph_creation(self):
+        model = AutoDagNetwork(model_config=self.model_config, feature_config=self.feat_config, file_io=self.file_io)
+        graph: LayerGraph = model.model_graph
+
+        def __get_node_name(node_list):
+            return [node.name for node in node_list]
+
+        with self.subTest("Check input nodes"):
+            graph_input_nodes = __get_node_name(filter(lambda node: node.is_input_node, graph.nodes.values()))
+            self.assertSetEqual(set(graph_input_nodes), {"query_text", "text_match_score", "Title", "page_views_score"})
+        with self.subTest("Check output node"):
+            self.assertEqual(graph.output_node.name, "final_dense")
+
+        with self.subTest("Test graph connections"):
+            self.assertListEqual(__get_node_name(graph.get_node("global1").dependent_children), ["features_concat"])
+            self.assertListEqual(__get_node_name(graph.get_node("global2").dependent_children), ["features_concat"])
+            self.assertListEqual(__get_node_name(graph.get_node("global3").dependent_children), ["features_concat"])
+            self.assertListEqual(__get_node_name(graph.get_node("features_concat").dependent_children), ["first_dense"])
+            self.assertListEqual(__get_node_name(graph.get_node("first_dense").dependent_children), ["final_dense"])
 
     def test_tie_weights(self):
         model = AutoDagNetwork(model_config=self.model_config, feature_config=self.feat_config, file_io=self.file_io)
