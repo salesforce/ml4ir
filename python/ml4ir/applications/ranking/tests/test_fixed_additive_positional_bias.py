@@ -1,7 +1,7 @@
 import unittest
 import warnings
 import tensorflow as tf
-from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedAdditivePositionalBias
+from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
 
 warnings.filterwarnings("ignore")
 

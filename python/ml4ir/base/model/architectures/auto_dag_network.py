@@ -301,7 +301,7 @@ class AutoDagNetwork(keras.Model):
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
                                                     not layer_node.is_input_node]
-        self.file_io.logger.info("Execution order: %s", self.execution_order)
+        self.file_io.logger.info("Execution order: %s", [node.name for node in self.execution_order])
         self.output_node = self.model_graph.output_node
 
     def instantiate_op(self, current_layer_type: str, current_layer_args: Dict) -> layers.Layer:
