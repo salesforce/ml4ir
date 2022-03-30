@@ -53,6 +53,7 @@ class RelevanceTestBase(unittest.TestCase):
 
         # Make temp output directory
         self.file_io.make_directory(self.output_dir, clear_dir=True)
+        self.file_io.make_directory(self.args.logs_dir, clear_dir=True)
 
         # Fix random seed values for repeatability
         tf.keras.backend.clear_session()
