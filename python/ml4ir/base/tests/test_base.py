@@ -38,7 +38,18 @@ class RelevanceTestBase(unittest.TestCase):
         self.output_dir = output_dir
         self.root_data_dir = root_data_dir
         self.feature_config_fname = feature_config_fname
-        self.file_io = LocalIO(logging.getLogger())
+
+        # Setup arguments
+        self.args: Namespace = get_args([] if args is None else args)
+        self.args.models_dir = output_dir
+        self.args.logs_dir = output_dir
+
+        # Setup logging
+        outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
+
+        self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
+
+        self.file_io = LocalIO(self.logger)
 
         # Make temp output directory
         self.file_io.make_directory(self.output_dir, clear_dir=True)
@@ -49,17 +60,7 @@ class RelevanceTestBase(unittest.TestCase):
         tf.random.set_seed(123)
         random.seed(123)
 
-        # Setup arguments
-        self.args: Namespace = get_args([] if args is None else args)
-        self.args.models_dir = output_dir
-        self.args.logs_dir = output_dir
-
         self.load_model_config(self.args.model_config)
-
-        # Setup logging
-        outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
-
-        self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
 
     def tearDown(self):
         # Delete output directory
