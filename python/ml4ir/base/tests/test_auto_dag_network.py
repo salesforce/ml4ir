@@ -27,13 +27,13 @@ class TestGetLayerSubclasses(unittest.TestCase):
 
         self.assertNotIn(UserDefinedTestLayerLocal, self.layer_subclasses.values())
         local_layer_subclasses = get_layer_subclasses()
-        self.assertIn("tests.test_auto_dag_network.TestGetLayerSubclasses.test_local_userdefined_subclass."
+        self.assertIn("ml4ir.base.tests.test_auto_dag_network.TestGetLayerSubclasses.test_local_userdefined_subclass."
                       "<locals>.UserDefinedTestLayerLocal", local_layer_subclasses)
         self.assertIn(UserDefinedTestLayerLocal, local_layer_subclasses.values())
 
     def test_global_userdefined_subclass(self):
         """Test that all globally defined classes are accessible"""
-        self.assertIn("tests.test_auto_dag_network.UserDefinedTestLayerGlobal", self.layer_subclasses)
+        self.assertIn("ml4ir.base.tests.test_auto_dag_network.UserDefinedTestLayerGlobal", self.layer_subclasses)
         self.assertIn(UserDefinedTestLayerGlobal, self.layer_subclasses.values())
 
     def test_keras_native_subclass(self):
@@ -137,21 +137,21 @@ class AutoDagNetworkTests(unittest.TestCase):
             """
             architecture_key: auto-dag-network
             layers:
-              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: ml4ir.base.tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global1
                 inputs:
                   - query_text
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: ml4ir.base.tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global2
                 inputs:
                   - Title
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: tests.test_auto_dag_network.UserDefinedTestLayerGlobal
+              - type: ml4ir.base.tests.test_auto_dag_network.UserDefinedTestLayerGlobal
                 name: global3
                 inputs:
                   - text_match_score
