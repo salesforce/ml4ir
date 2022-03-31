@@ -1,5 +1,4 @@
 import gc
-import logging
 import os
 import random
 import unittest
@@ -43,16 +42,18 @@ class RelevanceTestBase(unittest.TestCase):
         self.args: Namespace = get_args([] if args is None else args)
         self.args.models_dir = output_dir
         self.args.logs_dir = output_dir
+        self.file_io = LocalIO()
+
+        # Make temp output directory
+        self.file_io.make_directory(self.output_dir, clear_dir=True)
+        self.file_io.make_directory(self.args.logs_dir, clear_dir=True)
 
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
 
         self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
 
-        self.file_io = LocalIO(self.logger)
-
-        # Make temp output directory
-        self.file_io.make_directory(self.output_dir, clear_dir=True)
+        self.file_io.set_logger(self.logger)
 
         # Fix random seed values for repeatability
         tf.keras.backend.clear_session()
