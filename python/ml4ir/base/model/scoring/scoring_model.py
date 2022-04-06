@@ -1,16 +1,16 @@
+import logging
+from logging import Logger
+from typing import Dict, Optional
+
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import metrics
 
 from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.model.architectures import architecture_factory
-from ml4ir.base.model.scoring.interaction_model import InteractionModel
-from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.io.file_io import FileIO
-from logging import Logger
-
-from typing import Dict, Optional
+from ml4ir.base.model.architectures import architecture_factory
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.interaction_model import InteractionModel
 
 
 class ScorerBase(keras.Model):
@@ -29,15 +29,16 @@ class ScorerBase(keras.Model):
     """
 
     def __init__(
-        self,
-        model_config: dict,
-        feature_config: FeatureConfig,
-        interaction_model: InteractionModel,
-        loss: RelevanceLossBase,
-        file_io: FileIO,
-        output_name: str = "score",
-        logger: Optional[Logger] = None,
-        **kwargs
+            self,
+            model_config: dict,
+            feature_config: FeatureConfig,
+            interaction_model: InteractionModel,
+            loss: RelevanceLossBase,
+            file_io: FileIO,
+            output_name: str = "score",
+            logger: Optional[Logger] = None,
+            logs_dir: Optional[str] = "",
+            **kwargs
     ):
         """
         Constructor method for creating a ScorerBase object
@@ -60,6 +61,8 @@ class ScorerBase(keras.Model):
             Name of the output that captures the score computed by the model
         logger : Logger, optional
             Logging handler
+        logs_dir : str, optional
+            Path to the logging directory
         """
         super().__init__(**kwargs)
 
@@ -69,18 +72,21 @@ class ScorerBase(keras.Model):
         self.loss_op = loss
         self.file_io = file_io
         self.output_name = output_name
+        self.logs_dir = logs_dir
+        self.architecture_op = self.get_architecture_op()
+        self.plot_abstract_model()
 
     @classmethod
     def from_model_config_file(
-        cls,
-        model_config_file: str,
-        interaction_model: InteractionModel,
-        loss: RelevanceLossBase,
-        file_io: FileIO,
-        output_name: str = "score",
-        feature_config: Optional[FeatureConfig] = None,
-        logger: Optional[Logger] = None,
-        **kwargs
+            cls,
+            model_config_file: str,
+            interaction_model: InteractionModel,
+            loss: RelevanceLossBase,
+            file_io: FileIO,
+            output_name: str = "score",
+            feature_config: Optional[FeatureConfig] = None,
+            logger: Optional[Logger] = None,
+            **kwargs
     ):
         """
         Get a Scorer object from a YAML model config file
@@ -122,6 +128,14 @@ class ScorerBase(keras.Model):
             **kwargs
         )
 
+    def plot_abstract_model(self):
+        """Visualize the model architecture if defined by the architecture op"""
+        if hasattr(self.architecture_op, "plot_abstract_model"):
+            self.architecture_op.plot_abstract_model(self.logs_dir)
+        else:
+            self.file_io.log(f"plot_abstract_model method is not defined for {self.architecture_op.__class__.__name__}",
+                             logging.DEBUG)
+
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
         Compute score from input features
@@ -147,19 +161,24 @@ class ScorerBase(keras.Model):
 
         return {self.output_name: scores}
 
+    def get_architecture_op(self):
+        """Get the tensorflow model instance"""
+        raise NotImplementedError
+
 
 class RelevanceScorer(ScorerBase):
 
     def __init__(
-        self,
-        model_config: dict,
-        feature_config: FeatureConfig,
-        interaction_model: InteractionModel,
-        loss: RelevanceLossBase,
-        file_io: FileIO,
-        output_name: str = "score",
-        logger: Optional[Logger] = None,
-        **kwargs
+            self,
+            model_config: dict,
+            feature_config: FeatureConfig,
+            interaction_model: InteractionModel,
+            loss: RelevanceLossBase,
+            file_io: FileIO,
+            output_name: str = "score",
+            logger: Optional[Logger] = None,
+            logs_dir: Optional[str] = None,
+            **kwargs
     ):
         """
         Constructor method for creating a RelevanceScorer object
@@ -182,6 +201,8 @@ class RelevanceScorer(ScorerBase):
             Name of the output that captures the score computed by the model
         logger : Logger, optional
             Logging handler
+        logs_dir : str, optional
+            Path to the logging directory
         """
         super().__init__(model_config=model_config,
                          feature_config=feature_config,
@@ -190,10 +211,13 @@ class RelevanceScorer(ScorerBase):
                          file_io=file_io,
                          output_name=output_name,
                          logger=logger,
+                         logs_dir=logs_dir,
                          **kwargs)
 
+    def get_architecture_op(self):
+        """Get the model architecture instance based on the configs"""
         # NOTE: Override self.architecture_op with any tensorflow network for customization
-        self.architecture_op = architecture_factory.get_architecture(
+        return architecture_factory.get_architecture(
             model_config=self.model_config,
             feature_config=self.feature_config,
             file_io=self.file_io,

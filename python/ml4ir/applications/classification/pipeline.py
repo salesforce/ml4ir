@@ -84,6 +84,7 @@ class ClassificationPipeline(RelevancePipeline):
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
+            logs_dir=self.args.logs_dir
         )
 
         # Define metrics objects from metrics keys

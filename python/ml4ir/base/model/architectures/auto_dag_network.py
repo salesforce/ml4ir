@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from logging import FileHandler
 from pathlib import Path
-from typing import List, Dict, Union, Type
+from typing import List, Dict, Union, Type, Optional
 
 try:
     import pygraphviz as pgv
@@ -224,7 +224,7 @@ class LayerGraph:
 
     def visualize(self, path: str):
         """
-        Utility function to visualize the DAG
+        Utility function to visualize the DAG and save DAG image to disk
 
         Parameters
         ----------
@@ -281,18 +281,6 @@ class AutoDagNetwork(keras.Model):
         # Get all available layers (including keras layers)
         self.available_layers = get_layer_subclasses()
 
-        # Visualize with pygraphviz if available
-        self.viz_path = None
-        if pgv:
-            # Get the first file handler for the logger
-            file_handlers = [handler for handler in self.file_io.logger.handlers if isinstance(handler, FileHandler)]
-            logging_dir = Path(file_handlers[0].baseFilename).parent if file_handlers else Path(self.DEFAULT_VIZ_SAVE_PATH)
-            # Save the visualization in the logging directory
-            self.viz_path = str(logging_dir / self.GRAPH_VIZ_FILE_NAME)
-            self.file_io.log(f"Model DAG visualization can be found here: {self.viz_path}")
-        else:
-            self.file_io.log("Skipping visualization. Dependency pygraphviz not found. "
-                             "Try installing ml4ir with visualization dependency: pip install ml4ir[visualization]")
         self.model_graph = self.define_architecture(model_config)
 
         self.execution_order: List[LayerNode] = self.model_graph.topological_sort()
@@ -303,6 +291,15 @@ class AutoDagNetwork(keras.Model):
                                                     not layer_node.is_input_node]
         self.file_io.logger.info("Execution order: %s", self.execution_order)
         self.output_node = self.model_graph.output_node
+
+    def plot_abstract_model(self, plot_dir: str):
+        if pgv:
+            viz_path = str(Path(plot_dir) / self.GRAPH_VIZ_FILE_NAME)
+            self.model_graph.visualize(viz_path)
+            self.file_io.log(f"Model DAG visualization can be found here: {self.viz_path}")
+        else:
+            self.file_io.log("Skipping visualization. Dependency pygraphviz not found. "
+                             "Try installing ml4ir with visualization dependency: pip install ml4ir[visualization]")
 
     def instantiate_op(self, current_layer_type: str, current_layer_args: Dict) -> layers.Layer:
         """
