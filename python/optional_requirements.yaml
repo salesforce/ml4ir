@@ -21,6 +21,9 @@
 # To install ml4ir `all`, run pip install ml4ir[all]
 all:
   - pyspark==3.0.1  # required to run ml4ir.base.pipeline
+  - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
 pyspark:
   - pyspark==3.0.1  # required to support pyspark data read
+visualization:
+  - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
 # Add other optional ml4ir dependencies here
