@@ -63,6 +63,11 @@ class ScorerBase(keras.Model):
             Logging handler
         logs_dir : str, optional
             Path to the logging directory
+
+        Notes
+        -----
+        logs_dir : Used to point model architectures to local logging directory,
+            primarily for saving visualizations.
         """
         super().__init__(**kwargs)
 
