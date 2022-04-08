@@ -1,8 +1,8 @@
 import tensorflow as tf
-from tensorflow.keras import layers
 
-from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.model.layers.tf_native import TFNativeLayer
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
+from ml4ir.base.io.file_io import FileIO
 
 
 class TFNativeOpLayer(BaseFeatureLayerOp):
@@ -11,10 +11,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
     The functions will be applied in the order they are specified.
     """
     LAYER_NAME = "tf_native_op"
-
-    ARGS = "args"
     OPS = "ops"
-    FN = "fn"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -41,8 +38,8 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
                         Keyword arguments to be passed to the tensorflow function
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
-
         self.tf_ops = self.feature_layer_args.get(self.OPS, {})
+        self.layer = TFNativeLayer(self.tf_ops)
 
     def call(self, inputs, training=None):
         """
@@ -60,25 +57,8 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        if not self.tf_ops:
-            return inputs
-
-        feature_tensor = inputs
-        for tf_op in self.tf_ops:
-            try:
-                fn_, fn_args = eval(tf_op[self.FN]), tf_op.get(self.ARGS, {})
-            except AttributeError as e:
-                raise KeyError(
-                    "Invalid fn specified for tf_native_op : {}\n{}".format(tf_op[self.FN], e))
-
-            try:
-                feature_tensor = fn_(feature_tensor, **fn_args)
-            except Exception as e:
-                raise Exception("Error while applying {} to {} feature:\n{}".format(
-                    tf_op[self.FN], self.feature_name, e))
-
+        feature_tensor = self.layer(inputs, training)
         # Adjusting the shape to the default feature fns for concatenating in the next step
         feature_tensor = tf.expand_dims(feature_tensor, axis=-1,
                                         name="{}_tf_native_op".format(self.feature_name))
-
         return feature_tensor

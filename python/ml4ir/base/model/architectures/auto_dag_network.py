@@ -9,6 +9,11 @@ try:
 except ImportError:
     pgv = None
 
+try:
+    import pygraphviz as pgv
+except ImportError:
+    pgv = None
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -98,7 +103,8 @@ class LayerGraph:
     def __init__(
             self,
             layer_ops: Dict[str, Union[str, bool, layers.Layer]],
-            inputs: List[str]
+            inputs: List[str],
+            visualization_path: str = None
     ):
         """
         Constructor to create a Graph. It creates a dependency graph and identifies the output node.
@@ -286,7 +292,7 @@ class AutoDagNetwork(keras.Model):
         # If removed, no layers will be present in the AutoDagNetwork (in the model summary)
         self.register_layers: List[layers.Layer] = [layer_node.layer for layer_node in self.execution_order if
                                                     not layer_node.is_input_node]
-        self.file_io.logger.info("Execution order: %s", self.execution_order)
+        self.file_io.logger.info("Execution order: %s", [node.name for node in self.execution_order])
         self.output_node = self.model_graph.output_node
 
     def plot_abstract_model(self, plot_dir: str):

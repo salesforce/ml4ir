@@ -8,7 +8,7 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedAdditivePositionalBias
+from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
 
 
 OOV = 1
