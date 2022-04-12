@@ -1,13 +1,7 @@
 from __future__ import annotations
 
-from logging import FileHandler
 from pathlib import Path
-from typing import List, Dict, Union, Type, Optional
-
-try:
-    import pygraphviz as pgv
-except ImportError:
-    pgv = None
+from typing import List, Dict, Union, Type
 
 try:
     import pygraphviz as pgv
