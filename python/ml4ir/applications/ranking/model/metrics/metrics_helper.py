@@ -39,7 +39,7 @@ def compute_dcg(relevance_grades: List[float]):
     -----
     Reference -> https://en.wikipedia.org/wiki/Discounted_cumulative_gain
     """
-    return np.sum([(np.power(2, relevance_grades[i] - 1.) / np.log2(i + 1 + 1)) for i in range(len(relevance_grades))])
+    return np.sum([((np.power(2, relevance_grades[i]) - 1.) / np.log2(i + 1 + 1)) for i in range(len(relevance_grades))])
 
 
 def compute_ndcg(relevance_grades: List[float]):
