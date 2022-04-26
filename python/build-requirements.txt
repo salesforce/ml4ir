@@ -10,7 +10,7 @@ mypy
 
 # ml4ir dependencies
 tensorflow==2.0.4
-numpy==1.18.5
+numpy==1.21.0
 pandas==1.2.1
 scipy==1.5.4
 
