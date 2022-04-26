@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Fixing NDCG calcuation.
-- Pypassing bad queries during model training.
+- Bypassing bad queries during model training.
 
 ## [0.1.11] - 2021-01-18
 
