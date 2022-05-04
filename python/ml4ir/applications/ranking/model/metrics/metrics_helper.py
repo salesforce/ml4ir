@@ -106,6 +106,9 @@ def compute_secondary_label_metrics(
     failure_any = 0
     failure_count = 0
     failure_fraction = 0.0
+    # We need to have at least one relevant document.
+    # If not, any ordering is considered ideal
+    secondary_label_ndcg = 1
 
     try:
         click_secondary_label_value = secondary_label_values[ranks == click_rank].values[0]
@@ -137,8 +140,6 @@ def compute_secondary_label_metrics(
 
     # Compute NDCG metric on the secondary label
     # NOTE: Here we are passing the relevance grades ordered by the ranking
-    # We need to have at least one relevant document. If not, any ordering is considered ideal
-    secondary_label_ndcg = 1
     if secondary_label_values.sum() > 0:
         secondary_label_ndcg = compute_ndcg(
             secondary_label_values.values[np.argsort(ranks.values)]
