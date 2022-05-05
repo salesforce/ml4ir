@@ -376,16 +376,16 @@ class RelevancePipeline(object):
             for fold_id in range(num_folds):
                 self.logger.info("fold={}".format(fold_id))
                 logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / \
-                    "fold_{}".format(fold_id)
+                           "fold_{}".format(fold_id)
                 models_dir = pathlib.Path(base_models_dir) / \
-                    self.args.run_id / "fold_{}".format(fold_id)
+                             self.args.run_id / "fold_{}".format(fold_id)
                 args.logs_dir = pathlib.Path(logs_dir).as_posix()
                 args.models_dir = pathlib.Path(models_dir).as_posix()
 
                 fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
                                                                           args.include_testset_in_kfold,
                                                                           read_data_sets=False)
-                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset) 
+                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset)
                 pipeline = self.create_pipeline_for_kfold(args)
                 pipeline.run_pipeline(fold_relevance_dataset, fold_id)
 
@@ -506,8 +506,8 @@ class RelevancePipeline(object):
             experiment_tracking_dict.update(test_metrics)
 
             # Add optimizer and lr schedule
-            experiment_tracking_dict.update(
-                relevance_model.model.optimizer.get_config())
+            if self.args.execution_mode not in {ExecutionModeKey.EVALUATE_ONLY}:
+                experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
 
             # Save model
             # NOTE: Model will be saved with the latest serving signatures
@@ -556,7 +556,7 @@ class RelevancePipeline(object):
                                                             **kwargs)
 
                         experiment_tracking_dict.update({CalibrationKey.TEMPERATURE:
-                                                         results.position[0]})
+                                                             results.position[0]})
                         # replacing the existing keras functional API model with the model with
                         # temperature scaling layer
                         relevance_model.add_temperature_layer(results.position[0])

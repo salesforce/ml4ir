@@ -1,9 +1,6 @@
 import unittest
 from unittest.mock import patch
-import json
 
-import numpy as np
-import pandas as pd
 from pandas import testing as pd_testing
 
 from ml4ir.applications.ranking.model.metrics.metrics_helper import *
@@ -344,7 +341,13 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             old_rank_col="old_rank",
             new_rank_col="new_rank",
             secondary_labels=["secondary_label_1", "secondary_label_2"])
-        assert secondary_labels_metrics.empty
+        ndcg_rows = secondary_labels_metrics.index.str.contains("NDCG")
+        self.assertEqual((secondary_labels_metrics[ndcg_rows] > 0).sum(),
+                         len(secondary_labels_metrics[ndcg_rows]),
+                         "NDCG should be >0 in all cases")
+        self.assertEqual(secondary_labels_metrics[~ndcg_rows].sum(),
+                         0,
+                         "All metrics should have default values")
 
     def test_compute_dcg(self):
         with self.subTest("Worst ordering of grade values"):
@@ -368,4 +371,3 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
 
         with self.subTest("Equal grade values"):
             self.assertTrue(np.isclose(compute_ndcg([1., 1., 1.]), 1., atol=3))
-
