@@ -797,7 +797,7 @@ def read(
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
         dataset = (
             dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-            # .apply(data.experimental.ignore_errors())
+             .apply(data.experimental.ignore_errors())
         )
 
     # Create BatchedDataSet
