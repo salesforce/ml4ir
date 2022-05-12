@@ -49,7 +49,7 @@ class SparkIO(FileIO):
         return self.spark_context._gateway.jvm.org.apache.hadoop.fs.Path(file_path)
 
     def read_df(
-        self, infile: str, sep: str = ",", index_col: int = None
+        self, infile: str, sep: str = ",", index_col: int = None, **kwargs
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
@@ -79,7 +79,7 @@ class SparkIO(FileIO):
             .toPandas()
         )
 
-    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
+    def read_df_list(self, infiles, sep=",", index_col=None, **kwargs) -> pd.DataFrame:
         """
         Load a pandas dataframe from a list of files
 

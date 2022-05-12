@@ -124,7 +124,8 @@ class LayerGraph:
         if len(output_nodes) == 0:
             raise CycleFoundException("No output nodes found because of cycle in DAG")
         elif len(output_nodes) > 1:
-            raise NotImplementedError(f"1 output node expected, found {len(output_nodes)}: {output_nodes}")
+            raise NotImplementedError(
+                f"1 output node expected, found {len(output_nodes)}: {list(map(str, output_nodes))}")
         self.output_node = output_nodes[0]
 
     @staticmethod

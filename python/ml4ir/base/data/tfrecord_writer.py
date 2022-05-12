@@ -89,7 +89,7 @@ def write_from_files(
     """
 
     # Read CSV data into a pandas dataframe
-    df = file_io.read_df_list(csv_files)
+    df = file_io.read_df_list(csv_files, use_escape_char=False)
     write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
 
 
