@@ -23,6 +23,9 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         """
         cce = losses.CategoricalCrossentropy()
         mask = kwargs.get("mask")
+        softmax_y_true = False
+        if kwargs.get("softmax_y_aux"):
+            softmax_y_true = True
 
         def _loss_fn(y_true, y_pred):
             """
@@ -32,7 +35,11 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             y_pred : [batch_size, num_classes]
             mask : [batch_size, num_classes]
             """
-            return cce(y_true, tf.math.multiply(y_pred, mask))
+            if softmax_y_true:
+                y_true_softmax = tf.math.softmax(y_true)
+                return cce(y_true_softmax, tf.math.multiply(y_pred, mask))
+            else:
+                return cce(y_true, tf.math.multiply(y_pred, mask))
 
         return _loss_fn
 

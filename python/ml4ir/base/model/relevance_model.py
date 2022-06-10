@@ -126,6 +126,7 @@ class RelevanceModel:
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
+            metadata_features['softmax_y_aux'] = True
             loss_fn_aux = scorer.loss.get_loss_fn(**metadata_features)
             losses = {
                 self.output_name: loss_fn,
