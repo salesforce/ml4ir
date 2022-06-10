@@ -121,14 +121,23 @@ class RelevanceModel:
             scores, train_features, metadata_features = scorer(inputs)
 
             # Create model with functional Keras API
-            self.model = Model(inputs=inputs, outputs={self.output_name: scores})
-            self.model.output_names = [self.output_name]
+            self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.output_name+"_aux": scores})
+            self.model.output_names = [self.output_name, self.output_name+"_aux"]
 
             # Get loss fn
             loss_fn = scorer.loss.get_loss_fn(**metadata_features)
+            loss_fn_aux = scorer.loss.get_loss_fn(**metadata_features)
+            losses = {
+                self.output_name: loss_fn,
+                self.output_name+"_aux": loss_fn_aux}
+
+            lossWeights = {self.output_name: 0.75, self.output_name+"_aux": 0.25}
 
             # Get metric objects
             metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+            )
+            metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
                 metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
             )
 
@@ -137,10 +146,17 @@ class RelevanceModel:
             NOTE:
             Related Github issue: https://github.com/tensorflow/probability/issues/519
             """
+            # self.model.compile(
+            #     optimizer=optimizer,
+            #     loss=loss_fn,
+            #     metrics=metrics_impl,
+            #     experimental_run_tf_function=False,
+            # )
             self.model.compile(
                 optimizer=optimizer,
-                loss=loss_fn,
-                metrics=metrics_impl,
+                loss=losses,
+                loss_weights=lossWeights,
+                metrics=[metrics_impl, metrics_impl_aux],
                 experimental_run_tf_function=False,
             )
 

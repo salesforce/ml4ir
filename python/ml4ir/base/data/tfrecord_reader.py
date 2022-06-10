@@ -260,9 +260,12 @@ class TFRecordParser(object):
 
             # Extract the label feature to return separately
             labels = features_dict.pop(self.feature_config.get_label(key="name"))
+            aux_labels = features_dict.get(self.feature_config.get_aux_label(key="name"))
 
             # return X and y which can be used with fit(), predict() and evaluate()
-            return features_dict, labels
+            #return {'input_x': image, 'click_label': labels, 'aux_label': aux_labels}
+            return features_dict, {'ranking_score': labels, 'ranking_score_aux': aux_labels}
+            #return features_dict, [labels, aux_labels]
 
         return _parse_fn
 
