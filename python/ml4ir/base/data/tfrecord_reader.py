@@ -260,12 +260,14 @@ class TFRecordParser(object):
 
             # Extract the label feature to return separately
             labels = features_dict.pop(self.feature_config.get_label(key="name"))
-            aux_labels = features_dict.get(self.feature_config.get_aux_label(key="name"))
 
-            # return X and y which can be used with fit(), predict() and evaluate()
-            #return {'input_x': image, 'click_label': labels, 'aux_label': aux_labels}
-            return features_dict, {'ranking_score': labels, 'ranking_score_aux': aux_labels}
-            #return features_dict, [labels, aux_labels]
+            if self.feature_config.aux_label:
+                aux_labels = features_dict.get(self.feature_config.get_aux_label(key="name"))
+                # return X and y and y_aux which can be used with fit(), predict() and evaluate()
+                return features_dict, {self.output_name: labels, self.aux_output_name: aux_labels}
+            else:
+                # return X and y which can be used with fit(), predict() and evaluate()
+                features_dict, labels
 
         return _parse_fn
 
@@ -412,6 +414,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         required_fields_only: Optional[bool] = False,
         pad_sequence: Optional[bool] = True,
         max_sequence_size: Optional[int] = 25,
+        output_name: Optional[str] = 'ranking_score',
+        aux_output_name: Optional[str] = 'ranking_score_aux',
     ):
         """
         Constructor method for instantiating a TFRecordParser object
@@ -431,6 +435,9 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         """
         self.pad_sequence = pad_sequence
         self.max_sequence_size = max_sequence_size
+        self.output_name = output_name
+        self.aux_output_name = aux_output_name
+
         super(TFRecordSequenceExampleParser, self).__init__(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
@@ -676,6 +683,9 @@ def get_parse_fn(
     max_sequence_size: int = 0,
     required_fields_only: bool = False,
     pad_sequence: bool = True,
+    output_name: str = 'ranking_score',
+    aux_output_name: str = 'ranking_score_aux'
+
 ) -> tf.function:
     """
     Create a parsing function to extract features from serialized TFRecord data
@@ -722,6 +732,8 @@ def get_parse_fn(
             max_sequence_size=max_sequence_size,
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
+            output_name=output_name,
+            aux_output_name=aux_output_name,
         )
     else:
         raise KeyError("Invalid TFRecord type specified: {}".format(tfrecord_type))
@@ -784,6 +796,8 @@ def read(
         tfrecord_type=tfrecord_type,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         max_sequence_size=max_sequence_size,
+        output_name=kwargs['output_name'],
+        aux_output_name=kwargs['aux_output_name'],
     )
 
     # Get all tfrecord files in directory

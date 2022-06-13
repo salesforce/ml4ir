@@ -40,6 +40,7 @@ class RankingArgParser(RelevanceArgParser):
             max_sequence_size=25,
             group_metrics_min_queries=25,
             output_name="ranking_score",
+            aux_output_name="aux_ranking_score"
         )
 
 

@@ -242,6 +242,8 @@ class RelevancePipeline(object):
             logger=self.logger,
             non_zero_features_only=self.non_zero_features_only,
             keep_additional_info=self.keep_additional_info,
+            output_name=self.args.output_name,
+            aux_output_name=self.args.aux_output_name,
         )
 
         return relevance_dataset
@@ -294,7 +296,9 @@ class RelevancePipeline(object):
             keep_additional_info=self.keep_additional_info,
             num_folds=num_folds,
             include_testset_in_kfold=include_testset_in_kfold,
-            read_data_sets=read_data_sets
+            read_data_sets=read_data_sets,
+            output_name=self.args.output_name,
+            aux_output_name=self.args.aux_output_name,
         )
 
         return relevance_dataset

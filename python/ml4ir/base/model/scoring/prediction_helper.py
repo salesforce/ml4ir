@@ -116,6 +116,8 @@ def get_predict_fn(
         # NOTE: This assumes that the record dimension is on axis 1, like previously
         for feature_name in predictions_dict.keys():
             feat_ = predictions_dict[feature_name]
+            if type(feat_) == dict:
+                feat_ = feat_[output_name]
             if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
                 feat_ = tf.cond(
                     tf.equal(tf.shape(feat_)[1], tf.constant(1)),

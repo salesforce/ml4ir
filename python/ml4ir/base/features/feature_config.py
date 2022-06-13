@@ -179,7 +179,8 @@ class FeatureConfig:
         self.all_features.append(self.label)
 
         self.aux_label = self.features_dict.get(FeatureConfigKey.AUX_LABEL)
-        self.all_features.append(self.aux_label)
+        if self.aux_label:
+            self.all_features.append(self.aux_label)
 
         self.features = self.features_dict.get(FeatureConfigKey.FEATURES)
         self.all_features.extend(self.features)

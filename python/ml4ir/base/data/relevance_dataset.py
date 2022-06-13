@@ -33,6 +33,8 @@ class RelevanceDataset:
         logger: Optional[Logger] = None,
         keep_additional_info: int = 0,
         non_zero_features_only: int = 0,
+        output_name: str = 'ranking_score',
+        aux_output_name: str = 'ranking_score_aux',
     ):
         """
         Constructor method to instantiate a RelevanceDataset object
@@ -97,6 +99,8 @@ class RelevanceDataset:
 
         self.keep_additional_info = keep_additional_info
         self.non_zero_features_only = non_zero_features_only
+        self.output_name = output_name
+        self.aux_output_name = aux_output_name
 
         self.train: Optional[tf.data.TFRecordDataset] = None
         self.validation: Optional[tf.data.TFRecordDataset] = None
@@ -179,6 +183,8 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name,
+                aux_output_name=self.aux_output_name
             )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
@@ -194,6 +200,8 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name,
+                aux_output_name=self.aux_output_name
             )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
@@ -209,6 +217,8 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name,
+                aux_output_name=self.aux_output_name
             )
 
     def balance_classes(self):

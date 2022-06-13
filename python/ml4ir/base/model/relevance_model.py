@@ -48,7 +48,10 @@ class RelevanceModel:
         freeze_layers_list: list = [],
         compile_keras_model: bool = False,
         output_name: str = "score",
+        aux_output_name: str = "aux_score",
         logger=None,
+        primary_loss_weight: float = 1.0,
+        aux_loss_weight: float = 0,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -89,6 +92,7 @@ class RelevanceModel:
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
         self.output_name = output_name
+        self.aux_output_name = aux_output_name
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
@@ -120,46 +124,56 @@ class RelevanceModel:
             inputs: Dict[str, Input] = feature_config.define_inputs()
             scores, train_features, metadata_features = scorer(inputs)
 
-            # Create model with functional Keras API
-            self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.output_name+"_aux": scores})
-            self.model.output_names = [self.output_name, self.output_name+"_aux"]
+            if self.feature_config.get_aux_label():
+                # Create model with functional Keras API
+                self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.output_name+"_aux": scores})
+                self.model.output_names = [self.output_name, self.aux_output_name]
+                # Get loss fn
+                loss_fn = scorer.loss[self.output_name].get_loss_fn(**metadata_features)
+                metadata_features['softmax_y_true'] = True
+                loss_fn_aux = scorer.loss[self.aux_output_name].get_loss_fn(**metadata_features)
+                losses = {
+                    self.output_name: loss_fn,
+                    self.aux_output_name: loss_fn_aux}
 
-            # Get loss fn
-            loss_fn = scorer.loss.get_loss_fn(**metadata_features)
-            metadata_features['softmax_y_aux'] = True
-            loss_fn_aux = scorer.loss.get_loss_fn(**metadata_features)
-            losses = {
-                self.output_name: loss_fn,
-                self.output_name+"_aux": loss_fn_aux}
+                lossWeights = {self.output_name: primary_loss_weight, self.aux_output_name: aux_loss_weight}
 
-            lossWeights = {self.output_name: 0.75, self.output_name+"_aux": 0.25}
+                # Get metric objects
+                metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                )
+                metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                )
+                self.model.compile(
+                    optimizer=optimizer,
+                    loss=losses,
+                    loss_weights=lossWeights,
+                    metrics=[metrics_impl, metrics_impl_aux],
+                    experimental_run_tf_function=False,
+                )
+            else:
+                # Create model with functional Keras API
+                self.model = Model(inputs=inputs, outputs={self.output_name: scores})
+                self.model.output_names = [self.output_name]
 
-            # Get metric objects
-            metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
-            )
-            metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
-            )
+                # Get loss fn
+                loss_fn = scorer.loss.get_loss_fn(**metadata_features)
 
-            # Compile model
-            """
-            NOTE:
-            Related Github issue: https://github.com/tensorflow/probability/issues/519
-            """
-            # self.model.compile(
-            #     optimizer=optimizer,
-            #     loss=loss_fn,
-            #     metrics=metrics_impl,
-            #     experimental_run_tf_function=False,
-            # )
-            self.model.compile(
-                optimizer=optimizer,
-                loss=losses,
-                loss_weights=lossWeights,
-                metrics=[metrics_impl, metrics_impl_aux],
-                experimental_run_tf_function=False,
-            )
+                # Get metric objects
+                metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
+                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                )
+                """
+                NOTE:
+                Related Github issue: https://github.com/tensorflow/probability/issues/519
+                """
+                self.model.compile(
+                    optimizer=optimizer,
+                    loss=loss_fn,
+                    metrics=metrics_impl,
+                    experimental_run_tf_function=False,
+                )
 
             # Write model summary to logs
             model_summary = list()
@@ -448,7 +462,8 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-
+        if self.feature_config.aux_label: #val_ranking_score_new_MRR
+            monitor_metric = 'val_' + self.output_name + '_' + monitor_metric
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
