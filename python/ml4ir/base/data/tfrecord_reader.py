@@ -796,8 +796,8 @@ def read(
         tfrecord_type=tfrecord_type,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         max_sequence_size=max_sequence_size,
-        output_name=kwargs['output_name'],
-        aux_output_name=kwargs['aux_output_name'],
+        output_name=kwargs.get('output_name'),
+        aux_output_name=kwargs.get('aux_output_name'),
     )
 
     # Get all tfrecord files in directory
