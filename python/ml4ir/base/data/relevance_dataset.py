@@ -33,8 +33,8 @@ class RelevanceDataset:
         logger: Optional[Logger] = None,
         keep_additional_info: int = 0,
         non_zero_features_only: int = 0,
-        output_name: str = 'ranking_score',
-        aux_output_name: str = 'ranking_score_aux',
+        output_name: str = None,
+        aux_output_name: str = None,
     ):
         """
         Constructor method to instantiate a RelevanceDataset object

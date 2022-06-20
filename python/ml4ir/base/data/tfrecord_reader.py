@@ -267,7 +267,7 @@ class TFRecordParser(object):
                 return features_dict, {self.output_name: labels, self.aux_output_name: aux_labels}
             else:
                 # return X and y which can be used with fit(), predict() and evaluate()
-                features_dict, labels
+                return features_dict, labels
 
         return _parse_fn
 
@@ -414,8 +414,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         required_fields_only: Optional[bool] = False,
         pad_sequence: Optional[bool] = True,
         max_sequence_size: Optional[int] = 25,
-        output_name: Optional[str] = 'ranking_score',
-        aux_output_name: Optional[str] = 'ranking_score_aux',
+        output_name: Optional[str] = None,
+        aux_output_name: Optional[str] = None,
     ):
         """
         Constructor method for instantiating a TFRecordParser object
@@ -683,8 +683,8 @@ def get_parse_fn(
     max_sequence_size: int = 0,
     required_fields_only: bool = False,
     pad_sequence: bool = True,
-    output_name: str = 'ranking_score',
-    aux_output_name: str = 'ranking_score_aux'
+    output_name: str = None,
+    aux_output_name: str = None,
 
 ) -> tf.function:
     """
