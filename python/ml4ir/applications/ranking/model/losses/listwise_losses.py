@@ -101,9 +101,9 @@ class BasicCrossEntropy(ListwiseLossBase):
             to the loss
         """
         mask = kwargs.get("mask")
-        softmax_y_true = False
-        if kwargs.get("softmax_y_true"):
-            softmax_y_true = True
+        is_aux_loss = False
+        if kwargs.get("is_aux_loss"):
+            is_aux_loss = True
 
         def _loss_fn(y_true, y_pred):
             """
@@ -113,17 +113,17 @@ class BasicCrossEntropy(ListwiseLossBase):
             y_pred : [batch_size, num_classes]
             mask : [batch_size, num_classes]
             """
-            if softmax_y_true:
+            if is_aux_loss:
                 y_true_softmax = tf.math.softmax(y_true)
-                return -tf.reduce_sum(y_true_softmax * tf.math.log(tf.math.multiply(y_pred, mask)), 1)
+                #return -tf.reduce_sum(y_true_softmax * tf.math.log(tf.math.multiply(y_pred, mask)), 1)
                 # masking zeros for the log op
                 zero = tf.constant(0, dtype=tf.float32)
                 non_zero = tf.not_equal(y_pred, zero)
                 y_pred_non_zero = tf.boolean_mask(y_pred, non_zero)
-                #y_pred_non_zero = y_pred[non_zero]
-                #zero_mask = tf.greater(y_pred, 0)
-                #y_pred_non_zero = tf.boolean_mask(y_pred, zero_mask)
-                return -tf.reduce_sum(y_true_softmax * tf.math.multiply(tf.math.log(y_pred_non_zero, 1), mask))
+                y_true_softmax_masked = tf.boolean_mask(y_true_softmax, non_zero)
+                #return -tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero))
+                return tf.divide(-tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero)), tf.constant(y_true.shape[0], dtype=tf.float32))
+                #return -tf.reduce_sum(y_true_softmax * tf.math.multiply(tf.math.log(y_pred_non_zero, 1), mask))
             else:
                 return -tf.reduce_sum(y_true * tf.math.log(tf.math.multiply(y_pred, mask)), 1)
 

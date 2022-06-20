@@ -28,7 +28,9 @@ class KfoldRelevanceDataset(RelevanceDataset):
             non_zero_features_only: int = 0,
             num_folds: int = 3,
             include_testset_in_kfold: bool = False,
-            read_data_sets: bool = False
+            read_data_sets: bool = False,
+            output_name: str = None,
+            aux_output_name: str = None,
     ):
         self.include_testset_in_kfold = include_testset_in_kfold
         self.num_folds = num_folds
@@ -42,6 +44,8 @@ class KfoldRelevanceDataset(RelevanceDataset):
         self.batch_size: int = batch_size
         self.preprocessing_keys_to_fns = preprocessing_keys_to_fns
         self.file_io = file_io
+        self.output_name = output_name
+        self.aux_output_name = aux_output_name
 
         self.train_pcent_split: float = train_pcent_split
         self.val_pcent_split: float = val_pcent_split
