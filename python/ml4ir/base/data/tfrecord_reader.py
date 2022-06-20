@@ -262,7 +262,7 @@ class TFRecordParser(object):
             labels = features_dict.pop(self.feature_config.get_label(key="name"))
 
             if self.feature_config.aux_label:
-                aux_labels = features_dict.get(self.feature_config.get_aux_label(key="name"))
+                aux_labels = features_dict.get(self.feature_config.get_aux_label(key="node_name"))
                 # return X and y and y_aux which can be used with fit(), predict() and evaluate()
                 return features_dict, {self.output_name: labels, self.aux_output_name: aux_labels}
             else:
