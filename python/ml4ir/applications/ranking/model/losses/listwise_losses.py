@@ -35,6 +35,12 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             y_pred : [batch_size, num_classes]
             mask : [batch_size, num_classes]
             """
+
+            #Fixme
+            """
+            Queries with ties in the highest scores would have multiple one's in the 1-hot vector.
+            Queries with all zeros for y_true would have all ones as their 1-hot vector. 
+            """
             if is_aux_loss:  # converting y-true to 1-hot for cce
                 y_true_1_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
                 y_true_1_hot = tf.cast(y_true_1_hot, dtype=tf.float32)
@@ -104,6 +110,7 @@ class BasicCrossEntropy(ListwiseLossBase):
         is_aux_loss = False
         if kwargs.get("is_aux_loss"):
             is_aux_loss = True
+        batch_size = kwargs.get("batch_size", 1)
 
         def _loss_fn(y_true, y_pred):
             """
@@ -113,17 +120,17 @@ class BasicCrossEntropy(ListwiseLossBase):
             y_pred : [batch_size, num_classes]
             mask : [batch_size, num_classes]
             """
+
             if is_aux_loss:
-                y_true_softmax = tf.math.softmax(y_true)
-                #return -tf.reduce_sum(y_true_softmax * tf.math.log(tf.math.multiply(y_pred, mask)), 1)
+                y_true_softmax = tf.math.softmax(y_true)  #convert to a prod. dist
                 # masking zeros for the log op
                 zero = tf.constant(0, dtype=tf.float32)
                 non_zero = tf.not_equal(y_pred, zero)
+                # remove all the zero entries from the y_pred (corresponds to padded records)
                 y_pred_non_zero = tf.boolean_mask(y_pred, non_zero)
+                # retain values in y_true corresponding to non zero values in y_pred
                 y_true_softmax_masked = tf.boolean_mask(y_true_softmax, non_zero)
-                #return -tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero))
-                return tf.divide(-tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero)), tf.constant(y_true.shape[0], dtype=tf.float32))
-                #return -tf.reduce_sum(y_true_softmax * tf.math.multiply(tf.math.log(y_pred_non_zero, 1), mask))
+                return tf.math.divide(-tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero)), tf.constant(batch_size, dtype=tf.float32))
             else:
                 return -tf.reduce_sum(y_true * tf.math.log(tf.math.multiply(y_pred, mask)), 1)
 

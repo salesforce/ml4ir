@@ -432,6 +432,10 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Whether to pad sequence
         max_sequence_size: int, optional
             Maximum number of sequence per query. Used for padding
+        output_name: str
+            The name of tensorflow's output node which carry the prediction score
+        aux_output_name: str
+            The name of tensorflow's output node which carry the prediction score for the auxiliary output.
         """
         self.pad_sequence = pad_sequence
         self.max_sequence_size = max_sequence_size
@@ -707,6 +711,10 @@ def get_parse_fn(
         Whether to only use required fields from the feature_config
     pad_sequence: bool
         Whether to pad sequence
+    output_name: str
+            The name of tensorflow's output node which carry the prediction score
+    aux_output_name: str
+        The name of tensorflow's output node which carry the prediction score for the auxiliary output.
 
     Returns
     -------

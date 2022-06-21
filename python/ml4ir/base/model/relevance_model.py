@@ -52,6 +52,7 @@ class RelevanceModel:
         logger=None,
         primary_loss_weight: float = 1.0,
         aux_loss_weight: float = 0,
+        batch_size: int = 1,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -86,13 +87,18 @@ class RelevanceModel:
             with loss, metrics and an optimizer
         output_name : str, optional
             Name of the output tensorflow node that captures the score
+        aux_output_name : str, optional
+            Name of the output tensorflow node that captures the score for the auxiliary output
         logger : `Logger`, optional
             logging handler for status messages
+        batch_size : int
+            The batch size
         """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
         self.output_name = output_name
         self.aux_output_name = aux_output_name
+        self.batch_size = batch_size
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
@@ -131,6 +137,7 @@ class RelevanceModel:
                 # Get loss fn
                 loss_fn = scorer.loss[self.output_name].get_loss_fn(**metadata_features)
                 metadata_features['is_aux_loss'] = True
+                metadata_features['batch_size'] = self.batch_size
                 loss_fn_aux = scorer.loss[self.aux_output_name].get_loss_fn(**metadata_features)
                 losses = {
                     self.output_name: loss_fn,

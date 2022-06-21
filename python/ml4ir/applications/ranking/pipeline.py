@@ -48,6 +48,7 @@ class RankingPipeline(RelevancePipeline):
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
         self.aux_loss_key = args.aux_loss_key
+        self.batch_size = args.batch_size
 
         super().__init__(args)
 
@@ -134,6 +135,7 @@ class RankingPipeline(RelevancePipeline):
             logger=self.logger,
             primary_loss_weight=self.args.primary_loss_weight,
             aux_loss_weight=self.args.aux_loss_weight,
+            batch_size=self.batch_size,
         )
 
         return relevance_model

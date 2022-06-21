@@ -75,6 +75,10 @@ class RelevanceDataset:
             returns strings as is otherwise
         logger : `Logger`, optional
             logging handler for status messages
+        output_name: str
+            The name of tensorflow's output node which carry the prediction score.
+        aux_output_name: str
+            The name of tensorflow's output node which carry the prediction score for the auxiliary output.
 
         Notes
         -----
