@@ -122,7 +122,7 @@ class BasicCrossEntropy(ListwiseLossBase):
             """
 
             if is_aux_loss:
-                y_true_softmax = tf.math.softmax(y_true)  #convert to a prod. dist
+                y_true_softmax = tf.math.softmax(y_true)  # convert to a probability distribution
                 # masking zeros for the log op
                 zero = tf.constant(0, dtype=tf.float32)
                 non_zero = tf.not_equal(y_pred, zero)
