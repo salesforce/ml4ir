@@ -97,7 +97,7 @@ class RankingPipeline(RelevancePipeline):
             aux_loss: RelevanceLossBase = loss_factory.get_loss(
                 loss_key=self.aux_loss_key, scoring_type=self.scoring_type
             )
-            losses = {self.args.output_name: loss, self.args.aux_output_name:aux_loss}
+            losses = {self.args.output_name: loss, self.args.aux_output_name: aux_loss}
 
 
         # Define scorer

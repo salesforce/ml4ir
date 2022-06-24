@@ -132,7 +132,7 @@ class RelevanceModel:
 
             if self.feature_config.get_aux_label():
                 # Create model with functional Keras API
-                self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.output_name+"_aux": scores})
+                self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.aux_output_name: scores})
                 self.model.output_names = [self.output_name, self.aux_output_name]
                 # Get loss fn
                 loss_fn = scorer.loss[self.output_name].get_loss_fn(**metadata_features)
