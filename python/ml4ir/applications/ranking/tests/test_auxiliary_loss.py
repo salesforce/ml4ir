@@ -37,7 +37,7 @@ def train_ml4ir(data_dir, feature_config, model_config, logs_dir):
             "--val_pcent_split", "0.15",
             "--test_pcent_split", "0.15",
             "--early_stopping_patience", "25",
-            "--metrics_keys", "MRR", "categorical_accuracy",
+            "--metrics_keys", "MRR", "RankMatchFailure", "categorical_accuracy",
             "--monitor_metric", "categorical_accuracy"]
     args = get_args(argv)
     rp = RankingPipeline(args=args)
@@ -73,6 +73,7 @@ class TestDualObjectiveTraining(unittest.TestCase):
         assert np.isclose(primary_val_loss, 1.2086908, atol=0.0001)
         aux_val_loss = float(ml4ir_results.loc[ml4ir_results[0] == 'val_aux_ranking_score_loss'][1])
         assert np.isclose(aux_val_loss, 3.218617, atol=0.0001)
+        ml4ir_results.to_csv("/tmp/aux_success.csv")
 
 
 if __name__ == "__main__":

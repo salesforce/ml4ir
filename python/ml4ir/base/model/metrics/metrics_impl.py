@@ -1,9 +1,10 @@
+from typing import Dict
 from typing import Type, List, Union
+
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.base.features.feature_config import FeatureConfig
-
-from typing import Dict
+from ml4ir.applications.ranking.model.metrics import metrics_impl as ranking_metrics_impl
 
 
 class MetricState:
@@ -12,10 +13,11 @@ class MetricState:
 
 
 def get_metrics_impl(
-    metrics: List[Union[str, Type[Metric]]],
-    feature_config: FeatureConfig,
-    metadata_features: Dict,
-    **kwargs
+        metrics: List[Union[str, Type[Metric]]],
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        for_aux_output: bool = False,
+        **kwargs
 ) -> List[Union[Metric, str]]:
     """
     Wrapper function to get Metric objects
@@ -41,6 +43,9 @@ def get_metrics_impl(
     metrics_impl: List[Union[Metric, str]] = list()
 
     for metric in metrics:
+        if isinstance(metric, ranking_metrics_impl.CombinationMetric) and for_aux_output:
+            # Combination metrics are only defined for main output
+            continue
         if isinstance(metric, str):
             # If metric is specified as a string, then do nothing
             metrics_impl.append(metric)

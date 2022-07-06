@@ -22,7 +22,6 @@ from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
     TemperatureScalingLayer
-from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
@@ -150,13 +149,20 @@ class RelevanceModel:
                     metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
                 )
                 metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                    metrics=metrics,
+                    feature_config=feature_config,
+                    metadata_features=metadata_features,
+                    for_aux_output=True
                 )
                 self.model.compile(
                     optimizer=optimizer,
                     loss=losses,
                     loss_weights=lossWeights,
-                    metrics=[metrics_impl, metrics_impl_aux],
+                    metrics={
+                        self.output_name: metrics_impl,
+                        # TODO: The line below needs to be fixed
+                        # self.aux_output_name: metrics_impl_aux
+                    },
                     experimental_run_tf_function=False,
                 )
             else:

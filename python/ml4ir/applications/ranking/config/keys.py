@@ -27,6 +27,7 @@ class MetricKey(Key):
     ACR = "ACR"
     NDCG = "NDCG"
     PRECISION = "Precision"
+    RankMatchFailure = "RankMatchFailure"
     CATEGORICAL_ACCURACY = "categorical_accuracy"
     TOP_5_CATEGORICAL_ACCURACY = "top_5_categorical_accuracy"
 
