@@ -227,6 +227,10 @@ class RelevanceScorer(ScorerBase):
             Tensor object produced by applying the final activation function
             to the scores computed by the model
         """
+        if isinstance(self.loss, dict):
+            return self.loss[self.output_name].get_final_activation_op(self.output_name)(
+                scores, mask=metadata_features.get("mask")
+            )
         return self.loss.get_final_activation_op(self.output_name)(
             scores, mask=metadata_features.get("mask")
         )

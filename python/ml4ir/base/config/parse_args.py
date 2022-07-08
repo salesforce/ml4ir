@@ -107,6 +107,27 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--aux_loss_key",
+            type=str,
+            choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
+            help="Auxiliary loss to optimize."
+        )
+
+        self.add_argument(
+            "--primary_loss_weight",
+            type=float,
+            default=1.0,
+            help="The weight of the primary loss in the total loss",
+        )
+
+        self.add_argument(
+            "--aux_loss_weight",
+            type=float,
+            default=0,
+            help="The weight of the auxiliary loss in the total loss",
+        )
+
+        self.add_argument(
             "--metrics_keys",
             type=str,
             nargs="+",
@@ -304,6 +325,13 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="relevance_score",
             help="Name of the output node of the model",
+        )
+
+        self.add_argument(
+            "--aux_output_name",
+            type=str,
+            default=None,
+            help="Name of the output node of the auxiliary objective for the model",
         )
 
         self.add_argument(

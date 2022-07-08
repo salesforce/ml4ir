@@ -28,5 +28,7 @@ def get_loss(loss_key, scoring_type) -> RelevanceLossBase:
         return listwise_losses.RankOneListNet(loss_key=loss_key, scoring_type=scoring_type)
     elif loss_key == LossKey.SOFTMAX_CROSS_ENTROPY:
         return listwise_losses.SoftmaxCrossEntropy(loss_key=loss_key, scoring_type=scoring_type)
+    elif loss_key == LossKey.BASIC_CROSS_ENTROPY:
+        return listwise_losses.BasicCrossEntropy(loss_key=loss_key, scoring_type=scoring_type)
     else:
         raise NotImplementedError
