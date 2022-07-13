@@ -8,12 +8,7 @@ from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
 
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.model.metrics.metrics_impl import MetricState
-
-
-class CombinationMetric:
-    # Metrics from combinations of outputs
-    pass
+from ml4ir.base.model.metrics.metrics_impl import MetricState, CombinationMetric
 
 
 class MeanMetricWrapper(metrics.Mean):
@@ -85,13 +80,13 @@ class MeanMetricWrapper(metrics.Mean):
 
 class MeanRankMetric(MeanMetricWrapper):
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            state: str = MetricState.NEW,
-            name="MeanRankMetric",
-            dtype: Optional[dtypes.DType] = None,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        state: str = MetricState.NEW,
+        name="MeanRankMetric",
+        dtype: Optional[dtypes.DType] = None,
+        **kwargs,
     ):
         """
         Creates a `MeanRankMetric` instance to compute mean of rank
@@ -196,12 +191,12 @@ class MRR(MeanRankMetric):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            name="MRR",
-            state=MetricState.NEW,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="MRR",
+        state=MetricState.NEW,
+        **kwargs,
     ):
         """
         Creates a `MRR` instance to compute mean of reciprocal rank
@@ -224,7 +219,7 @@ class MRR(MeanRankMetric):
             metadata_features=metadata_features,
             name=name,
             state=state,
-            **kwargs
+            **kwargs,
         )
 
     def _get_matches_hook(self, y_pred_click_ranks):
@@ -261,12 +256,12 @@ class ACR(MeanRankMetric):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            name="ACR",
-            state=MetricState.NEW,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        name="ACR",
+        state=MetricState.NEW,
+        **kwargs,
     ):
         """
         Creates a `ACR` instance to compute mean of rank
@@ -289,7 +284,7 @@ class ACR(MeanRankMetric):
             metadata_features=metadata_features,
             name=name,
             state=state,
-            **kwargs
+            **kwargs,
         )
 
     def _get_matches_hook(self, y_pred_click_ranks):
@@ -311,13 +306,13 @@ class ACR(MeanRankMetric):
 
 class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            metadata_features: Dict,
-            state: str = MetricState.NEW,
-            name="RankMatchFailure",
-            dtype: Optional[dtypes.DType] = None,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        metadata_features: Dict,
+        state: str = MetricState.NEW,
+        name="RankMatchFailure",
+        dtype: Optional[dtypes.DType] = None,
+        **kwargs,
     ):
         """
         Creates a `RankMatchFailure` instance to compute mean of rank
@@ -351,17 +346,21 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
         rank = metadata_features[feature_config.get_rank("node_name")]
         mask = metadata_features[feature_config.get_mask("node_name")]
         if not feature_config.aux_label:
-            raise ValueError(f"{self.__class__.__qualname__} needs an aux label in the feature config")
+            raise ValueError(
+                f"{self.__class__.__qualname__} needs an aux label in the feature config"
+            )
         y_aux = metadata_features[feature_config.get_aux_label("node_name")]
 
-        super().__init__(
-            self._compute, name, dtype=dtype, y_aux=y_aux, rank=rank, mask=mask
-        )
+        super().__init__(self._compute, name, dtype=dtype, y_aux=y_aux, rank=rank, mask=mask)
         self.state = state
 
     def get_sample_weight(self, query_scores):
         mask = tf.ones_like(query_scores)
-        return tf.where(query_scores == tf.constant(-np.inf, dtype=tf.float32), tf.constant(0, dtype=tf.float32), mask)
+        return tf.where(
+            query_scores == tf.constant(-np.inf, dtype=tf.float32),
+            tf.constant(0, dtype=tf.float32),
+            mask,
+        )
 
     def _compute(self, y_true, y_pred, y_aux, rank, mask):
         """
@@ -385,30 +384,42 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
             y_pred = tf.where(tf.equal(mask, 0), tf.constant(-np.inf), y_pred)
 
             # Convert predicted ranking scores into ranks for each record per query
+            # TODO: Currently these ranks are defined below the clicked document too. Scores below the clicked document shouldn't affect the final rank for NDCG
             y_pred_ranks = tf.add(
                 tf.argsort(
                     tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
                 ),
                 tf.constant(1),
             )
-            click_ranks = tf.reduce_sum(tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), y_pred_ranks, 0),
-                                        axis=-1)
+            click_ranks = tf.reduce_sum(
+                tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), y_pred_ranks, 0),
+                axis=-1,
+            )
 
-            y_true_click_rank = tf.reduce_sum(tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), rank, 0),
-                                              axis=-1)
+            y_true_click_rank = tf.reduce_sum(
+                tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), rank, 0), axis=-1
+            )
             ranks = y_pred_ranks
 
         else:
             """Compute mean rank metric for existing data"""
-            y_true_click_rank = tf.reduce_sum(tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), rank, 0),
-                                              axis=-1)
+            y_true_click_rank = tf.reduce_sum(
+                tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), rank, 0), axis=-1
+            )
             click_ranks = y_true_click_rank
             ranks = rank
+        # Mask ranks with max possible value so that they are ignored downstream
+        ranks = tf.where(tf.equal(mask, 0), tf.constant(np.inf), tf.cast(ranks, tf.float32))
 
-        return self._compute_match_failure(tf.cast(ranks, tf.float32), tf.cast(y_true_click_rank, tf.float32),
-                                           tf.cast(click_ranks, tf.float32), tf.cast(y_aux, tf.float32))
+        return self._compute_match_failure(
+            tf.cast(ranks, tf.float32),
+            tf.cast(y_true_click_rank, tf.float32),
+            tf.cast(click_ranks, tf.float32),
+            tf.cast(y_aux, tf.float32),
+        )
 
-    def _compute_match_failure(self, ranks, y_true_click_rank, metric_click_ranks, y_aux):
+    @staticmethod
+    def _compute_match_failure(ranks, y_true_click_rank, metric_click_ranks, y_aux):
         """
         Compute match failure metric for a batch
 
@@ -416,11 +427,11 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
         ----------
         ranks : Tensor object
             Tensor object that contains scores for various documents
-        ranks : Tensor object
+        y_true_click_rank : Tensor object
             Tensor object that contains scores for various documents
-        ranks : Tensor object
+        metric_click_ranks : Tensor object
             Tensor object that contains scores for various documents
-        ranks : Tensor object
+        y_aux : Tensor object
             Tensor object that contains scores for various documents
 
         Returns
@@ -429,23 +440,39 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
             Tensor of Match Failure scores for each query
         """
         # Mask all values of y_aux which are below the clicked rank
-        scores = tf.where(ranks <= tf.expand_dims(metric_click_ranks, axis=-1), y_aux, tf.constant(-np.inf))
-        rank_scores = self.convert_to_rank_scores(scores)
+        scores = tf.where(
+            ranks <= tf.expand_dims(metric_click_ranks, axis=-1), y_aux, tf.constant(-np.inf)
+        )
+        rank_scores = RankMatchFailure.convert_to_rank_scores(scores)
+        ranks_above_click = tf.where(
+            ranks <= tf.expand_dims(metric_click_ranks, axis=-1), ranks, tf.constant(np.inf)
+        )
         num_match = tf.cast(tf.math.count_nonzero(scores > 0, axis=-1), tf.float32)
-        match_failure = 1 - tf.cast(self.normalized_discounted_cumulative_gain(rank_scores), tf.float32)  # TODO: See if rank has to be sent
+        match_failure = 1 - tf.cast(
+            RankMatchFailure.normalized_discounted_cumulative_gain(rank_scores, ranks_above_click),
+            tf.float32,
+        )
         # If all records<=click have a name match, then it is not an NMF
         # If number of scores>0 is same as the clicked rank, all ranks have a name match
-        match_failure = tf.where(tf.equal(metric_click_ranks, num_match), tf.constant(0, dtype=tf.float32),
-                                 match_failure)
+        match_failure = tf.where(
+            tf.equal(metric_click_ranks, num_match),
+            tf.constant(0, dtype=tf.float32),
+            match_failure,
+        )
         # No Match Failure when there is no match on the clicked rank
         idxs = tf.expand_dims(tf.range(tf.shape(ranks)[0]), -1)
         y_true_click_rank = tf.expand_dims(tf.cast(y_true_click_rank, tf.int32), axis=-1)
         y_true_click_idx = tf.where(y_true_click_rank > 0, y_true_click_rank - 1, 0)
-        clicked_records_score = tf.gather_nd(y_aux, indices=tf.concat([idxs, y_true_click_idx], axis=-1))
-        match_failure = tf.where(clicked_records_score == 0., tf.constant(-np.inf, dtype=tf.float32), match_failure)
+        clicked_records_score = tf.gather_nd(
+            y_aux, indices=tf.concat([idxs, y_true_click_idx], axis=-1)
+        )
+        match_failure = tf.where(
+            clicked_records_score == 0.0, tf.constant(-np.inf, dtype=tf.float32), match_failure
+        )
         return match_failure
 
-    def convert_to_rank_scores(self, scores):
+    @staticmethod
+    def convert_to_rank_scores(scores):
         """
         Maps each score -> 1/rank for standardizing the score ranges across queries
         Parameters
@@ -469,14 +496,21 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
         )
         rank_scores = 1 / score_rank
         rank_scores = tf.cast(rank_scores, dtype=tf.float32)
-        rank_scores = tf.where(scores == tf.constant(0., dtype=tf.float32), tf.constant(0., dtype=tf.float32),
-                               rank_scores)
+        rank_scores = tf.where(
+            scores == tf.constant(0.0, dtype=tf.float32),
+            tf.constant(0.0, dtype=tf.float32),
+            rank_scores,
+        )
         # -inf is used as mask
-        rank_scores = tf.where(scores == tf.constant(-np.inf, dtype=tf.float32), tf.constant(-np.inf, dtype=tf.float32),
-                               rank_scores)
+        rank_scores = tf.where(
+            scores == tf.constant(-np.inf, dtype=tf.float32),
+            tf.constant(-np.inf, dtype=tf.float32),
+            rank_scores,
+        )
         return rank_scores
 
-    def discounted_cumulative_gain(self, relevance_grades):
+    @staticmethod
+    def discounted_cumulative_gain(relevance_grades, ranks):
         """
         Compute the discounted cumulative gain
 
@@ -490,15 +524,15 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
         Tensor object
             Tensor of DCG scores along 0th axis
         """
-        dcg_unmasked = (
-                (tf.cast(tf.math.pow(2., relevance_grades) - 1, dtype=tf.float32)) /
-                (tf.math.log(tf.cast(tf.range(tf.shape(relevance_grades)[1]), dtype=tf.float32) + 2) / tf.math.log(2.))
+        dcg_unmasked = (tf.cast(tf.math.pow(2.0, relevance_grades) - 1, dtype=tf.float32)) / (
+            tf.math.log(tf.cast(ranks, dtype=tf.float32) + 1) / tf.math.log(2.0)
         )
         # Remove DCG where relevance grade was -inf (mask)
-        dcg_masked = tf.where(dcg_unmasked < 0, tf.constant(0., dtype=tf.float32), dcg_unmasked)
+        dcg_masked = tf.where(dcg_unmasked < 0, tf.constant(0.0, dtype=tf.float32), dcg_unmasked)
         return tf.reduce_sum(dcg_masked, axis=-1)
 
-    def normalized_discounted_cumulative_gain(self, relevance_grades):
+    @staticmethod
+    def normalized_discounted_cumulative_gain(relevance_grades, ranks):
         """
         Compute the normalized discounted cumulative gain
 
@@ -512,9 +546,13 @@ class RankMatchFailure(MeanMetricWrapper, CombinationMetric):
         Tensor object
             Tensor of NDCG scores along 0th axis
         """
-        sorted_relevance_grades = tf.sort(relevance_grades, direction='DESCENDING', axis=-1)
-        dcg_score = self.discounted_cumulative_gain(relevance_grades)
-        idcg_score = self.discounted_cumulative_gain(sorted_relevance_grades)
+        ideal_ranks = 1 + tf.range(tf.shape(relevance_grades)[1])
+        sorted_relevance_grades = tf.sort(relevance_grades, direction="DESCENDING", axis=-1)
+        dcg_score = RankMatchFailure.discounted_cumulative_gain(relevance_grades, ranks)
+        idcg_score = RankMatchFailure.discounted_cumulative_gain(
+            sorted_relevance_grades, ideal_ranks
+        )
         ndcg_raw = dcg_score / idcg_score
-        return tf.where(idcg_score == 0, tf.constant(-np.inf, dtype=tf.float32),
-                        ndcg_raw)  # Handle invalid condition, return -inf
+        return tf.where(
+            idcg_score == 0, tf.constant(-np.inf, dtype=tf.float32), ndcg_raw
+        )  # Handle invalid condition, return -inf
