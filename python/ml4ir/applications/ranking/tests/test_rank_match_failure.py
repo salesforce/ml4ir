@@ -13,46 +13,40 @@ from ml4ir.base.model.metrics.metrics_impl import MetricState
 
 class RankMachFailureTest(tf.test.TestCase):
     def test_convert_to_rank_scores(self):
-        scores = tf.constant(
-            [
-                [5.0, 4.0, 3.0, 2.0, 1.0, -np.inf, -np.inf],
-                # Duplicate scores
-                [1.0, 4.0, 3.0, 2.0, 1.0, -np.inf, -np.inf],
-                [5.0, 4.0, 3.0, 2.0, 1.0, 6.0, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [3.0, 2.0, 1.0, 5.0, 4.0, -np.inf, -np.inf],
-                # 0 scores are retained as 0 rank_scorers
-                [3.0, 2.0, 1.0, 5.0, 4.0, 0.0, 0.0],
-            ]
-        )
+        scores = tf.constant([
+            [5., 4., 3., 2., 1., -np.inf, -np.inf],
+            # Duplicate scores
+            [1., 4., 3., 2., 1., -np.inf, -np.inf],
+            [5., 4., 3., 2., 1., 6., -np.inf],
+            [1., 2., 3., 4., 5., -np.inf, -np.inf],
+            [3., 2., 1., 5., 4., -np.inf, -np.inf],
+            # 0 scores are retained as 0 rank_scorers
+            [3., 2., 1., 5., 4., 0., 0.],
+        ])
         actual_rank_scores = RankMatchFailure.convert_to_rank_scores(scores)
-        expected_rank_scores = tf.constant(
-            [
-                [1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, -np.inf, -np.inf],
-                # Note duplicate scores don't get the same rank score
-                [1 / 4.0, 1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 5.0, -np.inf, -np.inf],
-                [1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 6.0, 1 / 1.0, -np.inf],
-                [1 / 5.0, 1 / 4.0, 1 / 3.0, 1 / 2.0, 1 / 1.0, -np.inf, -np.inf],
-                [1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 1.0, 1 / 2.0, -np.inf, -np.inf],
-                # 0 scores are retained as 0 rank_scorers
-                [1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 1.0, 1 / 2.0, 0, 0],
-            ]
-        )
+        expected_rank_scores = tf.constant([
+            [1 / 1., 1 / 2., 1 / 3., 1 / 4., 1 / 5., -np.inf, -np.inf],
+            # Note duplicate scores don't get the same rank score
+            [1 / 4., 1 / 1., 1 / 2., 1 / 3., 1 / 5., -np.inf, -np.inf],
+            [1 / 2., 1 / 3., 1 / 4., 1 / 5., 1 / 6., 1 / 1., -np.inf],
+            [1 / 5., 1 / 4., 1 / 3., 1 / 2., 1 / 1., -np.inf, -np.inf],
+            [1 / 3., 1 / 4., 1 / 5., 1 / 1., 1 / 2., -np.inf, -np.inf],
+            # 0 scores are retained as 0 rank_scorers
+            [1 / 3., 1 / 4., 1 / 5., 1 / 1., 1 / 2., 0, 0],
+        ])
         tf.debugging.assert_equal(actual_rank_scores, expected_rank_scores)
 
     def test_normalized_discounted_cumulative_gain(self):
-        relevance_grades = tf.constant(
-            [
-                [1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, -np.inf, -np.inf],
-                [1 / 4.0, 1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 5.0, -np.inf, -np.inf],
-                [1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 6.0, 1 / 1.0, -np.inf],
-                [1 / 5.0, 1 / 4.0, 1 / 3.0, 1 / 2.0, 1 / 1.0, -np.inf, -np.inf],
-                [1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 1.0, 1 / 2.0, 0, 0],
-                # This should return -inf as a mask -> not defined in context of rank match failure
-                [0.0, 0.0, 0.0, 0.0, 0.0, -np.inf, -np.inf],
-                [0.0, 0.0, 0.0, 0.0, 1.0, -np.inf, -np.inf],
-            ]
-        )
+        relevance_grades = tf.constant([
+            [1 / 1., 1 / 2., 1 / 3., 1 / 4., 1 / 5., -np.inf, -np.inf],
+            [1 / 4., 1 / 1., 1 / 2., 1 / 3., 1 / 5., -np.inf, -np.inf],
+            [1 / 2., 1 / 3., 1 / 4., 1 / 5., 1 / 6., 1 / 1., -np.inf],
+            [1 / 5., 1 / 4., 1 / 3., 1 / 2., 1 / 1., -np.inf, -np.inf],
+            [1 / 3., 1 / 4., 1 / 5., 1 / 1., 1 / 2., 0, 0],
+            # This should return -inf as a mask -> not defined in context of rank match failure
+            [0., 0., 0., 0., 0., -np.inf, -np.inf],
+            [0., 0., 0., 0., 1., -np.inf, -np.inf],
+        ])
         ranks = 1 + tf.range(tf.shape(relevance_grades)[1])
         actual_ndcg = RankMatchFailure.normalized_discounted_cumulative_gain(
             relevance_grades, ranks=ranks
@@ -63,17 +57,15 @@ class RankMachFailureTest(tf.test.TestCase):
         tf.debugging.assert_equal(actual_ndcg, expected_ndcg)
 
     def test_discounted_cumulative_gain(self):
-        relevance_grades = tf.constant(
-            [
-                [1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, -np.inf, -np.inf],
-                [1 / 4.0, 1 / 1.0, 1 / 2.0, 1 / 3.0, 1 / 5.0, -np.inf, -np.inf],
-                [1 / 2.0, 1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 6.0, 1 / 1.0, -np.inf],
-                [1 / 5.0, 1 / 4.0, 1 / 3.0, 1 / 2.0, 1 / 1.0, -np.inf, -np.inf],
-                [1 / 3.0, 1 / 4.0, 1 / 5.0, 1 / 1.0, 1 / 2.0, 0, 0],
-                [0.0, 0.0, 0.0, 0.0, 0.0, -np.inf, -np.inf],
-                [0.0, 0.0, 0.0, 0.0, 1.0, -np.inf, -np.inf],
-            ]
-        )
+        relevance_grades = tf.constant([
+            [1 / 1., 1 / 2., 1 / 3., 1 / 4., 1 / 5., -np.inf, -np.inf],
+            [1 / 4., 1 / 1., 1 / 2., 1 / 3., 1 / 5., -np.inf, -np.inf],
+            [1 / 2., 1 / 3., 1 / 4., 1 / 5., 1 / 6., 1 / 1., -np.inf],
+            [1 / 5., 1 / 4., 1 / 3., 1 / 2., 1 / 1., -np.inf, -np.inf],
+            [1 / 3., 1 / 4., 1 / 5., 1 / 1., 1 / 2., 0, 0],
+            [0., 0., 0., 0., 0., -np.inf, -np.inf],
+            [0., 0., 0., 0., 1., -np.inf, -np.inf],
+        ])
         ranks = 1 + tf.range(tf.shape(relevance_grades)[1])
         actual_dcg = RankMatchFailure.discounted_cumulative_gain(relevance_grades, ranks=ranks)
         expected_dcg = tf.constant(
