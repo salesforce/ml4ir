@@ -111,6 +111,7 @@ class TestDualObjectiveTraining(unittest.TestCase):
         aux_val_loss = float(
             ml4ir_results.loc[ml4ir_results[0] == "val_aux_ranking_score_loss"][1]
         )
+        # RankMatchFailure metric comparisons
         assert np.isclose(aux_val_loss, 1.2806674, atol=0.0001)
         # RankMatchFailure metric comparisons
         aux_val_loss = float(
