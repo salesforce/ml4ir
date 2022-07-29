@@ -20,9 +20,10 @@ from ml4ir.base.model.scoring.interaction_model import InteractionModel, Univari
 from ml4ir.base.model.serving import define_serving_signatures
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
-from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
-    TemperatureScalingLayer
-from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.base.model.calibration.temperature_scaling import (
+    temperature_scale,
+    TemperatureScalingLayer,
+)
 from ml4ir.base.config.keys import LearningRateScheduleKey
 
 
@@ -132,31 +133,42 @@ class RelevanceModel:
 
             if self.feature_config.get_aux_label():
                 # Create model with functional Keras API
-                self.model = Model(inputs=inputs, outputs={self.output_name: scores, self.aux_output_name: scores})
+                self.model = Model(
+                    inputs=inputs, outputs={self.output_name: scores, self.aux_output_name: scores}
+                )
                 self.model.output_names = [self.output_name, self.aux_output_name]
                 # Get loss fn
                 loss_fn = scorer.loss[self.output_name].get_loss_fn(**metadata_features)
-                metadata_features['is_aux_loss'] = True
-                metadata_features['batch_size'] = self.batch_size
+                metadata_features["is_aux_loss"] = True
+                metadata_features["batch_size"] = self.batch_size
                 loss_fn_aux = scorer.loss[self.aux_output_name].get_loss_fn(**metadata_features)
-                losses = {
-                    self.output_name: loss_fn,
-                    self.aux_output_name: loss_fn_aux}
+                losses = {self.output_name: loss_fn, self.aux_output_name: loss_fn_aux}
 
-                lossWeights = {self.output_name: primary_loss_weight, self.aux_output_name: aux_loss_weight}
+                loss_weights = {
+                    self.output_name: primary_loss_weight,
+                    self.aux_output_name: aux_loss_weight,
+                }
 
                 # Get metric objects
                 metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                    metrics=metrics,
+                    feature_config=feature_config,
+                    metadata_features=metadata_features,
                 )
                 metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                    metrics=metrics,
+                    feature_config=feature_config,
+                    metadata_features=metadata_features,
+                    for_aux_output=True,
                 )
                 self.model.compile(
                     optimizer=optimizer,
                     loss=losses,
-                    loss_weights=lossWeights,
-                    metrics=[metrics_impl, metrics_impl_aux],
+                    loss_weights=loss_weights,
+                    metrics={
+                        self.output_name: metrics_impl,
+                        self.aux_output_name: metrics_impl_aux,
+                    },
                     experimental_run_tf_function=False,
                 )
             else:
@@ -169,7 +181,9 @@ class RelevanceModel:
 
                 # Get metric objects
                 metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics, feature_config=feature_config, metadata_features=metadata_features
+                    metrics=metrics,
+                    feature_config=feature_config,
+                    metadata_features=metadata_features,
                 )
                 """
                 NOTE:
@@ -406,25 +420,29 @@ class RelevanceModel:
             The created scheduler callback object.
         """
 
-        if model_config and 'lr_schedule' in model_config:
-            lr_schedule = model_config['lr_schedule']
-            lr_schedule_key = lr_schedule['key']
+        if model_config and "lr_schedule" in model_config:
+            lr_schedule = model_config["lr_schedule"]
+            lr_schedule_key = lr_schedule["key"]
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
                 if monitor_metric is None:
-                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
-                                                                     verbose=1)
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+                        factor=lr_schedule.get("factor", 0.5),
+                        patience=lr_schedule.get("patience", 5),
+                        min_lr=lr_schedule.get("min_lr", 0.0001),
+                        mode=lr_schedule.get("mode", "auto"),
+                        verbose=1,
+                    )
                 else:
                     if not monitor_metric.startswith("val_"):
                         monitor_metric = "val_{}".format(monitor_metric)
-                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
-                                                                     factor=lr_schedule.get('factor', 0.5),
-                                                                     patience=lr_schedule.get('patience', 5),
-                                                                     min_lr=lr_schedule.get('min_lr', 0.0001),
-                                                                     mode=lr_schedule.get('mode', 'auto'),
-                                                                     verbose=1)
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+                        monitor=monitor_metric,
+                        factor=lr_schedule.get("factor", 0.5),
+                        patience=lr_schedule.get("patience", 5),
+                        min_lr=lr_schedule.get("min_lr", 0.0001),
+                        mode=lr_schedule.get("mode", "auto"),
+                        verbose=1,
+                    )
                 return reduce_lr
 
     def fit(
@@ -469,8 +487,8 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        if self.feature_config.aux_label: #val_ranking_score_new_MRR
-            monitor_metric = 'val_' + self.output_name + '_' + monitor_metric
+        if self.feature_config.aux_label:  # val_ranking_score_new_MRR
+            monitor_metric = "val_" + self.output_name + "_" + monitor_metric
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
@@ -574,9 +592,12 @@ class RelevanceModel:
 
             if logs_dir:
                 np.set_printoptions(
-                    formatter={"all": lambda x: str(x.decode("utf-8"))
-                               if isinstance(x, bytes) else str(x)},
-                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+                    formatter={
+                        "all": lambda x: str(x.decode("utf-8")) if isinstance(x, bytes) else str(x)
+                    },
+                    linewidth=sys.maxsize,
+                    threshold=sys.maxsize,
+                )  # write the full line in the csv not the truncated version.
 
                 # Decode bytes features to strings
                 for col in predictions_df.columns:
@@ -691,7 +712,7 @@ class RelevanceModel:
         pad_sequence: bool = False,
         sub_dir: str = "final",
         dataset: Optional[RelevanceDataset] = None,
-        experiment_details: Optional[dict] = None
+        experiment_details: Optional[dict] = None,
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -774,7 +795,10 @@ class RelevanceModel:
                 )
             except FileNotFoundError:
                 self.logger.warning(
-                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
+                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(
+                        layer.name
+                    )
+                )
 
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -908,7 +932,9 @@ class RelevanceModel:
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
 
         # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
-        scheduler_callback = self.define_scheduler_as_callback(monitor_metric, self.scorer.model_config)
+        scheduler_callback = self.define_scheduler_as_callback(
+            monitor_metric, self.scorer.model_config
+        )
         if scheduler_callback:
             callbacks_list.append(scheduler_callback)
 
@@ -916,8 +942,9 @@ class RelevanceModel:
 
         return callbacks_list
 
-    def calibrate(self, relevance_dataset, logger, logs_dir_local, **kwargs)\
-            -> Tuple[np.ndarray, ...]:
+    def calibrate(
+        self, relevance_dataset, logger, logs_dir_local, **kwargs
+    ) -> Tuple[np.ndarray, ...]:
         """Calibrate model with temperature scaling
         Parameters
         ----------
@@ -936,15 +963,19 @@ class RelevanceModel:
         """
         logger.info("=" * 50)
         logger.info("Calibrating the model with temperature scaling")
-        return temperature_scale(model=self.model,
-                                 scorer=self.scorer,
-                                 dataset=relevance_dataset,
-                                 logger=logger,
-                                 logs_dir_local=logs_dir_local,
-                                 file_io=self.file_io,
-                                 **kwargs)
+        return temperature_scale(
+            model=self.model,
+            scorer=self.scorer,
+            dataset=relevance_dataset,
+            logger=logger,
+            logs_dir_local=logs_dir_local,
+            file_io=self.file_io,
+            **kwargs,
+        )
 
-    def add_temperature_layer(self, temperature: float = 1.0, layer_name: str = 'temperature_layer'):
+    def add_temperature_layer(
+        self, temperature: float = 1.0, layer_name: str = "temperature_layer"
+    ):
         """Add temperature layer to the input of last activation (softmax) layer
         Parameters
         ----------
@@ -962,25 +993,32 @@ class RelevanceModel:
         """
 
         # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
-        final_layer_name = self.scorer.model_config['layers'][-1]['name']
+        final_layer_name = self.scorer.model_config["layers"][-1]["name"]
 
         final_layer = self.model.get_layer(name=final_layer_name).output
-        temperature_layer = TemperatureScalingLayer(name=layer_name,
-                                                    temperature=temperature)(final_layer)
+        temperature_layer = TemperatureScalingLayer(name=layer_name, temperature=temperature)(
+            final_layer
+        )
 
         # using the `last layer` as final activation function before computing loss
         idx_activation = -1
-        if len(self.model.layers) > 0 and isinstance(self.model.layers[idx_activation],
-                                                     tf.keras.layers.Activation):
+        if len(self.model.layers) > 0 and isinstance(
+            self.model.layers[idx_activation], tf.keras.layers.Activation
+        ):
             # creating new activation layer
             activation_layer_name = self.model.get_layer(index=idx_activation).name
             activation_function = self.model.get_layer(index=idx_activation).activation
             activation_layer = tf.keras.layers.Activation(
-                activation_function, name=activation_layer_name)(temperature_layer)
+                activation_function, name=activation_layer_name
+            )(temperature_layer)
             # creating new keras Functional API model
             self.model = Model(self.model.inputs, activation_layer)
-            self.logger.info(f'Temperature Scaling layer added and new Functional API model'
-                             f' replaced; temperature = {temperature}.')
+            self.logger.info(
+                f"Temperature Scaling layer added and new Functional API model"
+                f" replaced; temperature = {temperature}."
+            )
         else:
-            self.logger.info("Skipping adding Temperature Scaling layer because no activation "
-                             "exist in the last layer of Keras original model!")
+            self.logger.info(
+                "Skipping adding Temperature Scaling layer because no activation "
+                "exist in the last layer of Keras original model!"
+            )

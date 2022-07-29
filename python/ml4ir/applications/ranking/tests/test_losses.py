@@ -8,7 +8,6 @@ from ml4ir.applications.ranking.model.losses import listwise_losses
 
 
 class RankingModelTest(RankingTestBase):
-
     def setUp(self):
 
         super().setUp()
@@ -55,7 +54,7 @@ class RankingModelTest(RankingTestBase):
         y_pred = activation_op(logits=self.logits, mask=self.mask)
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         assert np.isclose(loss_fn(self.y_true, y_pred), 1.306335, atol=1e-5)
 
@@ -68,7 +67,7 @@ class RankingModelTest(RankingTestBase):
         y_pred = activation_op(logits=self.logits, mask=self.mask)
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         assert np.isclose(loss_fn(self.y_true_aux, y_pred), 0.75868917, atol=1e-5)
 
@@ -81,7 +80,7 @@ class RankingModelTest(RankingTestBase):
         y_pred = activation_op(logits=self.logits, mask=self.mask)
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         assert np.isclose(loss_fn(self.y_true_aux, y_pred), 0.5249801, atol=1e-5)
 
@@ -94,7 +93,7 @@ class RankingModelTest(RankingTestBase):
         y_pred = activation_op(logits=self.logits, mask=self.mask)
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         assert np.isclose(loss_fn(self.y_true_aux_ties, y_pred), 4.117315, atol=1e-5)
 
@@ -107,6 +106,6 @@ class RankingModelTest(RankingTestBase):
         y_pred = activation_op(logits=self.logits, mask=self.mask)
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         assert np.isclose(loss_fn(self.y_true, y_pred), 2.1073625, atol=1e-5)

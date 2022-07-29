@@ -7,7 +7,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.io.file_io import FileIO
 from logging import Logger
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, List
 
 
 class ScorerBase(object):
@@ -29,7 +29,7 @@ class ScorerBase(object):
         model_config: dict,
         feature_config: FeatureConfig,
         interaction_model: InteractionModel,
-        loss: RelevanceLossBase,
+        loss: Union[RelevanceLossBase, List[RelevanceLossBase]],
         file_io: FileIO,
         output_name: str = "score",
         logger: Optional[Logger] = None,
@@ -110,7 +110,7 @@ class ScorerBase(object):
             loss=loss,
             file_io=file_io,
             output_name=output_name,
-            logger=logger
+            logger=logger,
         )
 
     def __call__(self, inputs: Dict[str, Input]):
