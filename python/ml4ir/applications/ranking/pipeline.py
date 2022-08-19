@@ -47,6 +47,8 @@ class RankingPipeline(RelevancePipeline):
         """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
+        self.aux_loss_key = args.aux_loss_key
+        self.batch_size = args.batch_size
 
         super().__init__(args)
 
@@ -90,13 +92,20 @@ class RankingPipeline(RelevancePipeline):
         loss: RelevanceLossBase = loss_factory.get_loss(
             loss_key=self.loss_key, scoring_type=self.scoring_type
         )
+        losses = loss
+        if self.aux_loss_key:
+            aux_loss: RelevanceLossBase = loss_factory.get_loss(
+                loss_key=self.aux_loss_key, scoring_type=self.scoring_type
+            )
+            losses = {self.args.output_name: loss, self.args.aux_output_name: aux_loss}
+
 
         # Define scorer
         scorer: ScorerBase = RelevanceScorer(
             feature_config=self.feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
-            loss=loss,
+            loss=losses,
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
@@ -121,8 +130,12 @@ class RankingPipeline(RelevancePipeline):
             freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
             compile_keras_model=self.args.compile_keras_model,
             output_name=self.args.output_name,
+            aux_output_name=self.args.aux_output_name,
             file_io=self.local_io,
             logger=self.logger,
+            primary_loss_weight=self.args.primary_loss_weight,
+            aux_loss_weight=self.args.aux_loss_weight,
+            batch_size=self.batch_size,
         )
 
         return relevance_model

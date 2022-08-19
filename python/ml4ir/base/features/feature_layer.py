@@ -155,6 +155,7 @@ def define_feature_layer(
                 tf.expand_dims(tf.gather(inputs["mask"], indices=0), axis=0)
             )
 
+        # Note we exclude only label. Aux label is included as metadata
         for feature_info in feature_config.get_all_features(include_label=False):
             feature_node_name = feature_info.get("node_name", feature_info["name"])
             feature_layer_info = feature_info["feature_layer_info"]

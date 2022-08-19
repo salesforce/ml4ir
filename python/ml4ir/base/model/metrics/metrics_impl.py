@@ -1,9 +1,9 @@
+from typing import Dict
 from typing import Type, List, Union
+
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.base.features.feature_config import FeatureConfig
-
-from typing import Dict
 
 
 class MetricState:
@@ -11,10 +11,16 @@ class MetricState:
     NEW = "new"
 
 
+class CombinationMetric:
+    # Metrics from combinations of outputs
+    pass
+
+
 def get_metrics_impl(
     metrics: List[Union[str, Type[Metric]]],
     feature_config: FeatureConfig,
     metadata_features: Dict,
+    for_aux_output: bool = False,
     **kwargs
 ) -> List[Union[Metric, str]]:
     """
@@ -44,6 +50,9 @@ def get_metrics_impl(
         if isinstance(metric, str):
             # If metric is specified as a string, then do nothing
             metrics_impl.append(metric)
+        if issubclass(metric, CombinationMetric) and for_aux_output:
+            # Combination metrics are only defined for main output
+            continue
         else:
             # If metric is a class of type Metric
             try:
