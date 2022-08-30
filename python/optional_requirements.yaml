@@ -24,4 +24,6 @@ all:
   - omnixai==1.1.4  #required for running explanations demo. Upgrade to 1.1.5 when it is available
 pyspark:
   - pyspark==3.0.1  # required to support pyspark data read
+explainer:
+  - omnixai==1.1.4 # required for running explanations demo. Upgrade to 1.1.5 when it is available
 # Add other optional ml4ir dependencies here
