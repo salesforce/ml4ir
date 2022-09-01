@@ -14,7 +14,7 @@ ml4ir is designed as modular subcomponents which can each be combined and custom
 * Named Entity Recognition
 * Top Results
 * Query2SQL
-* *add your application here*
+* *add your application*
   
 ![ml4ir](docs/source/_static/ml4ir.png)
 
