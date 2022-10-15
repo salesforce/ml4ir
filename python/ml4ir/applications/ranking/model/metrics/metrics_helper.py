@@ -297,7 +297,8 @@ def get_grouped_stats(
         sum_new_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[new_rank_col]).sum())
 
         # Aggregate secondary label metrics by group keys
-        df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
+        if secondary_labels:
+            df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
     else:
         # Compute overall stats if group keys are not specified
         query_count = [df_clicked.shape[0]]
@@ -307,7 +308,8 @@ def get_grouped_stats(
         sum_new_reciprocal_rank = [(1.0 / df_clicked[new_rank_col]).sum()]
 
         # Aggregate secondary label metrics
-        df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
+        if secondary_labels:
+            df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
 
     df_label_stats = pd.DataFrame(
         {
