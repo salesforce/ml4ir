@@ -300,6 +300,16 @@ class RelevancePipeline(object):
 
         return relevance_dataset
 
+    def get_relevance_model_cls(self):
+        """
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
+
+        Returns
+        -------
+        RelevanceModel class
+        """
+        raise NotImplementedError
+
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
         Creates RelevanceModel that can be used for training and evaluating

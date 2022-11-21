@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Ability to pass custom ClassificationModel class in Pipeline.
+- Ability to pass custom RelevanceModel class in Pipeline.
 
 ## [0.1.13] - 2022-10-17
 

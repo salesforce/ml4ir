@@ -52,10 +52,18 @@ class RankingPipeline(RelevancePipeline):
 
         super().__init__(args)
 
+    def get_relevance_model_cls(self):
+        """
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
+
+        Returns
+        -------
+        RelevanceModel class
+        """
         if self.model_config["architecture_key"] == ArchitectureKey.LINEAR:
-            self.ranking_model_cls = LinearRankingModel
+            return LinearRankingModel
         else:
-            self.ranking_model_cls = RankingModel
+            return RankingModel
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
@@ -119,7 +127,7 @@ class RankingPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = self.ranking_model_cls(
+        relevance_model: RelevanceModel = self.get_relevance_model_cls(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             scorer=scorer,

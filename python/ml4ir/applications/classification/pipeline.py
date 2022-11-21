@@ -41,7 +41,15 @@ class ClassificationPipeline(RelevancePipeline):
         self.loss_key = args.loss_key
         super().__init__(args)
 
-        self.classification_model_cls = ClassificationModel
+    def get_relevance_model_cls(self):
+        """
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
+
+        Returns
+        -------
+        RelevanceModel class
+        """
+        return ClassificationModel
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
@@ -96,7 +104,7 @@ class ClassificationPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = self.classification_model_cls(
+        relevance_model: RelevanceModel = self.get_relevance_model_cls(
             feature_config=self.feature_config,
             scorer=scorer,
             metrics=metrics,
