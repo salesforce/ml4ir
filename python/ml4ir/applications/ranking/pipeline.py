@@ -127,7 +127,7 @@ class RankingPipeline(RelevancePipeline):
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
         # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = self.get_relevance_model_cls(
+        relevance_model: RelevanceModel = self.get_relevance_model_cls()(
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             scorer=scorer,
