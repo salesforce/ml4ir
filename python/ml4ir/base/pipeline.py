@@ -60,9 +60,6 @@ class RelevancePipeline(object):
 
         # Setup directories
         self.local_io = LocalIO()
-        self.models_dir_hdfs = None
-        self.logs_dir_hdfs = None
-        self.data_dir_hdfs = None
         if self.args.file_handler == FileHandlerKey.SPARK:
             self.models_dir = os.path.join(self.args.models_dir, self.run_id)
             self.logs_dir = os.path.join(self.args.logs_dir, self.run_id)
@@ -76,10 +73,10 @@ class RelevancePipeline(object):
                 DefaultDirectoryKey.TEMP_DATA, os.path.basename(self.data_dir)
             )
         else:
-            self.models_dir_local = os.path.join(
+            self.models_dir = self.models_dir_local = os.path.join(
                 self.args.models_dir, self.run_id)
-            self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
-            self.data_dir_local = self.args.data_dir
+            self.logs_dir = self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
+            self.data_dir = self.data_dir_local = self.args.data_dir
 
         # Setup logging
         self.local_io.make_directory(self.logs_dir_local, clear_dir=True)
@@ -302,6 +299,16 @@ class RelevancePipeline(object):
         )
 
         return relevance_dataset
+
+    def get_relevance_model_cls(self):
+        """
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
+
+        Returns
+        -------
+        RelevanceModel class
+        """
+        raise NotImplementedError
 
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
