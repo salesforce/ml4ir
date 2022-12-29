@@ -12,7 +12,7 @@
     <scalastyle.version>0.7.0</scalastyle.version>
     <scala.version>2.11.12</scala.version>
     <scala.artifact.suffix>2.11</scala.artifact.suffix>
-    <tensorflow.version>1.15.0</tensorflow.version>
+    <tensorflow.version>2.4.0</tensorflow.version>
     <jackson.version>2.10.0</jackson.version>
   </properties>
 
