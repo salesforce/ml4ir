@@ -1,7 +1,10 @@
 package ml4ir.inference.tensorflow
 
 import com.google.protobuf.MessageLite
-import org.tensorflow.{SavedModelBundle, Tensor, Tensors}
+import org.tensorflow.ndarray.{ByteNdArray, NdArray, NdArrays, Shape, StdArrays}
+import org.tensorflow.ndarray.buffer.{ByteDataBuffer, DataBuffers}
+import org.tensorflow.types.{TFloat32, TString}
+import org.tensorflow.{SavedModelBundle, Tensor}
 
 /**
   * @see <a href="https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle">SavedModelBundle</a>
@@ -39,30 +42,23 @@ class TFRecordExecutor(dirPath: String, config: ModelExecutorConfig) {
   def apply(in: MessageLite): Array[Float] = {
     val ModelExecutorConfig(inputNode, outputNode) = config
     // TF typically runs the forward pass on batches, so we wrap our protobuf bytes in another outer length-1 array
-    val inputTensor: Tensor[String] = Tensors.create(Array(serializeToBytes(in)))
+    val inputTensor: TString = TString.tensorOfBytes(NdArrays.vectorOfObjects(serializeToBytes(in)))
+
     try {
-      val resultTensor: Tensor[_] = session
+      val resultTensor: TFloat32 = session
         .runner()
         .feed(inputNode, inputTensor)
         .fetch(outputNode)
         .run()
         .get(0)
-      resultTensor.shape().length match {
+        .asInstanceOf[TFloat32]
+      resultTensor.shape().numDimensions() match {
         case 1 =>
-          val predictions: Array[Float] = Array.ofDim[Float](resultTensor.shape()(0).toInt)
-          resultTensor.copyTo(predictions)
-          predictions
+          StdArrays.array1dCopyOf(resultTensor)
         case 2 =>
-          val predictions: Array[Array[Float]] =
-            Array.ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt)
-          resultTensor.copyTo(predictions)
-          predictions(0)
+          StdArrays.array2dCopyOf(resultTensor)(0)
         case 3 =>
-          val predictions: Array[Array[Array[Float]]] =
-            Array
-              .ofDim[Float](resultTensor.shape()(0).toInt, resultTensor.shape()(1).toInt, resultTensor.shape()(2).toInt)
-          resultTensor.copyTo(predictions)
-          predictions(0)(0)
+          StdArrays.array3dCopyOf(resultTensor)(0)(0)
         case _ =>
           throw new IllegalArgumentException("unsupported result shape: " + resultTensor.shape())
       }
