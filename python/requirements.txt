@@ -1,9 +1,9 @@
 # ml4ir dependencies
-tensorflow==2.10.0
+tensorflow==2.7.0
 numpy==1.21.6
 pandas==1.2.1
 scipy==1.5.4
-tensorflow-text==2.10.0
+tensorflow-text==2.7.3
 transformers==4.15.0
 tensorflow-hub==0.12.0
 
