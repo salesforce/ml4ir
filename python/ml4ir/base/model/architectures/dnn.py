@@ -68,7 +68,7 @@ class DNN(keras.Model):
     def get_config(self):
         """Get config for the model"""
         config = super().get_config()
-        config[DNNLayerKey.LAYERS] = model_config[DNNLayerKey.LAYERS]
+        config[DNNLayerKey.LAYERS] = self.model_config[DNNLayerKey.LAYERS]
         return config
 
     def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
