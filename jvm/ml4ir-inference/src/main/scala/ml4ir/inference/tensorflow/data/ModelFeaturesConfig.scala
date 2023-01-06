@@ -9,7 +9,9 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.common.base.Charsets._
 import com.google.common.io.Files
-import org.tensorflow.DataType
+import org.tensorflow.proto.framework.DataType
+import org.tensorflow.types.{TFloat32, TInt64, TString}
+import org.tensorflow.types.family.TType
 
 import scala.collection.JavaConverters._
 
@@ -46,7 +48,16 @@ case class FeatureConfig(@JsonProperty("name") name: String,
                          @JsonProperty("dtype") dTypeString: String,
                          @JsonProperty("serving_info") servingConfig: ServingConfig,
                          @JsonProperty("tfrecord_type") tfRecordType: String) {
-  def dType: DataType = DataType.valueOf(dTypeString.toUpperCase)
+  def dType: DataType = {
+    dTypeString.toUpperCase match {
+      case "INT" => DataType.DT_INT64
+      case "INT64" => DataType.DT_INT64
+      case "FLOAT" => DataType.DT_FLOAT
+      case "FLOAT32" => DataType.DT_FLOAT
+      case "BYTES" => DataType.DT_STRING
+      case "STRING" => DataType.DT_STRING
+    }
+  }
 }
 
 /**
