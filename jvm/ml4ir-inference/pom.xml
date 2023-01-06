@@ -150,6 +150,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <addScalacArgs>-target:jvm-1.8</addScalacArgs>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -214,7 +217,7 @@
   <dependencies>
     <dependency>
       <groupId>org.tensorflow</groupId>
-      <artifactId>tensorflow</artifactId>
+      <artifactId>tensorflow-core-platform</artifactId>
     </dependency>
     <dependency>
       <groupId>org.tensorflow</groupId>
@@ -222,8 +225,13 @@
     </dependency>
     <dependency>
       <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>3.21.12</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java-util</artifactId>
-      <version>3.11.4</version>
+      <version>3.21.12</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
