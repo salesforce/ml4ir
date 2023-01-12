@@ -8,7 +8,6 @@ import yaml
 
 from ml4ir.applications.ranking.model.metrics.metrics_impl import RankMatchFailure
 from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.model.metrics.metrics_impl import MetricState
 
 
 class RankMachFailureTest(tf.test.TestCase):
@@ -204,11 +203,7 @@ class RankMachFailureTest(tf.test.TestCase):
                 feature_config_dict=yaml.safe_load(feature_config_file),
                 logger=logging.Logger("test_logger"),
             )
-        rmf = RankMatchFailure(
-            feature_config,
-            metadata_features=defaultdict(lambda: tf.constant([1])),
-            state=MetricState.NEW,
-        )
+        rmf = RankMatchFailure()
         actual_rmfs = rmf._compute(y_true, y_pred, y_aux, ranks, mask)
         expected_rmfs = tf.constant(
             [

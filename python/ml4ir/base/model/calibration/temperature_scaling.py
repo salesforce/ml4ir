@@ -160,9 +160,9 @@ def get_intermediate_model(model, scorer) -> tf.keras.models.Model:
     tf.keras.models.Model
     a tf.keras.models.Model copy of the `model`
     """
-    # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
+    # get last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
     final_layer_name = scorer.model_config['layers'][-1]['name']
-    layer_output = model.get_layer(name=final_layer_name).output
+    layer_output = model.get_layer("dnn").get_layer(name=final_layer_name).output
 
     return tf.keras.models.Model(inputs=model.input, outputs=layer_output)
 
