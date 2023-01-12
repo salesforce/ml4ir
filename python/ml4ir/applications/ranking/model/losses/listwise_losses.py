@@ -166,7 +166,12 @@ class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
 
         # Convert y_true to a probability distribution
-        y_true_softmax = self.final_activation_fn(y_true)
+        y_true_softmax = self.final_activation_op({
+            FeatureTypeKey.METADATA: {
+                FeatureTypeKey.MASK: mask
+            },
+            FeatureTypeKey.LOGITS: y_true
+        }, training=training)
 
         return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
 
