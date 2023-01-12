@@ -10,8 +10,8 @@ class LossKey(Key):
     SOFTMAX_CROSS_ENTROPY = "softmax_cross_entropy"
     BASIC_CROSS_ENTROPY = "basic_cross_entropy"
 
-    AUXILIARY_ONE_HOT_CROSS_ENTROPY = "auxiliary_one_hot_cross_entropy"
-    AUXILIARY_SOFTMAX_CROSS_ENTROPY = "auxiliary_softmax_cross_entropy"
+    AUX_ONE_HOT_CROSS_ENTROPY = "aux_one_hot_cross_entropy"
+    AUX_SOFTMAX_CROSS_ENTROPY = "aux_softmax_cross_entropy"
 
 
 class ScoringTypeKey(Key):

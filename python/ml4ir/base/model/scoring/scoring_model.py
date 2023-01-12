@@ -1,5 +1,6 @@
 import logging
 from logging import Logger
+import traceback
 from typing import Dict, Optional, Union, List
 
 import tensorflow as tf
@@ -78,6 +79,8 @@ class RelevanceScorer(keras.Model):
             primarily for saving visualizations.
         """
         super().__init__(**kwargs)
+
+        self.logger = logger
 
         self.model_config = model_config
         self.feature_config = feature_config
@@ -243,8 +246,15 @@ class RelevanceScorer(keras.Model):
 
         # If auxiliary loss is present, add it to compute final loss
         if self.aux_loss_weight > 0:
+            aux_label = None
+            try:
+                aux_label = self.feature_config.get_aux_label("node_name")
+            except AttributeError:
+                self.logger.error("There was an error while loading the aux_label info. Did you set the is_aux_label flag to true in the FeatureConfig YAML?")
+                self.logger.error(traceback.format_exc())
+
             aux_loss_value = self.aux_loss_op(inputs=inputs,
-                                              y_true=inputs[self.feature_config.get_aux_label("node_name")],
+                                              y_true=inputs[aux_label],
                                               y_pred=y_pred)
 
             self.primary_loss_metric.update_state(loss_value)

@@ -20,7 +20,7 @@ from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.tests.test_base import RelevanceTestBase
 from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.model.losses import loss_factory
-from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.ranking.model.metrics import metrics_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
 
 import warnings
@@ -83,7 +83,7 @@ class RankingTestBase(RelevanceTestBase):
 
         # Define metrics objects from metrics keys
         metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
         ]
 
         # Define optimizer

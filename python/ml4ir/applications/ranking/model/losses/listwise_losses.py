@@ -4,14 +4,15 @@ from tensorflow.keras import layers
 from tensorflow.keras.losses import Reduction
 
 from ml4ir.base.config.keys import FeatureTypeKey
+from ml4ir.applications.ranking.config.keys import LossKey, ScoringTypeKey
 from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 
 
 class SoftmaxCrossEntropy(ListwiseLossBase):
 
     def __init__(self,
-                 loss_key: str,
-                 scoring_type: str,
+                 loss_key: str = LossKey.SOFTMAX_CROSS_ENTROPY,
+                 scoring_type: str = ScoringTypeKey.LISTWISE,
                  output_name: str = "score",
                  **kwargs):
         """
@@ -56,8 +57,10 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
-        return self.loss_fn(y_true, tf.math.multiply(y_pred, mask))
+        return self.loss_fn(y_true=tf.math.multiply(y_true, mask),
+                            y_pred=tf.math.multiply(y_pred, mask))
 
     def final_activation_op(self, inputs, training=None):
         """
@@ -122,15 +125,18 @@ class AuxiliaryOneHotCrossEntropy(SoftmaxCrossEntropy):
         - A simple remedy is to scale down the loss by the number of ties per query.
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
         # Convert y_true to 1-hot labels
-        y_true_1_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
-        y_true_1_hot = tf.cast(y_true_1_hot, dtype=tf.float32)
+        y_true_one_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
+        y_true_one_hot = tf.cast(y_true_one_hot, dtype=y_pred.dtype)
 
         # Scale down the loss of a query by 1 / (number of ties)
-        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_1_hot, axis=1))
+        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_one_hot, axis=1))
 
-        return self.loss_fn(y_true_1_hot, tf.math.multiply(y_pred, mask), sample_weight=sample_weight)
+        return self.loss_fn(y_true=tf.math.multiply(y_true_one_hot, mask),
+                            y_pred=tf.math.multiply(y_pred, mask),
+                            sample_weight=sample_weight)
 
 
 class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
@@ -164,18 +170,25 @@ class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
         - Uses `mask` field to exclude padded records from contributing to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
         # Convert y_true to a probability distribution
-        y_true_softmax = self.final_activation_fn(y_true)
+        y_true_softmax = self.final_activation_op({
+            FeatureTypeKey.METADATA: {
+                FeatureTypeKey.MASK: mask
+            },
+            FeatureTypeKey.LOGITS: y_true
+        }, training=training)
 
-        return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
+        return self.loss_fn(y_true=tf.math.multiply(y_true_softmax, mask),
+                            y_pred=tf.math.multiply(y_pred, mask))
 
 
 class RankOneListNet(SoftmaxCrossEntropy):
 
     def __init__(self,
-                 loss_key: str,
-                 scoring_type: str,
+                 loss_key: str = LossKey.RANK_ONE_LISTNET,
+                 scoring_type: str = ScoringTypeKey.LISTWISE,
                  output_name: str = "score",
                  **kwargs):
         """
@@ -222,6 +235,7 @@ class RankOneListNet(SoftmaxCrossEntropy):
             to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
         batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 
         # Mask the padded records
