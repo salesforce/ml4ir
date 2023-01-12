@@ -33,6 +33,7 @@ class RelevanceDataset:
         logger: Optional[Logger] = None,
         keep_additional_info: int = 0,
         non_zero_features_only: int = 0,
+        output_name: str = None
     ):
         """
         Constructor method to instantiate a RelevanceDataset object
@@ -73,6 +74,8 @@ class RelevanceDataset:
             returns strings as is otherwise
         logger : `Logger`, optional
             logging handler for status messages
+        output_name: str
+            The name of tensorflow's output node which carry the prediction score.
 
         Notes
         -----
@@ -97,6 +100,7 @@ class RelevanceDataset:
 
         self.keep_additional_info = keep_additional_info
         self.non_zero_features_only = non_zero_features_only
+        self.output_name = output_name
 
         self.train: Optional[tf.data.TFRecordDataset] = None
         self.validation: Optional[tf.data.TFRecordDataset] = None
@@ -179,6 +183,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
@@ -194,6 +199,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
@@ -209,6 +215,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
 
     def balance_classes(self):

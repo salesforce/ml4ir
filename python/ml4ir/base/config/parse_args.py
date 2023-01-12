@@ -107,12 +107,35 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--aux_loss_key",
+            type=str,
+            choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
+            help="Auxiliary loss to optimize."
+        )
+
+        self.add_argument(
+            "--aux_loss_weight",
+            type=float,
+            default=0,
+            help="The weight of the auxiliary loss in the total loss",
+        )
+
+        self.add_argument(
             "--metrics_keys",
             type=str,
             nargs="+",
             default=None,
             choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
             help="A space separated list of metrics to compute.",
+        )
+
+        self.add_argument(
+            "--aux_metrics_keys",
+            type=str,
+            nargs="+",
+            default=None,
+            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            help="A space separated list of auxiliary validation metrics to compute."
         )
 
         self.add_argument(

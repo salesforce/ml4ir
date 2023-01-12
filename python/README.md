@@ -149,6 +149,8 @@ To use ml4ir as a deep learning library to build relevance models, look at the f
 
 * **Text Classification** : The `EntityPredictionDemo` notebook walks you through training a model to predict entity type given a user context and query.
 
+* **Ranking Explanations** : The `Ranking_Explanations` notebook walks you through per-query explanations for a trained ml4ir model
+
 Enter the following command to spin up Jupyter notebook on your browser to run the above notebooks
 ```
 cd path/to/ml4ir/python/

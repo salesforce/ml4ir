@@ -1,6 +1,6 @@
 import logging
 from logging import Logger
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, List
 
 import tensorflow as tf
 from tensorflow import keras
@@ -13,7 +13,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 
 
-class ScorerBase(keras.Model):
+class RelevanceScorer(keras.Model):
     """
     Base Scorer class that defines the neural network layers that convert
     the input features into scores
@@ -35,13 +35,15 @@ class ScorerBase(keras.Model):
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
+            aux_loss: Optional[RelevanceLossBase] = None,
+            aux_loss_weight: float = 0.0,
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
             **kwargs
     ):
         """
-        Constructor method for creating a ScorerBase object
+        Constructor method for creating a RelevanceScorer object
 
         Parameters
         ----------
@@ -57,6 +59,12 @@ class ScorerBase(keras.Model):
             and the loss function for the model
         file_io : `FileIO` object
             FileIO object that handles read and write
+        aux_loss : `RelevanceLossBase` object
+            Auxiliary loss to be used in conjunction with the primary loss
+        aux_loss_weight: float
+            Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
+            in the total final loss value computed using a linear combination
+            total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger : Logger, optional
@@ -74,7 +82,14 @@ class ScorerBase(keras.Model):
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
+
         self.loss_op = loss
+        self.aux_loss_op = aux_loss
+        self.aux_loss_weight = aux_loss_weight
+        self.loss_metric = None
+        self.aux_loss_metric = None
+        self.primary_loss_metric = None
+
         self.file_io = file_io
         self.output_name = output_name
         self.logs_dir = logs_dir
@@ -88,6 +103,8 @@ class ScorerBase(keras.Model):
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
+            aux_loss: Optional[RelevanceLossBase] = None,
+            aux_loss_weight: float = 0.0,
             output_name: str = "score",
             feature_config: Optional[FeatureConfig] = None,
             logger: Optional[Logger] = None,
@@ -110,6 +127,12 @@ class ScorerBase(keras.Model):
             and the loss function for the model
         file_io : `FileIO` object
             FileIO object that handles read and write
+        aux_loss : `RelevanceLossBase` object
+            Auxiliary loss to be used in conjunction with the primary loss
+        aux_loss_weight: float
+            Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
+            in the total final loss value computed using a linear combination
+            total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger: Logger, optional
@@ -117,8 +140,8 @@ class ScorerBase(keras.Model):
 
         Returns
         -------
-        `ScorerBase` object
-            ScorerBase object that computes the scores from the input features of the model
+        `RelevanceScorer` object
+            RelevanceScorer object that computes the scores from the input features of the model
         """
         model_config = file_io.read_yaml(model_config_file)
 
@@ -128,6 +151,8 @@ class ScorerBase(keras.Model):
             interaction_model=interaction_model,
             loss=loss,
             file_io=file_io,
+            aux_loss=aux_loss,
+            aux_loss_weight=aux_loss_weight,
             output_name=output_name,
             logger=logger,
             **kwargs
@@ -167,59 +192,6 @@ class ScorerBase(keras.Model):
         return {self.output_name: scores}
 
     def get_architecture_op(self):
-        """Get the tensorflow model instance"""
-        raise NotImplementedError
-
-
-class RelevanceScorer(ScorerBase):
-
-    def __init__(
-            self,
-            model_config: dict,
-            feature_config: FeatureConfig,
-            interaction_model: InteractionModel,
-            loss: RelevanceLossBase,
-            file_io: FileIO,
-            output_name: str = "score",
-            logger: Optional[Logger] = None,
-            logs_dir: Optional[str] = None,
-            **kwargs
-    ):
-        """
-        Constructor method for creating a RelevanceScorer object
-
-        Parameters
-        ----------
-        model_config : dict
-            Dictionary defining the model layer configuration
-        feature_config : `FeatureConfig` object
-            FeatureConfig object defining the features and their configurations
-        interaction_model : `InteractionModel` object
-            InteractionModel that defines the feature transformation layers
-            on the input model features
-        loss : `RelevanceLossBase` object
-            Relevance loss object that defines the final activation layer
-            and the loss function for the model
-        file_io : `FileIO` object
-            FileIO object that handles read and write
-        output_name : str, optional
-            Name of the output that captures the score computed by the model
-        logger : Logger, optional
-            Logging handler
-        logs_dir : str, optional
-            Path to the logging directory
-        """
-        super().__init__(model_config=model_config,
-                         feature_config=feature_config,
-                         interaction_model=interaction_model,
-                         loss=loss,
-                         file_io=file_io,
-                         output_name=output_name,
-                         logger=logger,
-                         logs_dir=logs_dir,
-                         **kwargs)
-
-    def get_architecture_op(self):
         """Get the model architecture instance based on the configs"""
         # NOTE: Override self.architecture_op with any tensorflow network for customization
         return architecture_factory.get_architecture(
@@ -229,9 +201,15 @@ class RelevanceScorer(ScorerBase):
         )
 
     def compile(self, **kwargs):
-        """Compile the keras model and defining a loss metric to track any custom loss"""
+        """Compile the keras model and defining a loss metrics to track any custom loss"""
         # Define metric to track loss
         self.loss_metric = keras.metrics.Mean(name="loss")
+
+        # Define metric to track an auxiliary loss if needed
+        if self.aux_loss_weight > 0:
+            self.primary_loss_metric = keras.metrics.Mean(name="primary_loss")
+            self.aux_loss_metric = keras.metrics.Mean(name="aux_loss")
+
         super().compile(**kwargs)
 
     def __get_loss_value(self, inputs, y_true, y_pred):
@@ -257,13 +235,25 @@ class RelevanceScorer(ScorerBase):
         if isinstance(self.loss, str):
             loss_value = self.compiled_loss(y_true=y_true, y_pred=y_pred)
         elif isinstance(self.loss, RelevanceLossBase):
-            loss_value = self.loss(inputs=inputs, y_true=y_true, y_pred=y_pred)
-            # Update loss metric
-            self.loss_metric.update_state(loss_value)
+            loss_value = self.loss_op(inputs=inputs, y_true=y_true, y_pred=y_pred)
         elif isinstance(self.loss, keras.losses.Loss):
             loss_value = self.compiled_loss(y_true=y_true, y_pred=y_pred)
         else:
             raise KeyError("Unknown Loss encountered in RelevanceScorer")
+
+        # If auxiliary loss is present, add it to compute final loss
+        if self.aux_loss_weight > 0:
+            aux_loss_value = self.aux_loss_op(inputs=inputs,
+                                              y_true=inputs[self.feature_config.get_aux_label("node_name")],
+                                              y_pred=y_pred)
+
+            self.primary_loss_metric.update_state(loss_value)
+            self.aux_loss_metric.update_state(aux_loss_value)
+
+            loss_value = tf.math.multiply((1. - self.aux_loss_weight), loss_value) + tf.math.multiply(self.aux_loss_weight, aux_loss_value)
+
+        # Update loss metric
+        self.loss_metric.update_state(loss_value)
 
         return loss_value
 
@@ -297,7 +287,6 @@ class RelevanceScorer(ScorerBase):
 
         # Update metrics
         self.compiled_metrics.update_state(y, y_pred)
-        # self.compiled_metrics.update_state(y, y_pred, features=X)
 
         # Return a dict mapping metric names to current value
         return {metric.name: metric.result() for metric in self.metrics}
@@ -333,4 +322,9 @@ class RelevanceScorer(ScorerBase):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        return [self.loss_metric] + super().metrics
+        metrics = [self.loss_metric] + super().metrics
+
+        if self.aux_loss_weight > 0:
+            metrics += [self.primary_loss_metric, self.aux_loss_metric]
+
+        return metrics

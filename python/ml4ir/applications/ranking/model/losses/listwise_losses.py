@@ -9,7 +9,21 @@ from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 
 class SoftmaxCrossEntropy(ListwiseLossBase):
 
-    def __init__(self, loss_key="pointwise", scoring_type="", output_name="score", **kwargs):
+    def __init__(self,
+                 loss_key: str,
+                 scoring_type: str,
+                 output_name: str = "score",
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        loss_key : str
+            Name of the loss function as specified by LossKey
+        scoring_type : str
+            Type of scoring function - pointwise, pairwise, groupwise
+        output_name: str
+            Name of the output node for the predicted scores
+        """
         super().__init__(loss_key=loss_key, scoring_type=scoring_type, output_name=output_name)
 
         self.final_activation_fn = layers.Softmax(axis=-1, name=output_name)
@@ -18,8 +32,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
 
     def call(self, inputs, y_true, y_pred, training=None):
         """
-        Get the sigmoid cross entropy loss
-        Additionally can pass in record positions to handle positional bias
+        Get the softmax cross entropy loss
 
         Parameters
         ----------
@@ -35,7 +48,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         Returns
         -------
         tensor
-            Scalar sigmoid cross entropy loss tensor
+            Scalar softmax cross entropy loss tensor
 
         Notes
         -----
@@ -48,7 +61,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
 
     def final_activation_op(self, inputs, training=None):
         """
-        Get sigmoid activated scores on logits
+        Get softmax activated scores on logits
 
         Parameters
         ----------
@@ -58,7 +71,7 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         Returns
         -------
         tensor
-            sigmoid activated scores
+            softmax activated scores
 
         Notes
         -----
@@ -75,9 +88,106 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         return self.final_activation_fn(logits)
 
 
+class AuxiliaryOneHotCrossEntropy(SoftmaxCrossEntropy):
+    """
+    Compute the one-hot softmax cross entropy loss on the auxiliary label
+    """
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Get the softmax cross entropy loss on the auxiliary label
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Scalar softmax cross entropy loss tensor
+
+        Notes
+        -----
+        - Uses `mask` field to exclude padded records from contributing
+        to the loss
+        - Queries with ties in the highest scores would have multiple one's in the 1-hot vector.
+        - Queries with all zeros for y_true would have all ones as their 1-hot vector.
+        - A simple remedy is to scale down the loss by the number of ties per query.
+        """
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+
+        # Convert y_true to 1-hot labels
+        y_true_1_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
+        y_true_1_hot = tf.cast(y_true_1_hot, dtype=tf.float32)
+
+        # Scale down the loss of a query by 1 / (number of ties)
+        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_1_hot, axis=1))
+
+        return self.loss_fn(y_true_1_hot, tf.math.multiply(y_pred, mask), sample_weight=sample_weight)
+
+
+class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
+    """
+    Compute the softmax cross entropy loss on auxiliary label
+    FIXME: Add difference between variants of losses
+    """
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Get the softmax cross entropy loss
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Scalar basic cross entropy loss tensor
+
+        Notes
+        -----
+        - Uses `mask` field to exclude padded records from contributing to the loss
+        """
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+
+        # Convert y_true to a probability distribution
+        y_true_softmax = self.final_activation_fn(y_true)
+
+        return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
+
+
 class RankOneListNet(SoftmaxCrossEntropy):
 
-    def __init__(self, loss_key="pointwise", scoring_type="", output_name="score", **kwargs):
+    def __init__(self,
+                 loss_key: str,
+                 scoring_type: str,
+                 output_name: str = "score",
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        loss_key : str
+            Name of the loss function as specified by LossKey
+        scoring_type : str
+            Type of scoring function - pointwise, pairwise, groupwise
+        output_name: str
+            Name of the output node for the predicted scores
+        """
         super().__init__(loss_key=loss_key, scoring_type=scoring_type, output_name=output_name)
 
         self.loss_fn = losses.BinaryCrossentropy(reduction=Reduction.SUM)
@@ -88,7 +198,6 @@ class RankOneListNet(SoftmaxCrossEntropy):
         This loss is useful for multi-label classification when we have multiple
         click labels per document. This is because the loss breaks down the comparison
         between y_pred and y_true into individual binary assessments.
-
         Ref -> https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2007-40.pdf
 
         Parameters

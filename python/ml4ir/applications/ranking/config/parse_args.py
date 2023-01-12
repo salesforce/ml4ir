@@ -34,12 +34,14 @@ class RankingArgParser(RelevanceArgParser):
         self.set_defaults(
             tfrecord_type="sequence_example",
             loss_key="sigmoid_cross_entropy",
-            metrics_keys=['MRR', 'ACR'],
+            metrics_keys=["MRR", "ACR"],
             monitor_metric="MRR",
             monitor_mode="max",
             max_sequence_size=25,
             group_metrics_min_queries=25,
             output_name="ranking_score",
+            aux_loss_key="auxiliary_softmax_cross_entropy",
+            aux_metrics_keys=["RankMatchFailure"]
         )
 
 

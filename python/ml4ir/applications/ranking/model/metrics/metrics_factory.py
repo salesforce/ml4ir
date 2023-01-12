@@ -1,7 +1,7 @@
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.ranking.config.keys import MetricKey
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, RankMatchFailure
 
 
 def get_metric(metric_key: str) -> Metric:
@@ -24,5 +24,9 @@ def get_metric(metric_key: str) -> Metric:
         return ACR(name="ACR")
     elif metric_key == MetricKey.NDCG:
         raise NotImplementedError
+    elif metric_key == MetricKey.CATEGORICAL_ACCURACY:
+        return CategoricalAccuracy(name="categorical_accuracy")
+    elif metric_key == MetricKey.RankMatchFailure:
+        return RankMatchFailure(name="RankMF")
     else:
         return metric_key

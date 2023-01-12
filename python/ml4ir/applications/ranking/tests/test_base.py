@@ -10,7 +10,7 @@ from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
@@ -70,7 +70,7 @@ class RankingTestBase(RelevanceTestBase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer(
+        scorer: RelevanceScorer = RelevanceScorer(
             feature_config=feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,

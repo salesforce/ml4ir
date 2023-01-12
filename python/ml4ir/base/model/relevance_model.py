@@ -1,28 +1,27 @@
 import os
 import sys
 from logging import Logger
-from typing import Dict, Optional, List, Union, Type, Tuple
-from tensorflow.keras import callbacks, Input, Model
-from tensorflow.keras.optimizers import Optimizer
-from tensorflow import data
-from tensorflow.keras import metrics as kmetrics
+from typing import Optional, List, Union, Tuple
+
+import numpy as np
 import pandas as pd
 import tensorflow as tf
-import numpy as np
-
+from ml4ir.base.config.keys import LearningRateScheduleKey
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
-from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.serving import define_serving_signatures
-from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
-from ml4ir.base.model.callbacks.debugging import DebuggingCallback
-from ml4ir.base.model.calibration.temperature_scaling import temperature_scale,\
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale, \
     TemperatureScalingLayer
-from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from ml4ir.base.config.keys import LearningRateScheduleKey
+from ml4ir.base.model.callbacks.debugging import DebuggingCallback
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
+from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
+from ml4ir.base.model.serving import define_serving_signatures
+from tensorflow import data
+from tensorflow.keras import callbacks, Model
+from tensorflow.keras import metrics as kmetrics
+from tensorflow.keras.optimizers import Optimizer
 
 
 class RelevanceModelConstants:
@@ -35,19 +34,19 @@ class RelevanceModelConstants:
 
 class RelevanceModel:
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        file_io: FileIO,
-        scorer: Optional[ScorerBase] = None,
-        metrics: List[Union[kmetrics.Metric, str]] = [],
-        optimizer: Optional[Optimizer] = None,
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        logger=None,
+            self,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            file_io: FileIO,
+            scorer: Optional[RelevanceScorer] = None,
+            metrics: List[Union[kmetrics.Metric, str]] = [],
+            optimizer: Optional[Optimizer] = None,
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            logger=None,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -62,7 +61,7 @@ class RelevanceModel:
             Type of the TFRecord protobuf message used for TFRecordDataset
         file_io : `FileIO` object
             file I/O handler objects for reading and writing data
-        scorer : `ScorerBase` object
+        scorer : `RelevanceScorer` object
             Scorer object that wraps an InteractionModel and converts
             input features into scores
         metrics : list
@@ -153,21 +152,21 @@ class RelevanceModel:
 
     @classmethod
     def from_relevance_scorer(
-        cls,
-        feature_config: FeatureConfig,
-        interaction_model: InteractionModel,
-        model_config: dict,
-        loss: RelevanceLossBase,
-        metrics: List[Union[kmetrics.Metric, str]],
-        optimizer: Optimizer,
-        tfrecord_type: str,
-        file_io: FileIO,
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        logger=None,
+            cls,
+            feature_config: FeatureConfig,
+            interaction_model: InteractionModel,
+            model_config: dict,
+            loss: RelevanceLossBase,
+            metrics: List[Union[kmetrics.Metric, str]],
+            optimizer: Optimizer,
+            tfrecord_type: str,
+            file_io: FileIO,
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            logger=None,
     ):
         """
         Create a RelevanceModel with default Scorer function
@@ -216,7 +215,7 @@ class RelevanceModel:
         assert isinstance(interaction_model, InteractionModel)
         assert isinstance(loss, RelevanceLossBase)
 
-        scorer: ScorerBase = RelevanceScorer(
+        scorer: RelevanceScorer = RelevanceScorer(
             model_config=model_config,
             interaction_model=interaction_model,
             loss=loss,
@@ -240,22 +239,22 @@ class RelevanceModel:
 
     @classmethod
     def from_univariate_interaction_model(
-        cls,
-        model_config,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        loss: RelevanceLossBase,
-        metrics: List[Union[kmetrics.Metric, str]],
-        optimizer: Optimizer,
-        feature_layer_keys_to_fns: dict = {},
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        max_sequence_size: int = 0,
-        file_io: FileIO = None,
-        logger=None,
+            cls,
+            model_config,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            loss: RelevanceLossBase,
+            metrics: List[Union[kmetrics.Metric, str]],
+            optimizer: Optimizer,
+            feature_layer_keys_to_fns: dict = {},
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            max_sequence_size: int = 0,
+            file_io: FileIO = None,
+            logger=None,
     ):
         """
         Create a RelevanceModel with default UnivariateInteractionModel
@@ -395,15 +394,15 @@ class RelevanceModel:
                 return reduce_lr
 
     def fit(
-        self,
-        dataset: RelevanceDataset,
-        num_epochs: int,
-        models_dir: str,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        monitor_metric: str = "",
-        monitor_mode: str = "",
-        patience=2,
+            self,
+            dataset: RelevanceDataset,
+            num_epochs: int,
+            models_dir: str,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            monitor_metric: str = "",
+            monitor_mode: str = "",
+            patience=2,
     ):
         """
         Trains model for defined number of epochs
@@ -487,12 +486,12 @@ class RelevanceModel:
             )
 
     def predict(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = "serving_default",
-        additional_features: dict = {},
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = "serving_default",
+            additional_features: dict = {},
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -544,7 +543,7 @@ class RelevanceModel:
             if logs_dir:
                 np.set_printoptions(
                     formatter={"all": lambda x: str(x.decode("utf-8"))
-                               if isinstance(x, bytes) else str(x)},
+                    if isinstance(x, bytes) else str(x)},
                     linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
 
                 # Decode bytes features to strings
@@ -574,14 +573,14 @@ class RelevanceModel:
         return predictions_df
 
     def evaluate(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = None,
-        additional_features: dict = {},
-        group_metrics_min_queries: int = 50,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        compute_intermediate_stats: bool = True,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = None,
+            additional_features: dict = {},
+            group_metrics_min_queries: int = 50,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -652,15 +651,15 @@ class RelevanceModel:
         raise NotImplementedError
 
     def save(
-        self,
-        models_dir: str,
-        preprocessing_keys_to_fns={},
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        sub_dir: str = "final",
-        dataset: Optional[RelevanceDataset] = None,
-        experiment_details: Optional[dict] = None
+            self,
+            models_dir: str,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only: bool = True,
+            pad_sequence: bool = False,
+            sub_dir: str = "final",
+            dataset: Optional[RelevanceDataset] = None,
+            experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -803,14 +802,14 @@ class RelevanceModel:
         self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
-        self,
-        models_dir: str,
-        logs_dir: Optional[str] = None,
-        is_training=True,
-        logging_frequency=25,
-        monitor_metric: str = "",
-        monitor_mode: str = "",
-        patience=2,
+            self,
+            models_dir: str,
+            logs_dir: Optional[str] = None,
+            is_training=True,
+            logging_frequency=25,
+            monitor_metric: str = "",
+            monitor_mode: str = "",
+            patience=2,
     ):
         """
         Build callback hooks for the training and evaluation loop
@@ -886,7 +885,7 @@ class RelevanceModel:
 
         return callbacks_list
 
-    def calibrate(self, relevance_dataset, logger, logs_dir_local, **kwargs)\
+    def calibrate(self, relevance_dataset, logger, logs_dir_local, **kwargs) \
             -> Tuple[np.ndarray, ...]:
         """Calibrate model with temperature scaling
         Parameters

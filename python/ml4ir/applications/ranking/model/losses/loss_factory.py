@@ -5,7 +5,9 @@ import ml4ir.applications.ranking.model.losses.listwise_losses as listwise_losse
 from ml4ir.applications.ranking.config.keys import LossKey
 
 
-def get_loss(loss_key, scoring_type, output_name="score") -> RelevanceLossBase:
+def get_loss(loss_key: str,
+             scoring_type: str,
+             output_name: str = "score") -> RelevanceLossBase:
     """
     Factor method to get Loss function object
 
@@ -36,5 +38,13 @@ def get_loss(loss_key, scoring_type, output_name="score") -> RelevanceLossBase:
         return listwise_losses.SoftmaxCrossEntropy(loss_key=loss_key,
                                                    scoring_type=scoring_type,
                                                    output_name=output_name)
+    elif loss_key == LossKey.AUXILIARY_ONE_HOT_CROSS_ENTROPY:
+        return listwise_losses.AuxiliaryOneHotCrossEntropy(loss_key=loss_key,
+                                                           scoring_type=scoring_type,
+                                                           output_name=output_name)
+    elif loss_key == LossKey.AUXILIARY_SOFTMAX_CROSS_ENTROPY:
+        return listwise_losses.AuxiliarySoftmaxCrossEntropy(loss_key=loss_key,
+                                                            scoring_type=scoring_type,
+                                                            output_name=output_name)
     else:
         raise NotImplementedError
