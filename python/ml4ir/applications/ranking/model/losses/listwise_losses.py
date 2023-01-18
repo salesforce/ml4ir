@@ -4,14 +4,15 @@ from tensorflow.keras import layers
 from tensorflow.keras.losses import Reduction
 
 from ml4ir.base.config.keys import FeatureTypeKey
+from ml4ir.applications.ranking.config.keys import LossKey, ScoringTypeKey
 from ml4ir.applications.ranking.model.losses.loss_base import ListwiseLossBase
 
 
 class SoftmaxCrossEntropy(ListwiseLossBase):
 
     def __init__(self,
-                 loss_key: str,
-                 scoring_type: str,
+                 loss_key: str = LossKey.SOFTMAX_CROSS_ENTROPY,
+                 scoring_type: str = ScoringTypeKey.LISTWISE,
                  output_name: str = "score",
                  **kwargs):
         """
@@ -166,21 +167,34 @@ class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
 
         # Convert y_true to a probability distribution
-        y_true_softmax = self.final_activation_op({
-            FeatureTypeKey.METADATA: {
-                FeatureTypeKey.MASK: mask
-            },
-            FeatureTypeKey.LOGITS: y_true
-        }, training=training)
+        # y_true_softmax = self.final_activation_op({
+        #     FeatureTypeKey.METADATA: {
+        #         FeatureTypeKey.MASK: mask
+        #     },
+        #     FeatureTypeKey.LOGITS: y_true
+        # }, training=training)
 
-        return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
+        # return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
+
+        y_true_softmax = tf.math.softmax(y_true)  # convert to a probability distribution
+        # masking zeros for the log op
+        zero = tf.constant(0, dtype=tf.float32)
+        non_zero = tf.not_equal(y_pred, zero)
+        # remove all the zero entries from the y_pred (corresponds to padded records)
+        y_pred_non_zero = tf.boolean_mask(y_pred, non_zero)
+        # retain values in y_true corresponding to non zero values in y_pred
+        y_true_softmax_masked = tf.boolean_mask(y_true_softmax, non_zero)
+        return tf.math.divide(
+            -tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero)),
+            tf.constant(32, dtype=tf.float32),
+        )
 
 
 class RankOneListNet(SoftmaxCrossEntropy):
 
     def __init__(self,
-                 loss_key: str,
-                 scoring_type: str,
+                 loss_key: str = LossKey.RANK_ONE_LISTNET,
+                 scoring_type: str = ScoringTypeKey.LISTWISE,
                  output_name: str = "score",
                  **kwargs):
         """
