@@ -119,7 +119,6 @@ class TestDualObjectiveTraining(unittest.TestCase):
             os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
         ).set_index(0).to_dict()[1]
 
-        import pdb; pdb.set_trace()
         assert np.isclose(float(results_dict["train_loss"]), 1.1912113, atol=0.0001)
         assert np.isclose(float(results_dict["train_primary_loss"]), 1.19025492, atol=0.0001)
         assert np.isclose(float(results_dict["train_aux_loss"]), 1.19503664, atol=0.0001)
