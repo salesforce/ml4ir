@@ -96,13 +96,13 @@ class TestDualObjectiveTraining(unittest.TestCase):
             os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
         ).set_index(0).to_dict()[1]
 
-        assert np.isclose(results_dict["train_loss"], 1.18435859, atol=0.0001)
-        assert np.isclose(results_dict["train_primary_loss"], 1.1877643, atol=0.0001)
-        assert np.isclose(results_dict["train_aux_loss"], 1.1706434, atol=0.0001)
+        assert np.isclose(float(results_dict["train_loss"]), 1.18435859, atol=0.0001)
+        assert np.isclose(float(results_dict["train_primary_loss"]), 1.1877643, atol=0.0001)
+        assert np.isclose(float(results_dict["train_aux_loss"]), 1.1706434, atol=0.0001)
 
-        assert np.isclose(results_dict["val_loss"], 1.2038229, atol=0.0001)
-        assert np.isclose(results_dict["val_primary_loss"], 1.2087243, atol=0.0001)
-        assert np.isclose(results_dict["val_aux_loss"], 1.1842161, atol=0.0001)
+        assert np.isclose(float(results_dict["val_loss"]), 1.2038229, atol=0.0001)
+        assert np.isclose(float(results_dict["val_primary_loss"]), 1.2087243, atol=0.0001)
+        assert np.isclose(float(results_dict["val_aux_loss"]), 1.1842161, atol=0.0001)
 
     def test_end_to_end_aux_softmax_cross_entropy(self):
         feature_config_path = os.path.join(
@@ -119,13 +119,14 @@ class TestDualObjectiveTraining(unittest.TestCase):
             os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
         ).set_index(0).to_dict()[1]
 
-        assert np.isclose(results_dict["train_loss"], 1.1912113, atol=0.0001)
-        assert np.isclose( results_dict["train_primary_loss"], 1.19025492, atol=0.0001)
-        assert np.isclose(results_dict["train_aux_loss"], 1.19503664, atol=0.0001)
+        import pdb; pdb.set_trace()
+        assert np.isclose(float(results_dict["train_loss"]), 1.1912113, atol=0.0001)
+        assert np.isclose(float(results_dict["train_primary_loss"]), 1.19025492, atol=0.0001)
+        assert np.isclose(float(results_dict["train_aux_loss"]), 1.19503664, atol=0.0001)
 
-        assert np.isclose(results_dict["val_loss"], 1.2133840, atol=0.0001)
-        assert np.isclose(results_dict["val_primary_loss"], 1.21196198, atol=0.0001)
-        assert np.isclose(results_dict["val_aux_loss"], 1.2190713, atol=0.0001)
+        assert np.isclose(float(results_dict["val_loss"]), 1.2133840, atol=0.0001)
+        assert np.isclose(float(results_dict["val_primary_loss"]), 1.21196198, atol=0.0001)
+        assert np.isclose(float(results_dict["val_aux_loss"]), 1.2190713, atol=0.0001)
 
 
 if __name__ == "__main__":
