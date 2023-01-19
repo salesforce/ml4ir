@@ -114,13 +114,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--primary_loss_weight",
-            type=float,
-            default=1.0,
-            help="The weight of the primary loss in the total loss",
-        )
-
-        self.add_argument(
             "--aux_loss_weight",
             type=float,
             default=0,
@@ -134,6 +127,15 @@ class RelevanceArgParser(ArgumentParser):
             default=None,
             choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
             help="A space separated list of metrics to compute.",
+        )
+
+        self.add_argument(
+            "--aux_metrics_keys",
+            type=str,
+            nargs="+",
+            default=None,
+            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            help="A space separated list of auxiliary validation metrics to compute."
         )
 
         self.add_argument(
@@ -325,13 +327,6 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="relevance_score",
             help="Name of the output node of the model",
-        )
-
-        self.add_argument(
-            "--aux_output_name",
-            type=str,
-            default=None,
-            help="Name of the output node of the auxiliary objective for the model",
         )
 
         self.add_argument(

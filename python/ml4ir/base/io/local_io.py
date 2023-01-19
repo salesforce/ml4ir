@@ -45,7 +45,7 @@ class LocalIO(FileIO):
         os.makedirs(dir_path)
 
     def read_df(
-        self, infile: str, sep: str = ",", index_col: int = None
+        self, infile: str, sep: str = ",", index_col: int = None, **kwargs
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
@@ -66,6 +66,9 @@ class LocalIO(FileIO):
         """
         self.log("Loading dataframe from path : {}".format(infile))
 
+        escape_char = None
+        if "use_escape_char" in kwargs and kwargs["use_escape_char"]:
+            escape_char = "\\"
         if infile.endswith(".gz"):
             fp = gzip.open(os.path.expanduser(infile), "rb")
         else:
@@ -82,7 +85,7 @@ class LocalIO(FileIO):
                 index_col=index_col,
                 skipinitialspace=True,
                 quotechar='"',
-                escapechar="\\",
+                escapechar=escape_char,
                 error_bad_lines=False,
                 warn_bad_lines=True,
                 engine="c",
@@ -103,7 +106,7 @@ class LocalIO(FileIO):
         fp.close()
         return df
 
-    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
+    def read_df_list(self, infiles, sep=",", index_col=None, **kwargs) -> pd.DataFrame:
         """
         Load a pandas dataframe from a list of files
 
@@ -123,7 +126,7 @@ class LocalIO(FileIO):
         """
         self.log("Reading {} files from [{}, ..".format(len(infiles), infiles[0]))
         return pd.concat(
-            [self.read_df(infile, sep=sep, index_col=index_col) for infile in infiles]
+            [self.read_df(infile, sep=sep, index_col=index_col, **kwargs) for infile in infiles]
         )
 
     def write_df(self, df, outfile: str = None, sep: str = ",", index: bool = True) -> str:

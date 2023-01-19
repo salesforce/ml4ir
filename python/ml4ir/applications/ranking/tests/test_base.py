@@ -10,7 +10,7 @@ from tensorflow.keras.optimizers import Optimizer
 
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.io.local_io import LocalIO
@@ -20,7 +20,7 @@ from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.tests.test_base import RelevanceTestBase
 from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
 from ml4ir.applications.ranking.model.losses import loss_factory
-from ml4ir.applications.ranking.model.metrics import metric_factory
+from ml4ir.applications.ranking.model.metrics import metrics_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
 
 import warnings
@@ -41,7 +41,7 @@ class RankingTestBase(RelevanceTestBase):
         loss_key: str,
         metrics_keys: List,
         feature_config: FeatureConfig,
-        model_config: dict = {},
+        model_config: dict = None,
         feature_layer_keys_to_fns={},
         initialize_layers_dict={},
         freeze_layers_list=[],
@@ -51,6 +51,7 @@ class RankingTestBase(RelevanceTestBase):
 
         NOTE: Override this method to create custom loss, scorer, model objects
         """
+        self.model_config = model_config if model_config else self.model_config
 
         # Define interaction model
         interaction_model: InteractionModel = UnivariateInteractionModel(
@@ -63,11 +64,13 @@ class RankingTestBase(RelevanceTestBase):
 
         # Define loss object from loss key
         loss: RelevanceLossBase = loss_factory.get_loss(
-            loss_key=loss_key, scoring_type=self.args.scoring_type
+            loss_key=loss_key,
+            scoring_type=self.args.scoring_type,
+            output_name=self.args.output_name
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer(
+        scorer: RelevanceScorer = RelevanceScorer(
             feature_config=feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
@@ -75,16 +78,17 @@ class RankingTestBase(RelevanceTestBase):
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
+            logs_dir=self.args.logs_dir
         )
 
         # Define metrics objects from metrics keys
         metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
         ]
 
         # Define optimizer
         optimizer: Optimizer = get_optimizer(
-            model_config=self.file_io.read_yaml(self.args.model_config),
+            model_config=self.model_config,
         )
 
         # Combine the above to define a RelevanceModel

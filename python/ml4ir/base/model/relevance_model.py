@@ -1,30 +1,27 @@
 import os
 import sys
 from logging import Logger
-from typing import Dict, Optional, List, Union, Type, Tuple
-from tensorflow.keras import callbacks, Input, Model
-from tensorflow.keras.optimizers import Optimizer
-from tensorflow import data
-from tensorflow.keras import metrics as kmetrics
+from typing import Optional, List, Union, Tuple
+
+import numpy as np
 import pandas as pd
 import tensorflow as tf
-import numpy as np
-
+from ml4ir.base.config.keys import LearningRateScheduleKey
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.metrics.metrics_impl import get_metrics_impl
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
-from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.serving import define_serving_signatures
-from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale, \
+    TemperatureScalingLayer
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
-from ml4ir.base.model.calibration.temperature_scaling import (
-    temperature_scale,
-    TemperatureScalingLayer,
-)
-from ml4ir.base.config.keys import LearningRateScheduleKey
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
+from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
+from ml4ir.base.model.serving import define_serving_signatures
+from tensorflow import data
+from tensorflow.keras import callbacks, Model
+from tensorflow.keras import metrics as kmetrics
+from tensorflow.keras.optimizers import Optimizer
 
 
 class RelevanceModelConstants:
@@ -37,23 +34,19 @@ class RelevanceModelConstants:
 
 class RelevanceModel:
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        file_io: FileIO,
-        scorer: Optional[ScorerBase] = None,
-        metrics: List[Union[Type[kmetrics.Metric], str]] = [],
-        optimizer: Optional[Optimizer] = None,
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        aux_output_name: str = "aux_score",
-        logger=None,
-        primary_loss_weight: float = 1.0,
-        aux_loss_weight: float = 0,
-        batch_size: int = 1,
+            self,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            file_io: FileIO,
+            scorer: Optional[RelevanceScorer] = None,
+            metrics: List[Union[kmetrics.Metric, str]] = [],
+            optimizer: Optional[Optimizer] = None,
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            logger=None,
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -68,11 +61,11 @@ class RelevanceModel:
             Type of the TFRecord protobuf message used for TFRecordDataset
         file_io : `FileIO` object
             file I/O handler objects for reading and writing data
-        scorer : `ScorerBase` object
+        scorer : `RelevanceScorer` object
             Scorer object that wraps an InteractionModel and converts
             input features into scores
         metrics : list
-            List of keras Metric classes that will be used for evaluating the trained model
+            List of keras Metric objects/strings that will be used for evaluating the trained model
         optimizer : `Optimizer`
             Tensorflow keras optimizer to be used for training the model
         model_file : str, optional
@@ -88,18 +81,12 @@ class RelevanceModel:
             with loss, metrics and an optimizer
         output_name : str, optional
             Name of the output tensorflow node that captures the score
-        aux_output_name : str, optional
-            Name of the output tensorflow node that captures the score for the auxiliary output
         logger : `Logger`, optional
             logging handler for status messages
-        batch_size : int
-            The batch size
         """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
         self.output_name = output_name
-        self.aux_output_name = aux_output_name
-        self.batch_size = batch_size
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
@@ -128,79 +115,16 @@ class RelevanceModel:
             Individual input nodes are defined for each feature
             Each data point represents features for all records in a single query
             """
-            inputs: Dict[str, Input] = feature_config.define_inputs()
-            scores, train_features, metadata_features = scorer(inputs)
+            self.model = self.scorer
+            self.model.output_names = [self.output_name]
 
-            if self.feature_config.get_aux_label():
-                # Create model with functional Keras API
-                self.model = Model(
-                    inputs=inputs, outputs={self.output_name: scores, self.aux_output_name: scores}
-                )
-                self.model.output_names = [self.output_name, self.aux_output_name]
-                # Get loss fn
-                loss_fn = scorer.loss[self.output_name].get_loss_fn(**metadata_features)
-                metadata_features["is_aux_loss"] = True
-                metadata_features["batch_size"] = self.batch_size
-                loss_fn_aux = scorer.loss[self.aux_output_name].get_loss_fn(**metadata_features)
-                losses = {self.output_name: loss_fn, self.aux_output_name: loss_fn_aux}
-
-                loss_weights = {
-                    self.output_name: primary_loss_weight,
-                    self.aux_output_name: aux_loss_weight,
-                }
-
-                # Get metric objects
-                metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics,
-                    feature_config=feature_config,
-                    metadata_features=metadata_features,
-                )
-                metrics_impl_aux: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics,
-                    feature_config=feature_config,
-                    metadata_features=metadata_features,
-                    for_aux_output=True,
-                )
-                self.model.compile(
-                    optimizer=optimizer,
-                    loss=losses,
-                    loss_weights=loss_weights,
-                    metrics={
-                        self.output_name: metrics_impl,
-                        self.aux_output_name: metrics_impl_aux,
-                    },
-                    experimental_run_tf_function=False,
-                )
-            else:
-                # Create model with functional Keras API
-                self.model = Model(inputs=inputs, outputs={self.output_name: scores})
-                self.model.output_names = [self.output_name]
-
-                # Get loss fn
-                loss_fn = scorer.loss.get_loss_fn(**metadata_features)
-
-                # Get metric objects
-                metrics_impl: List[Union[str, kmetrics.Metric]] = get_metrics_impl(
-                    metrics=metrics,
-                    feature_config=feature_config,
-                    metadata_features=metadata_features,
-                )
-                """
-                NOTE:
-                Related Github issue: https://github.com/tensorflow/probability/issues/519
-                """
-                self.model.compile(
-                    optimizer=optimizer,
-                    loss=loss_fn,
-                    metrics=metrics_impl,
-                    experimental_run_tf_function=False,
-                )
-
-            # Write model summary to logs
-            model_summary = list()
-            self.model.summary(print_fn=lambda x: model_summary.append(x))
-            if self.logger:
-                self.logger.info("\n".join(model_summary))
+            self.model.compile(
+                optimizer=optimizer,
+                loss=self.scorer.loss_op,
+                metrics=metrics
+            )
+            # NOTE: We need to do one forward pass to build the network
+            self.is_built = False
 
             if model_file:
                 """
@@ -228,21 +152,21 @@ class RelevanceModel:
 
     @classmethod
     def from_relevance_scorer(
-        cls,
-        feature_config: FeatureConfig,
-        interaction_model: InteractionModel,
-        model_config: dict,
-        loss: RelevanceLossBase,
-        metrics: List[Union[kmetrics.Metric, str]],
-        optimizer: Optimizer,
-        tfrecord_type: str,
-        file_io: FileIO,
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        logger=None,
+            cls,
+            feature_config: FeatureConfig,
+            interaction_model: InteractionModel,
+            model_config: dict,
+            loss: RelevanceLossBase,
+            metrics: List[Union[kmetrics.Metric, str]],
+            optimizer: Optimizer,
+            tfrecord_type: str,
+            file_io: FileIO,
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            logger=None,
     ):
         """
         Create a RelevanceModel with default Scorer function
@@ -291,7 +215,7 @@ class RelevanceModel:
         assert isinstance(interaction_model, InteractionModel)
         assert isinstance(loss, RelevanceLossBase)
 
-        scorer: ScorerBase = RelevanceScorer(
+        scorer: RelevanceScorer = RelevanceScorer(
             model_config=model_config,
             interaction_model=interaction_model,
             loss=loss,
@@ -315,22 +239,22 @@ class RelevanceModel:
 
     @classmethod
     def from_univariate_interaction_model(
-        cls,
-        model_config,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        loss: RelevanceLossBase,
-        metrics: List[Union[kmetrics.Metric, str]],
-        optimizer: Optimizer,
-        feature_layer_keys_to_fns: dict = {},
-        model_file: Optional[str] = None,
-        initialize_layers_dict: dict = {},
-        freeze_layers_list: list = [],
-        compile_keras_model: bool = False,
-        output_name: str = "score",
-        max_sequence_size: int = 0,
-        file_io: FileIO = None,
-        logger=None,
+            cls,
+            model_config,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            loss: RelevanceLossBase,
+            metrics: List[Union[kmetrics.Metric, str]],
+            optimizer: Optimizer,
+            feature_layer_keys_to_fns: dict = {},
+            model_file: Optional[str] = None,
+            initialize_layers_dict: dict = {},
+            freeze_layers_list: list = [],
+            compile_keras_model: bool = False,
+            output_name: str = "score",
+            max_sequence_size: int = 0,
+            file_io: FileIO = None,
+            logger=None,
     ):
         """
         Create a RelevanceModel with default UnivariateInteractionModel
@@ -403,6 +327,27 @@ class RelevanceModel:
             logger=logger,
         )
 
+    def build(self, dataset: RelevanceDataset):
+        """
+        Build the model layers and connect them to form a network
+
+        Parameters
+        ----------
+        dataset: RelevanceDataset
+            RelevanceDataset object used to initialize the weights and input/output
+            spec for the network
+
+        Notes
+        -----
+        Because we build the model using keras model subclassing API, it has no understanding
+        of the actual inputs to expect. So we do one forward pass to initialize all the internal
+        weights and connections
+        """
+        self.model(next(iter(dataset.train))[0])
+        self.model.summary(print_fn=self.logger.info, expand_nested=True)
+
+        self.is_built = True
+
     def define_scheduler_as_callback(self, monitor_metric, model_config):
         """
         Adding reduce lr on plateau as a callback if specified
@@ -420,41 +365,44 @@ class RelevanceModel:
             The created scheduler callback object.
         """
 
-        if model_config and "lr_schedule" in model_config:
-            lr_schedule = model_config["lr_schedule"]
-            lr_schedule_key = lr_schedule["key"]
+        if model_config and 'lr_schedule' in model_config:
+            lr_schedule = model_config['lr_schedule']
+            lr_schedule_key = lr_schedule['key']
             if lr_schedule_key == LearningRateScheduleKey.REDUCE_LR_ON_PLATEAU:
                 if monitor_metric is None:
-                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-                        factor=lr_schedule.get("factor", 0.5),
-                        patience=lr_schedule.get("patience", 5),
-                        min_lr=lr_schedule.get("min_lr", 0.0001),
-                        mode=lr_schedule.get("mode", "auto"),
-                        verbose=1,
-                    )
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=lr_schedule.get('factor', 0.5),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
+                                                                     verbose=1)
                 else:
                     if not monitor_metric.startswith("val_"):
                         monitor_metric = "val_{}".format(monitor_metric)
-                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-                        monitor=monitor_metric,
-                        factor=lr_schedule.get("factor", 0.5),
-                        patience=lr_schedule.get("patience", 5),
-                        min_lr=lr_schedule.get("min_lr", 0.0001),
-                        mode=lr_schedule.get("mode", "auto"),
-                        verbose=1,
-                    )
+                    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
+                                                                     factor=lr_schedule.get(
+                                                                         'factor', 0.5),
+                                                                     patience=lr_schedule.get(
+                                                                         'patience', 5),
+                                                                     min_lr=lr_schedule.get(
+                                                                         'min_lr', 0.0001),
+                                                                     mode=lr_schedule.get(
+                                                                         'mode', 'auto'),
+                                                                     verbose=1)
                 return reduce_lr
 
     def fit(
-        self,
-        dataset: RelevanceDataset,
-        num_epochs: int,
-        models_dir: str,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        monitor_metric: str = "",
-        monitor_mode: str = "",
-        patience=2,
+            self,
+            dataset: RelevanceDataset,
+            num_epochs: int,
+            models_dir: str,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            monitor_metric: str = "",
+            monitor_mode: str = "",
+            patience=2,
     ):
         """
         Trains model for defined number of epochs
@@ -487,8 +435,10 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        if self.feature_config.aux_label:  # val_ranking_score_new_MRR
-            monitor_metric = "val_" + self.output_name + "_" + monitor_metric
+        # Build the network if it hasn't been built yet
+        if not self.is_built:
+            self.build(dataset)
+
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
@@ -536,12 +486,12 @@ class RelevanceModel:
             )
 
     def predict(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = "serving_default",
-        additional_features: dict = {},
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = "serving_default",
+            additional_features: dict = {},
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -592,12 +542,9 @@ class RelevanceModel:
 
             if logs_dir:
                 np.set_printoptions(
-                    formatter={
-                        "all": lambda x: str(x.decode("utf-8")) if isinstance(x, bytes) else str(x)
-                    },
-                    linewidth=sys.maxsize,
-                    threshold=sys.maxsize,
-                )  # write the full line in the csv not the truncated version.
+                    formatter={"all": lambda x: str(x.decode("utf-8"))
+                    if isinstance(x, bytes) else str(x)},
+                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
 
                 # Decode bytes features to strings
                 for col in predictions_df.columns:
@@ -626,14 +573,14 @@ class RelevanceModel:
         return predictions_df
 
     def evaluate(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = None,
-        additional_features: dict = {},
-        group_metrics_min_queries: int = 50,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        compute_intermediate_stats: bool = True,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = None,
+            additional_features: dict = {},
+            group_metrics_min_queries: int = 50,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -704,15 +651,15 @@ class RelevanceModel:
         raise NotImplementedError
 
     def save(
-        self,
-        models_dir: str,
-        preprocessing_keys_to_fns={},
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        sub_dir: str = "final",
-        dataset: Optional[RelevanceDataset] = None,
-        experiment_details: Optional[dict] = None,
+            self,
+            models_dir: str,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only: bool = True,
+            pad_sequence: bool = False,
+            sub_dir: str = "final",
+            dataset: Optional[RelevanceDataset] = None,
+            experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -795,10 +742,7 @@ class RelevanceModel:
                 )
             except FileNotFoundError:
                 self.logger.warning(
-                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(
-                        layer.name
-                    )
-                )
+                    "Error saving layer: {} due to FileNotFoundError. Skipping...".format(layer.name))
 
         self.logger.info("Final model saved to : {}".format(model_file))
 
@@ -858,14 +802,14 @@ class RelevanceModel:
         self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
-        self,
-        models_dir: str,
-        logs_dir: Optional[str] = None,
-        is_training=True,
-        logging_frequency=25,
-        monitor_metric: str = "",
-        monitor_mode: str = "",
-        patience=2,
+            self,
+            models_dir: str,
+            logs_dir: Optional[str] = None,
+            is_training=True,
+            logging_frequency=25,
+            monitor_metric: str = "",
+            monitor_mode: str = "",
+            patience=2,
     ):
         """
         Build callback hooks for the training and evaluation loop
@@ -933,8 +877,7 @@ class RelevanceModel:
 
         # Adding lr scheduler as a callback; used for `ReduceLROnPlateau` which we treat today as a callback
         scheduler_callback = self.define_scheduler_as_callback(
-            monitor_metric, self.scorer.model_config
-        )
+            monitor_metric, self.scorer.model_config)
         if scheduler_callback:
             callbacks_list.append(scheduler_callback)
 
@@ -942,9 +885,8 @@ class RelevanceModel:
 
         return callbacks_list
 
-    def calibrate(
-        self, relevance_dataset, logger, logs_dir_local, **kwargs
-    ) -> Tuple[np.ndarray, ...]:
+    def calibrate(self, relevance_dataset, logger, logs_dir_local, **kwargs) \
+            -> Tuple[np.ndarray, ...]:
         """Calibrate model with temperature scaling
         Parameters
         ----------
@@ -963,19 +905,15 @@ class RelevanceModel:
         """
         logger.info("=" * 50)
         logger.info("Calibrating the model with temperature scaling")
-        return temperature_scale(
-            model=self.model,
-            scorer=self.scorer,
-            dataset=relevance_dataset,
-            logger=logger,
-            logs_dir_local=logs_dir_local,
-            file_io=self.file_io,
-            **kwargs,
-        )
+        return temperature_scale(model=self.model,
+                                 scorer=self.scorer,
+                                 dataset=relevance_dataset,
+                                 logger=logger,
+                                 logs_dir_local=logs_dir_local,
+                                 file_io=self.file_io,
+                                 **kwargs)
 
-    def add_temperature_layer(
-        self, temperature: float = 1.0, layer_name: str = "temperature_layer"
-    ):
+    def add_temperature_layer(self, temperature: float = 1.0, layer_name: str = 'temperature_layer'):
         """Add temperature layer to the input of last activation (softmax) layer
         Parameters
         ----------
@@ -993,32 +931,25 @@ class RelevanceModel:
         """
 
         # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
-        final_layer_name = self.scorer.model_config["layers"][-1]["name"]
+        final_layer_name = self.scorer.model_config['layers'][-1]['name']
 
         final_layer = self.model.get_layer(name=final_layer_name).output
-        temperature_layer = TemperatureScalingLayer(name=layer_name, temperature=temperature)(
-            final_layer
-        )
+        temperature_layer = TemperatureScalingLayer(name=layer_name,
+                                                    temperature=temperature)(final_layer)
 
         # using the `last layer` as final activation function before computing loss
         idx_activation = -1
-        if len(self.model.layers) > 0 and isinstance(
-            self.model.layers[idx_activation], tf.keras.layers.Activation
-        ):
+        if len(self.model.layers) > 0 and isinstance(self.model.layers[idx_activation],
+                                                     tf.keras.layers.Activation):
             # creating new activation layer
             activation_layer_name = self.model.get_layer(index=idx_activation).name
             activation_function = self.model.get_layer(index=idx_activation).activation
             activation_layer = tf.keras.layers.Activation(
-                activation_function, name=activation_layer_name
-            )(temperature_layer)
+                activation_function, name=activation_layer_name)(temperature_layer)
             # creating new keras Functional API model
             self.model = Model(self.model.inputs, activation_layer)
-            self.logger.info(
-                f"Temperature Scaling layer added and new Functional API model"
-                f" replaced; temperature = {temperature}."
-            )
+            self.logger.info(f'Temperature Scaling layer added and new Functional API model'
+                             f' replaced; temperature = {temperature}.')
         else:
-            self.logger.info(
-                "Skipping adding Temperature Scaling layer because no activation "
-                "exist in the last layer of Keras original model!"
-            )
+            self.logger.info("Skipping adding Temperature Scaling layer because no activation "
+                             "found in the last layer of Keras original model!")

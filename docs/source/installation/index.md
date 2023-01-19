@@ -15,7 +15,12 @@ pip install ml4ir
 
 This will install **[ml4ir-0.1.3](https://pypi.org/project/ml4ir/)** (the current version) from PyPI.
 
-To use pre-built pipelines that come with ml4ir, make sure to install it as follows (this installs pyspark as well)
+To install optional dependencies like [pygraphviz](https://pygraphviz.github.io/documentation/stable/install.html), use the following command:
+```bash
+pip3 install ml4ir[visualization]
+```
+
+To use pre-built pipelines that come with ml4ir, make sure to install it as follows (this installs pyspark and pygraphviz as well)
 
 ```
 pip install ml4ir[all]
@@ -92,6 +97,8 @@ Set the PYTHONPATH environment variable to point to the python package
 ```
 export PYTHONPATH=$PYTHONPATH:`pwd`
 ```
+
+For more information in pygraphviz and its prerequisites, refer to [pygraphviz documentation](https://pygraphviz.github.io/documentation/stable/index.html)
 
 #### Contributing to ml4ir
 * Install python dependencies from the `build-requirements.txt` to setup the dependencies required for pre-commit hooks.

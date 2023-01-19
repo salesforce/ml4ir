@@ -113,6 +113,23 @@ class RankingModelTest(RankingTestBase):
             feature_config=feature_config,
             metrics_keys=["MRR"]
         )
+        ranking_dataset = RelevanceDataset(
+            data_dir=os.path.join(self.root_data_dir, "tfrecord"),
+            data_format="tfrecord",
+            feature_config=feature_config,
+            tfrecord_type=self.args.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            batch_size=self.args.batch_size,
+            preprocessing_keys_to_fns={},
+            train_pcent_split=self.args.train_pcent_split,
+            val_pcent_split=self.args.val_pcent_split,
+            test_pcent_split=self.args.test_pcent_split,
+            use_part_files=self.args.use_part_files,
+            parse_tfrecord=True,
+            file_io=self.file_io,
+            logger=self.logger,
+        )
+        ranking_model.build(ranking_dataset)
 
         # Save the model and check if coefficients file was saved
         ranking_model.save(models_dir=self.args.models_dir)

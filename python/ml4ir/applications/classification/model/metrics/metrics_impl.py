@@ -1,46 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 
-from ml4ir.base.model.metrics.metrics_impl import MetricState
-from ml4ir.base.features.feature_config import FeatureConfig
-
-from typing import Optional, Dict
-
-
-class CategoricalAccuracy(metrics.CategoricalAccuracy):
-    """
-    Custom metric class to compute the Categorical Accuracy.
-
-    Currently just a wrapper around tf.keras.metrics.CategoricalAccuracy
-    to maintain consistency of arguments to __init__
-    """
-
-    def __init__(
-        self,
-        feature_config: FeatureConfig,
-        metadata_features: Dict,
-        name="categorical_accuracy",
-        state=MetricState.NEW,
-        **kwargs
-    ):
-        """
-        Creates a CategoricalAccuracy instance
-
-        Parameters
-        ----------
-        feature_config : FeatureConfig object
-            FeatureConfig object that defines the configuration for each model
-            feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
-        name : str
-            Name of the metric
-        state : {"new", "old"}
-            State of the metric
-        """
-        super(CategoricalAccuracy, self).__init__(name=name)
-
 
 class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
@@ -53,10 +13,7 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
     def __init__(
         self,
-        feature_config: Optional[FeatureConfig] = None,
-        metadata_features: Dict = {},
         name="top_5_categorical_accuracy",
-        state=MetricState.NEW,
         **kwargs
     ):
         """
@@ -67,13 +24,8 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         feature_config : FeatureConfig object
             FeatureConfig object that defines the configuration for each model
             feature
-        metadata_features : dict
-            Dictionary of metadata feature tensors that can be used to compute
-            custom metrics
         name : str
             Name of the metric
-        state : {"new", "old"}
-            State of the metric
         """
         super(Top5CategoricalAccuracy, self).__init__(name=name, k=5)
 

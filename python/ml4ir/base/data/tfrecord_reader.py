@@ -261,13 +261,8 @@ class TFRecordParser(object):
             # Extract the label feature to return separately
             labels = features_dict.pop(self.feature_config.get_label(key="name"))
 
-            if self.feature_config.aux_label:
-                aux_labels = features_dict.get(self.feature_config.get_aux_label(key="node_name"))
-                # return X and y and y_aux which can be used with fit(), predict() and evaluate()
-                return features_dict, {self.output_name: labels, self.aux_output_name: aux_labels}
-            else:
-                # return X and y which can be used with fit(), predict() and evaluate()
-                return features_dict, labels
+            # return X and y which can be used with fit(), predict() and evaluate()
+            return features_dict, labels
 
         return _parse_fn
 
@@ -414,8 +409,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         required_fields_only: Optional[bool] = False,
         pad_sequence: Optional[bool] = True,
         max_sequence_size: Optional[int] = 25,
-        output_name: Optional[str] = None,
-        aux_output_name: Optional[str] = None,
+        output_name: Optional[str] = None
     ):
         """
         Constructor method for instantiating a TFRecordParser object
@@ -434,13 +428,10 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Maximum number of sequence per query. Used for padding
         output_name: str
             The name of tensorflow's output node which carry the prediction score
-        aux_output_name: str
-            The name of tensorflow's output node which carry the prediction score for the auxiliary output.
         """
         self.pad_sequence = pad_sequence
         self.max_sequence_size = max_sequence_size
         self.output_name = output_name
-        self.aux_output_name = aux_output_name
 
         super(TFRecordSequenceExampleParser, self).__init__(
             feature_config=feature_config,
@@ -687,8 +678,7 @@ def get_parse_fn(
     max_sequence_size: int = 0,
     required_fields_only: bool = False,
     pad_sequence: bool = True,
-    output_name: str = None,
-    aux_output_name: str = None,
+    output_name: str = None
 
 ) -> tf.function:
     """
@@ -713,8 +703,6 @@ def get_parse_fn(
         Whether to pad sequence
     output_name: str
             The name of tensorflow's output node which carry the prediction score
-    aux_output_name: str
-        The name of tensorflow's output node which carry the prediction score for the auxiliary output.
 
     Returns
     -------
@@ -740,8 +728,7 @@ def get_parse_fn(
             max_sequence_size=max_sequence_size,
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
-            output_name=output_name,
-            aux_output_name=aux_output_name,
+            output_name=output_name
         )
     else:
         raise KeyError("Invalid TFRecord type specified: {}".format(tfrecord_type))
@@ -804,8 +791,7 @@ def read(
         tfrecord_type=tfrecord_type,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         max_sequence_size=max_sequence_size,
-        output_name=kwargs.get('output_name'),
-        aux_output_name=kwargs.get('aux_output_name'),
+        output_name=kwargs.get("output_name")
     )
 
     # Get all tfrecord files in directory

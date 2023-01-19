@@ -37,8 +37,6 @@ def train_ml4ir(data_dir, feature_config, model_config, logs_dir, aux_loss):
         "softmax_cross_entropy",
         "--aux_loss_key",
         aux_loss,
-        "--primary_loss_weight",
-        "0.8",
         "--aux_loss_weight",
         "0.2",
         "--num_epochs",
@@ -61,7 +59,6 @@ def train_ml4ir(data_dir, feature_config, model_config, logs_dir, aux_loss):
         "25",
         "--metrics_keys",
         "MRR",
-        "RankMatchFailure",
         "categorical_accuracy",
         "--monitor_metric",
         "categorical_accuracy",
@@ -84,81 +81,51 @@ class TestDualObjectiveTraining(unittest.TestCase):
         gc.collect()
         K.clear_session()
 
-    def test_E2E_aux_softmax_CE(self):
+    def test_end_to_end_aux_one_hot_cross_entropy(self):
         feature_config_path = os.path.join(
             ROOT_DATA_DIR, "configs", "feature_config_aux_loss.yaml"
         )
-        model_config_path = os.path.join(ROOT_DATA_DIR, "configs", "model_config_cyclic_lr.yaml")
+        model_config_path = os.path.join(
+            ROOT_DATA_DIR, "configs", "model_config_cyclic_lr.yaml")
         data_dir = os.path.join(ROOT_DATA_DIR, "tfrecord")
-        aux_loss = "softmax_cross_entropy"
-        train_ml4ir(data_dir, feature_config_path, model_config_path, self.log_dir, aux_loss)
+        aux_loss = "aux_one_hot_cross_entropy"
+        train_ml4ir(data_dir, feature_config_path,
+                    model_config_path, self.log_dir, aux_loss)
 
-        ml4ir_results = pd.read_csv(
+        results_dict = pd.read_csv(
             os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
-        )
-        primary_training_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_ranking_score_loss"][1]
-        )
-        assert np.isclose(primary_training_loss, 1.1877643, atol=0.0001)
-        aux_training_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_aux_ranking_score_loss"][1]
-        )
-        assert np.isclose(aux_training_loss, 1.2242277, atol=0.0001)
-        primary_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_ranking_score_loss"][1]
-        )
-        assert np.isclose(primary_val_loss, 1.2086908, atol=0.0001)
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_aux_ranking_score_loss"][1]
-        )
-        # RankMatchFailure metric comparisons
-        assert np.isclose(aux_val_loss, 1.2806674, atol=0.0001)
-        # RankMatchFailure metric comparisons
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_ranking_score_old_RankMatchFailure"][1]
-        )
-        assert np.isclose(aux_val_loss, 0.00082716695, atol=0.00001)
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_ranking_score_new_RankMatchFailure"][1]
-        )
-        assert np.isclose(aux_val_loss, 0.00012763393, atol=0.00001)
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_ranking_score_old_RankMatchFailure"][1]
-        )
-        assert np.isclose(aux_val_loss, 0.0011314502, atol=0.00001)
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_ranking_score_new_RankMatchFailure"][1]
-        )
-        assert np.isclose(aux_val_loss, 0.0002121307, atol=0.00001)
+        ).set_index(0).to_dict()[1]
 
-    def test_E2E_aux_basic_CE(self):
+        assert np.isclose(float(results_dict["train_loss"]), 1.18435859, atol=0.0001)
+        assert np.isclose(float(results_dict["train_primary_loss"]), 1.1877643, atol=0.0001)
+        assert np.isclose(float(results_dict["train_aux_loss"]), 1.1706434, atol=0.0001)
+
+        assert np.isclose(float(results_dict["val_loss"]), 1.2038229, atol=0.0001)
+        assert np.isclose(float(results_dict["val_primary_loss"]), 1.2087243, atol=0.0001)
+        assert np.isclose(float(results_dict["val_aux_loss"]), 1.1842161, atol=0.0001)
+
+    def test_end_to_end_aux_softmax_cross_entropy(self):
         feature_config_path = os.path.join(
             ROOT_DATA_DIR, "configs", "feature_config_aux_loss.yaml"
         )
-        model_config_path = os.path.join(ROOT_DATA_DIR, "configs", "model_config_cyclic_lr.yaml")
+        model_config_path = os.path.join(
+            ROOT_DATA_DIR, "configs", "model_config_cyclic_lr.yaml")
         data_dir = os.path.join(ROOT_DATA_DIR, "tfrecord")
-        aux_loss = "basic_cross_entropy"
-        train_ml4ir(data_dir, feature_config_path, model_config_path, self.log_dir, aux_loss)
+        aux_loss = "aux_softmax_cross_entropy"
+        train_ml4ir(data_dir, feature_config_path,
+                    model_config_path, self.log_dir, aux_loss)
 
-        ml4ir_results = pd.read_csv(
+        results_dict = pd.read_csv(
             os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
-        )
-        primary_training_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_ranking_score_loss"][1]
-        )
-        assert np.isclose(primary_training_loss, 1.1911143, atol=0.0001)
-        aux_training_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "train_aux_ranking_score_loss"][1]
-        )
-        assert np.isclose(aux_training_loss, 0.3824733, atol=0.0001)
-        primary_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_ranking_score_loss"][1]
-        )
-        assert np.isclose(primary_val_loss, 1.2130133, atol=0.0001)
-        aux_val_loss = float(
-            ml4ir_results.loc[ml4ir_results[0] == "val_aux_ranking_score_loss"][1]
-        )
-        assert np.isclose(aux_val_loss, 0.3906489, atol=0.0001)
+        ).set_index(0).to_dict()[1]
+
+        assert np.isclose(float(results_dict["train_loss"]), 1.1912113, atol=0.0001)
+        assert np.isclose(float(results_dict["train_primary_loss"]), 1.19025492, atol=0.0001)
+        assert np.isclose(float(results_dict["train_aux_loss"]), 1.19503664, atol=0.0001)
+
+        assert np.isclose(float(results_dict["val_loss"]), 1.2133840, atol=0.0001)
+        assert np.isclose(float(results_dict["val_primary_loss"]), 1.21196198, atol=0.0001)
+        assert np.isclose(float(results_dict["val_aux_loss"]), 1.2190713, atol=0.0001)
 
 
 if __name__ == "__main__":

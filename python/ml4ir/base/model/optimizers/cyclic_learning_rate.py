@@ -69,9 +69,12 @@ class CyclicalLearningRate(tf.keras.optimizers.schedules.LearningRateSchedule):
             initial_learning_rate = tf.convert_to_tensor(
                 self.initial_learning_rate, name="initial_learning_rate"
             )
+
             dtype = initial_learning_rate.dtype
             maximal_learning_rate = tf.cast(self.maximal_learning_rate, dtype)
             step_size = tf.cast(self.step_size, dtype)
+            step = tf.cast(step, dtype)
+
             cycle = tf.floor(1 + step / (2 * step_size))
             x = tf.abs(step / step_size - 2 * cycle + 1)
 

@@ -3,16 +3,17 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ml4ir</groupId>
   <artifactId>ml4ir-parent</artifactId>
-  <version>0.0.3-SNAPSHOT</version>
+  <version>0.0.7-SNAPSHOT</version>
   <name>ml4ir-parent</name>
   <packaging>pom</packaging>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>11</java.version>
     <scalastyle.version>0.7.0</scalastyle.version>
-    <scala.version>2.11.12</scala.version>
-    <scala.artifact.suffix>2.11</scala.artifact.suffix>
-    <tensorflow.version>1.15.0</tensorflow.version>
+    <scala.version>2.12.4</scala.version>
+    <scala.artifact.suffix>2.12</scala.artifact.suffix>
+    <tensorflow.core.version>0.4.2</tensorflow.core.version>
+    <tensorflow.proto.version>1.15.0</tensorflow.proto.version>
     <jackson.version>2.10.0</jackson.version>
   </properties>
 
@@ -47,13 +48,13 @@
     </dependency>
     <dependency>
         <groupId>org.tensorflow</groupId>
-        <artifactId>tensorflow</artifactId>
-        <version>${tensorflow.version}</version>
+        <artifactId>tensorflow-core-platform</artifactId>
+        <version>${tensorflow.core.version}</version>
     </dependency>
     <dependency>
       <groupId>org.tensorflow</groupId>
       <artifactId>proto</artifactId>
-      <version>${tensorflow.version}</version>
+      <version>${tensorflow.proto.version}</version>
     </dependency>
       <dependency>
           <groupId>com.fasterxml.jackson.dataformat</groupId>

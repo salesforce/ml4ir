@@ -35,24 +35,13 @@ label:
   serving_info:
     name: clicked
   tfrecord_type: sequence
-aux_label:
-  name: text_match_score
-  node_name: text_match_score_aux
-  trainable: false
-  dtype: float
-  log_at_inference: true
-  feature_layer_info:
-    type: numeric
-    shape: null
-  serving_info:
-    name: textMatchScore_aux
-  tfrecord_type: sequence
 features:
   - name: text_match_score
     node_name: text_match_score
     trainable: true
     dtype: float
     log_at_inference: true
+    is_aux_label: true
     feature_layer_info:
       type: numeric
       shape: null

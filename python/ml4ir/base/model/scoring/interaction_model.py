@@ -1,91 +1,28 @@
-from tensorflow.keras import Input
 import tensorflow as tf
+from tensorflow import keras
 
+from ml4ir.base.config.keys import FeatureTypeKey, TFRecordTypeKey, SequenceExampleTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_layer import FeatureLayerMap
-from ml4ir.base.features.feature_layer import define_feature_layer
 from ml4ir.base.io.file_io import FileIO
 
 from typing import Dict
 
 
-class InteractionModel:
+FN = "fn"
+NODE_NAME = "node_name"
+NAME = "name"
+MASK = "mask"
+FEATURE_LAYER_INFO = "feature_layer_info"
+TRAINABLE = "trainable"
+TFRECORD_TYPE = "tfrecord_type"
+DTYPE = "dtype"
+
+
+class InteractionModel(keras.Model):
     """
     InteractionModel class that defines tensorflow layers that act on input features to
     convert them into numeric features to be fed into further neural network layers
-    """
-
-    def __call__(self, inputs: Dict[str, Input]):
-        """
-        Convert input tensorflow features into numeric
-        train features and metadata features by applying respective
-        feature transformation functions as specified in the FeatureConfig
-
-        Parameters
-        ----------
-        inputs : dict
-            Dictionary of the inputs to the tensorflow keras model
-
-        Returns
-        -------
-        train_features : `tf.Tensor`
-            Dense tensor object that is used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
-        """
-        train_features, metadata_features = self.feature_layer_op(inputs)
-        train_features, metadata_features = self.transform_features_op(
-            train_features, metadata_features
-        )
-        return train_features, metadata_features
-
-    def feature_layer_op(self, inputs: Dict[str, Input]):
-        """
-        Convert input tensorflow features into numeric
-        train features and metadata features by applying respective feature
-        transformation functions as specified in the FeatureConfig
-
-        Parameters
-        ----------
-        inputs : dict
-            Dictionary of the inputs to the tensorflow keras model
-
-        Returns
-        -------
-        train_features : dict
-            Dict of feature tensors that are used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
-        """
-        raise NotImplementedError
-
-    def transform_features_op(self, train_features, metadata_features):
-        """
-        Convert train and metadata features which have feature layer
-        functions applied to them into dense numeric tensors
-
-        Parameters
-        ----------
-        inputs : dict
-            Dictionary of the inputs to the tensorflow keras model
-
-        Returns
-        -------
-        train_features : `tf.Tensor`
-            Dense tensor object that is used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
-        """
-        raise NotImplementedError
-
-
-class UnivariateInteractionModel(InteractionModel):
-    """
-    Defines an interaction model that configures feature layer operations
-    on individual features
     """
 
     def __init__(
@@ -95,7 +32,49 @@ class UnivariateInteractionModel(InteractionModel):
         feature_layer_keys_to_fns: dict = {},
         max_sequence_size: int = 0,
         file_io: FileIO = None,
+        **kwargs
     ):
+        """
+        Constructor for instantiating a base InteractionModel
+
+        Parameters
+        ----------
+        feature_config : `FeatureConfig` object
+            FeatureConfig object that defines list of model features
+            and the feature transformation functions to be used on each
+        tfrecord_type : {"example", "sequence_example"}
+            Type of TFRecord protobuf being used for model training
+        feature_layer_keys_to_fns : dict
+            Dictionary of custom feature transformation functions to be applied
+            on the input features
+        max_sequence_size : int, optional
+            Maximum size of the sequence in SequenceExample protobuf
+        file_io : FileIO object
+            `FileIO` object that handles read write operations
+        """
+        super().__init__(**kwargs)
+
+        self.feature_config = feature_config
+        self.tfrecord_type = tfrecord_type
+        self.feature_layer_keys_to_fns = feature_layer_keys_to_fns
+        self.max_sequence_size = max_sequence_size
+        self.file_io = file_io
+        self.all_features = self.feature_config.get_all_features(include_label=False)
+
+        self.feature_layer_map = FeatureLayerMap()
+        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
+
+
+class UnivariateInteractionModel(InteractionModel):
+    """Keras layer that applies in-graph transformations to input feature tensors"""
+
+    def __init__(self,
+                 feature_config: FeatureConfig,
+                 tfrecord_type: str,
+                 feature_layer_keys_to_fns: dict = {},
+                 max_sequence_size: int = 0,
+                 file_io: FileIO = None,
+                 **kwargs):
         """
         Constructor for instantiating a UnivariateInteractionModel
 
@@ -114,67 +93,110 @@ class UnivariateInteractionModel(InteractionModel):
         file_io : FileIO object
             `FileIO` object that handles read write operations
         """
-        self.feature_config = feature_config
-        self.tfrecord_type = tfrecord_type
-        self.max_sequence_size = max_sequence_size
-        self.feature_layer_map = FeatureLayerMap()
-        self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
-        self.file_io = file_io
+        super().__init__(feature_config=feature_config,
+                         tfrecord_type=tfrecord_type,
+                         feature_layer_keys_to_fns=feature_layer_keys_to_fns,
+                         max_sequence_size=max_sequence_size,
+                         file_io=file_io,
+                         **kwargs)
 
-    def feature_layer_op(self, inputs: Dict[str, Input]):
+        # Define a one-to-one feature transform mapping
+        self.feature_transform_ops = dict()
+        for feature_info in self.all_features:
+            feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
+            feature_layer_info = feature_info.get(FEATURE_LAYER_INFO, {})
+            if FN in feature_layer_info:
+                feature_transform_cls = self.feature_layer_map.get_fn(
+                    feature_layer_info[FN])
+                if feature_transform_cls:
+                    self.feature_transform_ops[feature_node_name] = feature_transform_cls(
+                        feature_info=feature_info,
+                        file_io=file_io,
+                        **kwargs)
+                else:
+                    raise RuntimeError(
+                        "Unsupported feature function: {}".format(feature_layer_info[FN])
+                    )
+
+    def call(self, inputs, training=None):
         """
-        Convert input tensorflow features into numeric
-        train features and metadata features by applying respective feature
-        transformation functions as specified in the FeatureConfig
+        Apply the feature transform op to each feature
 
         Parameters
         ----------
-        inputs : dict
-            Dictionary of the inputs to the tensorflow keras model
+        inputs: dict of tensors
+            List of tensors that can be found in the FeatureConfig
+            key-d with their node_name
+        training: boolean
+            Boolean specifying if the layer is used in training mode or not
 
         Returns
         -------
-        train_features : dict
-            Dict of feature tensors that are used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
+        dict of dict of tensors
+            train: dict of tensors
+                List of transformed features that are used for training
+            metadata: dict of tensors
+                List of transformed features that are used as metadata
         """
-        train_features, metadata_features = define_feature_layer(
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            feature_layer_map=self.feature_layer_map,
-            file_io=self.file_io,
-        )(inputs)
+        train_features = dict()
+        metadata_features = dict()
 
-        return train_features, metadata_features
+        # Define a dynamic tensor tiling shape
+        # NOTE: Can not be hardcoded as we allow for varying sequence_size at inference time
+        #
+        # TODO: This could possibly be cleaned up now that we have moved to
+        #       keras model subclassing API, which allows dynamic graph execution
+        #       and doesn't need all this _ahem_ magic
+        if self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
+            train_tile_shape = tf.shape(
+                tf.expand_dims(
+                    tf.expand_dims(tf.gather(inputs[MASK], indices=0), axis=0), axis=-1
+                )
+            )
+            metadata_tile_shape = tf.shape(
+                tf.expand_dims(tf.gather(inputs[MASK], indices=0), axis=0)
+            )
 
-    def transform_features_op(
-        self, train_features: Dict[str, tf.Tensor], metadata_features: Dict[str, tf.Tensor]
-    ):
-        """
-        Convert train and metadata features which have feature layer
-        functions applied to them into dense numeric tensors.
-        Sorts the features by name and concats the individual features
-        into a dense tensor.
+        for feature_info in self.all_features:
+            feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
+            feature_layer_info = feature_info[FEATURE_LAYER_INFO]
+            feature_tensor = inputs[feature_node_name]
 
-        Parameters
-        ----------
-        inputs : dict
-            Dictionary of the inputs to the tensorflow keras model
+            if feature_node_name in self.feature_transform_ops:
+                feature_tensor = self.feature_transform_ops[feature_node_name](
+                    feature_tensor, training=training
+                )
+            elif feature_info[TRAINABLE]:
+                # Default feature layer
+                feature_tensor = tf.expand_dims(
+                    feature_tensor, axis=-1, name="{}_expanded".format(feature_node_name))
 
-        Returns
-        -------
-        train_features : `tf.Tensor`
-            Dense tensor object that is used for training
-        metadata_features : dict
-            Dictionary of feature tensors that can be used for
-            computing custom metrics and losses
-        """
-        # Sorting the train features dictionary so that we control the order
-        train_features_list = [train_features[k] for k in sorted(train_features)]
+            """
+            NOTE: If the trainable feature is of type context, then we tile/duplicate
+            the values for all examples of the sequence
+            """
+            if (
+                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
+            ):
+                if feature_info[TRAINABLE]:
+                    feature_tensor = tf.tile(feature_tensor, train_tile_shape)
+                else:
+                    feature_tensor = tf.tile(feature_tensor, metadata_tile_shape)
 
-        # Concat all train features to get a dense feature vector
-        train_features_transformed = tf.concat(train_features_list, axis=-1, name="train_features")
+            if feature_info[TRAINABLE]:
+                # Note: All non-string types are converted to float to avoid dtype mismatches.
+                # Strings are left as is to be processed by model layers which expect string inputs
+                if feature_info[DTYPE] != tf.string:
+                    train_features[feature_node_name] = tf.cast(feature_tensor, tf.float32)
+                else:
+                    train_features[feature_node_name] = feature_tensor
+            else:
+                if feature_info[DTYPE] == tf.int64:
+                    feature_tensor = tf.cast(feature_tensor, tf.float32)
+                metadata_features[feature_node_name] = feature_tensor
 
-        return train_features_transformed, metadata_features
+        return {
+            FeatureTypeKey.TRAIN: train_features,
+            FeatureTypeKey.METADATA: metadata_features
+        }

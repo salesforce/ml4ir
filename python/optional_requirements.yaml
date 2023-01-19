@@ -21,9 +21,21 @@
 # To install ml4ir `all`, run pip install ml4ir[all]
 all:
   - pyspark==3.0.1  # required to run ml4ir.base.pipeline
-  - omnixai==1.1.4  # required for running explanations demo. Upgrade to 1.1.5 when it is available
+  - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
+  - omnixai==1.1.4 # required for running explanations demo. Upgrade to 1.1.5 when it is available
+  - gast<0.5.0,>=0.2.1
+  - torch==1.10.0
+  - sentence-transformers==2.1.0
+  - sentencepiece==0.1.96
 pyspark:
   - pyspark==3.0.1  # required to support pyspark data read
+sentence-transformers:
+  - gast<0.5.0,>=0.2.1
+  - torch==1.10.0
+  - sentence-transformers==2.1.0
+  - sentencepiece==0.1.96
+visualization:
+  - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
 explainer:
   - omnixai==1.1.4 # required for running explanations demo. Upgrade to 1.1.5 when it is available
 # Add other optional ml4ir dependencies here
