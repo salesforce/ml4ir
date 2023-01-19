@@ -57,8 +57,10 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
             to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
-        return self.loss_fn(y_true, tf.math.multiply(y_pred, mask))
+        return self.loss_fn(y_true=tf.math.multiply(y_true, mask),
+                            y_pred=tf.math.multiply(y_pred, mask))
 
     def final_activation_op(self, inputs, training=None):
         """
@@ -123,15 +125,18 @@ class AuxiliaryOneHotCrossEntropy(SoftmaxCrossEntropy):
         - A simple remedy is to scale down the loss by the number of ties per query.
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
         # Convert y_true to 1-hot labels
-        y_true_1_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
-        y_true_1_hot = tf.cast(y_true_1_hot, dtype=tf.float32)
+        y_true_one_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
+        y_true_one_hot = tf.cast(y_true_one_hot, dtype=y_pred.dtype)
 
         # Scale down the loss of a query by 1 / (number of ties)
-        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_1_hot, axis=1))
+        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_one_hot, axis=1))
 
-        return self.loss_fn(y_true_1_hot, tf.math.multiply(y_pred, mask), sample_weight=sample_weight)
+        return self.loss_fn(y_true=tf.math.multiply(y_true_one_hot, mask),
+                            y_pred=tf.math.multiply(y_pred, mask),
+                            sample_weight=sample_weight)
 
 
 class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
@@ -165,29 +170,18 @@ class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
         - Uses `mask` field to exclude padded records from contributing to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
 
         # Convert y_true to a probability distribution
-        # y_true_softmax = self.final_activation_op({
-        #     FeatureTypeKey.METADATA: {
-        #         FeatureTypeKey.MASK: mask
-        #     },
-        #     FeatureTypeKey.LOGITS: y_true
-        # }, training=training)
+        y_true_softmax = self.final_activation_op({
+            FeatureTypeKey.METADATA: {
+                FeatureTypeKey.MASK: mask
+            },
+            FeatureTypeKey.LOGITS: y_true
+        }, training=training)
 
-        # return self.loss_fn(y_true_softmax, tf.math.multiply(y_pred, mask))
-
-        y_true_softmax = tf.math.softmax(y_true)  # convert to a probability distribution
-        # masking zeros for the log op
-        zero = tf.constant(0, dtype=tf.float32)
-        non_zero = tf.not_equal(y_pred, zero)
-        # remove all the zero entries from the y_pred (corresponds to padded records)
-        y_pred_non_zero = tf.boolean_mask(y_pred, non_zero)
-        # retain values in y_true corresponding to non zero values in y_pred
-        y_true_softmax_masked = tf.boolean_mask(y_true_softmax, non_zero)
-        return tf.math.divide(
-            -tf.reduce_sum(y_true_softmax_masked * tf.math.log(y_pred_non_zero)),
-            tf.constant(32, dtype=tf.float32),
-        )
+        return self.loss_fn(y_true=tf.math.multiply(y_true_softmax, mask),
+                            y_pred=tf.math.multiply(y_pred, mask))
 
 
 class RankOneListNet(SoftmaxCrossEntropy):
@@ -241,6 +235,7 @@ class RankOneListNet(SoftmaxCrossEntropy):
             to the loss
         """
         mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
         batch_size = tf.cast(tf.shape(y_true)[0], tf.float32)
 
         # Mask the padded records

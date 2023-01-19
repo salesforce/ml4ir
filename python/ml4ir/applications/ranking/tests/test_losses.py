@@ -65,57 +65,6 @@ class RankingModelTest(RankingTestBase):
         loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
         assert np.isclose(loss, 1.306335, atol=1e-5)
 
-    def test_aux_one_hot_hot_cross_entropy(self):
-        """Test the auxiliary one hot cross entropy listwise loss object"""
-        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
-
-        y_pred = loss_op.final_activation_op({
-            "logits": self.logits,
-            "metadata": {
-                "mask": self.mask
-            }
-        })
-
-        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
-
-        loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
-        assert np.isclose(loss, 0.5249801, atol=1e-5)
-
-    def test_aux_one_hot_cross_entropy_with_ties(self):
-        """Test the one hot cross entropy for aux target with ties"""
-        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
-
-        y_pred = loss_op.final_activation_op({
-            "logits": self.logits,
-            "metadata": {
-                "mask": self.mask
-            }
-        })
-
-        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
-
-        loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
-        assert np.isclose(loss, 4.117315, atol=1e-5)
-
-    def test_aux_softmax_cross_entropy(self):
-        """Test the auxiliary softmax cross entropy listwise loss object"""
-        loss_op = listwise_losses.AuxiliarySoftmaxCrossEntropy()
-
-        y_pred = loss_op.final_activation_op({
-            "logits": self.logits,
-            "metadata": {
-                "mask": self.mask
-            }
-        })
-
-        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
-
-        loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
-        assert np.isclose(loss, 0.75868917, atol=1e-5)
-
     def test_rank_one_list_net(self):
         """Test the rank-one listnet listwise loss object"""
         loss_op = listwise_losses.RankOneListNet()
@@ -132,3 +81,54 @@ class RankingModelTest(RankingTestBase):
 
         loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
         assert np.isclose(loss, 2.1073625, atol=1e-5)
+
+    def test_aux_one_hot_hot_cross_entropy(self):
+        """Test the auxiliary one hot cross entropy listwise loss object"""
+        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux, y_pred)
+        assert np.isclose(loss, 0.5249801, atol=1e-5)
+
+    def test_aux_one_hot_cross_entropy_with_ties(self):
+        """Test the one hot cross entropy for aux target with ties"""
+        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux_ties, y_pred)
+        assert np.isclose(loss, 0.8936954, atol=1e-5)
+
+    def test_aux_softmax_cross_entropy(self):
+        """Test the auxiliary softmax cross entropy listwise loss object"""
+        loss_op = listwise_losses.AuxiliarySoftmaxCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux, y_pred)
+        assert np.isclose(loss, 0.88127804, atol=1e-5)
