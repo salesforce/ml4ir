@@ -103,6 +103,7 @@ class FeatureConfig:
         self.all_features: List[Optional[Dict]] = list()
         self.query_key: Optional[Dict] = None
         self.label: Optional[Dict] = None
+        self.aux_label: Optional[Dict] = None
         self.mask: Optional[Dict] = None
         self.features: List[Optional[Dict]] = list()
 
@@ -192,6 +193,9 @@ class FeatureConfig:
 
             if feature_info.get("is_secondary_label", False):
                 self.secondary_labels.append(feature_info)
+
+            if feature_info.get("is_aux_label", False):
+                self.aux_label = feature_info
 
     def log_initialization(self):
         """
@@ -288,6 +292,23 @@ class FeatureConfig:
             Label value or entire config dictionary based on if the key is passed
         """
         return self._get_key_or_dict(self.label, key=key)
+
+    def get_aux_label(self, key: str = None):
+        """
+        Getter method for label in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+
+        Parameters
+        ----------
+        key : str
+            Value from the label feature configuration to be fetched
+
+        Returns
+        -------
+        str or int or bool or dict
+            Label value or entire config dictionary based on if the key is passed
+        """
+        return self._get_key_or_dict(self.aux_label, key=key)
 
     def get_mask(self, key: str = None):
         """

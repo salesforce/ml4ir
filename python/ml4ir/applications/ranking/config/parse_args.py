@@ -16,7 +16,7 @@ class RankingArgParser(RelevanceArgParser):
             choices=LossTypeKey.get_all_keys(),
             default=LossTypeKey.POINTWISE,
             help="Scoring technique to use. Has to be one of the scoring types in ScoringTypeKey in "
-            "applications/ranking/config/keys.py",
+                 "applications/ranking/config/keys.py",
         )
 
         self.add_argument(
@@ -25,7 +25,7 @@ class RankingArgParser(RelevanceArgParser):
             choices=ScoringTypeKey.get_all_keys(),
             default=ScoringTypeKey.LISTWISE,
             help="Loss technique to use. Has to be one of the loss types in LossTypeKey in "
-            "applications/ranking/config/keys.py",
+                 "applications/ranking/config/keys.py",
         )
 
     def set_default_args(self):
@@ -39,7 +39,8 @@ class RankingArgParser(RelevanceArgParser):
             monitor_mode="max",
             max_sequence_size=25,
             group_metrics_min_queries=25,
-            output_name="ranking_score"
+            output_name="ranking_score",
+            aux_loss_key="auxiliary_softmax_cross_entropy"
         )
 
 

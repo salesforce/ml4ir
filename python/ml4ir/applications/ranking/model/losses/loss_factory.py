@@ -38,5 +38,13 @@ def get_loss(loss_key: str,
         return listwise_losses.SoftmaxCrossEntropy(loss_key=loss_key,
                                                    scoring_type=scoring_type,
                                                    output_name=output_name)
+    elif loss_key == LossKey.AUX_ONE_HOT_CROSS_ENTROPY:
+        return listwise_losses.AuxiliaryOneHotCrossEntropy(loss_key=loss_key,
+                                                           scoring_type=scoring_type,
+                                                           output_name=output_name)
+    elif loss_key == LossKey.AUX_SOFTMAX_CROSS_ENTROPY:
+        return listwise_losses.AuxiliarySoftmaxCrossEntropy(loss_key=loss_key,
+                                                            scoring_type=scoring_type,
+                                                            output_name=output_name)
     else:
         raise NotImplementedError

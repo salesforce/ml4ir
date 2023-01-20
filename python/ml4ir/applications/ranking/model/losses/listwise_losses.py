@@ -91,6 +91,99 @@ class SoftmaxCrossEntropy(ListwiseLossBase):
         return self.final_activation_fn(logits)
 
 
+class AuxiliaryOneHotCrossEntropy(SoftmaxCrossEntropy):
+    """
+    Compute the one-hot softmax cross entropy loss on the auxiliary label
+    """
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Get the softmax cross entropy loss on the auxiliary label
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Scalar softmax cross entropy loss tensor
+
+        Notes
+        -----
+        - Uses `mask` field to exclude padded records from contributing
+        to the loss
+        - Queries with ties in the highest scores would have multiple one's in the 1-hot vector.
+        - Queries with all zeros for y_true would have all ones as their 1-hot vector.
+        - A simple remedy is to scale down the loss by the number of ties per query.
+        """
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
+
+        # Convert y_true to 1-hot labels
+        y_true_one_hot = tf.equal(y_true, tf.expand_dims(tf.math.reduce_max(y_true, axis=1), axis=1))
+        y_true_one_hot = tf.cast(y_true_one_hot, dtype=y_pred.dtype)
+
+        # Scale down the loss of a query by 1 / (number of ties)
+        sample_weight = tf.math.divide(tf.constant(1, dtype=tf.float32), tf.reduce_sum(y_true_one_hot, axis=1))
+
+        return self.loss_fn(y_true=tf.math.multiply(y_true_one_hot, mask),
+                            y_pred=tf.math.multiply(y_pred, mask),
+                            sample_weight=sample_weight)
+
+
+class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
+    """
+    Compute the softmax cross entropy loss on auxiliary label
+    FIXME: Add difference between variants of losses
+    """
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Get the softmax cross entropy loss
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Scalar basic cross entropy loss tensor
+
+        Notes
+        -----
+        - Uses `mask` field to exclude padded records from contributing to the loss
+        """
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
+
+        # Convert y_true to a probability distribution
+        y_true_softmax = self.final_activation_op({
+            FeatureTypeKey.METADATA: {
+                FeatureTypeKey.MASK: mask
+            },
+            FeatureTypeKey.LOGITS: y_true
+        }, training=training)
+
+        return self.loss_fn(y_true=tf.math.multiply(y_true_softmax, mask),
+                            y_pred=tf.math.multiply(y_pred, mask))
+
+
 class RankOneListNet(SoftmaxCrossEntropy):
 
     def __init__(self,

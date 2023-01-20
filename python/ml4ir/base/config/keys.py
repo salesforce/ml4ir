@@ -144,6 +144,7 @@ class FeatureTypeKey(Key):
     MASK = "mask"
     LOGITS = "logits"
     SCORES = "scores"
+    AUX_LABEL = "aux_label"
 
 
 class VocabularyInfoArgsKey(Key):
