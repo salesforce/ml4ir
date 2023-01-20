@@ -36,7 +36,6 @@ class RankingPipeline(RelevancePipeline):
         """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
-        self.aux_loss_key = args.aux_loss_key
         self.batch_size = args.batch_size
 
         super().__init__(args)
@@ -66,23 +65,6 @@ class RankingPipeline(RelevancePipeline):
             scoring_type=self.scoring_type,
             output_name=self.args.output_name
         )
-
-    def get_aux_loss(self):
-        """
-        Get the auxiliary loss function to be used with the RelevanceModel
-
-        Returns
-        -------
-        RelevanceLossBase object
-        """
-        if self.aux_loss_key:
-            return loss_factory.get_loss(
-                loss_key=self.aux_loss_key,
-                scoring_type=self.scoring_type,
-                output_name="aux_{}".format(self.args.output_name)
-            )
-        else:
-            return None
 
     def get_metrics(self) -> List[Union[Type[Metric], str]]:
         """

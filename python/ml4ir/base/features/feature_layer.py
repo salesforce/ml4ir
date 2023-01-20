@@ -1,19 +1,12 @@
-import tensorflow as tf
-from tensorflow.keras import layers
-
-from ml4ir.base.features.feature_config import FeatureConfig
-from ml4ir.base.config.keys import SequenceExampleTypeKey
-from ml4ir.base.config.keys import TFRecordTypeKey
-from ml4ir.base.features.feature_fns.sequence import BytesSequenceToEncodingBiLSTM
-from ml4ir.base.features.feature_fns.sequence import Global1dPooling
 from ml4ir.base.features.feature_fns.categorical import CategoricalEmbeddingToEncodingBiLSTM
 from ml4ir.base.features.feature_fns.categorical import CategoricalEmbeddingWithHashBuckets
 from ml4ir.base.features.feature_fns.categorical import CategoricalEmbeddingWithIndices
 from ml4ir.base.features.feature_fns.categorical import CategoricalEmbeddingWithVocabularyFile
-from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWithVocabularyFile
 from ml4ir.base.features.feature_fns.categorical import CategoricalEmbeddingWithVocabularyFileAndDropout
+from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWithVocabularyFile
+from ml4ir.base.features.feature_fns.sequence import BytesSequenceToEncodingBiLSTM
+from ml4ir.base.features.feature_fns.sequence import Global1dPooling
 from ml4ir.base.features.feature_fns.tf_native import TFNativeOpLayer
-from ml4ir.base.io.file_io import FileIO
 
 
 class FeatureLayerMap:

@@ -27,11 +27,11 @@ class FixedAdditivePositionalBias(layers.Layer):
     def __init__(self, max_ranks, kernel_initializer='Zeros', l1_coeff=0, l2_coeff=0):
         super(FixedAdditivePositionalBias, self).__init__()
         self.dense = layers.Dense(1,
-                     name=PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS,
-                     kernel_initializer=kernel_initializer,
-                     kernel_regularizer=regularizers.l1_l2(l1=l1_coeff, l2=l2_coeff),
-                     activation=None,
-                     use_bias=False)
+                                  name=PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS,
+                                  kernel_initializer=kernel_initializer,
+                                  kernel_regularizer=regularizers.l1_l2(l1=l1_coeff, l2=l2_coeff),
+                                  activation=None,
+                                  use_bias=False)
         self.max_ranks = max_ranks
 
     def call(self, inputs, training=False):

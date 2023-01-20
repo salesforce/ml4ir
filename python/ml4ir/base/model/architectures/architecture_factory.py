@@ -21,6 +21,5 @@ def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io)
             return DNN(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.RNN:
         raise NotImplementedError
-
     else:
         raise NotImplementedError

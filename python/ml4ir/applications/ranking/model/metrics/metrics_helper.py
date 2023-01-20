@@ -65,11 +65,11 @@ def compute_ndcg(relevance_grades: List[float]):
 
 
 def compute_secondary_label_metrics(
-    secondary_label_values: pd.Series,
-    ranks: pd.Series,
-    click_rank: int,
-    secondary_label: str,
-    prefix: str = "",
+        secondary_label_values: pd.Series,
+        ranks: pd.Series,
+        click_rank: int,
+        secondary_label: str,
+        prefix: str = "",
 ):
     """
     Computes the secondary ranking metrics using a secondary label for a single query
@@ -129,7 +129,7 @@ def compute_secondary_label_metrics(
             )
             # Count of failure records
             failure_count = (
-                pre_click_secondary_label_values < click_secondary_label_value
+                    pre_click_secondary_label_values < click_secondary_label_value
             ).sum()
             # Normalizing to fraction of potential records
             failure_fraction = failure_count / (click_rank - 1)
@@ -161,12 +161,12 @@ def compute_secondary_label_metrics(
 
 
 def compute_secondary_labels_metrics_on_query_group(
-    query_group: pd.DataFrame,
-    label_col: str,
-    old_rank_col: str,
-    new_rank_col: str,
-    secondary_labels: List[str],
-    group_keys: List[str] = []
+        query_group: pd.DataFrame,
+        label_col: str,
+        old_rank_col: str,
+        new_rank_col: str,
+        secondary_labels: List[str],
+        group_keys: List[str] = []
 ):
     """
     Compute the old and new secondary ranking metrics for a given
@@ -269,6 +269,9 @@ def get_grouped_stats(
         computed from the old and new ranks and secondary labels generated
         by the model
     """
+    # Filter unclicked queries
+    df_clicked = df[df[label_col] == 1.0]
+    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
     # Compute metrics on secondary labels
     df_secondary_labels_metrics = pd.DataFrame()
@@ -282,9 +285,6 @@ def get_grouped_stats(
                 secondary_labels=secondary_labels,
                 group_keys=group_keys
             ))
-
-    # Select clicked records
-    df_clicked = df[df[label_col] == 1.0]
 
     if group_keys:
         df_grouped_batch = df_clicked.groupby(group_keys)
@@ -377,16 +377,16 @@ def summarize_grouped_stats(df_grouped):
         # If higher values of the metric are better/desirable
         if metric_name_suffix.endswith(tuple(POSITIVE_METRIC_SUFFIXES)):
             df_grouped_metrics[perc_improv_metric_name] = 100. * (
-                (df_grouped_metrics["new_{}".format(metric_name_suffix)] -
-                 df_grouped_metrics["old_{}".format(metric_name_suffix)])
-                / df_grouped_metrics["old_{}".format(metric_name_suffix)])
+                    (df_grouped_metrics["new_{}".format(metric_name_suffix)] -
+                     df_grouped_metrics["old_{}".format(metric_name_suffix)])
+                    / df_grouped_metrics["old_{}".format(metric_name_suffix)])
 
         # If lower values of the metric are better/desirable
         elif metric_name_suffix.endswith(tuple(NEGATIVE_METRIC_SUFFIXES)):
             df_grouped_metrics[perc_improv_metric_name] = 100. * (
-                (df_grouped_metrics["old_{}".format(metric_name_suffix)] -
-                 df_grouped_metrics["new_{}".format(metric_name_suffix)])
-                / df_grouped_metrics["old_{}".format(metric_name_suffix)])
+                    (df_grouped_metrics["old_{}".format(metric_name_suffix)] -
+                     df_grouped_metrics["new_{}".format(metric_name_suffix)])
+                    / df_grouped_metrics["old_{}".format(metric_name_suffix)])
 
         processed_metric_name_suffixes.add(metric_name_suffix)
 

@@ -49,7 +49,7 @@ class SparkIO(FileIO):
         return self.spark_context._gateway.jvm.org.apache.hadoop.fs.Path(file_path)
 
     def read_df(
-        self, infile: str, sep: str = ",", index_col: int = None
+            self, infile: str, sep: str = ",", index_col: int = None, **kwargs
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
@@ -71,15 +71,15 @@ class SparkIO(FileIO):
         self.log("Reading dataframe from : {}".format(infile))
         return (
             self.spark_session.read.format("csv")
-            .option("header", "true")
-            .option("inferschema", "true")
-            .option("mode", "DROPMALFORMED")
-            .option("mergeSchema", "true")
-            .load(infile)
-            .toPandas()
+                .option("header", "true")
+                .option("inferschema", "true")
+                .option("mode", "DROPMALFORMED")
+                .option("mergeSchema", "true")
+                .load(infile)
+                .toPandas()
         )
 
-    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
+    def read_df_list(self, infiles, sep=",", index_col=None, **kwargs) -> pd.DataFrame:
         """
         Load a pandas dataframe from a list of files
 
@@ -104,12 +104,12 @@ class SparkIO(FileIO):
         self.log("Reading {} files from [{}, ..".format(len(infiles), infiles[0]))
         return (
             self.spark_session.read.format("csv")
-            .option("header", "true")
-            .option("inferschema", "true")
-            .option("mode", "DROPMALFORMED")
-            .option("mergeSchema", "true")
-            .load(infiles)
-            .toPandas()
+                .option("header", "true")
+                .option("inferschema", "true")
+                .option("mode", "DROPMALFORMED")
+                .option("mergeSchema", "true")
+                .load(infiles)
+                .toPandas()
         )
 
     def read_text_file(self, infile) -> str:

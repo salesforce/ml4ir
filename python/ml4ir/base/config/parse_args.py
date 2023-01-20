@@ -55,8 +55,8 @@ class RelevanceArgParser(ArgumentParser):
             "--data_dir",
             type=str,
             help="Path to the data directory to be used for training and inference. "
-            "Can optionally include train/ val/ and test/ subdirectories. "
-            "If subdirectories are not present, data will be split based on train_pcent_split",
+                 "Can optionally include train/ val/ and test/ subdirectories. "
+                 "If subdirectories are not present, data will be split based on train_pcent_split",
         )
 
         self.add_argument(
@@ -65,7 +65,7 @@ class RelevanceArgParser(ArgumentParser):
             choices=DataFormatKey.get_all_keys(),
             default="tfrecord",
             help="Format of the data to be used. "
-            "Supported Data Formats  are specified in ml4ir/base/config/keys.py",
+                 "Supported Data Formats  are specified in ml4ir/base/config/keys.py",
         )
 
         self.add_argument(
@@ -74,7 +74,7 @@ class RelevanceArgParser(ArgumentParser):
             choices=TFRecordTypeKey.get_all_keys(),
             default="example",
             help="TFRecord type of the data to be used. "
-            "Supported TFRecord type are specified in ml4ir/base/config/keys.py",
+                 "Supported TFRecord type are specified in ml4ir/base/config/keys.py",
         )
 
         self.add_argument(
@@ -89,7 +89,7 @@ class RelevanceArgParser(ArgumentParser):
             default=None,
             required=False,
             help="Path to a pretrained model to load for either resuming training or for running in"
-            "inference mode.",
+                 "inference mode.",
         )
 
         self.add_argument(
@@ -104,27 +104,6 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
             help="Loss to optimize."
-        )
-
-        self.add_argument(
-            "--aux_loss_key",
-            type=str,
-            choices=RankingLoss.get_all_keys() + ClassificationLoss.get_all_keys(),
-            help="Auxiliary loss to optimize."
-        )
-
-        self.add_argument(
-            "--primary_loss_weight",
-            type=float,
-            default=1.0,
-            help="The weight of the primary loss in the total loss",
-        )
-
-        self.add_argument(
-            "--aux_loss_weight",
-            type=float,
-            default=0,
-            help="The weight of the auxiliary loss in the total loss",
         )
 
         self.add_argument(
@@ -241,8 +220,8 @@ class RelevanceArgParser(ArgumentParser):
             type=float,
             default=0.8,
             help="Percentage of all data to be used for training. The remaining is used for validation and "
-            "testing. Remaining data is split in half if val_pcent_split or test_pcent_split are not "
-            "specified.",
+                 "testing. Remaining data is split in half if val_pcent_split or test_pcent_split are not "
+                 "specified.",
         )
 
         self.add_argument(
@@ -300,8 +279,8 @@ class RelevanceArgParser(ArgumentParser):
             type=ast.literal_eval,
             default=False,
             help="Whether to compile a loaded SavedModel into a Keras model. "
-            "NOTE: This requires that the SavedModel's architecture, loss, metrics, etc are the same as the RankingModel"
-            "If that is not the case, then you can still use a SavedModel from a model_file for inference/evaluation only",
+                 "NOTE: This requires that the SavedModel's architecture, loss, metrics, etc are the same as the RankingModel"
+                 "If that is not the case, then you can still use a SavedModel from a model_file for inference/evaluation only",
         )
 
         self.add_argument(
@@ -328,13 +307,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--aux_output_name",
-            type=str,
-            default=None,
-            help="Name of the output node of the auxiliary objective for the model",
-        )
-
-        self.add_argument(
             "--early_stopping_patience",
             type=int,
             default=2,
@@ -354,8 +326,8 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="{}",
             help="Dictionary of pretrained layers to be loaded."
-            "The key is the name of the layer to be assigned the pretrained weights."
-            "The value is the path to the pretrained weights.",
+                 "The key is the name of the layer to be assigned the pretrained weights."
+                 "The value is the path to the pretrained weights.",
         )
 
         self.add_argument(
@@ -363,7 +335,7 @@ class RelevanceArgParser(ArgumentParser):
             type=str,
             default="[]",
             help="List of layer names that are to be frozen instead of training."
-            "Usually coupled with initialize_layers_dict to load pretrained weights and freeze them",
+                 "Usually coupled with initialize_layers_dict to load pretrained weights and freeze them",
         )
 
         self.add_argument(

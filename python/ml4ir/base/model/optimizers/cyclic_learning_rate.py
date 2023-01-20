@@ -11,13 +11,13 @@ class CyclicalLearningRate(tf.keras.optimizers.schedules.LearningRateSchedule):
     """A LearningRateSchedule that uses cyclical schedule."""
 
     def __init__(
-        self,
-        initial_learning_rate,
-        maximal_learning_rate,
-        step_size,
-        scale_fn: Callable,
-        scale_mode: str = "cycle",
-        name: str = "CyclicalLearningRate",
+            self,
+            initial_learning_rate,
+            maximal_learning_rate,
+            step_size,
+            scale_fn: Callable,
+            scale_mode: str = "cycle",
+            name: str = "CyclicalLearningRate",
     ):
         """Applies cyclical schedule to the learning rate.
         See Cyclical Learning Rates for Training Neural Networks. https://arxiv.org/abs/1506.01186
@@ -69,16 +69,19 @@ class CyclicalLearningRate(tf.keras.optimizers.schedules.LearningRateSchedule):
             initial_learning_rate = tf.convert_to_tensor(
                 self.initial_learning_rate, name="initial_learning_rate"
             )
+
             dtype = initial_learning_rate.dtype
             maximal_learning_rate = tf.cast(self.maximal_learning_rate, dtype)
             step_size = tf.cast(self.step_size, dtype)
+            step = tf.cast(step, dtype)
+
             cycle = tf.floor(1 + step / (2 * step_size))
             x = tf.abs(step / step_size - 2 * cycle + 1)
 
             mode_step = cycle if self.scale_mode == "cycle" else step
 
             lr = initial_learning_rate + (
-                maximal_learning_rate - initial_learning_rate
+                    maximal_learning_rate - initial_learning_rate
             ) * tf.maximum(tf.cast(0, dtype), (1 - x)) * self.scale_fn(mode_step)
 
             return lr
@@ -95,12 +98,12 @@ class CyclicalLearningRate(tf.keras.optimizers.schedules.LearningRateSchedule):
 
 class TriangularCyclicalLearningRate(CyclicalLearningRate):
     def __init__(
-        self,
-        initial_learning_rate,
-        maximal_learning_rate,
-        step_size,
-        scale_mode: str = "cycle",
-        name: str = "TriangularCyclicalLearningRate",
+            self,
+            initial_learning_rate,
+            maximal_learning_rate,
+            step_size,
+            scale_mode: str = "cycle",
+            name: str = "TriangularCyclicalLearningRate",
     ):
         """Applies triangular cyclical schedule to the learning rate.
         See Cyclical Learning Rates for Training Neural Networks. https://arxiv.org/abs/1506.01186
@@ -154,12 +157,12 @@ class TriangularCyclicalLearningRate(CyclicalLearningRate):
 class Triangular2CyclicalLearningRate(CyclicalLearningRate):
     #@typechecked
     def __init__(
-        self,
-        initial_learning_rate,
-        maximal_learning_rate,
-        step_size,
-        scale_mode: str = "cycle",
-        name: str = "Triangular2CyclicalLearningRate",
+            self,
+            initial_learning_rate,
+            maximal_learning_rate,
+            step_size,
+            scale_mode: str = "cycle",
+            name: str = "Triangular2CyclicalLearningRate",
     ):
         """Applies triangular2 cyclical schedule to the learning rate.
         See Cyclical Learning Rates for Training Neural Networks. https://arxiv.org/abs/1506.01186
@@ -212,13 +215,13 @@ class Triangular2CyclicalLearningRate(CyclicalLearningRate):
 
 class ExponentialCyclicalLearningRate(CyclicalLearningRate):
     def __init__(
-        self,
-        initial_learning_rate,
-        maximal_learning_rate,
-        step_size,
-        gamma=1.0,
-        scale_mode: str = "iterations",
-        name: str = "ExponentialCyclicalLearningRate",
+            self,
+            initial_learning_rate,
+            maximal_learning_rate,
+            step_size,
+            gamma=1.0,
+            scale_mode: str = "iterations",
+            name: str = "ExponentialCyclicalLearningRate",
     ):
         """Applies exponential cyclical schedule to the learning rate.
         See Cyclical Learning Rates for Training Neural Networks. https://arxiv.org/abs/1506.01186
