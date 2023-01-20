@@ -9,7 +9,11 @@ from ml4ir.applications.ranking.model.losses.loss_base import PointwiseLossBase
 
 class SigmoidCrossEntropy(PointwiseLossBase):
 
-    def __init__(self, loss_key="pointwise", scoring_type="", output_name="score", **kwargs):
+    def __init__(self,
+                 loss_key="pointwise",
+                 scoring_type="",
+                 output_name="score",
+                 **kwargs):
         super().__init__(loss_key=loss_key, scoring_type=scoring_type, output_name=output_name)
 
         self.final_activation_fn = layers.Activation("sigmoid", name=output_name)

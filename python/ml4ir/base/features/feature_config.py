@@ -16,6 +16,7 @@ from typing import List, Dict, Optional
 class FeatureConfigKey:
     QUERY_KEY = "query_key"
     LABEL = "label"
+    AUX_LABEL = "aux_label"
     FEATURES = "features"
     RANK = "rank"
 
@@ -103,6 +104,7 @@ class FeatureConfig:
         self.all_features: List[Optional[Dict]] = list()
         self.query_key: Optional[Dict] = None
         self.label: Optional[Dict] = None
+        self.aux_label: Optional[Dict] = None
         self.mask: Optional[Dict] = None
         self.features: List[Optional[Dict]] = list()
 
@@ -174,6 +176,10 @@ class FeatureConfig:
 
         self.label = self.features_dict.get(FeatureConfigKey.LABEL)
         self.all_features.append(self.label)
+
+        self.aux_label = self.features_dict.get(FeatureConfigKey.AUX_LABEL)
+        if self.aux_label:
+            self.all_features.append(self.aux_label)
 
         self.features = self.features_dict.get(FeatureConfigKey.FEATURES)
         self.all_features.extend(self.features)
@@ -288,6 +294,23 @@ class FeatureConfig:
             Label value or entire config dictionary based on if the key is passed
         """
         return self._get_key_or_dict(self.label, key=key)
+
+    def get_aux_label(self, key: str = None):
+        """
+        Getter method for label in FeatureConfig object
+        Can additionally be used to only fetch a particular value from the dict
+
+        Parameters
+        ----------
+        key : str
+            Value from the label feature configuration to be fetched
+
+        Returns
+        -------
+        str or int or bool or dict
+            Label value or entire config dictionary based on if the key is passed
+        """
+        return self._get_key_or_dict(self.aux_label, key=key)
 
     def get_mask(self, key: str = None):
         """

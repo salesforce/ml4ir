@@ -39,7 +39,7 @@ def compute_dcg(relevance_grades: List[float]):
     -----
     Reference -> https://en.wikipedia.org/wiki/Discounted_cumulative_gain
     """
-    return np.sum([(np.power(2, relevance_grades[i] - 1.) / np.log2(i + 1 + 1)) for i in range(len(relevance_grades))])
+    return np.sum([((np.power(2, relevance_grades[i]) - 1.) / np.log2(i + 1 + 1)) for i in range(len(relevance_grades))])
 
 
 def compute_ndcg(relevance_grades: List[float]):
@@ -106,6 +106,9 @@ def compute_secondary_label_metrics(
     failure_any = 0
     failure_count = 0
     failure_fraction = 0.0
+    # We need to have at least one relevant document.
+    # If not, any ordering is considered ideal
+    secondary_label_ndcg = 1
 
     try:
         click_secondary_label_value = secondary_label_values[ranks == click_rank].values[0]
@@ -137,8 +140,10 @@ def compute_secondary_label_metrics(
 
     # Compute NDCG metric on the secondary label
     # NOTE: Here we are passing the relevance grades ordered by the ranking
-    secondary_label_ndcg = compute_ndcg(
-        secondary_label_values.values[np.argsort(ranks.values)])
+    if secondary_label_values.sum() > 0:
+        secondary_label_ndcg = compute_ndcg(
+            secondary_label_values.values[np.argsort(ranks.values)]
+        )
 
     return {
         "{}{}_NDCG".format(prefix, secondary_label): secondary_label_ndcg,
@@ -202,7 +207,9 @@ def compute_secondary_labels_metrics_on_query_group(
                 compute_secondary_label_metrics(
                     secondary_label_values=query_group[secondary_label],
                     ranks=query_group[old_rank_col],
-                    click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0],
+                    click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0]
+                    if (query_group[label_col] == 1).sum() != 0
+                    else float("inf"),
                     secondary_label=secondary_label,
                     prefix="old_",
                 )
@@ -211,7 +218,9 @@ def compute_secondary_labels_metrics_on_query_group(
                 compute_secondary_label_metrics(
                     secondary_label_values=query_group[secondary_label],
                     ranks=query_group[new_rank_col],
-                    click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0],
+                    click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0]
+                    if (query_group[label_col] == 1).sum() != 0
+                    else float("inf"),
                     secondary_label=secondary_label,
                     prefix="new_",
                 )
@@ -224,13 +233,13 @@ def compute_secondary_labels_metrics_on_query_group(
 
 
 def get_grouped_stats(
-    df: pd.DataFrame,
-    query_key_col: str,
-    label_col: str,
-    old_rank_col: str,
-    new_rank_col: str,
-    group_keys: List[str] = [],
-    secondary_labels: List[str] = [],
+        df: pd.DataFrame,
+        query_key_col: str,
+        label_col: str,
+        old_rank_col: str,
+        new_rank_col: str,
+        group_keys: List[str] = [],
+        secondary_labels: List[str] = [],
 ):
     """
     Compute query stats that can be used to compute ranking metrics
@@ -288,7 +297,8 @@ def get_grouped_stats(
         sum_new_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[new_rank_col]).sum())
 
         # Aggregate secondary label metrics by group keys
-        df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
+        if secondary_labels:
+            df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
     else:
         # Compute overall stats if group keys are not specified
         query_count = [df_clicked.shape[0]]
@@ -298,7 +308,8 @@ def get_grouped_stats(
         sum_new_reciprocal_rank = [(1.0 / df_clicked[new_rank_col]).sum()]
 
         # Aggregate secondary label metrics
-        df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
+        if secondary_labels:
+            df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
 
     df_label_stats = pd.DataFrame(
         {

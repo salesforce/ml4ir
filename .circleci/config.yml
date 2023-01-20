@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: ducouloa/ml4ir:0.1
+      - image: lastmansleeping/ml4ir:0.1
     resource_class: xlarge
     steps:
       - checkout

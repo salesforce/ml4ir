@@ -126,3 +126,9 @@ class ACR(MeanRankMetric):
             Ranks tensor cast to float
         """
         return tf.cast(click_ranks, tf.float32)
+
+
+class RankMatchFailure(metrics.Mean):
+
+    def test(self):
+        pass
