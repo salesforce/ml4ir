@@ -15,6 +15,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
+            pip install --upgrade pip
             pip install -r python/build-requirements.txt
       - run:
           name: Build
@@ -49,6 +50,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -82,6 +84,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -92,12 +95,12 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.classification coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - persist_to_workspace:
           root: python/reports
           paths:
-            - .coverage.classif
+            - .coverage.classification
       - store_test_results:
           path: python/test_results
 
@@ -115,6 +118,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -148,6 +152,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             cd python
+            pip install --upgrade pip
             pip install -r build-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/build-requirements.txt" }}
@@ -160,9 +165,9 @@ jobs:
           name: Run Python Coverage
           command: |
             . venv/bin/activate
-            coverage combine reports/.coverage.ranking reports/.coverage.classif
+            coverage combine reports/
             coverage report
-            coverage html --fail-under=75
+            coverage html --fail-under=80
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - store_artifacts:
           path: /home/circleci/project/htmlcov

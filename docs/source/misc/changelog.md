@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.15] - 2023-01-20
+
+### Changed
+
+- Upgrading from tensorflow 2.0.x to 2.7.x
+- Moving from Keras Functional API to Model Subclassing API for more customization capabilities
+
+### Removed
+
+- RankMatchFailure
+- Auxiliary loss support
+
 ## [0.1.14] - 2022-11-18
 
 ### Changed

@@ -19,7 +19,7 @@ import pandas as pd
 import tensorflow_probability as tfp
 
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
-from ml4ir.base.model.scoring.scoring_model import ScorerBase
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.io.file_io import FileIO
 
 TEMPERATURE_SCALE = 'temp_scaling_scores'
@@ -152,26 +152,26 @@ def get_intermediate_model(model, scorer) -> tf.keras.models.Model:
     ----------
         model: tf.keras.models.Model
                 Model object to get the intermediate model from
-        scorer: ScorerBase
-                scorerBase object to get the `model_config` from
+        scorer: RelevanceScorer
+                RelevanceScorer object to get the `model_config` from
 
     Returns
     ------
     tf.keras.models.Model
     a tf.keras.models.Model copy of the `model`
     """
-    # get  last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
+    # get last layer's output  --> MUST **NOT** BE AN ACTIVATION (e.g. SOFTMAX) LAYER
     final_layer_name = scorer.model_config['layers'][-1]['name']
-    layer_output = model.get_layer(name=final_layer_name).output
+    layer_output = model.get_layer("dnn").get_layer(name=final_layer_name).output
 
     return tf.keras.models.Model(inputs=model.input, outputs=layer_output)
 
 
-def eval_relevance_model(scorer: ScorerBase, logits: np.ndarray, labels, temperature=None):
+def eval_relevance_model(scorer: RelevanceScorer, logits: np.ndarray, labels, temperature=None):
     """Evaluates the relevance model given the logits and labels
     Parameters
     ----------
-        scorer: ScorerBase
+        scorer: RelevanceScorer
                 Scorer of the RelevanceModel
         logits: numpy.ndarray
                 input of softmax
@@ -218,7 +218,7 @@ def get_logits_labels(model: tf.keras.Model, evaluation_set: tf.data.TFRecordDat
 
 
 def temperature_scale(model: tf.keras.Model,
-                      scorer: ScorerBase,
+                      scorer: RelevanceScorer,
                       dataset: RelevanceDataset,
                       logger: Logger,
                       logs_dir_local: str,
@@ -234,8 +234,8 @@ def temperature_scale(model: tf.keras.Model,
     ----------
         model :  tf.keras.Model
                  Model object to be used for temperature scaling
-        scorer:  ScorerBase object
-                 ScorerBase object of the RelevanceModel
+        scorer:  RelevanceScorer object
+                 RelevanceScorer object of the RelevanceModel
         dataset: RelevanceDataset
                  RelevanceDataset object to be used for training and evaluating temperature scaling
         logger : Logger
@@ -299,7 +299,7 @@ def temperature_scale(model: tf.keras.Model,
     logger.info(f'temperature value : {results.position}')
     logger.info('Evaluating on the validation dataset ')
     logger.info(f'original loss: {original_nll_loss_op}, accuracy: {original_acc_op}, \n'
-          f'temperature scaling loss: {results.objective_value}, accuracy: {acc_op}\n')
+                f'temperature scaling loss: {results.objective_value}, accuracy: {acc_op}\n')
     logger.info("="*50)
     logger.info("Evaluating on the test dataset")
 
@@ -310,7 +310,7 @@ def temperature_scale(model: tf.keras.Model,
                                                                     labels_numpys_test)
 
     # evaluation on test set with temperature scaling
-    acc_test_temperature_scaling, _, temperature_scaling_softmaxes =\
+    acc_test_temperature_scaling, _, temperature_scaling_softmaxes = \
         eval_relevance_model(scorer, logits_numpys_test, labels_numpys_test, temperature=temper)
 
     # write the full vector in the csv not ...
@@ -329,7 +329,7 @@ def temperature_scale(model: tf.keras.Model,
                 }
 
     logger.info(f'original test accuracy: {acc_test_original}, \ntemperature scaling '
-                     f'test accuracy: {acc_test_temperature_scaling} \n')
+                f'test accuracy: {acc_test_temperature_scaling} \n')
 
     # the file is big and can be zipped
     final_dir_path = dict_to_csv(data_dic, logs_dir_local, file_io, zip_output=zip_output)

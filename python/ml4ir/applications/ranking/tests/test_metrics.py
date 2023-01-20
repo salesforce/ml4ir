@@ -1,10 +1,12 @@
 import os
 import numpy as np
+import unittest
 
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
 
 # Constants
 GOLD_METRICS = {'query_count': 1500.0,
@@ -35,6 +37,8 @@ GOLD_METRICS = {'query_count': 1500.0,
 
 
 class RankingModelTest(RankingTestBase):
+    """End-to-End tests for Ranking models"""
+
     def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str):
         """Train a model with the default set of args"""
         feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -90,4 +94,16 @@ class RankingModelTest(RankingTestBase):
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
-            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.02)
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
+
+class RankingMetricsTest(unittest.TestCase):
+    """Unit tests for ml4ir.applications.ranking.model.metrics"""
+
+    def test_mrr(self):
+        self.assertEquals(MRR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          0.75)
+
+    def test_acr(self):
+        self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          1.5)
+

@@ -10,6 +10,7 @@ from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
+from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
@@ -412,8 +413,9 @@ class LinearRankingModel(RankingModel):
         """
 
         # Save the linear model coefficients as a CSV
+        dnn_model = self.model.get_layer(DNNLayerKey.MODEL_NAME)
         dense_layer = None
-        for layer in self.model.layers:
+        for layer in dnn_model.layers:
             if isinstance(layer, tf.keras.layers.Dense):
                 dense_layer = layer
                 assert dense_layer.units == 1
@@ -422,13 +424,12 @@ class LinearRankingModel(RankingModel):
 
         linear_model_coefficients = pd.DataFrame(
             list(zip(
-                [f.name.split(":")[0].replace("_expanded", "") for f in self.model.get_layer(
-                    "tf_op_layer_train_features").input],
+                dnn_model.train_features,
                 tf.squeeze(dense_layer.get_weights()[0]).numpy())
             ),
             columns=["feature", "weight"])
         # Adding log for bias value
-        if len(dense_layer.get_weights())>1:
+        if len(dense_layer.get_weights()) > 1:
             bias_val = dense_layer.get_weights()[1][0]
             linear_model_coefficients.loc[len(linear_model_coefficients.index)] = ['bias', bias_val]
         self.logger.info("Linear Model Coefficients:\n{}".format(

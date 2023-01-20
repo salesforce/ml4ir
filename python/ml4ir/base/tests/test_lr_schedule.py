@@ -9,7 +9,7 @@ from ml4ir.base.config.keys import DataFormatKey, TFRecordTypeKey
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
@@ -55,7 +55,7 @@ class TestLrSchedules(unittest.TestCase):
 
     def setUp(self):
         self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
-            'ranklib/feature_config_convert_to_clicks.yaml'
+                                                     'ranklib/feature_config_convert_to_clicks.yaml'
         self.model_config_file = MODEL_CONFIG
 
     def compare_lr_values(self, scheduler, expected_values):
@@ -178,11 +178,12 @@ class TestLrSchedules(unittest.TestCase):
 
         # Define loss object from loss key
         loss: RelevanceLossBase = loss_factory.get_loss(
-            loss_key=LossKey.RANK_ONE_LISTNET, scoring_type=ScoringTypeKey.POINTWISE
+            loss_key=LossKey.RANK_ONE_LISTNET,
+            scoring_type=ScoringTypeKey.POINTWISE
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+        scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
             interaction_model=interaction_model,
             loss=loss,
@@ -217,7 +218,7 @@ class TestLrSchedules(unittest.TestCase):
         lr_list = my_callback_object.get_lr_list()
         lr_gold = [0.001,0.020800006,0.040599994,0.0604,0.080199994,0.1,0.080199994,0.0604,0.040599994,0.020800006,0.001,
                    0.010900003,0.020800006,0.030699994,0.040599994,0.050499998,0.040599994,0.030699994,0.020800006,
-                   0.010900003,0.001,0.0059499955,0.010900003,0.015849996,0.020800006,0.02575,0.020800006,0.015849996,
+                   0.010900003,0.001,0.0059499955,0.010900003,0.015849996,0.020800006,0.02575,0.02575,0.020800006,0.015849996,
                    0.010900003,0.0059499955,0.001,0.0034749978,0.0059500015,0.008424998,0.010900003,0.013375,
                    0.010900003,0.008424998,0.0059500015,0.0034749978,0.001,0.0022374988,0.0034749978,0.0047125025,
                    0.0059500015,0.0071875,0.0059500015,0.0047125025,0.0034749978, 0.0022374988]
@@ -267,7 +268,7 @@ class TestLrSchedules(unittest.TestCase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+        scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
             interaction_model=interaction_model,
             loss=loss,

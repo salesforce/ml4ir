@@ -8,7 +8,6 @@ class LossKey(Key):
     SIGMOID_CROSS_ENTROPY = "sigmoid_cross_entropy"
     RANK_ONE_LISTNET = "rank_one_listnet"
     SOFTMAX_CROSS_ENTROPY = "softmax_cross_entropy"
-    BASIC_CROSS_ENTROPY = "basic_cross_entropy"
 
 
 class ScoringTypeKey(Key):
@@ -27,7 +26,6 @@ class MetricKey(Key):
     ACR = "ACR"
     NDCG = "NDCG"
     PRECISION = "Precision"
-    RankMatchFailure = "RankMatchFailure"
     CATEGORICAL_ACCURACY = "categorical_accuracy"
     TOP_5_CATEGORICAL_ACCURACY = "top_5_categorical_accuracy"
 

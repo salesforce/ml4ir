@@ -1,30 +1,20 @@
-import sys
-import ast
-from argparse import Namespace
-import tensorflow as tf
-from tensorflow.keras.metrics import Metric
-from tensorflow.keras.optimizers import Optimizer
-import pandas as pd
 import pathlib
-from scipy import stats
+import sys
+from argparse import Namespace
+from typing import List, Union, Type
 
-from ml4ir.base.pipeline import RelevancePipeline
-from ml4ir.base.config.keys import ArchitectureKey
-from ml4ir.base.model.relevance_model import RelevanceModel
-from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
-from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
-from ml4ir.base.model.optimizers.optimizer import get_optimizer
-from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel, RankingConstants
+import pandas as pd
 from ml4ir.applications.ranking.config.keys import LossKey
 from ml4ir.applications.ranking.config.keys import MetricKey
 from ml4ir.applications.ranking.config.keys import ScoringTypeKey
-from ml4ir.applications.ranking.model.losses import loss_factory
-from ml4ir.applications.ranking.model.metrics import metric_factory
 from ml4ir.applications.ranking.config.parse_args import get_args
-
-
-from typing import Union, List, Type
+from ml4ir.applications.ranking.model.losses import loss_factory
+from ml4ir.applications.ranking.model.metrics import metrics_factory
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel, RankingConstants
+from ml4ir.base.config.keys import ArchitectureKey
+from ml4ir.base.pipeline import RelevancePipeline
+from scipy import stats
+from tensorflow.keras.metrics import Metric
 
 
 class RankingPipeline(RelevancePipeline):
@@ -38,7 +28,6 @@ class RankingPipeline(RelevancePipeline):
         This method sets up data, logs, models directories, file handlers used.
         The method also loads and sets up the FeatureConfig for the model training
         pipeline
-
         Parameters
         ----------
         args: argparse Namespace
@@ -47,7 +36,6 @@ class RankingPipeline(RelevancePipeline):
         """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
-        self.aux_loss_key = args.aux_loss_key
         self.batch_size = args.batch_size
 
         super().__init__(args)
@@ -55,7 +43,6 @@ class RankingPipeline(RelevancePipeline):
     def get_relevance_model_cls(self):
         """
         Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
-
         Returns
         -------
         RelevanceModel class
@@ -65,88 +52,31 @@ class RankingPipeline(RelevancePipeline):
         else:
             return RankingModel
 
-    def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
+    def get_loss(self):
         """
-        Creates a RankingModel that can be used for training and evaluating
-
-        Parameters
-        ----------
-        feature_layer_keys_to_fns : dict of (str, function)
-            dictionary of function names mapped to tensorflow compatible
-            function definitions that can now be used in the InteractionModel
-            as a feature function to transform input features
+        Get the primary loss function to be used with the RelevanceModel
 
         Returns
         -------
-        `RankingModel`
-            RankingModel that can be used for training and evaluating
-            a ranking model
-
-        Notes
-        -----
-        Override this method to create custom loss, scorer, model objects
+        RelevanceLossBase object
         """
-
-        # Define interaction model
-        interaction_model: InteractionModel = UnivariateInteractionModel(
-            feature_config=self.feature_config,
-            feature_layer_keys_to_fns=feature_layer_keys_to_fns,
-            tfrecord_type=self.tfrecord_type,
-            max_sequence_size=self.args.max_sequence_size,
-            file_io=self.file_io,
+        return loss_factory.get_loss(
+            loss_key=self.loss_key,
+            scoring_type=self.scoring_type,
+            output_name=self.args.output_name
         )
 
-        # Define loss object from loss key
-        loss: RelevanceLossBase = loss_factory.get_loss(
-            loss_key=self.loss_key, scoring_type=self.scoring_type
-        )
-        losses = loss
-        if self.aux_loss_key:
-            aux_loss: RelevanceLossBase = loss_factory.get_loss(
-                loss_key=self.aux_loss_key, scoring_type=self.scoring_type
-            )
-            losses = {self.args.output_name: loss, self.args.aux_output_name: aux_loss}
+    def get_metrics(self) -> List[Union[Type[Metric], str]]:
+        """
+        Get the list of keras metrics to be used with the RelevanceModel
 
-
-        # Define scorer
-        scorer: ScorerBase = RelevanceScorer(
-            feature_config=self.feature_config,
-            model_config=self.model_config,
-            interaction_model=interaction_model,
-            loss=losses,
-            output_name=self.args.output_name,
-            logger=self.logger,
-            file_io=self.file_io,
-        )
-
-        # Define metrics objects from metrics keys
-        metrics: List[Union[Type[Metric], str]] = [
-            metric_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
+        Returns
+        -------
+        list of keras Metric objects
+        """
+        return [
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
-
-        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
-
-        # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = self.get_relevance_model_cls()(
-            feature_config=self.feature_config,
-            tfrecord_type=self.tfrecord_type,
-            scorer=scorer,
-            metrics=metrics,
-            optimizer=optimizer,
-            model_file=self.model_file,
-            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
-            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
-            compile_keras_model=self.args.compile_keras_model,
-            output_name=self.args.output_name,
-            aux_output_name=self.args.aux_output_name,
-            file_io=self.local_io,
-            logger=self.logger,
-            primary_loss_weight=self.args.primary_loss_weight,
-            aux_loss_weight=self.args.aux_loss_weight,
-            batch_size=self.batch_size,
-        )
-
-        return relevance_model
 
     def validate_args(self):
         """
@@ -186,7 +116,6 @@ class RankingPipeline(RelevancePipeline):
         """
         Aggregate results of the k-fold runs and perform t-test on the results between old(prod model) and
         new model's w.r.t the specified metrics.
-
         Parameters
         ----------
         base_logs_dir : int
@@ -237,7 +166,6 @@ class RankingPipeline(RelevancePipeline):
     def run_kfold_analysis(self, logs_dir, run_id, num_folds, metrics):
         """
         Running the kfold analysis for ranking.
-
         Parameters:
         -----------
         logs_dir: str
@@ -248,7 +176,6 @@ class RankingPipeline(RelevancePipeline):
             number of folds
         metrics: list
             list of metrics to include in the kfold analysis
-
         Returns:
         --------
         summary of the kfold analysis
@@ -256,7 +183,7 @@ class RankingPipeline(RelevancePipeline):
         #TODO:Choose the best model among the folds
 
         return str(self.kfold_analysis(logs_dir, run_id, num_folds, RankingConstants.TTEST_PVALUE_THRESHOLD,
-                               metrics))
+                                       metrics))
 
 
 def main(argv):

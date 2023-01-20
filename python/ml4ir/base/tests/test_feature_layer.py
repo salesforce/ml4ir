@@ -22,6 +22,7 @@ class FeatureLayerTest(RelevanceTestBase):
         embedding_size = 128
         encoding_size = 512
         feature_info = {
+            "name": "test",
             "feature_layer_info": {
                 "type": "numeric",
                 "fn": "bytes_sequence_to_encoding_bilstm",
@@ -37,9 +38,9 @@ class FeatureLayerTest(RelevanceTestBase):
 
         # Define an input string tensor
         string_tensor = [["abc"], ["xyz"], ["123"]]
-        sequence_encoding = sequence_fns.bytes_sequence_to_encoding_bilstm(
-            string_tensor, feature_info, self.file_io
-        )
+        sequence_encoding = sequence_fns.BytesSequenceToEncodingBiLSTM(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting encoding based on the feature_info
         assert sequence_encoding.shape[0] == len(string_tensor)
@@ -76,9 +77,9 @@ class FeatureLayerTest(RelevanceTestBase):
         string_tensor = tf.constant(
             [[["AAA"]], [["BBB"]], [["AAA"]], [["CCC"]], [["out_of_vocabulary"]]]
         )
-        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
-            string_tensor, feature_info, self.file_io
-        )
+        sequence_encoding = categorical_fns.CategoricalEmbeddingToEncodingBiLSTM(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting encoding based on the feature_info
         assert sequence_encoding.shape[0] == len(string_tensor)
@@ -123,9 +124,9 @@ class FeatureLayerTest(RelevanceTestBase):
         string_tensor = tf.constant(
             [[["AAA"]], [["BBB"]], [["AAA"]], [["CCC"]], [["out_of_vocabulary"]]]
         )
-        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
-            string_tensor, feature_info, self.file_io
-        )
+        sequence_encoding = categorical_fns.CategoricalEmbeddingToEncodingBiLSTM(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting encoding based on the feature_info
         assert sequence_encoding.shape[0] == len(string_tensor)
@@ -139,8 +140,8 @@ class FeatureLayerTest(RelevanceTestBase):
 
     def test_categorical_embedding_to_encoding_bilstm_sequence_of_words(self):
         """
-        Check that categorical_embedding_to_encoding_bilstm function does not fail with sequences of word (in a single
-        row).
+        Check that categorical_embedding_to_encoding_bilstm function does not fail with
+        sequences of word (in a single row).
         """
         embedding_size = 32
         encoding_size = 64
@@ -162,9 +163,9 @@ class FeatureLayerTest(RelevanceTestBase):
 
         string_tensor = tf.constant([[["AAA", "BBB", "out_of_vocabulary"]]])
 
-        categorical_fns.categorical_embedding_to_encoding_bilstm(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_fns.CategoricalEmbeddingToEncodingBiLSTM(
+            feature_info, self.file_io
+        )(string_tensor)
 
     def test_categorical_embedding_to_encoding_bilstm_oov_mapping_with_dropout(self):
         """
@@ -203,9 +204,9 @@ class FeatureLayerTest(RelevanceTestBase):
 
         # If the embedding lookup input dimension were computed incorrectly, the following call would fail with:
         # tensorflow.python.framework.errors_impl.InvalidArgumentError: indices[0,0,7] = 8 is not in [0, 8)
-        sequence_encoding = categorical_fns.categorical_embedding_to_encoding_bilstm(
-            string_tensor, feature_info, self.file_io
-        )
+        sequence_encoding = categorical_fns.CategoricalEmbeddingToEncodingBiLSTM(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Strings 1 and 2 should result in the same embedding because they are both OOV
         # Check that each word, except the OOV ones are mapped to different encodings (actually different embeddings,
@@ -262,9 +263,9 @@ class FeatureLayerTest(RelevanceTestBase):
         # Define an input string tensor
         string_tensor = ["domain_0", "domain_1", "domain_0"]
 
-        categorical_embedding = categorical_fns.categorical_embedding_with_hash_buckets(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_embedding = categorical_fns.CategoricalEmbeddingWithHashBuckets(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(string_tensor)
@@ -298,9 +299,9 @@ class FeatureLayerTest(RelevanceTestBase):
         # Define an input int tensor
         index_tensor = [0, 1, 2, 1, 10]
 
-        categorical_embedding = categorical_fns.categorical_embedding_with_indices(
-            index_tensor, feature_info, self.file_io
-        )
+        categorical_embedding = categorical_fns.CategoricalEmbeddingWithIndices(
+            feature_info, self.file_io
+        )(index_tensor)
 
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(index_tensor)
@@ -339,9 +340,9 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_embedding = categorical_fns.CategoricalEmbeddingWithVocabularyFile(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(string_tensor)
@@ -384,9 +385,9 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        categorical_embedding = categorical_fns.categorical_embedding_with_vocabulary_file(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_embedding = categorical_fns.CategoricalEmbeddingWithVocabularyFile(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(string_tensor)
@@ -430,9 +431,9 @@ class FeatureLayerTest(RelevanceTestBase):
 
         value_error_raised = False
         try:
-            categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
-                string_tensor, feature_info, self.file_io
-            )
+            categorical_fns.CategoricalEmbeddingWithVocabularyFileAndDropout(
+                feature_info, self.file_io
+            )(string_tensor)
         except ValueError:
             # Should throw error as method does not work with IDs containing 0
             value_error_raised = True
@@ -466,9 +467,9 @@ class FeatureLayerTest(RelevanceTestBase):
         )
 
         categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
-        embedding_tensor = categorical_fns.categorical_embedding_with_vocabulary_file_and_dropout(
-            categorcial_tensor, feature_info, self.file_io
-        )
+        embedding_tensor = categorical_fns.CategoricalEmbeddingWithVocabularyFileAndDropout(
+            feature_info, self.file_io
+        )(categorcial_tensor)
         model = tf.keras.Model(categorcial_tensor, embedding_tensor)
 
         categorical_embedding = model(string_tensor, training=False)
@@ -517,9 +518,9 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_one_hot = categorical_fns.CategoricalIndicatorWithVocabularyFile(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting one-hot vector
         assert categorical_one_hot.shape[0] == len(string_tensor)
@@ -561,9 +562,9 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        categorical_one_hot = categorical_fns.categorical_indicator_with_vocabulary_file(
-            string_tensor, feature_info, self.file_io
-        )
+        categorical_one_hot = categorical_fns.CategoricalIndicatorWithVocabularyFile(
+            feature_info, self.file_io
+        )(string_tensor)
 
         # Assert the right shapes of the resulting one-hot vector
         assert categorical_one_hot.shape[0] == len(string_tensor)
@@ -587,8 +588,7 @@ class FeatureLayerTest(RelevanceTestBase):
         Checks the right output shapes produced and the values generated
         """
         feature_tensor = tf.reshape(tf.constant(range(30), dtype=tf.float32), (2, 5, 3))
-        pooled_tensor = sequence_fns.global_1d_pooling(
-            feature_tensor=feature_tensor,
+        pooled_tensor = sequence_fns.Global1dPooling(
             feature_info={
                 "name": "f",
                 "feature_layer_info": {
@@ -596,7 +596,7 @@ class FeatureLayerTest(RelevanceTestBase):
                 },
             },
             file_io=None,
-        )
+        )(feature_tensor)
 
         assert pooled_tensor.shape == (2, 5, 5)
         assert (
@@ -623,8 +623,7 @@ class FeatureLayerTest(RelevanceTestBase):
         # Here, we mask all the even values
         padded_val = -1.0
         feature_tensor_with_mask = tf.where(feature_tensor % 2 == 0, feature_tensor, padded_val)
-        pooled_tensor_with_mask = sequence_fns.global_1d_pooling(
-            feature_tensor=feature_tensor_with_mask,
+        pooled_tensor_with_mask = sequence_fns.Global1dPooling(
             feature_info={
                 "name": "f",
                 "feature_layer_info": {
@@ -636,7 +635,7 @@ class FeatureLayerTest(RelevanceTestBase):
                 },
             },
             file_io=None,
-        )
+        )(feature_tensor_with_mask)
         assert pooled_tensor_with_mask.shape == (2, 5, 5)
         assert not (pooled_tensor_with_mask.numpy() == pooled_tensor.numpy()).all()
         assert (
@@ -662,14 +661,13 @@ class FeatureLayerTest(RelevanceTestBase):
         # Test empty pooling fn list
         found_value_error = False
         try:
-            pooled_tensor = sequence_fns.global_1d_pooling(
-                feature_tensor=feature_tensor,
+            pooled_tensor = sequence_fns.Global1dPooling(
                 feature_info={
                     "name": "f",
                     "feature_layer_info": {"args": {"fns": [], "padded_val": padded_val}},
                 },
                 file_io=None,
-            )
+            )(feature_tensor)
         except ValueError:
             found_value_error = True
         assert found_value_error
@@ -677,14 +675,13 @@ class FeatureLayerTest(RelevanceTestBase):
         # Test invalid pooling fn
         found_key_error = False
         try:
-            pooled_tensor = sequence_fns.global_1d_pooling(
-                feature_tensor=feature_tensor,
+            pooled_tensor = sequence_fns.Global1dPooling(
                 feature_info={
                     "name": "f",
                     "feature_layer_info": {"args": {"fns": ["invalid"], "padded_val": padded_val}},
                 },
                 file_io=None,
-            )
+            )(feature_tensor)
         except KeyError:
             found_key_error = True
         assert found_key_error
@@ -695,10 +692,9 @@ class FeatureLayerTest(RelevanceTestBase):
 
         Checks the right output shapes produced and the values generated
         """
-        input_tensor = np.abs(np.random.randn(32, 4, 2))
+        input_tensor = np.abs(np.random.randn(32, 4, 2)).astype(np.float32)
 
-        actual_tensor = tf_native_fns.tf_native_op(
-                feature_tensor=input_tensor,
+        actual_tensor = tf_native_fns.TFNativeOpLayer(
                 feature_info={
                     "name": "f",
                     "feature_layer_info": {
@@ -711,7 +707,7 @@ class FeatureLayerTest(RelevanceTestBase):
                     }
                 },
                 file_io=None
-            )
+            )(input_tensor)
         expected_tensor = tf.expand_dims(tf.math.log(tf.math.add(input_tensor, 1.)), axis=-1)
 
         assert tf.reduce_all(actual_tensor == expected_tensor)

@@ -1,6 +1,6 @@
 # ml4ir dependencies
-tensorflow==2.0.4
-numpy==1.18.5
+tensorflow==2.7.4
+numpy==1.21.6
 pandas==1.2.1
 scipy==1.5.4
 
@@ -14,4 +14,7 @@ PyYAML==5.4.1
 pyspark==3.0.1
 
 #calibration
-tensorflow_probability==0.8.0
+tensorflow-probability==0.15.0
+
+# DAG visualization
+pygraphviz==1.7
