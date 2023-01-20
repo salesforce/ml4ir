@@ -22,6 +22,7 @@ class ArchitectureKey(Key):
     LINEAR = "linear"
     RNN = "rnn"
     SET_RANK = "set_rank"
+    AUTO_DAG_NETWORK = "auto-dag-network"
 
 
 class OptimizerKey(Key):
@@ -145,6 +146,7 @@ class FeatureTypeKey(Key):
     MASK = "mask"
     LOGITS = "logits"
     SCORES = "scores"
+    AUX_LABEL = "aux_label"
 
 
 class VocabularyInfoArgsKey(Key):

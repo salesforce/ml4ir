@@ -71,7 +71,7 @@ class FileIO(object):
         raise NotImplementedError
 
     def read_df(
-        self, infile: str, sep: str = ",", index_col: int = None
+            self, infile: str, sep: str = ",", index_col: int = None, **kwargs
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
@@ -92,7 +92,7 @@ class FileIO(object):
         """
         raise NotImplementedError
 
-    def read_df_list(self, infiles, sep=",", index_col=None) -> pd.DataFrame:
+    def read_df_list(self, infiles, sep=",", index_col=None, **kwargs) -> pd.DataFrame:
         """
         Load a pandas dataframe from a list of files by concatenating
         the individual dataframes from each file

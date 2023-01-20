@@ -21,10 +21,10 @@ class TFRecordParser(object):
     """
 
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        preprocessing_map: PreprocessingMap,
-        required_fields_only: Optional[bool] = False,
+            self,
+            feature_config: FeatureConfig,
+            preprocessing_map: PreprocessingMap,
+            required_fields_only: Optional[bool] = False,
     ):
         """
         Constructor method for instantiating a TFRecordParser object
@@ -403,12 +403,13 @@ class TFRecordExampleParser(TFRecordParser):
 
 class TFRecordSequenceExampleParser(TFRecordParser):
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        preprocessing_map: PreprocessingMap,
-        required_fields_only: Optional[bool] = False,
-        pad_sequence: Optional[bool] = True,
-        max_sequence_size: Optional[int] = 25,
+            self,
+            feature_config: FeatureConfig,
+            preprocessing_map: PreprocessingMap,
+            required_fields_only: Optional[bool] = False,
+            pad_sequence: Optional[bool] = True,
+            max_sequence_size: Optional[int] = 25,
+            output_name: Optional[str] = None
     ):
         """
         Constructor method for instantiating a TFRecordParser object
@@ -425,9 +426,13 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Whether to pad sequence
         max_sequence_size: int, optional
             Maximum number of sequence per query. Used for padding
+        output_name: str
+            The name of tensorflow's output node which carry the prediction score
         """
         self.pad_sequence = pad_sequence
         self.max_sequence_size = max_sequence_size
+        self.output_name = output_name
+
         super(TFRecordSequenceExampleParser, self).__init__(
             feature_config=feature_config,
             preprocessing_map=preprocessing_map,
@@ -457,8 +462,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
                 continue
             serving_info = feature_info["serving_info"]
             if not self.required_fields_only or feature_info["trainable"] or \
-                (serving_info.get("required", feature_info["trainable"])) or \
-                (feature_info.get("name") == self.feature_config.get_rank("name")):
+                    (serving_info.get("required", feature_info["trainable"])) or \
+                    (feature_info.get("name") == self.feature_config.get_rank("name")):
 
                 feature_name = feature_info["name"]
                 dtype = feature_info["dtype"]
@@ -587,8 +592,8 @@ class TFRecordSequenceExampleParser(TFRecordParser):
         """
         context_features, sequence_features = extracted_features
         if (
-            self.required_fields_only
-            and not self.feature_config.get_rank("serving_info").get("required", True)
+                self.required_fields_only
+                and not self.feature_config.get_rank("serving_info").get("required", True)
         ):
             """
             Define dummy mask if the rank field is not a required field for serving
@@ -630,7 +635,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
                         mask, [[0, self.max_sequence_size - tf.shape(mask)[0]]]),
                     # Crop if there are extra sequence
                     crop_fn,
-                )
+                    )
                 sequence_size = tf.constant(self.max_sequence_size, dtype=tf.int64)
             else:
                 mask = tf.squeeze(mask, axis=0)
@@ -667,12 +672,14 @@ class TFRecordSequenceExampleParser(TFRecordParser):
 
 
 def get_parse_fn(
-    tfrecord_type: str,
-    feature_config: FeatureConfig,
-    preprocessing_keys_to_fns: dict,
-    max_sequence_size: int = 0,
-    required_fields_only: bool = False,
-    pad_sequence: bool = True,
+        tfrecord_type: str,
+        feature_config: FeatureConfig,
+        preprocessing_keys_to_fns: dict,
+        max_sequence_size: int = 0,
+        required_fields_only: bool = False,
+        pad_sequence: bool = True,
+        output_name: str = None
+
 ) -> tf.function:
     """
     Create a parsing function to extract features from serialized TFRecord data
@@ -694,6 +701,8 @@ def get_parse_fn(
         Whether to only use required fields from the feature_config
     pad_sequence: bool
         Whether to pad sequence
+    output_name: str
+            The name of tensorflow's output node which carry the prediction score
 
     Returns
     -------
@@ -719,6 +728,7 @@ def get_parse_fn(
             max_sequence_size=max_sequence_size,
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
+            output_name=output_name
         )
     else:
         raise KeyError("Invalid TFRecord type specified: {}".format(tfrecord_type))
@@ -727,17 +737,17 @@ def get_parse_fn(
 
 
 def read(
-    data_dir: str,
-    feature_config: FeatureConfig,
-    tfrecord_type: str,
-    file_io: FileIO,
-    max_sequence_size: int = 0,
-    batch_size: int = 0,
-    preprocessing_keys_to_fns: dict = {},
-    parse_tfrecord: bool = True,
-    use_part_files: bool = False,
-    logger: Logger = None,
-    **kwargs
+        data_dir: str,
+        feature_config: FeatureConfig,
+        tfrecord_type: str,
+        file_io: FileIO,
+        max_sequence_size: int = 0,
+        batch_size: int = 0,
+        preprocessing_keys_to_fns: dict = {},
+        parse_tfrecord: bool = True,
+        use_part_files: bool = False,
+        logger: Logger = None,
+        **kwargs
 ) -> data.TFRecordDataset:
     """
     Extract features by reading and parsing TFRecord data
@@ -781,6 +791,7 @@ def read(
         tfrecord_type=tfrecord_type,
         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
         max_sequence_size=max_sequence_size,
+        output_name=kwargs.get("output_name")
     )
 
     # Get all tfrecord files in directory
@@ -795,10 +806,8 @@ def read(
 
     if parse_tfrecord:
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
-        dataset = (
-            dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-            .apply(data.experimental.ignore_errors())
-        )
+        dataset = (dataset.map(parse_fn, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+                          .apply(data.experimental.ignore_errors()))
 
     # Create BatchedDataSet
     if batch_size:

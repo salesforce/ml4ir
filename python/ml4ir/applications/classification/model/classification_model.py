@@ -17,14 +17,14 @@ class ClassificationModel(RelevanceModel):
     methods."""
 
     def evaluate(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = None,
-        additional_features: dict = {},
-        group_metrics_min_queries: int = 50,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        compute_intermediate_stats: bool = True,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = None,
+            additional_features: dict = {},
+            group_metrics_min_queries: int = 50,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the Classification Model
@@ -246,7 +246,7 @@ class ClassificationModel(RelevanceModel):
         if logs_dir:
             np.set_printoptions(formatter={'all':lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
                                 linewidth=sys.maxsize,
-                                threshold=sys.maxsize,  # write the full vector in the csv not ...
+                                threshold=sys.maxsize,  # write the full vector in the csv not a truncated version
                                 legacy="1.13")  # enables 1.13 legacy printing mode
             for col in predictions_df.columns:
                 if isinstance(predictions_df[col].values[0], bytes):

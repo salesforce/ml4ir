@@ -48,14 +48,14 @@ case class FeatureConfig(@JsonProperty("name") name: String,
                          @JsonProperty("serving_info") servingConfig: ServingConfig,
                          @JsonProperty("tfrecord_type") tfRecordType: String) {
   def dType: DataType = {
-      dTypeString.toUpperCase match {
-        case "INT" => DataType.DT_INT64
-        case "INT64" => DataType.DT_INT64
-        case "FLOAT" => DataType.DT_FLOAT
-        case "FLOAT32" => DataType.DT_FLOAT
-        case "BYTES" => DataType.DT_STRING
-        case "STRING" => DataType.DT_STRING
-      }
+    dTypeString.toUpperCase match {
+      case "INT" => DataType.DT_INT64
+      case "INT64" => DataType.DT_INT64
+      case "FLOAT" => DataType.DT_FLOAT
+      case "FLOAT32" => DataType.DT_FLOAT
+      case "BYTES" => DataType.DT_STRING
+      case "STRING" => DataType.DT_STRING
+    }
   }
 }
 

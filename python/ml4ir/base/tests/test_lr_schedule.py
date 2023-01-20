@@ -9,7 +9,7 @@ from ml4ir.base.config.keys import DataFormatKey, TFRecordTypeKey
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
@@ -55,7 +55,7 @@ class TestLrSchedules(unittest.TestCase):
 
     def setUp(self):
         self.feature_config_yaml_convert_to_clicks = INPUT_DIR + \
-            'ranklib/feature_config_convert_to_clicks.yaml'
+                                                     'ranklib/feature_config_convert_to_clicks.yaml'
         self.model_config_file = MODEL_CONFIG
 
     def compare_lr_values(self, scheduler, expected_values):
@@ -183,7 +183,7 @@ class TestLrSchedules(unittest.TestCase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+        scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
             interaction_model=interaction_model,
             loss=loss,
@@ -268,7 +268,7 @@ class TestLrSchedules(unittest.TestCase):
         )
 
         # Define scorer
-        scorer: ScorerBase = RelevanceScorer.from_model_config_file(
+        scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
             interaction_model=interaction_model,
             loss=loss,

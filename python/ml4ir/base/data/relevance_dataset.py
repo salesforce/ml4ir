@@ -16,23 +16,24 @@ class RelevanceDataset:
     """class to create/load TFRecordDataset for train, validation and test"""
 
     def __init__(
-        self,
-        data_dir: str,
-        data_format: str,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        file_io: FileIO,
-        max_sequence_size: int = 0,
-        batch_size: int = 128,
-        preprocessing_keys_to_fns: dict = {},
-        train_pcent_split: float = 0.8,
-        val_pcent_split: float = -1,
-        test_pcent_split: float = -1,
-        use_part_files: bool = False,
-        parse_tfrecord: bool = True,
-        logger: Optional[Logger] = None,
-        keep_additional_info: int = 0,
-        non_zero_features_only: int = 0,
+            self,
+            data_dir: str,
+            data_format: str,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            file_io: FileIO,
+            max_sequence_size: int = 0,
+            batch_size: int = 128,
+            preprocessing_keys_to_fns: dict = {},
+            train_pcent_split: float = 0.8,
+            val_pcent_split: float = -1,
+            test_pcent_split: float = -1,
+            use_part_files: bool = False,
+            parse_tfrecord: bool = True,
+            logger: Optional[Logger] = None,
+            keep_additional_info: int = 0,
+            non_zero_features_only: int = 0,
+            output_name: str = None
     ):
         """
         Constructor method to instantiate a RelevanceDataset object
@@ -73,6 +74,8 @@ class RelevanceDataset:
             returns strings as is otherwise
         logger : `Logger`, optional
             logging handler for status messages
+        output_name: str
+            The name of tensorflow's output node which carry the prediction score.
 
         Notes
         -----
@@ -97,6 +100,7 @@ class RelevanceDataset:
 
         self.keep_additional_info = keep_additional_info
         self.non_zero_features_only = non_zero_features_only
+        self.output_name = output_name
 
         self.train: Optional[tf.data.TFRecordDataset] = None
         self.validation: Optional[tf.data.TFRecordDataset] = None
@@ -179,6 +183,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
             self.validation = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.VALIDATION),
@@ -194,6 +199,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
             self.test = data_reader.read(
                 data_dir=os.path.join(self.data_dir, DataSplitKey.TEST),
@@ -209,6 +215,7 @@ class RelevanceDataset:
                 logger=self.logger,
                 keep_additional_info=self.keep_additional_info,
                 non_zero_features_only=self.non_zero_features_only,
+                output_name=self.output_name
             )
 
     def balance_classes(self):

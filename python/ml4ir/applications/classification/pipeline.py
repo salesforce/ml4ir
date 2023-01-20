@@ -1,23 +1,16 @@
 import sys
-import ast
 from argparse import Namespace
-from typing import Union, List, Type, Optional
+from typing import Union, List, Type
 
-from tensorflow.keras.metrics import Metric
-from tensorflow.keras.optimizers import Optimizer
 from ml4ir.applications.classification.config.parse_args import get_args
+from ml4ir.applications.classification.model.classification_model import ClassificationModel
 from ml4ir.applications.classification.model.losses import categorical_cross_entropy
 from ml4ir.applications.classification.model.metrics import metrics_factory
-from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.data.kfold_relevance_dataset import KfoldRelevanceDataset
+from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.preprocessing import get_one_hot_label_vectorizer
-from ml4ir.base.model.losses.loss_base import RelevanceLossBase
-from ml4ir.base.model.optimizers.optimizer import get_optimizer
-from ml4ir.base.model.relevance_model import RelevanceModel
-from ml4ir.base.model.scoring.scoring_model import ScorerBase, RelevanceScorer
-from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.pipeline import RelevancePipeline
-from ml4ir.applications.classification.model.classification_model import ClassificationModel
+from tensorflow.keras.metrics import Metric
 
 
 class ClassificationPipeline(RelevancePipeline):
@@ -41,78 +34,41 @@ class ClassificationPipeline(RelevancePipeline):
         self.loss_key = args.loss_key
         super().__init__(args)
 
-    def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
+    def get_relevance_model_cls(self):
         """
-        Creates a RelevanceModel that can be used for training and evaluating
-
-        Parameters
-        ----------
-        feature_layer_keys_to_fns : dict of (str, function)
-            dictionary of function names mapped to tensorflow compatible
-            function definitions that can now be used in the InteractionModel
-            as a feature function to transform input features
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
 
         Returns
         -------
-        `RelevanceModel`
-            RelevanceModel that can be used for training and evaluating
-            a classification model
-
-        Notes
-        -----
-        Override this method to create custom loss, scorer, model objects
+        RelevanceModel class
         """
+        return ClassificationModel
 
-        # Define interaction model
-        interaction_model: InteractionModel = UnivariateInteractionModel(
-            feature_config=self.feature_config,
-            feature_layer_keys_to_fns=feature_layer_keys_to_fns,
-            tfrecord_type=self.tfrecord_type,
-            file_io=self.file_io,
-        )
+    def get_loss(self):
+        """
+        Get the primary loss function to be used with the RelevanceModel
 
-        # Define loss object from loss key
-        loss: RelevanceLossBase = categorical_cross_entropy.get_loss(loss_key=self.loss_key,
-                                                                     output_name=self.args.output_name)
+        Returns
+        -------
+        RelevanceLossBase object
+        """
+        return categorical_cross_entropy.get_loss(loss_key=self.loss_key,
+                                                  output_name=self.args.output_name)
 
-        # Define scorer
-        scorer: ScorerBase = RelevanceScorer(
-            feature_config=self.feature_config,
-            model_config=self.model_config,
-            interaction_model=interaction_model,
-            loss=loss,
-            output_name=self.args.output_name,
-            logger=self.logger,
-            file_io=self.file_io,
-        )
+    def get_metrics(self) -> List[Union[Type[Metric], str]]:
+        """
+        Get the list of keras metrics to be used with the RelevanceModel
 
-        # Define metrics objects from metrics keys
-        metrics: List[Union[Type[Metric], str]] = [
+        Returns
+        -------
+        list of keras Metric objects
+        """
+        return [
             metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
         ]
 
-        # Define optimizer
-        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
-
-        # Combine the above to define a RelevanceModel
-        relevance_model: RelevanceModel = ClassificationModel(
-            feature_config=self.feature_config,
-            scorer=scorer,
-            metrics=metrics,
-            optimizer=optimizer,
-            tfrecord_type=self.tfrecord_type,
-            model_file=self.args.model_file,
-            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
-            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
-            compile_keras_model=self.args.compile_keras_model,
-            output_name=self.args.output_name,
-            file_io=self.local_io,
-            logger=self.logger,
-        )
-        return relevance_model
-
     def get_relevance_dataset(
-        self, parse_tfrecord=True, preprocessing_keys_to_fns={}
+            self, parse_tfrecord=True, preprocessing_keys_to_fns={}
     ) -> RelevanceDataset:
         """
         Create RelevanceDataset object by loading train, test data as tensorflow datasets

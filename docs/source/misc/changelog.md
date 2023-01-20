@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.15] - 2023-01-20
+
+### Changed
+
+- Upgrading from tensorflow 2.0.x to 2.7.x
+- Moving from Keras Functional API to Model Subclassing API for more customization capabilities
+- Auxiliary loss is reimplemented as part of ScoringModel
+
+### Removed
+
+- RankMatchFailure
+
+## [0.1.14] - 2022-11-18
+
+### Changed
+
+- Ability to pass custom RelevanceModel class in Pipeline.
+
+## [0.1.13] - 2022-10-17
+
+### Fixed
+
+- Bug in metrics_helper when used without secondary_labels
+
+### Added
+
+- RankMatchFailure metric for evaluation
+- RankMatchFailure auxiliary loss
+
+## [0.1.12] - 2022-04-26
+
 ## [0.1.11] - 2021-01-18
 
 ### Changed

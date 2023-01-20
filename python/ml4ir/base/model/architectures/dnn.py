@@ -8,7 +8,7 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.model.architectures.fixed_additive_positional_bias import FixedAdditivePositionalBias
+from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
 
 
 OOV = 1
@@ -57,7 +57,7 @@ class DNN(keras.Model):
 
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER][
-                "key"] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
+            "key"] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
             self.positional_bias_layer = FixedAdditivePositionalBias(max_ranks=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["max_ranks"],
                                                                      kernel_initializer=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get(
                                                                          "kernel_initializer", "Zeros"),
@@ -129,6 +129,7 @@ class DNN(keras.Model):
             Dense tensor that can be input to the layers of the DNN
         """
         train_features = inputs[FeatureTypeKey.TRAIN]
+        metadata_features = inputs[FeatureTypeKey.METADATA]
 
         # Sort the train features dictionary so that we control the order
         # Concat all train features to get a dense feature vector

@@ -8,7 +8,6 @@ from ml4ir.applications.ranking.model.losses import listwise_losses
 
 
 class RankingModelTest(RankingTestBase):
-
     def setUp(self):
 
         super().setUp()
@@ -21,6 +20,14 @@ class RankingModelTest(RankingTestBase):
             [[0., 0., 1., 0., 0.],
              [0., 1., 0., 0., 0.],
              [0., 1., 0., 0., 0.]])
+        self.y_true_aux = tf.constant(
+            [[0.34, 0.81, 0.22, -0.05, -0.67],
+             [-1.35, -0.75, -0.37, 1.5467, 0.8],
+             [-1.4356, 0.75, -0.6857, -0.689, 0.089]])
+        self.y_true_aux_ties = tf.constant(
+            [[0.34, 0.81, 0.22, 0.22, 0.22],
+             [-1.35, -0.75, 1.5467, 1.5467, 0.8],
+             [0, 0, 0, 0, 0]])
         self.mask = tf.constant(
             [[1., 1., 1., 1., 1.],
              [1., 1., 1., 1., 0.],
@@ -53,7 +60,7 @@ class RankingModelTest(RankingTestBase):
             }
         })
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
         assert np.isclose(loss, 1.306335, atol=1e-5)
@@ -70,7 +77,58 @@ class RankingModelTest(RankingTestBase):
         })
 
         assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
-        assert np.isclose(y_pred[2][4].numpy(), 0., atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
 
         loss = loss_op({"mask": self.mask}, self.y_true, y_pred)
         assert np.isclose(loss, 2.1073625, atol=1e-5)
+
+    def test_aux_one_hot_hot_cross_entropy(self):
+        """Test the auxiliary one hot cross entropy listwise loss object"""
+        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux, y_pred)
+        assert np.isclose(loss, 0.5249801, atol=1e-5)
+
+    def test_aux_one_hot_cross_entropy_with_ties(self):
+        """Test the one hot cross entropy for aux target with ties"""
+        loss_op = listwise_losses.AuxiliaryOneHotCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux_ties, y_pred)
+        assert np.isclose(loss, 0.8936954, atol=1e-5)
+
+    def test_aux_softmax_cross_entropy(self):
+        """Test the auxiliary softmax cross entropy listwise loss object"""
+        loss_op = listwise_losses.AuxiliarySoftmaxCrossEntropy()
+
+        y_pred = loss_op.final_activation_op({
+            "logits": self.logits,
+            "metadata": {
+                "mask": self.mask
+            }
+        })
+
+        assert np.isclose(y_pred[0][0].numpy(), 0.19868991, atol=1e-5)
+        assert np.isclose(y_pred[2][4].numpy(), 0.0, atol=1e-5)
+
+        loss = loss_op({"mask": self.mask}, self.y_true_aux, y_pred)
+        assert np.isclose(loss, 0.88127804, atol=1e-5)

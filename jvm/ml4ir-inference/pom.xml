@@ -5,7 +5,7 @@
   <parent>
     <groupId>ml4ir</groupId>
     <artifactId>ml4ir-parent</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.7-SNAPSHOT</version>
   </parent>
   <artifactId>ml4ir-inference</artifactId>
   <packaging>jar</packaging>
@@ -150,9 +150,6 @@
             </goals>
           </execution>
         </executions>
-        <configuration>
-          <addScalacArgs>-target:jvm-1.8</addScalacArgs>
-        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>

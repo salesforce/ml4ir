@@ -5,15 +5,17 @@ import random
 import traceback
 import sys
 import time
+import ast
 from argparse import Namespace
 from logging import Logger
 import pathlib
-from typing import List
+from typing import List, Union, Type, Optional
 import copy
 
 import tensorflow as tf
 import numpy as np
 import pandas as pd
+from tensorflow.keras.metrics import Metric
 
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
@@ -24,6 +26,10 @@ from ml4ir.base.io.spark_io import SparkIO
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.data.kfold_relevance_dataset import KfoldRelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
+from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
+from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.config.keys import DataFormatKey
 from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
@@ -61,26 +67,19 @@ class RelevancePipeline(object):
 
         # Setup directories
         self.local_io = LocalIO()
-        self.models_dir_hdfs = None
-        self.logs_dir_hdfs = None
-        self.data_dir_hdfs = None
+
         if self.args.file_handler == FileHandlerKey.SPARK:
             self.models_dir = os.path.join(self.args.models_dir, self.run_id)
             self.logs_dir = os.path.join(self.args.logs_dir, self.run_id)
             self.data_dir = self.args.data_dir
 
-            self.models_dir_local = os.path.join(
-                DefaultDirectoryKey.MODELS, self.run_id)
-            self.logs_dir_local = os.path.join(
-                DefaultDirectoryKey.LOGS, self.run_id)
-            self.data_dir_local = os.path.join(
-                DefaultDirectoryKey.TEMP_DATA, os.path.basename(self.data_dir)
-            )
+            self.models_dir_local = os.path.join(DefaultDirectoryKey.MODELS, self.run_id)
+            self.logs_dir_local = os.path.join(DefaultDirectoryKey.LOGS, self.run_id)
+            self.data_dir_local = os.path.join(DefaultDirectoryKey.TEMP_DATA, os.path.basename(self.data_dir))
         else:
-            self.models_dir_local = os.path.join(
-                self.args.models_dir, self.run_id)
-            self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
-            self.data_dir_local = self.args.data_dir
+            self.models_dir = self.models_dir_local = os.path.join(self.args.models_dir, self.run_id)
+            self.logs_dir = self.logs_dir_local = os.path.join(self.args.logs_dir, self.run_id)
+            self.data_dir = self.data_dir_local = self.args.data_dir
 
         # Setup logging
         self.local_io.make_directory(self.logs_dir_local, clear_dir=True)
@@ -243,6 +242,7 @@ class RelevancePipeline(object):
             logger=self.logger,
             non_zero_features_only=self.non_zero_features_only,
             keep_additional_info=self.keep_additional_info,
+            output_name=self.args.output_name
         )
 
         return relevance_dataset
@@ -295,32 +295,124 @@ class RelevancePipeline(object):
             keep_additional_info=self.keep_additional_info,
             num_folds=num_folds,
             include_testset_in_kfold=include_testset_in_kfold,
-            read_data_sets=read_data_sets
+            read_data_sets=read_data_sets,
+            output_name=self.args.output_name
         )
 
         return relevance_dataset
 
+    def get_relevance_model_cls(self):
+        """
+        Fetch the class of the RelevanceModel to be used for the ml4ir pipeline
+
+        Returns
+        -------
+        RelevanceModel class
+        """
+        raise NotImplementedError
+
+    def get_loss(self):
+        """
+        Get the primary loss function to be used with the RelevanceModel
+
+        Returns
+        -------
+        RelevanceLossBase object
+        """
+        raise NotImplementedError
+
+    def get_aux_loss(self):
+        """
+        Get the auxiliary loss function to be used with the RelevanceModel
+
+        Returns
+        -------
+        RelevanceLossBase object
+        """
+        raise NotImplementedError
+
+    def get_metrics(self) -> List[Union[Type[Metric], str]]:
+        """
+        Get the list of keras metrics to be used with the RelevanceModel
+
+        Returns
+        -------
+        list of keras Metric objects
+        """
+        raise NotImplementedError
+
     def get_relevance_model(self, feature_layer_keys_to_fns={}) -> RelevanceModel:
         """
-        Creates RelevanceModel that can be used for training and evaluating
-
+        Creates a RankingModel that can be used for training and evaluating
         Parameters
         ----------
         feature_layer_keys_to_fns : dict of (str, function)
             dictionary of function names mapped to tensorflow compatible
             function definitions that can now be used in the InteractionModel
             as a feature function to transform input features
-
         Returns
         -------
-        `RelevanceModel`
-            RelevanceModel that can be used for training and evaluating
-
+        `RankingModel`
+            RankingModel that can be used for training and evaluating
+            a ranking model
         Notes
         -----
         Override this method to create custom loss, scorer, model objects
         """
-        raise NotImplementedError
+
+        # Define interaction model
+        interaction_model: InteractionModel = UnivariateInteractionModel(
+            feature_config=self.feature_config,
+            feature_layer_keys_to_fns=feature_layer_keys_to_fns,
+            tfrecord_type=self.tfrecord_type,
+            max_sequence_size=self.args.max_sequence_size,
+            file_io=self.file_io,
+        )
+
+        # Define loss object from loss key
+        loss: RelevanceLossBase = self.get_loss()
+
+        # Define auxiliary loss object
+        aux_loss: Optional[RelevanceLossBase] = None
+        if self.args.aux_loss_weight > 0:
+            aux_loss = self.get_aux_loss()
+
+        # Define scorer
+        scorer: RelevanceScorer = RelevanceScorer(
+            feature_config=self.feature_config,
+            model_config=self.model_config,
+            interaction_model=interaction_model,
+            loss=loss,
+            aux_loss=aux_loss,
+            aux_loss_weight=self.args.aux_loss_weight,
+            output_name=self.args.output_name,
+            logger=self.logger,
+            file_io=self.file_io,
+            logs_dir=self.logs_dir_local
+        )
+
+        # Define metrics objects from metrics keys
+        metrics: List[Union[Type[Metric], str]] = self.get_metrics()
+
+        optimizer: Optimizer = get_optimizer(model_config=self.model_config)
+
+        # Combine the above to define a RelevanceModel
+        relevance_model: RelevanceModel = self.get_relevance_model_cls()(
+            feature_config=self.feature_config,
+            tfrecord_type=self.tfrecord_type,
+            scorer=scorer,
+            metrics=metrics,
+            optimizer=optimizer,
+            model_file=self.model_file,
+            initialize_layers_dict=ast.literal_eval(self.args.initialize_layers_dict),
+            freeze_layers_list=ast.literal_eval(self.args.freeze_layers_list),
+            compile_keras_model=self.args.compile_keras_model,
+            output_name=self.args.output_name,
+            file_io=self.local_io,
+            logger=self.logger,
+        )
+
+        return relevance_model
 
     def create_pipeline_for_kfold(self, args):
         raise NotImplementedError
@@ -377,16 +469,16 @@ class RelevancePipeline(object):
             for fold_id in range(num_folds):
                 self.logger.info("fold={}".format(fold_id))
                 logs_dir = pathlib.Path(base_logs_dir) / self.args.run_id / \
-                    "fold_{}".format(fold_id)
+                           "fold_{}".format(fold_id)
                 models_dir = pathlib.Path(base_models_dir) / \
-                    self.args.run_id / "fold_{}".format(fold_id)
+                             self.args.run_id / "fold_{}".format(fold_id)
                 args.logs_dir = pathlib.Path(logs_dir).as_posix()
                 args.models_dir = pathlib.Path(models_dir).as_posix()
 
                 fold_relevance_dataset = self.get_kfold_relevance_dataset(args.kfold,
                                                                           args.include_testset_in_kfold,
                                                                           read_data_sets=False)
-                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset) 
+                fold_relevance_dataset.create_folds(fold_id, merged_data, relevance_dataset)
                 pipeline = self.create_pipeline_for_kfold(args)
                 pipeline.run_pipeline(fold_relevance_dataset, fold_id)
 
@@ -507,8 +599,8 @@ class RelevancePipeline(object):
             experiment_tracking_dict.update(test_metrics)
 
             # Add optimizer and lr schedule
-            experiment_tracking_dict.update(
-                relevance_model.model.optimizer.get_config())
+            if self.args.execution_mode not in {ExecutionModeKey.EVALUATE_ONLY}:
+                experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
 
             # Save model
             # NOTE: Model will be saved with the latest serving signatures
@@ -557,7 +649,7 @@ class RelevancePipeline(object):
                                                             **kwargs)
 
                         experiment_tracking_dict.update({CalibrationKey.TEMPERATURE:
-                                                         results.position[0]})
+                                                             results.position[0]})
                         # replacing the existing keras functional API model with the model with
                         # temperature scaling layer
                         relevance_model.add_temperature_layer(results.position[0])

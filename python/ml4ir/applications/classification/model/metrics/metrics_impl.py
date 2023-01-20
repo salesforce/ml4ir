@@ -1,10 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 
-from ml4ir.base.features.feature_config import FeatureConfig
-
-from typing import Optional, Dict
-
 
 class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
     """
@@ -25,9 +21,6 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
 
         Parameters
         ----------
-        feature_config : FeatureConfig object
-            FeatureConfig object that defines the configuration for each model
-            feature
         name : str
             Name of the metric
         """
