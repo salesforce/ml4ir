@@ -1,6 +1,7 @@
 package ml4ir.inference.tensorflow.data
 
 import java.io.File
+
 import com.fasterxml.jackson.annotation.{JsonIgnoreProperties, JsonProperty}
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory

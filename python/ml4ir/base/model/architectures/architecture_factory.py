@@ -1,11 +1,8 @@
 from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
-<<<<<<< HEAD
-from ml4ir.applications.ranking.model.architectures.set_rank import SetRank
-=======
 from ml4ir.base.model.architectures.auto_dag_network import AutoDagNetwork
->>>>>>> 39c292678c25561d6d108d03c5dbc2b8e94c8ced
+from ml4ir.applications.ranking.model.architectures.set_rank import SetRank
 
 
 def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io):

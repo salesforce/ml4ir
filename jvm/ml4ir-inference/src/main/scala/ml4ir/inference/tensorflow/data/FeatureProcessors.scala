@@ -2,8 +2,10 @@ package ml4ir.inference.tensorflow.data
 
 import java.lang.{Float => JFloat, Long => JLong, String => JString}
 import java.util.{Map => JMap}
+
 import scala.collection.JavaConverters._
 import java.util.function.{Function => JFunction}
+
 import ml4ir.inference.tensorflow.data.FeaturesConfigHelper._
 import org.tensorflow.proto.framework.DataType
 import org.tensorflow.types.family.TType
