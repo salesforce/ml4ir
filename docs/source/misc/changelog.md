@@ -11,11 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgrading from tensorflow 2.0.x to 2.7.x
 - Moving from Keras Functional API to Model Subclassing API for more customization capabilities
+- Auxiliary loss is reimplemented as part of ScoringModel
 
 ### Removed
 
 - RankMatchFailure
-- Auxiliary loss support
 
 ## [0.1.14] - 2022-11-18
 

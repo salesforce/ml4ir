@@ -36,6 +36,8 @@ class RelevanceScorer(keras.Model):
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
+            aux_loss: Optional[RelevanceLossBase] = None,
+            aux_loss_weight: float = 0.0,
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
@@ -58,6 +60,12 @@ class RelevanceScorer(keras.Model):
             and the loss function for the model
         file_io : `FileIO` object
             FileIO object that handles read and write
+        aux_loss : `RelevanceLossBase` object
+            Auxiliary loss to be used in conjunction with the primary loss
+        aux_loss_weight: float
+            Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
+            in the total final loss value computed using a linear combination
+            total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger : Logger, optional
@@ -79,7 +87,10 @@ class RelevanceScorer(keras.Model):
         self.interaction_model = interaction_model
 
         self.loss_op = loss
+        self.aux_loss_op = aux_loss
+        self.aux_loss_weight = aux_loss_weight
         self.loss_metric = None
+        self.aux_loss_metric = None
         self.primary_loss_metric = None
 
         self.file_io = file_io
@@ -95,6 +106,8 @@ class RelevanceScorer(keras.Model):
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
+            aux_loss: Optional[RelevanceLossBase] = None,
+            aux_loss_weight: float = 0.0,
             output_name: str = "score",
             feature_config: Optional[FeatureConfig] = None,
             logger: Optional[Logger] = None,
@@ -117,6 +130,12 @@ class RelevanceScorer(keras.Model):
             and the loss function for the model
         file_io : `FileIO` object
             FileIO object that handles read and write
+        aux_loss : `RelevanceLossBase` object
+            Auxiliary loss to be used in conjunction with the primary loss
+        aux_loss_weight: float
+            Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
+            in the total final loss value computed using a linear combination
+            total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger: Logger, optional
@@ -135,6 +154,8 @@ class RelevanceScorer(keras.Model):
             interaction_model=interaction_model,
             loss=loss,
             file_io=file_io,
+            aux_loss=aux_loss,
+            aux_loss_weight=aux_loss_weight,
             output_name=output_name,
             logger=logger,
             **kwargs
@@ -187,6 +208,11 @@ class RelevanceScorer(keras.Model):
         # Define metric to track loss
         self.loss_metric = keras.metrics.Mean(name="loss")
 
+        # Define metric to track an auxiliary loss if needed
+        if self.aux_loss_weight > 0:
+            self.primary_loss_metric = keras.metrics.Mean(name="primary_loss")
+            self.aux_loss_metric = keras.metrics.Mean(name="aux_loss")
+
         super().compile(**kwargs)
 
     def __get_loss_value(self, inputs, y_true, y_pred):
@@ -217,6 +243,24 @@ class RelevanceScorer(keras.Model):
             loss_value = self.compiled_loss(y_true=y_true, y_pred=y_pred)
         else:
             raise KeyError("Unknown Loss encountered in RelevanceScorer")
+
+        # If auxiliary loss is present, add it to compute final loss
+        if self.aux_loss_weight > 0:
+            aux_label = None
+            try:
+                aux_label = self.feature_config.get_aux_label("node_name")
+            except AttributeError:
+                self.logger.error("There was an error while loading the aux_label info. Did you set the is_aux_label flag to true in the FeatureConfig YAML?")
+                self.logger.error(traceback.format_exc())
+
+            aux_loss_value = self.aux_loss_op(inputs=inputs,
+                                              y_true=inputs[aux_label],
+                                              y_pred=y_pred)
+
+            self.primary_loss_metric.update_state(loss_value)
+            self.aux_loss_metric.update_state(aux_loss_value)
+
+            loss_value = tf.math.multiply((1. - self.aux_loss_weight), loss_value) + tf.math.multiply(self.aux_loss_weight, aux_loss_value)
 
         # Update loss metric
         self.loss_metric.update_state(loss_value)
@@ -289,5 +333,8 @@ class RelevanceScorer(keras.Model):
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
         metrics = [self.loss_metric] + super().metrics
+
+        if self.aux_loss_weight > 0:
+            metrics += [self.primary_loss_metric, self.aux_loss_metric]
 
         return metrics

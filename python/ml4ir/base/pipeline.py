@@ -321,6 +321,16 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
+    def get_aux_loss(self):
+        """
+        Get the auxiliary loss function to be used with the RelevanceModel
+
+        Returns
+        -------
+        RelevanceLossBase object
+        """
+        raise NotImplementedError
+
     def get_metrics(self) -> List[Union[Type[Metric], str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
@@ -362,12 +372,19 @@ class RelevancePipeline(object):
         # Define loss object from loss key
         loss: RelevanceLossBase = self.get_loss()
 
+        # Define auxiliary loss object
+        aux_loss: Optional[RelevanceLossBase] = None
+        if self.args.aux_loss_weight > 0:
+            aux_loss = self.get_aux_loss()
+
         # Define scorer
         scorer: RelevanceScorer = RelevanceScorer(
             feature_config=self.feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
             loss=loss,
+            aux_loss=aux_loss,
+            aux_loss_weight=self.args.aux_loss_weight,
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,

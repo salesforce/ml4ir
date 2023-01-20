@@ -9,6 +9,9 @@ class LossKey(Key):
     RANK_ONE_LISTNET = "rank_one_listnet"
     SOFTMAX_CROSS_ENTROPY = "softmax_cross_entropy"
 
+    AUX_ONE_HOT_CROSS_ENTROPY = "aux_one_hot_cross_entropy"
+    AUX_SOFTMAX_CROSS_ENTROPY = "aux_softmax_cross_entropy"
+
 
 class ScoringTypeKey(Key):
     """Scoring keys"""
