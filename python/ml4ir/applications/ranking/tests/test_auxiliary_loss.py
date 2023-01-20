@@ -126,7 +126,3 @@ class TestDualObjectiveTraining(unittest.TestCase):
         assert np.isclose(float(results_dict["val_loss"]), 1.2133840, atol=0.0001)
         assert np.isclose(float(results_dict["val_primary_loss"]), 1.21196198, atol=0.0001)
         assert np.isclose(float(results_dict["val_aux_loss"]), 1.2190713, atol=0.0001)
-
-
-if __name__ == "__main__":
-    unittest.main()
