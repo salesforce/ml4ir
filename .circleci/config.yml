@@ -95,12 +95,12 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            COVERAGE_FILE=reports/.coverage.classif coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
+            COVERAGE_FILE=reports/.coverage.classification coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - persist_to_workspace:
           root: python/reports
           paths:
-            - .coverage.classif
+            - .coverage.classification
       - store_test_results:
           path: python/test_results
 
@@ -165,7 +165,7 @@ jobs:
           name: Run Python Coverage
           command: |
             . venv/bin/activate
-            coverage combine reports/.coverage.ranking reports/.coverage.classif
+            coverage combine reports/
             coverage report
             coverage html --fail-under=70
           no_output_timeout: 45m  # Time for running the tests before we timeout
