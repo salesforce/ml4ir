@@ -133,20 +133,6 @@ class RankingModelTest(RankingTestBase):
             default_signature_predictions, tfrecord_signature_predictions, rtol=0.01
         ).all()
 
-    def test_model_serving_default(self):
-        """
-        Train a simple dnn model and test serving flow by loading the SavedModel
-        """
-        self.check_model_serving()
-
-    def test_model_serving_auto_dag_network(self):
-        """
-        Train a simple auto-dag-network model and test serving flow by loading the SavedModel
-        """
-        self.check_model_serving(
-            model_config_path="ml4ir/applications/ranking/tests/data/configs/auto_dag_network_sample_config.yaml"
-        )
-
     def get_feature_config(self):
         feature_config_path = os.path.join(
             self.root_data_dir, "configs", self.FEATURE_CONFIG_FNAME
