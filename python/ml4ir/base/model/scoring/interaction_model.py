@@ -26,13 +26,13 @@ class InteractionModel(keras.Model):
     """
 
     def __init__(
-            self,
-            feature_config: FeatureConfig,
-            tfrecord_type: str,
-            feature_layer_keys_to_fns: dict = {},
-            max_sequence_size: int = 0,
-            file_io: FileIO = None,
-            **kwargs
+        self,
+        feature_config: FeatureConfig,
+        tfrecord_type: str,
+        feature_layer_keys_to_fns: dict = {},
+        max_sequence_size: int = 0,
+        file_io: FileIO = None,
+        **kwargs
     ):
         """
         Constructor for instantiating a base InteractionModel
@@ -176,8 +176,8 @@ class UnivariateInteractionModel(InteractionModel):
             the values for all examples of the sequence
             """
             if (
-                    self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
-                    and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
+                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
             ):
                 if feature_info[TRAINABLE]:
                     feature_tensor = tf.tile(feature_tensor, train_tile_shape)
