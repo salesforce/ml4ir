@@ -25,3 +25,6 @@ pyspark==3.0.1
 
 #calibration
 tensorflow-probability==0.15.0
+
+# DAG visualization
+pygraphviz==1.7
