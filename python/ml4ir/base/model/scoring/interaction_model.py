@@ -26,13 +26,13 @@ class InteractionModel(keras.Model):
     """
 
     def __init__(
-        self,
-        feature_config: FeatureConfig,
-        tfrecord_type: str,
-        feature_layer_keys_to_fns: dict = {},
-        max_sequence_size: int = 0,
-        file_io: FileIO = None,
-        **kwargs
+            self,
+            feature_config: FeatureConfig,
+            tfrecord_type: str,
+            feature_layer_keys_to_fns: dict = {},
+            max_sequence_size: int = 0,
+            file_io: FileIO = None,
+            **kwargs
     ):
         """
         Constructor for instantiating a base InteractionModel
@@ -176,8 +176,8 @@ class UnivariateInteractionModel(InteractionModel):
             the values for all examples of the sequence
             """
             if (
-                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
-                and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
+                    self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                    and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
             ):
                 if feature_info[TRAINABLE]:
                     feature_tensor = tf.tile(feature_tensor, train_tile_shape)
@@ -185,7 +185,12 @@ class UnivariateInteractionModel(InteractionModel):
                     feature_tensor = tf.tile(feature_tensor, metadata_tile_shape)
 
             if feature_info[TRAINABLE]:
-                train_features[feature_node_name] = tf.cast(feature_tensor, tf.float32)
+                # Note: All non-string types are converted to float to avoid dtype mismatches.
+                # Strings are left as is to be processed by model layers which expect string inputs
+                if feature_info[DTYPE] != tf.string:
+                    train_features[feature_node_name] = tf.cast(feature_tensor, tf.float32)
+                else:
+                    train_features[feature_node_name] = feature_tensor
             else:
                 if feature_info[DTYPE] == tf.int64:
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
