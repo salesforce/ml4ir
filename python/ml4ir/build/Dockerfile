@@ -1,5 +1,5 @@
 # Using python based centos7 docker base image:
-FROM ducouloa/ml4ir:0.1
+FROM lastmansleeping/ml4ir:0.1
 
 # Set working directory and PYTHONPATH
 USER root
