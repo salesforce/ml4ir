@@ -133,12 +133,6 @@ class RankingModelTest(RankingTestBase):
             default_signature_predictions, tfrecord_signature_predictions, rtol=0.01
         ).all()
 
-    def test_model_serving_default(self):
-        """
-        Train a simple dnn model and test serving flow by loading the SavedModel
-        """
-        self.check_model_serving()
-
     def get_feature_config(self):
         feature_config_path = os.path.join(
             self.root_data_dir, "configs", self.FEATURE_CONFIG_FNAME
@@ -174,6 +168,20 @@ class RankingModelTest(RankingTestBase):
         assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
 
         return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+
+    def test_model_serving_default(self):
+        """
+        Train a simple dnn model and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving()
+
+    def test_model_serving_auto_dag_network(self):
+        """
+        Train a simple auto-dag-network model and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving(
+            model_config_path="ml4ir/applications/ranking/tests/data/configs/model_config_auto_dag_network.yaml"
+        )
 
     def test_serving_n_records(self):
         """Test serving signature with different number of records"""
