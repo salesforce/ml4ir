@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moving from Keras Functional API to Model Subclassing API for more customization capabilities
 - Auxiliary loss is reimplemented as part of ScoringModel
 
+### Added
+
+- AutoDAGNetwork which allows for building flexible connected architectures using config files
+
 ### Removed
 
 - RankMatchFailure
