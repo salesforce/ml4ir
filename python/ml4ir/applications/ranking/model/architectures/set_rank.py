@@ -6,7 +6,7 @@ from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.architectures.dnn import DNN
-from ml4ir.base.model.architectures.transformer import TransformerEncoder
+from ml4ir.base.model.architectures.transformer import TransformerEncoderBlock
 
 
 class SetRankLayerKey:
@@ -62,17 +62,17 @@ class SetRank(DNN):
         self.input_projection_op = layers.Dense(units=self.model_dim)
         # NOTE: We are not using oridnal embeddings for the rank here as described in the original paper
         #       But the current architecture can be easily extended to support it
-        self.transformer_encoders = [TransformerEncoder(model_dim=self.model_dim,
-                                                        num_heads=self.num_heads,
-                                                        feed_forward_dim=self.feed_forward_dim,
-                                                        dropout_rate=self.dropout_rate)
+        self.transformer_encoders = [TransformerEncoderBlock(model_dim=self.model_dim,
+                                                             num_heads=self.num_heads,
+                                                             feed_forward_dim=self.feed_forward_dim,
+                                                             dropout_rate=self.dropout_rate)
                                      for _ in range(self.num_layers)]
         self.dropout = tf.keras.layers.Dropout(self.dropout_rate)
 
     def get_config(self):
         """Get config for the model"""
         config = super().get_config()
-        config[DNNLayerKey.TRANSFORMER_ENCODER] = model_config[DNNLayerKey.TRANSFORMER_ENCODER]
+        config[DNNLayerKey.TRANSFORMER_ENCODER] = self.model_config[DNNLayerKey.TRANSFORMER_ENCODER]
         return config
 
     def layer_input_op(self, inputs, training=None):

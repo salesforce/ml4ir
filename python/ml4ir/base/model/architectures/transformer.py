@@ -109,7 +109,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         return output, attention_weights
 
 
-class TransformerEncoder(tf.keras.layers.Layer):
+class TransformerEncoderBlock(tf.keras.layers.Layer):
     def __init__(self, model_dim, num_heads, feed_forward_dim, dropout_rate=0.1, **kwargs):
         super().__init__(**kwargs)
 
