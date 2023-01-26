@@ -16,7 +16,7 @@ layers:
     args:
       units: 2
       activation: relu
-  - type: keras.layers.merge.Concatenate
+  - type: keras.layers.merging.concatenate.Concatenate
     name: features_concat
     inputs:
       - query_text
