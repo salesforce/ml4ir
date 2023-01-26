@@ -157,7 +157,7 @@ class AutoDagNetworkTests(unittest.TestCase):
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: keras.layers.Concatenate
+              - type: keras.layers.merging.concatenate.Concatenate
                 name: features_concat
                 inputs:
                   - global1
