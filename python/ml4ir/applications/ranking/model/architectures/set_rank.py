@@ -72,7 +72,7 @@ class SetRank(DNN):
     def get_config(self):
         """Get config for the model"""
         config = super().get_config()
-        config[DNNLayerKey.TRANSFORMER_ENCODER] = self.model_config[DNNLayerKey.TRANSFORMER_ENCODER]
+        config[SetRankLayerKey.TRANSFORMER_ENCODER] = self.model_config[SetRankLayerKey.TRANSFORMER_ENCODER]
         return config
 
     def layer_input_op(self, inputs, training=None):
