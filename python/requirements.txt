@@ -1,5 +1,5 @@
 # ml4ir dependencies
-tensorflow==2.7.4
+tensorflow==2.9.3
 numpy==1.21.6
 pandas==1.2.1
 scipy==1.5.4
