@@ -23,10 +23,13 @@ all:
   - pyspark==3.0.1  # required to run ml4ir.base.pipeline
   - omnixai==1.1.4 # required for running explanations demo. Upgrade to 1.1.5 when it is available
   - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
+  - tf-models-official==2.9.2 # required for transformer architectures implemented in tensorflow
 pyspark:
   - pyspark==3.0.1  # required to support pyspark data read
 explainer:
   - omnixai==1.1.4 # required for running explanations demo. Upgrade to 1.1.5 when it is available
 visualization:
   - pygraphviz==1.7  # required to visualize ml4ir.base.model.architectures.auto_dag_network.LayerGraph
+transformers:
+  - tf-models-official==2.9.2 # required for transformer architectures implemented in tensorflow
 # Add other optional ml4ir dependencies here
