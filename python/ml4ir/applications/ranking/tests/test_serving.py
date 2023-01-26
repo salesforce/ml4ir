@@ -183,6 +183,14 @@ class RankingModelTest(RankingTestBase):
             model_config_path="ml4ir/applications/ranking/tests/data/configs/model_config_auto_dag_network.yaml"
         )
 
+    def test_model_serving_set_rank(self):
+        """
+        Train a simple auto-dag-network model and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving(
+            model_config_path="ml4ir/applications/ranking/tests/data/configs/model_config_set_rank.yaml"
+        )
+
     def test_serving_n_records(self):
         """Test serving signature with different number of records"""
         feature_config: FeatureConfig = self.get_feature_config()

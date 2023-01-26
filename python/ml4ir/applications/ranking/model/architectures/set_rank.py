@@ -14,8 +14,7 @@ class SetRankLayerKey:
     NUM_LAYERS = "num_layers"  # Number of stacked transformer encoder layers
     MODEL_DIM = "model_dim"  # Dimension to use for the transformer inputs and outputs
     NUM_HEADS = "num_heads"  # Number of heads in the multi-head attention layer
-    # Number of hidden units in the feed forward layer within the transformer
-    FEED_FORWARD_DIM = "feed_forward_dim"
+    FEED_FORWARD_DIM = "feed_forward_dim"  # Number of hidden units in the feed forward layer within the transformer
     DROPOUT_RATE = "dropout_rate"
 
 

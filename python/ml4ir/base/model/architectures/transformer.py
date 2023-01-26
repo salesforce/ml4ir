@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+from tensorflow.keras.layers import MultiHeadAttention
 """
 Implementation of transformer architecture based on tensorflow tutorial
 Reference -> https://www.tensorflow.org/text/tutorials/transformer
