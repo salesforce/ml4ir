@@ -1,5 +1,5 @@
 # Using python based centos7 docker base image:
-FROM ducouloa/ml4ir:0.1
+FROM lastmansleeping/ml4ir:0.1
 
 # Set working directory and PYTHONPATH
 USER root
@@ -9,6 +9,9 @@ ENV PYTHONPATH=/home/ml4ir/python
 
 # Install python dependencies
 COPY requirements.txt /home/ml4ir/python/
+RUN sudo apt-get --allow-releaseinfo-change update
+# Note: This is needed for DAG visualization
+RUN sudo apt-get install graphviz graphviz-dev
 RUN pip install --upgrade pip
 RUN pip config set global.extra-index-url https://pypi.python.org/simple
 RUN pip install --upgrade setuptools
