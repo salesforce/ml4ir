@@ -1,6 +1,7 @@
 from typing import Dict, Type
 from functools import lru_cache
 import json
+import sys
 
 import tensorflow as tf
 
@@ -8,7 +9,7 @@ from ml4ir.base.model.layers import *
 from ml4ir.applications.ranking.model.layers import *
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=0 if "pytest" in sys.modules else None)
 def get_keras_layer_subclasses() -> Dict[str, Type[tf.keras.layers.Layer]]:
     """Get mapping of {subclass-name: subclass} for all derivative classes of keras.layers.Layer"""
 
