@@ -18,7 +18,7 @@ class SetRankEncoder(layers.Layer):
     def __init__(self,
                  encoding_size: int,
                  requires_mask: bool,
-                 projection_dropout: float = 0.0,
+                 projection_dropout_rate: float = 0.0,
                  **kwargs):
         """
         Parameters
@@ -27,7 +27,7 @@ class SetRankEncoder(layers.Layer):
             Size of the projection which will serve as both the input and output size to the encoder
         requires_mask: bool
             Indicates if the layer requires a mask to be passed to it during forward pass
-        projection_dropout: float
+        projection_dropout_rate: float
             Dropout rate to be applied after the input projection layer
         kwargs:
             Additional key-value args that will be used for configuring the TransformerEncoder
@@ -43,7 +43,7 @@ class SetRankEncoder(layers.Layer):
         assert self.requires_mask, "To use SetRankEncoder layer, the `requires_mask` arg needs to be set to true"
 
         self.encoding_size = encoding_size
-        self.projection_dropout_rate = projection_dropout
+        self.projection_dropout_rate = projection_dropout_rate
 
         self.input_projection_op = layers.Dense(units=self.encoding_size)
         self.projection_dropout_op = layers.Dropout(rate=self.projection_dropout_rate)
@@ -88,8 +88,8 @@ class SetRankEncoder(layers.Layer):
     def get_config(self):
         config = self.transformer_encoder.get_config()
         config.update({
-            SetRankEncoderLayerKey.ENCODING_SIZE: self.encoding_size,
-            SetRankEncoderLayerKey.PROJECTION_DROPOUT: self.projection_dropout_rate
+            "encoding_size": self.encoding_size,
+            "projection_dropout_rate": self.projection_dropout_rate
         })
 
         return config

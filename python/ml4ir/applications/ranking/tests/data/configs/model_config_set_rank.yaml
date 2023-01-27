@@ -3,7 +3,7 @@ layers:
   - type: ml4ir.applications.ranking.model.layers.set_rank_encoder.SetRankEncoder
     requires_mask: true
     encoding_size: 128
-    projection_dropout: 0.0
+    projection_dropout_rate: 0.0
     num_layers: 4
     num_attention_heads: 8
     intermediate_size: 128
