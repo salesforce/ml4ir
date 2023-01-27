@@ -108,6 +108,8 @@ class DNN(keras.Model):
             elif layer_type == DNNLayerKey.ACTIVATION:
                 return layers.Activation(**layer_args)
             elif layer_type in self.available_keras_layers:
+                # This allows users to use any predefined or custom ml4ir layers inheriting tf.keras.layers.Layer
+                # easily from the config
                 keras_layer = instantiate_keras_layer(layer_type, layer_args)
                 return keras_layer
             else:
@@ -121,31 +123,6 @@ class DNN(keras.Model):
     def build(self, input_shape):
         """Build the DNN model"""
         self.train_features = sorted(input_shape[FeatureTypeKey.TRAIN])
-
-    def layer_input_op(self, inputs, training=None):
-        """
-        Generate the input tensor to the DNN layer
-
-        Parameters
-        ----------
-        inputs: dict of dict of tensors
-            Input feature tensors divided as train and metadata
-        training: bool
-            Boolean to indicate if the layer is used in training or inference mode
-
-        Returns
-        -------
-        tf.Tensor
-            Dense tensor that can be input to the layers of the DNN
-        """
-        train_features = inputs[FeatureTypeKey.TRAIN]
-        metadata_features = inputs[FeatureTypeKey.METADATA]
-
-        # Sort the train features dictionary so that we control the order
-        # Concat all train features to get a dense feature vector
-        layer_input = self.concat_input_op([train_features[k] for k in sorted(train_features)])
-
-        return layer_input
 
     def call(self, inputs, training=None):
         """
@@ -163,7 +140,11 @@ class DNN(keras.Model):
         tf.Tensor
             Logits tensor computed with the forward pass of the architecture layer
         """
-        layer_input = self.layer_input_op(inputs, training)
+        train_features = inputs[FeatureTypeKey.TRAIN]
+        metadata_features = inputs[FeatureTypeKey.METADATA]
+
+        # Concat input features to get a single vector representation
+        layer_input = self.concat_input_op([train_features[k] for k in sorted(train_features)])
 
         # Pass ranking features through all the layers of the DNN
         for layer_op, requires_mask in zip(self.layer_ops, self.layer_ops_requires_mask):
@@ -173,6 +154,7 @@ class DNN(keras.Model):
             else:
                 layer_input = layer_op(layer_input, training=training)
 
+        # TODO: Move this out of DNN class
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and \
                 self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["key"] == \
                 PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
