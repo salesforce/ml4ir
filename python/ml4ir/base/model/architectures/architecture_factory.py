@@ -2,7 +2,6 @@ from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
 from ml4ir.base.model.architectures.auto_dag_network import AutoDagNetwork
-from ml4ir.applications.ranking.model.architectures.set_rank import SetRank
 
 
 def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io):
@@ -25,7 +24,5 @@ def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io)
             return DNN(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.RNN:
         raise NotImplementedError
-    elif architecture_key == ArchitectureKey.SET_RANK:
-        return SetRank(model_config, feature_config, file_io)
     else:
         raise NotImplementedError

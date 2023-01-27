@@ -1,11 +1,13 @@
-architecture_key: set_rank
-transformer_encoder:
-  num_layers: 4
-  model_dim: 128
-  num_heads: 8
-  feed_forward_dim: 128
-  dropout_rate: 0.1
+architecture_key: dnn
 layers:
+  - type: ml4ir.base.model.layers.set_rank_encoder.SetRankEncoder
+    requires_mask: true
+    encoding_size: 128
+    projection_dropout: 0.0
+    num_layers: 4
+    num_attention_heads: 8
+    intermediate_size: 128
+    dropout_rate: 0.1
   - type: dense
     name: first_dense
     units: 256

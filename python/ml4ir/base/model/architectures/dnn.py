@@ -9,6 +9,7 @@ from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
+from ml4ir.base.model.architectures.utils import instantiate_keras_layer
 
 
 OOV = 1
@@ -23,6 +24,7 @@ class DNNLayerKey:
     ACTIVATION = "activation"
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
     CONCATENATED_INPUT = "concatenated_input"
+    REQUIRES_MASK = "REQUIRES_MASK"
 
 
 class DNN(keras.Model):
@@ -56,6 +58,9 @@ class DNN(keras.Model):
         self.concat_input_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
 
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
+        # Store if a layer requires mask to be passed during forward pass
+        self.layer_ops_requires_mask = [layer_args.get(DNNLayerKey.REQUIRES_MASK, False) for layer_args in model_config[DNNLayerKey.LAYERS]
+
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER][
             "key"] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
             self.positional_bias_layer = FixedAdditivePositionalBias(max_ranks=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["max_ranks"],
@@ -100,6 +105,8 @@ class DNN(keras.Model):
                 return layers.Dropout(**layer_args)
             elif layer_type == DNNLayerKey.ACTIVATION:
                 return layers.Activation(**layer_args)
+            elif layer_type in self.available_keras_layers:
+                return instantiate_keras_layer(layer_type, **layer_args)
             else:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
 
@@ -154,10 +161,14 @@ class DNN(keras.Model):
             Logits tensor computed with the forward pass of the architecture layer
         """
         layer_input = self.layer_input_op(inputs, training)
+        mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
 
         # Pass ranking features through all the layers of the DNN
-        for layer_op in self.layer_ops:
-            layer_input = layer_op(layer_input, training=training)
+        for layer_op, requires_mask in zip(self.layer_ops, self.layer_ops_requires_mask):
+            if self.requires_mask:
+                layer_input = layer_op(layer_input, mask=mask, training=training)
+            else:
+                layer_input = layer_op(layer_input, training=training)
 
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and \
                 self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["key"] == \
