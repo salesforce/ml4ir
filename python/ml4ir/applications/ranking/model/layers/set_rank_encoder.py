@@ -80,8 +80,8 @@ class SetRankEncoder(layers.Layer):
             # Mask encoder inputs after projection
             encoder_inputs = tf.transpose(
                 tf.multiply(
-                    tf.transpose(tf.constant(encoder_inputs)),
-                    tf.transpose(tf.cast(tf.constant(mask), encoder_inputs.dtype))
+                    tf.transpose(encoder_inputs),
+                    tf.transpose(tf.cast(mask, encoder_inputs.dtype))
                 )
             )
 
