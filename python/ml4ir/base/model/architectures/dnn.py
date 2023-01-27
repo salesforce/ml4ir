@@ -109,7 +109,6 @@ class DNN(keras.Model):
                 return layers.Activation(**layer_args)
             elif layer_type in self.available_keras_layers:
                 keras_layer = instantiate_keras_layer(layer_type, layer_args)
-                self.model.summary(print_fn=self.logger.info, expand_nested=True)
                 return keras_layer
             else:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
