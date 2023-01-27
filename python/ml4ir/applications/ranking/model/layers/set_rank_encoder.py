@@ -17,7 +17,7 @@ class SetRankEncoder(layers.Layer):
 
     def __init__(self,
                  encoding_size: int,
-                 requires_mask: bool,
+                 requires_mask: bool = True,
                  projection_dropout_rate: float = 0.0,
                  **kwargs):
         """
@@ -40,6 +40,9 @@ class SetRankEncoder(layers.Layer):
         super(SetRankEncoder, self).__init__()
 
         self.requires_mask = requires_mask
+        # NOTE: We are currently enforcing requires_mask to be set to True explicitly
+        #       when used with DNN architecture via model_config.yaml for
+        #       easy dynamic integration with the keras layer subclasses
         assert self.requires_mask, "To use SetRankEncoder layer, the `requires_mask` arg needs to be set to true"
 
         self.encoding_size = encoding_size
@@ -49,7 +52,7 @@ class SetRankEncoder(layers.Layer):
         self.projection_dropout_op = layers.Dropout(rate=self.projection_dropout_rate)
         self.transformer_encoder = tfm.nlp.models.TransformerEncoder(**kwargs)
 
-    def call(self, inputs, mask, training=None):
+    def call(self, inputs, mask=None, training=None):
         """
         Invoke the set transformer encoder (permutation invariant) for the input feature tensor
 
@@ -76,8 +79,19 @@ class SetRankEncoder(layers.Layer):
         encoder_inputs = self.input_projection_op(inputs, training=training)
         encoder_inputs = self.projection_dropout_op(encoder_inputs, training=training)
 
-        # Convert 2D mask to 3D mask to be used for attention
-        attention_mask = tf.matmul(mask[:, :, tf.newaxis], mask[:, tf.newaxis, :])
+        # Compute attention mask if mask is present
+        attention_mask = None
+        if mask:
+            # Mask encoder inputs after projection
+            encoder_inputs = tf.transpose(
+                tf.multiply(
+                    tf.transpose(tf.constant(encoder_inputs)),
+                    tf.transpose(tf.cast(tf.constant(mask), encoder_inputs.dtype))
+                )
+            )
+
+            # Convert 2D mask to 3D mask to be used for attention
+            attention_mask = tf.matmul(mask[:, :, tf.newaxis], mask[:, tf.newaxis, :])
 
         encoder_output = self.transformer_encoder(encoder_inputs=encoder_inputs,
                                                   attention_mask=attention_mask,
