@@ -3,12 +3,6 @@ from tensorflow.keras import layers
 import tensorflow_models as tfm
 
 
-class SetRankEncoderLayerKey:
-    REQUIRES_MASK = "requires_mask"  # Indicates if the layer requires a mask to be passed to it during forward pass
-    ENCODING_SIZE = "encoding_size"  # Size of the projection which will serve as both the input and output size to the encoder
-    PROJECTION_DROPOUT = "projection_dropout"  # Dropout rate to be applied after the input projection layer
-
-
 class SetRankEncoder(layers.Layer):
     """
     SetRank architecture layer that maps features for a document -> encoding
@@ -21,18 +15,35 @@ class SetRankEncoder(layers.Layer):
     Reference -> https://arxiv.org/pdf/1912.05891.pdf
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self,
+                 encoding_size: int,
+                 requires_mask: bool,
+                 projection_dropout: float = 0.0,
+                 **kwargs):
         """
-        For a full list of args that can be passed to configure this layer, please check the below official layer doc
-        https://www.tensorflow.org/api_docs/python/tfm/nlp/models/TransformerEncoder
+        Parameters
+        ----------
+        encoding_size: int
+            Size of the projection which will serve as both the input and output size to the encoder
+        requires_mask: bool
+            Indicates if the layer requires a mask to be passed to it during forward pass
+        projection_dropout: float
+            Dropout rate to be applied after the input projection layer
+        kwargs:
+            Additional key-value args that will be used for configuring the TransformerEncoder
+
+        Notes
+        -----
+            For a full list of args that can be passed to configure this layer, please check the below official layer doc
+            https://www.tensorflow.org/api_docs/python/tfm/nlp/models/TransformerEncoder
         """
         super(SetRankEncoder, self).__init__()
 
-        self.requires_mask = kwargs.pop(SetRankEncoderLayerKey.REQUIRES_MASK, False)
+        self.requires_mask = requires_mask
         assert self.requires_mask, "To use SetRankEncoder layer, the `requires_mask` arg needs to be set to true"
 
-        self.encoding_size = kwargs.pop(SetRankEncoderLayerKey.ENCODING_SIZE)
-        self.projection_dropout_rate = kwargs.pop(SetRankEncoderLayerKey.PROJECTION_DROPOUT, 0.0)
+        self.encoding_size = encoding_size
+        self.projection_dropout_rate = projection_dropout
 
         self.input_projection_op = layers.Dense(units=self.encoding_size)
         self.projection_dropout_op = layers.Dropout(rate=self.projection_dropout_rate)
@@ -44,14 +55,14 @@ class SetRankEncoder(layers.Layer):
 
         Parameters
         ----------
-        inputs : Tensor object
+        inputs: Tensor object
             Input ranking feature tensor
             Shape: [batch_size, sequence_len, num_features]
         mask: Tensor object
             Mask to be used as the attention mask for the TransformerEncoder
             to indicate which documents to not attend to in the query
             Shape: [batch_size, sequence_len]
-        training : bool
+        training: bool
             If the layer should be run as training or not
 
         Returns
