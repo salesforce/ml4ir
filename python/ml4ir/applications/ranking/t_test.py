@@ -1,5 +1,317 @@
-from scipy import stats
 import numpy as np
+import scipy
+import warnings
+from scipy import stats
+from scipy.optimize import brenth
+
+
+def power_ttest(d=None, n=None, power=None, alpha=0.05, contrast="two-samples", alternative="two-sided"):
+    """
+    Extracted from https://pingouin-stats.org/build/html/generated/pingouin.power_ttest.html
+    Evaluate power, sample size, effect size or significance level of a one-sample T-test,
+    a paired T-test or an independent two-samples T-test with equal sample sizes.
+    Parameters
+    ----------
+    d : float
+        Cohen d effect size
+    n : int
+        Sample size
+        In case of a two-sample T-test, sample sizes are assumed to be equal.
+        Otherwise, see the :py:func:`power_ttest2n` function.
+    power : float
+        Test power (= 1 - type II error).
+    alpha : float
+        Significance level (type I error probability).
+        The default is 0.05.
+    contrast : str
+        Can be `"one-sample"`, `"two-samples"` or `"paired"`.
+        Note that `"one-sample"` and `"paired"` have the same behavior.
+    alternative : string
+        Defines the alternative hypothesis, or tail of the test. Must be one of
+        "two-sided" (default), "greater" or "less".
+    Notes
+    -----
+    Exactly ONE of the parameters ``d``, ``n``, ``power`` and ``alpha`` must be passed as None, and
+    that parameter is determined from the others.
+    For a paired T-test, the sample size ``n`` corresponds to the number of pairs. For an
+    independent two-sample T-test with equal sample sizes, ``n`` corresponds to the sample size of
+    each group (i.e. number of observations in one group). If the sample sizes are unequal, please
+    use the :py:func:`power_ttest2n` function instead.
+    ``alpha`` has a default value of 0.05 so None must be explicitly passed if you want to
+    compute it.
+    This function is a Python adaptation of the `pwr.t.test` function implemented in the
+    `pwr <https://cran.r-project.org/web/packages/pwr/pwr.pdf>`_ R package.
+    Statistical power is the likelihood that a study will detect an effect when there is an effect
+    there to be detected. A high statistical power means that there is a low probability of
+    concluding that there is no effect when there is one. Statistical power is mainly affected by
+    the effect size and the sample size.
+    The first step is to use the Cohen's d to calculate the non-centrality parameter
+    :math:`\\delta` and degrees of freedom :math:`v`. In case of paired groups, this is:
+    .. math:: \\delta = d * \\sqrt n
+    .. math:: v = n - 1
+    and in case of independent groups with equal sample sizes:
+    .. math:: \\delta = d * \\sqrt{\\frac{n}{2}}
+    .. math:: v = (n - 1) * 2
+    where :math:`d` is the Cohen d and :math:`n` the sample size.
+    The critical value is then found using the percent point function of the T distribution with
+    :math:`q = 1 - alpha` and :math:`v` degrees of freedom.
+    Finally, the power of the test is given by the survival function of the non-central
+    distribution using the previously calculated critical value, degrees of freedom and
+    non-centrality parameter.
+    :py:func:`scipy.optimize.brenth` is used to solve power equations for other variables (i.e.
+    sample size, effect size, or significance level). If the solving fails, a nan value is
+    returned.
+    Results have been tested against GPower and the
+    `pwr <https://cran.r-project.org/web/packages/pwr/pwr.pdf>`_ R package.
+    Examples
+    --------
+    1. Compute power of a one-sample T-test given ``d``, ``n`` and ``alpha``
+    >>> from pingouin import power_ttest
+    >>> print('power: %.4f' % power_ttest(d=0.5, n=20, contrast='one-sample'))
+    power: 0.5645
+    2. Compute required sample size given ``d``, ``power`` and ``alpha``
+    >>> print('n: %.4f' % power_ttest(d=0.5, power=0.80, alternative='greater'))
+    n: 50.1508
+    3. Compute achieved ``d`` given ``n``, ``power`` and ``alpha`` level
+    >>> print('d: %.4f' % power_ttest(n=20, power=0.80, alpha=0.05, contrast='paired'))
+    d: 0.6604
+    4. Compute achieved alpha level given ``d``, ``n`` and ``power``
+    >>> print('alpha: %.4f' % power_ttest(d=0.5, n=20, power=0.80, alpha=None))
+    alpha: 0.4430
+    5. One-sided tests
+    >>> from pingouin import power_ttest
+    >>> print('power: %.4f' % power_ttest(d=0.5, n=20, alternative='greater'))
+    power: 0.4634
+    >>> print('power: %.4f' % power_ttest(d=0.5, n=20, alternative='less'))
+    power: 0.0007
+    """
+    # Check the number of arguments that are None
+    n_none = sum([v is None for v in [d, n, power, alpha]])
+    if n_none != 1:
+        raise ValueError("Exactly one of n, d, power, and alpha must be None.")
+
+    # Safety checks
+    assert alternative in [
+        "two-sided",
+        "greater",
+        "less",
+    ], "Alternative must be one of 'two-sided' (default), 'greater' or 'less'."
+    assert contrast.lower() in ["one-sample", "paired", "two-samples"]
+    tsample = 2 if contrast.lower() == "two-samples" else 1
+    tside = 2 if alternative == "two-sided" else 1
+    if d is not None and tside == 2:
+        d = abs(d)
+    if alpha is not None:
+        assert 0 < alpha <= 1
+    if power is not None:
+        assert 0 < power <= 1
+
+    if alternative == "less":
+
+        def func(d, n, power, alpha):
+            dof = (n - 1) * tsample
+            nc = d * np.sqrt(n / tsample)
+            tcrit = stats.t.ppf(alpha / tside, dof)
+            return stats.nct.cdf(tcrit, dof, nc)
+
+    elif alternative == "two-sided":
+
+        def func(d, n, power, alpha):
+            dof = (n - 1) * tsample
+            nc = d * np.sqrt(n / tsample)
+            tcrit = stats.t.ppf(1 - alpha / tside, dof)
+            return stats.nct.sf(tcrit, dof, nc) + stats.nct.cdf(-tcrit, dof, nc)
+
+    else:  # Alternative = 'greater'
+
+        def func(d, n, power, alpha):
+            dof = (n - 1) * tsample
+            nc = d * np.sqrt(n / tsample)
+            tcrit = stats.t.ppf(1 - alpha / tside, dof)
+            return stats.nct.sf(tcrit, dof, nc)
+
+    # Evaluate missing variable
+    if power is None:
+        # Compute achieved power given d, n and alpha
+        return func(d, n, power=None, alpha=alpha)
+
+    elif n is None:
+        # Compute required sample size given d, power and alpha
+
+        def _eval_n(n, d, power, alpha):
+            return func(d, n, power, alpha) - power
+
+        try:
+            return brenth(_eval_n, 2 + 1e-10, 1e07, args=(d, power, alpha))
+        except ValueError:  # pragma: no cover
+            return np.nan
+
+    elif d is None:
+        # Compute achieved d given sample size, power and alpha level
+        if alternative == "two-sided":
+            b0, b1 = 1e-07, 10
+        elif alternative == "less":
+            b0, b1 = -10, 5
+        else:
+            b0, b1 = -5, 10
+
+        def _eval_d(d, n, power, alpha):
+            return func(d, n, power, alpha) - power
+
+        try:
+            return brenth(_eval_d, b0, b1, args=(n, power, alpha))
+        except ValueError:  # pragma: no cover
+            return np.nan
+
+    else:
+        # Compute achieved alpha (significance) level given d, n and power
+
+        def _eval_alpha(alpha, d, n, power):
+            return func(d, n, power, alpha) - power
+
+        try:
+            return brenth(_eval_alpha, 1e-10, 1 - 1e-10, args=(d, n, power))
+        except ValueError:  # pragma: no cover
+            return np.nan
+
+
+def power_ttest2n(nx, ny, d=None, power=None, alpha=0.05, alternative="two-sided"):
+    """
+    Extracted from https://pingouin-stats.org/build/html/generated/pingouin.power_ttest2n.html
+    Evaluate power, effect size or  significance level of an independent two-samples T-test
+    with unequal sample sizes.
+    Parameters
+    ----------
+    nx, ny : int
+        Sample sizes. Must be specified. If the sample sizes are equal, you should use the
+        :py:func:`power_ttest` function instead.
+    d : float
+        Cohen d effect size
+    power : float
+        Test power (= 1 - type II error).
+    alpha : float
+        Significance level (type I error probability). The default is 0.05.
+    alternative : string
+        Defines the alternative hypothesis, or tail of the test. Must be one of "two-sided"
+        (default), "greater" or "less".
+    Notes
+    -----
+    Exactly ONE of the parameters ``d``, ``power`` and ``alpha`` must be passed as None, and that
+    parameter is determined from the others.
+    ``alpha`` has a default value of 0.05 so None must be explicitly passed if you want to compute
+    it.
+    This function is a Python adaptation of the `pwr.t2n.test` function implemented in the
+    `pwr <https://cran.r-project.org/web/packages/pwr/pwr.pdf>`_ R package.
+    Statistical power is the likelihood that a study will detect an effect when there is an effect
+    there to be detected. A high statistical power means that there is a low probability of
+    concluding that there is no effect when there is one. Statistical power is mainly affected by
+    the effect size and the sample size.
+    The first step is to use the Cohen's d to calculate the non-centrality parameter
+    :math:`\\delta` and degrees of freedom :math:`v`.cIn case of two independent groups with
+    unequal sample sizes, this is:
+    .. math:: \\delta = d * \\sqrt{\\frac{n_i * n_j}{n_i + n_j}}
+    .. math:: v = n_i + n_j - 2
+    where :math:`d` is the Cohen d, :math:`n` the sample size,
+    :math:`n_i` the sample size of the first group and
+    :math:`n_j` the sample size of the second group,
+    The critical value is then found using the percent point function of the T distribution with
+    :math:`q = 1 - alpha` and :math:`v` degrees of freedom.
+    Finally, the power of the test is given by the survival function of the non-central
+    distribution using the previously calculated critical value, degrees of freedom and
+    non-centrality parameter.
+    :py:func:`scipy.optimize.brenth` is used to solve power equations for other variables (i.e.
+    sample size, effect size, or significance level). If the solving fails, a nan value is
+    returned.
+    Results have been tested against GPower and the
+    `pwr <https://cran.r-project.org/web/packages/pwr/pwr.pdf>`_ R package.
+    Examples
+    --------
+    1. Compute achieved power of a T-test given ``d``, ``n`` and ``alpha``
+    >>> from pingouin import power_ttest2n
+    >>> print('power: %.4f' % power_ttest2n(nx=20, ny=15, d=0.5, alternative='greater'))
+    power: 0.4164
+    2. Compute achieved ``d`` given ``n``, ``power`` and ``alpha`` level
+    >>> print('d: %.4f' % power_ttest2n(nx=20, ny=15, power=0.80, alpha=0.05))
+    d: 0.9859
+    3. Compute achieved alpha level given ``d``, ``n`` and ``power``
+    >>> print('alpha: %.4f' % power_ttest2n(nx=20, ny=15, d=0.5, power=0.80, alpha=None))
+    alpha: 0.5000
+    """
+    # Check the number of arguments that are None
+    n_none = sum([v is None for v in [d, power, alpha]])
+    if n_none != 1:
+        raise ValueError("Exactly one of d, power, and alpha must be None")
+
+    # Safety checks
+    assert alternative in [
+        "two-sided",
+        "greater",
+        "less",
+    ], "Alternative must be one of 'two-sided' (default), 'greater' or 'less'."
+    tside = 2 if alternative == "two-sided" else 1
+    if d is not None and tside == 2:
+        d = abs(d)
+    if alpha is not None:
+        assert 0 < alpha <= 1
+    if power is not None:
+        assert 0 < power <= 1
+
+    if alternative == "less":
+
+        def func(d, nx, ny, power, alpha):
+            dof = nx + ny - 2
+            nc = d * (1 / np.sqrt(1 / nx + 1 / ny))
+            tcrit = stats.t.ppf(alpha / tside, dof)
+            return stats.nct.cdf(tcrit, dof, nc)
+
+    elif alternative == "two-sided":
+
+        def func(d, nx, ny, power, alpha):
+            dof = nx + ny - 2
+            nc = d * (1 / np.sqrt(1 / nx + 1 / ny))
+            tcrit = stats.t.ppf(1 - alpha / tside, dof)
+            return stats.nct.sf(tcrit, dof, nc) + stats.nct.cdf(-tcrit, dof, nc)
+
+    else:  # Alternative = 'greater'
+
+        def func(d, nx, ny, power, alpha):
+            dof = nx + ny - 2
+            nc = d * (1 / np.sqrt(1 / nx + 1 / ny))
+            tcrit = stats.t.ppf(1 - alpha / tside, dof)
+            return stats.nct.sf(tcrit, dof, nc)
+
+    # Evaluate missing variable
+    if power is None:
+        # Compute achieved power given d, n and alpha
+        return func(d, nx, ny, power=None, alpha=alpha)
+
+    elif d is None:
+        # Compute achieved d given sample size, power and alpha level
+        if alternative == "two-sided":
+            b0, b1 = 1e-07, 10
+        elif alternative == "less":
+            b0, b1 = -10, 5
+        else:
+            b0, b1 = -5, 10
+
+        def _eval_d(d, nx, ny, power, alpha):
+            return func(d, nx, ny, power, alpha) - power
+
+        try:
+            return brenth(_eval_d, b0, b1, args=(nx, ny, power, alpha))
+        except ValueError:  # pragma: no cover
+            return np.nan
+
+    else:
+        # Compute achieved alpha (significance) level given d, n and power
+
+        def _eval_alpha(alpha, d, nx, ny, power):
+            return func(d, nx, ny, power, alpha) - power
+
+        try:
+            return brenth(_eval_alpha, 1e-10, 1 - 1e-10, args=(d, nx, ny, power))
+        except ValueError:  # pragma: no cover
+            return np.nan
 
 
 def perform_click_rank_dist_paired_t_test(mean, variance, n):

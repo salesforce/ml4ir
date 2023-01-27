@@ -317,7 +317,7 @@ def get_grouped_stats(
             "sum_old_rank": sum_old_rank,
             "sum_new_rank": sum_new_rank,
             "sum_old_reciprocal_rank": sum_old_reciprocal_rank,
-            "sum_new_reciprocal_rank": sum_new_reciprocal_rank,
+            "sum_new_reciprocal_rank": sum_new_reciprocal_rank
         }
     )
 
