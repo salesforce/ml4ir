@@ -40,11 +40,6 @@ class SetRankEncoder(layers.Layer):
         super(SetRankEncoder, self).__init__()
 
         self.requires_mask = requires_mask
-        # NOTE: We are currently enforcing requires_mask to be set to True explicitly
-        #       when used with DNN architecture via model_config.yaml for
-        #       easy dynamic integration with the keras layer subclasses
-        assert self.requires_mask, "To use SetRankEncoder layer, the `requires_mask` arg needs to be set to true"
-
         self.encoding_size = encoding_size
         self.projection_dropout_rate = projection_dropout_rate
 
@@ -81,7 +76,7 @@ class SetRankEncoder(layers.Layer):
 
         # Compute attention mask if mask is present
         attention_mask = None
-        if mask:
+        if self.requires_mask:
             # Mask encoder inputs after projection
             encoder_inputs = tf.transpose(
                 tf.multiply(

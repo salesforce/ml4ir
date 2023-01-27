@@ -16,10 +16,6 @@ class TestSetRankEncoder(unittest.TestCase):
         self.num_features = 16
         self.encoding_size = 8
 
-    def test_fail_instantiation_with_no_requires_mask(self):
-        """Test to show that instantiation of the layer will fail without requires_mask arg set to True"""
-        self.assertRaises(AssertionError, SetRankEncoder, 64, False)
-
     def test_input_projection_op(self):
         """Test if the input_projection_op behaves as expected"""
         encoder = SetRankEncoder(self.encoding_size)
@@ -66,6 +62,7 @@ class TestSetRankEncoder(unittest.TestCase):
 
         # Check that the encodings for masked inputs are all the same in a given query
         for i in range(mask.shape[0]):
+            # Skip query if all documents are unmasked
             if tf.reduce_sum(mask[i]) == len(mask[i]):
                 continue
             encoder_output_for_masked_i = tf.gather_nd(encoder_output[i], tf.where(mask[i] == 0))
@@ -74,7 +71,8 @@ class TestSetRankEncoder(unittest.TestCase):
 
         # Check that the encodings for unmasked inputs are not all the same
         for i in range(mask.shape[0]):
-            if tf.reduce_sum(mask[i]) == 0:
+            # Skip query if there is only 1 unmasked document
+            if tf.reduce_sum(mask[i]) <= 1:
                 continue
             encoder_output_i = tf.gather_nd(encoder_output[i], tf.where(mask[i] == 1))
             self.assertFalse(tf.reduce_all(tf.reduce_all(
