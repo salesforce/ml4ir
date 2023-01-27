@@ -2,10 +2,9 @@ import tensorflow as tf
 from tensorflow.keras import layers
 import tensorflow_models as tfm
 
-from ml4ir.base.model.architectures.dnn import DNNLayerKey
-
 
 class SetRankEncoderLayerKey:
+    REQUIRES_MASK = "requires_mask"  # Indicates if the layer requires a mask to be passed to it during forward pass
     ENCODING_SIZE = "encoding_size"  # Size of the projection which will serve as both the input and output size to the encoder
     PROJECTION_DROPOUT = "projection_dropout"  # Dropout rate to be applied after the input projection layer
 
@@ -29,7 +28,7 @@ class SetRankEncoder(layers.Layer):
         """
         super(SetRankEncoder, self).__init__()
 
-        self.requires_mask = kwargs.pop(DNNLayerKey.REQUIRES_MASK, False)
+        self.requires_mask = kwargs.pop(SetRankEncoderLayerKey.REQUIRES_MASK, False)
         assert self.requires_mask, "To use SetRankEncoder layer, the `requires_mask` arg needs to be set to true"
 
         self.encoding_size = kwargs.pop(SetRankEncoderLayerKey.ENCODING_SIZE)
@@ -39,7 +38,7 @@ class SetRankEncoder(layers.Layer):
         self.projection_dropout_op = layers.Dropout(rate=self.projection_dropout_rate)
         self.transformer_encoder = tfm.nlp.models.TransformerEncoder(**kwargs)
 
-    def call(self, inputs, mask, training=False):
+    def call(self, inputs, mask, training=None):
         """
         Invoke the set transformer encoder (permutation invariant) for the input feature tensor
 
