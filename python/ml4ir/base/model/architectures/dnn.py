@@ -108,7 +108,9 @@ class DNN(keras.Model):
             elif layer_type == DNNLayerKey.ACTIVATION:
                 return layers.Activation(**layer_args)
             elif layer_type in self.available_keras_layers:
-                return instantiate_keras_layer(layer_type, layer_args)
+                keras_layer = instantiate_keras_layer(layer_type, layer_args)
+                self.model.summary(print_fn=self.logger.info, expand_nested=True)
+                return keras_layer
             else:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
 
@@ -163,11 +165,11 @@ class DNN(keras.Model):
             Logits tensor computed with the forward pass of the architecture layer
         """
         layer_input = self.layer_input_op(inputs, training)
-        mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
 
         # Pass ranking features through all the layers of the DNN
         for layer_op, requires_mask in zip(self.layer_ops, self.layer_ops_requires_mask):
             if requires_mask:
+                mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
                 layer_input = layer_op(layer_input, mask=mask, training=training)
             else:
                 layer_input = layer_op(layer_input, training=training)
