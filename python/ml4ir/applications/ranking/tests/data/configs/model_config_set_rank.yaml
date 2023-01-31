@@ -1,6 +1,6 @@
 architecture_key: dnn
 layers:
-  - type: ml4ir.applications.ranking.model.layers.set_rank_encoder.SetRankEncoder
+  - type: set_rank_encoder
     requires_mask: true
     encoding_size: 128
     projection_dropout_rate: 0.0
