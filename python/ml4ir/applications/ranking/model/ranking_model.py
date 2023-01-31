@@ -248,7 +248,10 @@ class RankingModel(RelevanceModel):
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
-        org_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS, orgs_metric_running_variance_params)
+        org_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS,
+                                                  orgs_metric_running_variance_params,
+                                                  RankingConstants.STATISTICAL_POWER,
+                                                  RankingConstants.TTEST_PVALUE_THRESHOLD)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(

@@ -441,6 +441,8 @@ def compute_org_running_variance_for_metrics(metric_list, orgs_metric_running_va
             else:
                 sv = StreamVariance()
 
+            # update the current mean and variance
+            # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
             combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
             combine_count = sv.count + new_count
             if (sv.count + new_count - 1) != 0:
@@ -456,51 +458,55 @@ def compute_org_running_variance_for_metrics(metric_list, orgs_metric_running_va
             org_params[metric] = sv
             orgs_metric_running_variance_params[org] = org_params
 
-    def compute_required_sample_size(mean1, mean2, var1, var2, RankingConstants):
-        """
-        Computes the required sample size for a statistically significant change given the means and variances
-        of the metrics.
-        ----------
-        mean1: float
-            The mean of the sample 1 (E.g. baseline MRR)
-        mean2: float
-            The mean of the sample 2 (E.g. new MRR)
-        var1: float
-            The variance of the sample 1 (E.g. baseline MRR)
-        var2: float
-            The variance of the sample 2 (E.g. new MRR)
-        RankingConstants: object
-            Lists all Ranking constants
 
-        Returns
-        -------
-        req_sample_sz: float
-            The required sample for statistically significant change
-        """
-        n = None
-        typ = "paired"
-        alternative = "two-sided"
-        try:
-            # compute the effect size (d)
-            d = np.abs(float(mean1) - float(mean2)) / np.sqrt((float(var1) + float(var2)) / 2)
-            req_sample_sz = power_ttest(d, n, RankingConstants.STATISTICAL_POWER,
-                                        RankingConstants.TTEST_PVALUE_THRESHOLD,
-                                        contrast=typ, alternative=alternative)
-            return req_sample_sz
-        except:
-            return -1.0
+def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pvalue):
+    """
+    Computes the required sample size for a statistically significant change given the means and variances
+    of the metrics.
+    ----------
+    mean1: float
+        The mean of the sample 1 (E.g. baseline MRR)
+    mean2: float
+        The mean of the sample 2 (E.g. new MRR)
+    var1: float
+        The variance of the sample 1 (E.g. baseline MRR)
+    var2: float
+        The variance of the sample 2 (E.g. new MRR)
+    statistical_power: float
+        Required statistical power
+    pvalue: float
+        Required pvalue
+
+    Returns
+    -------
+    req_sample_sz: float
+        The required sample for statistically significant change
+    """
+    n = None
+    typ = "paired"
+    alternative = "two-sided"
+    try:
+        # compute the effect size (d)
+        d = np.abs(float(mean1) - float(mean2)) / np.sqrt((float(var1) + float(var2)) / 2)
+        req_sample_sz = power_ttest(d, n, statistical_power, pvalue, contrast=typ, alternative=alternative)
+        return req_sample_sz
+    except:
+        return -1.0
 
 
-def run_power_analysis(metric_list, orgs_metric_running_variance_params):
+def run_power_analysis(metric_list, orgs_metric_running_variance_params, statistical_power, pvalue):
     """
     Using the input's stats (mean, variance and sample size) this function computes if the metric change is
     statistical significant using the predefined statistical power and p-value
     ----------
+    metric_list: list
+        List of all metrics to be used in the power analysis
     orgs_metric_running_variance_params: dict
         A dictionary containing mean, variance and sample size for each org for each metric
-
-    metric_list: list
-            Lists all Ranking constants
+    statistical_power: float
+        Required statistical power
+    pvalue: float
+        Required pvalue
 
     Returns
     -------
@@ -515,7 +521,8 @@ def run_power_analysis(metric_list, orgs_metric_running_variance_params):
             old_metric = "old_" + metric
             sv_old = orgs_metric_running_variance_params[org][old_metric]
             sv_new = orgs_metric_running_variance_params[org][new_metric]
-            req_sample_size = self.compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var)
+            req_sample_size = compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var,
+                                                           statistical_power, pvalue)
             if req_sample_size >= sv_new.count:
                 is_stat_sig = True
             else:
