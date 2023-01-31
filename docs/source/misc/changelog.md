@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Upgrading from tensorflow 2.0.x to 2.7.x
+- Upgrading from tensorflow 2.0.x to 2.9.x
 - Moving from Keras Functional API to Model Subclassing API for more customization capabilities
 - Auxiliary loss is reimplemented as part of ScoringModel
+
+### Added
+
+- AutoDAGNetwork which allows for building flexible connected architectures using config files
 
 ### Removed
 
