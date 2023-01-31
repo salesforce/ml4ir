@@ -15,7 +15,7 @@ from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
-    t_test_log_results, power_ttest, power_ttest2n
+    t_test_log_results, power_ttest, power_ttest2n, compute_org_running_variance_for_metrics, run_power_analysis, StreamVariance
 
 
 pd.set_option("display.max_rows", 500)
@@ -35,12 +35,6 @@ class RankingConstants:
     VARIANCE_METRIC_LIST = [NEW_MRR, OLD_MRR]
     # list of metrics for which power analysis to be used.
     METRIC_POWER_ANALYSIS = ["MRR"]
-
-
-class StreamVariance:
-    count = 0
-    mean = 0
-    var = 0
 
 
 class RankingModel(RelevanceModel):
@@ -114,115 +108,6 @@ class RankingModel(RelevanceModel):
                                'Rank distribution t-test pvalue': pvalue,
                                'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
         return t_test_metrics_dict
-
-    def run_power_analysis(self, orgs_metric_running_variance_params):
-        """
-        Using the input's stats (mean, variance and sample size) this function computes if the metric change is
-        statistical significant using the predefined statistical power and p-value
-        ----------
-        orgs_metric_running_variance_params: dict
-            A dictionary containing mean, variance and sample size for each org for each metric
-
-        Returns
-        -------
-        org_metrics_stat_sig: Pandas dataframe
-            A dataframe listing each org and for each metric whether the change is statistically significant
-        """
-        org_metrics_stat_sig = []
-        for org in orgs_metric_running_variance_params:
-            #org_metrics_stat_sig[org] = []
-            org_entry = {}
-            for metric in RankingConstants.METRIC_POWER_ANALYSIS:
-                new_metric = "new_" + metric
-                old_metric = "old_" + metric
-                sv_old = orgs_metric_running_variance_params[org][old_metric]
-                sv_new = orgs_metric_running_variance_params[org][new_metric]
-                req_sample_size = self.compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var)
-                if req_sample_size >= sv_new.count:
-                    is_stat_sig = True
-                else:
-                    is_stat_sig = False
-                org_entry["organization_id"] = org
-                org_entry["is_"+metric+"_lift_stat_sig"] = is_stat_sig
-                #org_metrics_stat_sig[org].append(is_stat_sig)
-            org_metrics_stat_sig.append(org_entry)
-        return pd.DataFrame(org_metrics_stat_sig)
-
-    def compute_org_running_variance_for_metrics(self, orgs_metric_running_variance_params, running_stats_df):
-        """
-        This function updates the intermediate mean and variance with each batch.
-        ----------
-        orgs_metric_running_variance_params: dict
-            A dictionary containing intermediate mean, variance and sample size for each org for each metric
-
-        running_stats_df: pandas dataframe
-            The incoming batch of mean and variance
-        """
-        running_stats_df = running_stats_df.fillna(0)
-        for row in running_stats_df.iterrows():
-            org = row[0]
-            if org in orgs_metric_running_variance_params:
-                org_params = orgs_metric_running_variance_params[org]
-            else:
-                org_params = {}
-                orgs_metric_running_variance_params[org] = org_params
-
-            for metric in RankingConstants.VARIANCE_METRIC_LIST:
-                new_mean = row[1][(metric, "mean")]
-                new_var = row[1][(metric, "var")]
-                new_count = row[1][("organization_id", "count")]
-
-                if metric in org_params:
-                    sv = orgs_metric_running_variance_params[org][metric]
-                else:
-                    sv = StreamVariance()
-
-                combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
-                combine_count = sv.count + new_count
-                if (sv.count + new_count - 1) != 0:
-                    combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
-                              ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
-                else:
-                    combine_var = 0
-
-                sv.count = combine_count
-                sv.mean = combined_mean
-                sv.var = combine_var
-
-                org_params[metric] = sv
-                orgs_metric_running_variance_params[org] = org_params
-
-    def compute_required_sample_size(self, mean1, mean2, var1, var2):
-        """
-        Computes the required sample size for a statistically significant change given the means and variances
-        of the metrics.
-        ----------
-        mean1: float
-            The mean of the sample 1 (E.g. baseline MRR)
-        mean2: float
-            The mean of the sample 2 (E.g. new MRR)
-        var1: float
-            The variance of the sample 1 (E.g. baseline MRR)
-        var2: float
-            The variance of the sample 2 (E.g. new MRR)
-
-        Returns
-        -------
-        req_sample_sz: float
-            The required sample for statistically significant change
-        """
-        n = None
-        typ = "paired"
-        alternative = "two-sided"
-        try:
-            # compute the effect size (d)
-            d = np.abs(float(sv_old.mean) - float(sv_new.mean)) / np.sqrt((float(sv_old.var) + float(sv_new.var)) / 2)
-            req_sample_sz = power_ttest(d, n, RankingConstants.STATISTICAL_POWER,
-                                        RankingConstants.TTEST_PVALUE_THRESHOLD,
-                                        contrast=typ, alternative=alternative)
-            return req_sample_sz
-        except:
-            return -1.0
 
     def evaluate(
         self,
@@ -314,17 +199,25 @@ class RankingModel(RelevanceModel):
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
+            # Add necessary columns for power analysis
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
 
-            running_stats_df = clicked_records.groupby('organization_id').agg({
-                    RankingConstants.NEW_MRR: ['mean', 'var'],
-                    RankingConstants.OLD_MRR: ['mean', 'var'],
+            # computing batch-wise mean and variance per metric
+            metric_stat_df_list = []
+            clicked_records.set_index("organization_id")
+            for metric in RankingConstants.VARIANCE_METRIC_LIST:
+                temp_df = clicked_records.groupby('organization_id').agg({
+                    metric: ['mean', 'var'],
                     "organization_id": ['count']
                 })
+                metric_stat_df_list.append(temp_df)
+            running_stats_df = pd.concat(metric_stat_df_list, axis=1)
 
-            self.compute_org_running_variance_for_metrics(orgs_metric_running_variance_params, running_stats_df)
+            # Accumulating batch-wise mean and variances
+            compute_org_running_variance_for_metrics(RankingConstants.VARIANCE_METRIC_LIST,
+                                                     orgs_metric_running_variance_params, running_stats_df)
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
@@ -355,7 +248,7 @@ class RankingModel(RelevanceModel):
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
-        org_metrics_stat_sig = self.run_power_analysis(orgs_metric_running_variance_params)
+        org_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS, orgs_metric_running_variance_params)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(

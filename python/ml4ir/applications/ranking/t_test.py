@@ -5,6 +5,13 @@ from scipy import stats
 from scipy.optimize import brenth
 
 
+class StreamVariance:
+    # Wrapper class to store mean, variance in batches
+    count = 0
+    mean = 0
+    var = 0
+
+
 def power_ttest(d=None, n=None, power=None, alpha=0.05, contrast="two-samples", alternative="two-sided"):
     """
     Extracted from https://pingouin-stats.org/build/html/generated/pingouin.power_ttest.html
@@ -400,3 +407,120 @@ def t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger):
        logger.warning(
             "With p-value threshold={} < p-value --> we cannot reject the null hypothesis. The click rank distribution of the new model is not significantly different from the old model".format(
                 ttest_pvalue_threshold))
+
+
+def compute_org_running_variance_for_metrics(metric_list, orgs_metric_running_variance_params, running_stats_df):
+    """
+    This function updates the intermediate mean and variance with each batch.
+    ----------
+    orgs_metric_running_variance_params: dict
+        A dictionary containing intermediate mean, variance and sample size for each org for each metric
+
+    running_stats_df: pandas dataframe
+        The incoming batch of mean and variance
+
+    metric_list: list
+            Lists all Ranking constants
+    """
+    running_stats_df = running_stats_df.fillna(0)
+    for row in running_stats_df.iterrows():
+        org = row[0]
+        if org in orgs_metric_running_variance_params:
+            org_params = orgs_metric_running_variance_params[org]
+        else:
+            org_params = {}
+            orgs_metric_running_variance_params[org] = org_params
+
+        for metric in metric_list:
+            new_mean = row[1][(metric, "mean")][0]
+            new_var = row[1][(metric, "var")][0]
+            new_count = row[1][("organization_id", "count")][0]
+
+            if metric in org_params:
+                sv = orgs_metric_running_variance_params[org][metric]
+            else:
+                sv = StreamVariance()
+
+            combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
+            combine_count = sv.count + new_count
+            if (sv.count + new_count - 1) != 0:
+                combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
+                          ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
+            else:
+                combine_var = 0
+
+            sv.count = combine_count
+            sv.mean = combined_mean
+            sv.var = combine_var
+
+            org_params[metric] = sv
+            orgs_metric_running_variance_params[org] = org_params
+
+    def compute_required_sample_size(mean1, mean2, var1, var2, RankingConstants):
+        """
+        Computes the required sample size for a statistically significant change given the means and variances
+        of the metrics.
+        ----------
+        mean1: float
+            The mean of the sample 1 (E.g. baseline MRR)
+        mean2: float
+            The mean of the sample 2 (E.g. new MRR)
+        var1: float
+            The variance of the sample 1 (E.g. baseline MRR)
+        var2: float
+            The variance of the sample 2 (E.g. new MRR)
+        RankingConstants: object
+            Lists all Ranking constants
+
+        Returns
+        -------
+        req_sample_sz: float
+            The required sample for statistically significant change
+        """
+        n = None
+        typ = "paired"
+        alternative = "two-sided"
+        try:
+            # compute the effect size (d)
+            d = np.abs(float(mean1) - float(mean2)) / np.sqrt((float(var1) + float(var2)) / 2)
+            req_sample_sz = power_ttest(d, n, RankingConstants.STATISTICAL_POWER,
+                                        RankingConstants.TTEST_PVALUE_THRESHOLD,
+                                        contrast=typ, alternative=alternative)
+            return req_sample_sz
+        except:
+            return -1.0
+
+
+def run_power_analysis(metric_list, orgs_metric_running_variance_params):
+    """
+    Using the input's stats (mean, variance and sample size) this function computes if the metric change is
+    statistical significant using the predefined statistical power and p-value
+    ----------
+    orgs_metric_running_variance_params: dict
+        A dictionary containing mean, variance and sample size for each org for each metric
+
+    metric_list: list
+            Lists all Ranking constants
+
+    Returns
+    -------
+    org_metrics_stat_sig: Pandas dataframe
+        A dataframe listing each org and for each metric whether the change is statistically significant
+    """
+    org_metrics_stat_sig = []
+    for org in orgs_metric_running_variance_params:
+        org_entry = {}
+        for metric in metric_list:
+            new_metric = "new_" + metric
+            old_metric = "old_" + metric
+            sv_old = orgs_metric_running_variance_params[org][old_metric]
+            sv_new = orgs_metric_running_variance_params[org][new_metric]
+            req_sample_size = self.compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var)
+            if req_sample_size >= sv_new.count:
+                is_stat_sig = True
+            else:
+                is_stat_sig = False
+            org_entry["organization_id"] = org
+            org_entry["is_"+metric+"_lift_stat_sig"] = is_stat_sig
+        org_metrics_stat_sig.append(org_entry)
+    return pd.DataFrame(org_metrics_stat_sig)
