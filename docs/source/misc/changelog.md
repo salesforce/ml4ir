@@ -18,10 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AutoDAGNetwork which allows for building flexible connected architectures using config files
 - SetRankEncoder keras Layer to train SetRank like Ranking models
 - Support for using tf-models-official deep learning garden library
-
-### Removed
-
-- RankMatchFailure
+- RankMatchFailure metric for validation
 
 ## [0.1.14] - 2022-11-18
 
