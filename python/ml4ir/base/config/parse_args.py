@@ -130,6 +130,15 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--aux_metrics_keys",
+            type=str,
+            nargs="+",
+            default=None,
+            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            help="A space separated list of metrics to compute.",
+        )
+
+        self.add_argument(
             "--monitor_metric",
             type=str,
             default=None,
