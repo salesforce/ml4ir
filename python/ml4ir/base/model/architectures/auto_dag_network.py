@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Dict, Union, Type
+from typing import List, Dict, Union
 
 try:
     import pygraphviz as pgv
@@ -15,36 +15,7 @@ from tensorflow.keras import layers
 from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
-
-
-def get_layer_subclasses() -> Dict[str, Type[layers.Layer]]:
-    """Get mapping of {subclass-name: subclass} for all derivative classes of keras.layers.Layer"""
-
-    def full_class_name(cls):
-        """
-        Get {package_name}.{class_name}
-
-        Examples:
-            - keras: keras.layers.merge.Concatenate, keras.layers.core.dense.Dense
-            - ml4ir: ml4ir.base.features.feature_fns.utils.VocabLookup,
-                     ml4ir.applications.ranking.model.losses.listwise_losses.RankOneListNet
-        """
-        module = cls.__module__
-        if module == "builtins":
-            return cls.__qualname__  # avoid outputs like 'builtins.str'
-        return f"{module}.{cls.__qualname__}"
-
-    def get_sub_classes(cls):
-        """DFS traversal to get all subclasses of `cls` class"""
-        for subcls in cls.__subclasses__():
-            if subcls not in subclasses:
-                # Handles duplicates
-                subclasses[full_class_name(subcls)] = subcls
-                get_sub_classes(subcls)
-
-    subclasses = {}
-    get_sub_classes(layers.Layer)
-    return subclasses
+from ml4ir.base.model.architectures.utils import instantiate_keras_layer
 
 
 class CycleFoundException(Exception):
@@ -276,9 +247,6 @@ class AutoDagNetwork(keras.Model):
         self.model_config = model_config
         self.feature_config = feature_config
 
-        # Get all available layers (including keras layers)
-        self.available_layers = get_layer_subclasses()
-
         self.model_graph = self.define_architecture(model_config)
 
         self.execution_order: List[LayerNode] = self.model_graph.topological_sort()
@@ -298,31 +266,6 @@ class AutoDagNetwork(keras.Model):
         else:
             self.file_io.log("Skipping visualization. Dependency pygraphviz not found. "
                              "Try installing ml4ir with visualization dependency: pip install ml4ir[visualization]")
-
-    def instantiate_op(self, current_layer_type: str, current_layer_args: Dict) -> layers.Layer:
-        """
-        Create and return an instance of `current_layer_type` with `current_layer_args` params
-        If `current_layer_type` is not found in the set of subclasses of keras.layers.Layer, throws KeyError
-
-        Parameters
-        ----------
-        current_layer_type: str
-            Refers to class name inheriting directly or indirectly from keras.layers.Layer to be instantiated
-        current_layer_args: dict
-            All the arguments from model config which are used as kwargs to current_layer_type instance
-
-        Returns
-        -------
-        keras.layers.Layer
-            Instance of current_layer_type
-        """
-        try:
-            return self.available_layers[current_layer_type](**current_layer_args)
-        except KeyError:
-            self.file_io.logger.error("Layer type: '%s' is not supported or not found in %s",
-                                      current_layer_type, str(self.available_layers))
-            raise KeyError(f"Layer type: '{current_layer_type}' "
-                           f"is not supported or not found in subclasses of keras.layers.Layer")
 
     def get_layer_op(
             self,
@@ -351,7 +294,7 @@ class AutoDagNetwork(keras.Model):
         return {
             self.INPUTS: layer_args[self.INPUTS],
             self.OP_IDENTIFIER: existing_op if existing_op
-            else self.instantiate_op(layer_args[self.LAYER_TYPE], layer_args.get(self.LAYER_KWARGS, {})),
+            else instantiate_keras_layer(layer_args[self.LAYER_TYPE], layer_args.get(self.LAYER_KWARGS, {})),
             self.INPUTS_AS_LIST: layer_args.get(self.INPUTS_AS_LIST, False)
         }
 
