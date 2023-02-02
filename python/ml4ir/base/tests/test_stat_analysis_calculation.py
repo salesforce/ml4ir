@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -9,6 +11,7 @@ from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_t
 warnings.filterwarnings("ignore")
 
 np.random.seed(123)
+random.seed(123)
 
 
 class TestStatisticalAnalysisCalculation(unittest.TestCase):
@@ -68,6 +71,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
         batch_size = 10
         a_bucket = np.random.randn(n)
         b_bucket = np.random.randn(n) + 0.5
+        print("a_bucket", a_bucket)
         n = len(a_bucket)
         group_metric_running_variance_params = {}
         var_metric_list = ['old_metric1', 'new_metric1', 'old_metric2', 'new_metric2']
