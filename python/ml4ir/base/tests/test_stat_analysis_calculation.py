@@ -86,7 +86,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
 
         self.test_running_power_analysis(metric_list, group_key, group_metric_running_variance_params)
 
-    def test_running_power_analysis(self, metric_list, group_key, group_metric_running_variance_params):
+    def running_power_analysis_test(self, metric_list, group_key, group_metric_running_variance_params):
         # performing power analysis
         group_metrics_stat_sig = run_power_analysis(metric_list,
                                                     group_key,

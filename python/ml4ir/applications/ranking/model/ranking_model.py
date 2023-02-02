@@ -90,6 +90,7 @@ class RankingModel(RelevanceModel):
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
             compute_intermediate_stats: bool = True,
+            evaluation_config: str =
     ):
         """
         Evaluate the RelevanceModel
