@@ -205,7 +205,7 @@ class RankingModel(RelevanceModel):
 
         # performing click rank distribution t-test
         t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
-                                             RankingConstants.TTEST_PVALUE_THRESHOLD)
+                                             RankingConstants.TTEST_PVALUE_THRESHOLD, self.logger)
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
