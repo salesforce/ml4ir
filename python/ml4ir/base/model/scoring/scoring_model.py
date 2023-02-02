@@ -306,7 +306,7 @@ class RelevanceScorer(keras.Model):
         self.compiled_metrics.update_state(y_true, y_pred)
 
         # Compute metrics on auxiliary label
-        if len(self.aux_metrics) > 0:
+        if self.aux_label:
             y_aux = inputs[self.aux_label]
             y_true_ranks = inputs[self.feature_config.get_rank("node_name")]
             mask = inputs[self.feature_config.get_mask("node_name")]

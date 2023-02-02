@@ -133,7 +133,7 @@ class RelevanceArgParser(ArgumentParser):
             "--aux_metrics_keys",
             type=str,
             nargs="+",
-            default=None,
+            default=list(),
             choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
             help="A space separated list of metrics to compute.",
         )
