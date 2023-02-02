@@ -93,9 +93,8 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
                                                     group_metric_running_variance_params,
                                                     0.9,
                                                     0.1)
-        print(group_metrics_stat_sig)
+        print()
         for row in group_metrics_stat_sig.iterrows():
-            print(row)
             for m in metric_list:
                 stat_check = "is_" + m + "_lift_stat_sig"
                 if m == "metric1":
