@@ -31,6 +31,7 @@ class MetricKey(Key):
     PRECISION = "Precision"
     CATEGORICAL_ACCURACY = "categorical_accuracy"
     TOP_5_CATEGORICAL_ACCURACY = "top_5_categorical_accuracy"
+    RANK_MATCH_FAILURE = "rank_match_failure"
 
 
 class LossTypeKey(Key):

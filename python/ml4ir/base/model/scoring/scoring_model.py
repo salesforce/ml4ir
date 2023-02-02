@@ -5,6 +5,7 @@ from typing import Dict, Optional, Union, List
 
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras.metrics import Metric
 
 from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -38,6 +39,7 @@ class RelevanceScorer(keras.Model):
             file_io: FileIO,
             aux_loss: Optional[RelevanceLossBase] = None,
             aux_loss_weight: float = 0.0,
+            aux_metrics: Optional[List[Union[Metric, str]]] = None,
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
@@ -66,6 +68,8 @@ class RelevanceScorer(keras.Model):
             Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
             in the total final loss value computed using a linear combination
             total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
+        aux_metrics: List of keras.metrics.Metric
+            Keras metric list to be computed on the aux label
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger : Logger, optional
@@ -89,6 +93,9 @@ class RelevanceScorer(keras.Model):
         self.loss_op = loss
         self.aux_loss_op = aux_loss
         self.aux_loss_weight = aux_loss_weight
+        self.aux_label = self.__get_aux_label()
+        self.aux_metrics = aux_metrics
+
         self.loss_metric = None
         self.aux_loss_metric = None
         self.primary_loss_metric = None
@@ -215,20 +222,37 @@ class RelevanceScorer(keras.Model):
 
         super().compile(**kwargs)
 
-    def __get_loss_value(self, inputs, y_true, y_pred):
+    def __get_aux_label(self):
+        """
+        Get aux_label from FeatureConfig
+
+        Returns
+        -------
+        str
+            Name of the aux label if present
+        """
+        aux_label = None
+        if self.aux_loss_weight > 0:
+            try:
+                aux_label = self.feature_config.get_aux_label("node_name")
+            except AttributeError:
+                self.logger.error("There was an error while loading the aux_label info. "
+                                  "Did you set the is_aux_label flag to true in the FeatureConfig YAML?")
+                self.logger.error(traceback.format_exc())
+        return aux_label
+
+    def __update_loss(self, inputs, y_true, y_pred):
         """
         Compute loss value
 
         Parameters
         ----------
-        inputs: dict of dict of tensors
+        inputs: dict of tensors
             Dictionary of input feature tensors
         y_true: tensor
             True labels
         y_pred: tensor
             Predicted scores
-        training: boolean
-            Boolean indicating whether the layer is being used in training mode
 
         Returns
         -------
@@ -246,26 +270,51 @@ class RelevanceScorer(keras.Model):
 
         # If auxiliary loss is present, add it to compute final loss
         if self.aux_loss_weight > 0:
-            aux_label = None
-            try:
-                aux_label = self.feature_config.get_aux_label("node_name")
-            except AttributeError:
-                self.logger.error("There was an error while loading the aux_label info. Did you set the is_aux_label flag to true in the FeatureConfig YAML?")
-                self.logger.error(traceback.format_exc())
-
             aux_loss_value = self.aux_loss_op(inputs=inputs,
-                                              y_true=inputs[aux_label],
+                                              y_true=inputs[self.aux_label],
                                               y_pred=y_pred)
 
             self.primary_loss_metric.update_state(loss_value)
             self.aux_loss_metric.update_state(aux_loss_value)
 
-            loss_value = tf.math.multiply((1. - self.aux_loss_weight), loss_value) + tf.math.multiply(self.aux_loss_weight, aux_loss_value)
+            loss_value = tf.math.multiply((1. - self.aux_loss_weight), loss_value) + \
+                         tf.math.multiply(self.aux_loss_weight, aux_loss_value)
 
         # Update loss metric
         self.loss_metric.update_state(loss_value)
 
         return loss_value
+
+    def __update_metrics(self, inputs, y_true, y_pred):
+        """
+        Compute metric value
+
+        Parameters
+        ----------
+        inputs: dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+
+        Notes
+        -----
+        - Currently only support pre-compiled Keras metrics
+        """
+        # Compute metrics on primary label
+        self.compiled_metrics.update_state(y_true, y_pred)
+
+        # Compute metrics on auxiliary label
+        if self.aux_label:
+            y_aux = inputs[self.aux_label]
+            y_true_ranks = inputs[self.feature_config.get_rank("node_name")]
+            mask = inputs[self.feature_config.get_mask("node_name")]
+            for metric in self.aux_metrics:
+                # TODO: The function definition could be made more generic
+                #       to accommodate more metrics in the future,
+                #       but this is sufficient for now
+                metric.update_state(y_true, y_pred, y_aux, y_true_ranks, mask)
 
     def train_step(self, data):
         """
@@ -287,7 +336,7 @@ class RelevanceScorer(keras.Model):
 
         with tf.GradientTape() as tape:
             y_pred = self(X, training=True)[self.output_name]
-            loss_value = self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
+            loss_value = self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
         gradients = tape.gradient(loss_value, self.trainable_variables)
@@ -296,7 +345,7 @@ class RelevanceScorer(keras.Model):
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
         # Update metrics
-        self.compiled_metrics.update_state(y, y_pred)
+        self.__update_metrics(inputs=X, y_true=y, y_pred=y_pred)
 
         # Return a dict mapping metric names to current value
         return {metric.name: metric.result() for metric in self.metrics}
@@ -321,10 +370,10 @@ class RelevanceScorer(keras.Model):
         y_pred = self(X, training=False)[self.output_name]
 
         # Update loss metric
-        self.__get_loss_value(inputs=X, y_true=y, y_pred=y_pred)
+        self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
 
         # Update metrics
-        self.compiled_metrics.update_state(y, y_pred)
+        self.__update_metrics(inputs=X, y_true=y, y_pred=y_pred)
 
         # Return a dict mapping metric names to current value
         return {metric.name: metric.result() for metric in self.metrics}
@@ -335,6 +384,10 @@ class RelevanceScorer(keras.Model):
         metrics = [self.loss_metric] + super().metrics
 
         if self.aux_loss_weight > 0:
+            # Add aux loss values
             metrics += [self.primary_loss_metric, self.aux_loss_metric]
+
+            # Add aux metrics
+            metrics += self.aux_metrics
 
         return metrics

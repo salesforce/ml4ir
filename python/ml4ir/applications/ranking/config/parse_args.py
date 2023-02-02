@@ -1,7 +1,7 @@
 from argparse import Namespace
 
 from ml4ir.base.config.parse_args import RelevanceArgParser
-from ml4ir.applications.ranking.config.keys import ScoringTypeKey, LossTypeKey
+from ml4ir.applications.ranking.config.keys import ScoringTypeKey, LossTypeKey, LossKey, MetricKey
 
 from typing import List
 
@@ -34,13 +34,14 @@ class RankingArgParser(RelevanceArgParser):
         self.set_defaults(
             tfrecord_type="sequence_example",
             loss_key="sigmoid_cross_entropy",
-            metrics_keys=["MRR", "ACR"],
-            monitor_metric="MRR",
+            metrics_keys=[MetricKey.MRR, MetricKey.ACR],
+            monitor_metric=MetricKey.MRR,
             monitor_mode="max",
             max_sequence_size=25,
             group_metrics_min_queries=25,
             output_name="ranking_score",
-            aux_loss_key="auxiliary_softmax_cross_entropy"
+            aux_loss_key=LossKey.AUX_SOFTMAX_CROSS_ENTROPY,
+            aux_metrics_keys=[MetricKey.RANK_MATCH_FAILURE]
         )
 
 
