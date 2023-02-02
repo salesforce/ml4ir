@@ -6,9 +6,6 @@ from tensorflow.keras import metrics
 class RankMatchFailure(metrics.Mean):
     """Custom metric implementation to compute the ranking performance on an auxiliary label"""
 
-    def __init__(self, name="AuxRMF", dtype=None):
-        super().__init__(name, dtype)
-
     def update_state(self, y_true, y_pred, y_aux, y_true_ranks, mask, sample_weight=None):
         """
         Accumulates metric statistics by computing the mean of the

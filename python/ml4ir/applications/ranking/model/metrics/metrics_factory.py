@@ -24,7 +24,7 @@ def get_metric(metric_key: str) -> Metric:
     elif metric_key == MetricKey.ACR:
         return ACR(name="ACR")
     elif metric_key == MetricKey.RANK_MATCH_FAILURE:
-        return RankMatchFailure(name="AuxRMF")
+        return RankMatchFailure(name="AuxRankMF")
     elif metric_key == MetricKey.NDCG:
         raise NotImplementedError
     else:
