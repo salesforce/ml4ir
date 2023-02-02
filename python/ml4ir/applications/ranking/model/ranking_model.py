@@ -177,8 +177,9 @@ class RankingModel(RelevanceModel):
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
             # Statistical analysis pre-processing
-            statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
-                                               RankingConstants.VARIANCE_METRIC_LIST)
+            if len(group_key) > 0:
+                statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
+                                                   RankingConstants.VARIANCE_METRIC_LIST)
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
@@ -239,12 +240,13 @@ class RankingModel(RelevanceModel):
                 metrics_helper.summarize_grouped_stats, axis=1
             )
             # Add power analysis to group metric dataframe
-            df_group_metrics = df_group_metrics.reset_index()
-            if len(group_key) > 1:
-                df_group_metrics[str(group_key)] = df_group_metrics[group_key].apply(tuple, axis=1)
-            df_group_metrics[str(group_key)] = df_group_metrics[group_key]
-            df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_key), how='left').drop(
-                columns=[str(group_key)])
+            if len(group_key) > 0:
+                df_group_metrics = df_group_metrics.reset_index()
+                if len(group_key) > 1:
+                    df_group_metrics[str(group_key)] = df_group_metrics[group_key].apply(tuple, axis=1)
+                df_group_metrics[str(group_key)] = df_group_metrics[group_key]
+                df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_key), how='left').drop(
+                    columns=[str(group_key)])
 
             if logs_dir:
                 self.file_io.write_df(
