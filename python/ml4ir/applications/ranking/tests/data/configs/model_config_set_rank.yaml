@@ -1,0 +1,34 @@
+architecture_key: dnn
+layers:
+  - type: set_rank_encoder
+    requires_mask: true
+    encoding_size: 128
+    projection_dropout_rate: 0.0
+    num_layers: 4
+    num_attention_heads: 8
+    intermediate_size: 128
+    dropout_rate: 0.1
+  - type: dense
+    name: first_dense
+    units: 256
+    activation: relu
+  - type: dropout
+    name: first_dropout
+    rate: 0.0
+  - type: dense
+    name: second_dense
+    units: 64
+    activation: relu
+  - type: dropout
+    name: second_dropout
+    rate: 0.0
+  - type: dense
+    name: final_dense
+    units: 1
+    activation: null
+optimizer:
+  key: adam
+  gradient_clip_value: 5.0
+lr_schedule:
+  key: constant
+  learning_rate: 0.001

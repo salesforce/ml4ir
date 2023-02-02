@@ -9,19 +9,25 @@ from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
-
+from ml4ir.base.model.architectures.utils import get_keras_layer_subclasses, instantiate_keras_layer
+from ml4ir.applications.ranking.model.layers.set_rank_encoder import SetRankEncoder
 
 OOV = 1
 
 
 class DNNLayerKey:
     MODEL_NAME = "dnn"
+    LAYERS = "layers"
     DENSE = "dense"
+    TYPE = "type"
+    NAME = "name"
     BATCH_NORMALIZATION = "batch_norm"
     DROPOUT = "dropout"
     ACTIVATION = "activation"
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
+    SET_RANK_ENCODER = "set_rank_encoder"
     CONCATENATED_INPUT = "concatenated_input"
+    REQUIRES_MASK = "requires_mask"
 
 
 class DNN(keras.Model):
@@ -49,12 +55,16 @@ class DNN(keras.Model):
         self.file_io: FileIO = file_io
         self.model_config = model_config
         self.feature_config = feature_config
+        self.available_keras_layers = get_keras_layer_subclasses()
 
         # Sort the train features dictionary so that we control the order
         # Concat all train features to get a dense feature vector
-        self.train_features_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
+        self.concat_input_op = layers.Concatenate(axis=-1, name=DNNLayerKey.CONCATENATED_INPUT)
 
+        # Store if a layer requires mask to be passed during forward pass
+        self.layer_ops_requires_mask = [layer_args.get(DNNLayerKey.REQUIRES_MASK, False) for layer_args in model_config[DNNLayerKey.LAYERS]]
         self.layer_ops: List = self.define_architecture(model_config, feature_config)
+
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER][
             "key"] == PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:
             self.positional_bias_layer = FixedAdditivePositionalBias(max_ranks=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["max_ranks"],
@@ -63,6 +73,12 @@ class DNN(keras.Model):
                                                                      l1_coeff=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get(
                                                                          "l1_coeff", 0),
                                                                      l2_coeff=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get("l2_coeff", 0))
+
+    def get_config(self):
+        """Get config for the model"""
+        config = super().get_config()
+        config[DNNLayerKey.LAYERS] = self.model_config[DNNLayerKey.LAYERS]
+        return config
 
     def define_architecture(self, model_config: dict, feature_config: FeatureConfig):
         """
@@ -93,12 +109,19 @@ class DNN(keras.Model):
                 return layers.Dropout(**layer_args)
             elif layer_type == DNNLayerKey.ACTIVATION:
                 return layers.Activation(**layer_args)
+            elif layer_type == DNNLayerKey.SET_RANK_ENCODER:
+                return SetRankEncoder(**layer_args)
+            elif layer_type in self.available_keras_layers:
+                # This allows users to use any predefined or custom ml4ir layers inheriting tf.keras.layers.Layer
+                # easily from the config
+                keras_layer = instantiate_keras_layer(layer_type, layer_args)
+                return keras_layer
             else:
                 raise KeyError("Layer type is not supported : {}".format(layer_type))
 
         return [
-            get_op(layer_args["type"], {k: v for k, v in layer_args.items() if k not in "type"})
-            for layer_args in model_config["layers"]
+            get_op(layer_args[DNNLayerKey.TYPE], {k: v for k, v in layer_args.items() if k not in DNNLayerKey.TYPE})
+            for layer_args in model_config[DNNLayerKey.LAYERS]
         ]
 
     def build(self, input_shape):
@@ -124,14 +147,18 @@ class DNN(keras.Model):
         train_features = inputs[FeatureTypeKey.TRAIN]
         metadata_features = inputs[FeatureTypeKey.METADATA]
 
-        # Sort the train features dictionary so that we control the order
-        # Concat all train features to get a dense feature vector
-        layer_input = self.train_features_op([train_features[k] for k in sorted(train_features)])
+        # Concat input features to get a single vector representation
+        layer_input = self.concat_input_op([train_features[k] for k in sorted(train_features)])
 
         # Pass ranking features through all the layers of the DNN
-        for layer_op in self.layer_ops:
-            layer_input = layer_op(layer_input, training=training)
+        for layer_op, requires_mask in zip(self.layer_ops, self.layer_ops_requires_mask):
+            if requires_mask:
+                mask = inputs[FeatureTypeKey.METADATA][FeatureTypeKey.MASK]
+                layer_input = layer_op(layer_input, mask=mask, training=training)
+            else:
+                layer_input = layer_op(layer_input, training=training)
 
+        # TODO: Move this out of DNN class
         if DNNLayerKey.POSITIONAL_BIAS_HANDLER in self.model_config and \
                 self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER]["key"] == \
                 PositionalBiasHandler.FIXED_ADDITIVE_POSITIONAL_BIAS:

@@ -5,7 +5,8 @@ import yaml
 from ml4ir.base.features.feature_config import SequenceExampleFeatureConfig
 from ml4ir.base.io import logging_utils
 from ml4ir.base.io.local_io import LocalIO
-from ml4ir.base.model.architectures.auto_dag_network import (LayerNode, get_layer_subclasses, CycleFoundException,
+from ml4ir.base.model.architectures.utils import get_keras_layer_subclasses
+from ml4ir.base.model.architectures.auto_dag_network import (LayerNode, CycleFoundException,
                                                              LayerGraph, AutoDagNetwork)
 from tensorflow.keras.layers import Layer, Dense
 
@@ -17,7 +18,7 @@ class UserDefinedTestLayerGlobal(Layer):
 class TestGetLayerSubclasses(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.layer_subclasses = get_layer_subclasses()
+        self.layer_subclasses = get_keras_layer_subclasses()
 
     def test_local_userdefined_subclass(self):
         """Test to show local classes are also accessible but need to be in scope to be found"""
@@ -26,7 +27,7 @@ class TestGetLayerSubclasses(unittest.TestCase):
             pass
 
         self.assertNotIn(UserDefinedTestLayerLocal, self.layer_subclasses.values())
-        local_layer_subclasses = get_layer_subclasses()
+        local_layer_subclasses = get_keras_layer_subclasses()
         self.assertIn("ml4ir.base.tests.test_auto_dag_network.TestGetLayerSubclasses.test_local_userdefined_subclass."
                       "<locals>.UserDefinedTestLayerLocal", local_layer_subclasses)
         self.assertIn(UserDefinedTestLayerLocal, local_layer_subclasses.values())
