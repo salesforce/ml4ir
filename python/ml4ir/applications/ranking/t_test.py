@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import warnings
+import pandas as pd
 from scipy import stats
 from scipy.optimize import brenth
 
@@ -409,35 +410,111 @@ def t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger):
                 ttest_pvalue_threshold))
 
 
-def compute_org_running_variance_for_metrics(metric_list, orgs_metric_running_variance_params, running_stats_df):
+def run_ttest(mean, variance, n, ttest_pvalue_threshold, logger):
+    """
+    Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
+    Parameters
+    ----------
+    logger: Logger
+        Logger object to log t-test significance decision
+    mean: float
+        The mean of the rank differences for the entire dataset
+    variance: float
+        The variance of the rank differences for the entire dataset
+    n: int
+        The number of samples in the entire dataset
+    ttest_pvalue_threshold: float
+        P-value threshold for student t-test
+
+    Returns
+    -------
+    t_test_metrics_dict: Dictionary
+        A dictionary with the t-test metrics recorded.
+    """
+    t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
+    t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, logger)
+
+    # Log t-test statistic and p-value
+    t_test_metrics_dict = {'Rank distribution t-test statistic': t_test_stat,
+                           'Rank distribution t-test pvalue': pvalue,
+                           'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
+    return t_test_metrics_dict
+
+
+def statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key, variance_list):
+    """
+    This function computes the mean, variance of the provided metrics for the current batch of prediction.
+    ----------
+    clicked_records: dataframe
+            A batch of the model's prediction
+
+    group_metric_running_variance_params: dict
+        A dictionary containing intermediate mean, variance and sample size for each org for each metric
+
+     group_key: list
+        The list of keys used to aggregate the metrics
+
+    variance_list: list
+            Lists of metrics for variance computation in batches
+    """
+
+    # computing batch-wise mean and variance per metric
+    metric_stat_df_list = []
+    clicked_records.set_index(group_key)
+    grouped = clicked_records.groupby(group_key)
+    for metric in variance_list:
+        grouped_agg = grouped.apply(lambda x: x[metric].mean())
+        mean_df = pd.DataFrame(
+            {str(group_key): grouped_agg.keys().values, str([metric, "mean"]): grouped_agg.values})
+
+        grouped_agg = grouped.apply(lambda x: x[metric].var())
+        var_df = pd.DataFrame({str(group_key): grouped_agg.keys().values, str([metric, "var"]): grouped_agg.values})
+
+        grouped_agg = grouped.apply(lambda x: x[metric].count())
+        count_df = pd.DataFrame(
+            {str(group_key): grouped_agg.keys().values, str([metric, "count"]): grouped_agg.values})
+
+        concat_df = pd.concat([mean_df, var_df, count_df], axis=1)
+        metric_stat_df_list.append(concat_df)
+
+    running_stats_df = pd.concat(metric_stat_df_list, axis=1)
+    running_stats_df = running_stats_df.loc[:, ~running_stats_df.columns.duplicated()]
+    # Accumulating batch-wise mean and variances
+    compute_org_running_variance_for_metrics(variance_list, group_metric_running_variance_params, running_stats_df, group_key)
+
+
+def compute_org_running_variance_for_metrics(metric_list, group_metric_running_variance_params, running_stats_df, group_key):
     """
     This function updates the intermediate mean and variance with each batch.
     ----------
-    orgs_metric_running_variance_params: dict
+    metric_list: list
+            Lists of metrics for variance computation in batches
+
+    group_metric_running_variance_params: dict
         A dictionary containing intermediate mean, variance and sample size for each org for each metric
 
     running_stats_df: pandas dataframe
         The incoming batch of mean and variance
 
-    metric_list: list
-            Lists all Ranking constants
+    group_key: list
+        The list of keys used to aggregate the metrics
     """
     running_stats_df = running_stats_df.fillna(0)
     for row in running_stats_df.iterrows():
-        org = row[0]
-        if org in orgs_metric_running_variance_params:
-            org_params = orgs_metric_running_variance_params[org]
+        group_name = row[1][str(group_key)]
+        if group_name in group_metric_running_variance_params:
+            group_params = group_metric_running_variance_params[group_name]
         else:
-            org_params = {}
-            orgs_metric_running_variance_params[org] = org_params
+            group_params = {}
+            group_metric_running_variance_params[group_name] = group_params
 
         for metric in metric_list:
-            new_mean = row[1][(metric, "mean")][0]
-            new_var = row[1][(metric, "var")][0]
-            new_count = row[1][("organization_id", "count")][0]
+            new_mean = row[1][str([metric, "mean"])]
+            new_var = row[1][str([metric, "var"])]
+            new_count = row[1][str([metric, "count"])]
 
-            if metric in org_params:
-                sv = orgs_metric_running_variance_params[org][metric]
+            if metric in group_params:
+                sv = group_metric_running_variance_params[group_name][metric]
             else:
                 sv = StreamVariance()
 
@@ -455,8 +532,8 @@ def compute_org_running_variance_for_metrics(metric_list, orgs_metric_running_va
             sv.mean = combined_mean
             sv.var = combine_var
 
-            org_params[metric] = sv
-            orgs_metric_running_variance_params[org] = org_params
+            group_params[metric] = sv
+            group_metric_running_variance_params[group_name] = group_params
 
 
 def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pvalue):
@@ -491,43 +568,49 @@ def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pv
         req_sample_sz = power_ttest(d, n, statistical_power, pvalue, contrast=typ, alternative=alternative)
         return req_sample_sz
     except:
-        return -1.0
+        return np.inf
 
 
-def run_power_analysis(metric_list, orgs_metric_running_variance_params, statistical_power, pvalue):
+def run_power_analysis(metric_list, group_key, group_metric_running_variance_params, statistical_power, pvalue):
     """
     Using the input's stats (mean, variance and sample size) this function computes if the metric change is
     statistical significant using the predefined statistical power and p-value
     ----------
     metric_list: list
         List of all metrics to be used in the power analysis
-    orgs_metric_running_variance_params: dict
+
+    group_key: list
+        The list of keys used to aggregate the metrics
+
+    group_metric_running_variance_params: dict
         A dictionary containing mean, variance and sample size for each org for each metric
+
     statistical_power: float
         Required statistical power
+
     pvalue: float
         Required pvalue
 
     Returns
     -------
-    org_metrics_stat_sig: Pandas dataframe
+    group_metrics_stat_sig: Pandas dataframe
         A dataframe listing each org and for each metric whether the change is statistically significant
     """
-    org_metrics_stat_sig = []
-    for org in orgs_metric_running_variance_params:
-        org_entry = {}
+    group_metrics_stat_sig = []
+    for group in group_metric_running_variance_params:
+        group_entry = {}
         for metric in metric_list:
             new_metric = "new_" + metric
             old_metric = "old_" + metric
-            sv_old = orgs_metric_running_variance_params[org][old_metric]
-            sv_new = orgs_metric_running_variance_params[org][new_metric]
+            sv_old = group_metric_running_variance_params[group][old_metric]
+            sv_new = group_metric_running_variance_params[group][new_metric]
             req_sample_size = compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var,
                                                            statistical_power, pvalue)
-            if req_sample_size >= sv_new.count:
+            if sv_new.count >= req_sample_size:
                 is_stat_sig = True
             else:
                 is_stat_sig = False
-            org_entry["organization_id"] = org
-            org_entry["is_"+metric+"_lift_stat_sig"] = is_stat_sig
-        org_metrics_stat_sig.append(org_entry)
-    return pd.DataFrame(org_metrics_stat_sig)
+            group_entry[str(group_key)] = group
+            group_entry["is_"+metric+"_lift_stat_sig"] = is_stat_sig
+        group_metrics_stat_sig.append(group_entry)
+    return pd.DataFrame(group_metrics_stat_sig)

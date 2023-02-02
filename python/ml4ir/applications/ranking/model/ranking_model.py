@@ -15,8 +15,8 @@ from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
-    t_test_log_results, power_ttest, power_ttest2n, compute_org_running_variance_for_metrics, run_power_analysis, StreamVariance
-
+    t_test_log_results, run_ttest, power_ttest, power_ttest2n, compute_org_running_variance_for_metrics, run_power_analysis, \
+    StreamVariance, statistical_analysis_preprocessing
 
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
@@ -39,12 +39,12 @@ class RankingConstants:
 
 class RankingModel(RelevanceModel):
     def predict(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = "serving_default",
-        additional_features: dict = {},
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = "serving_default",
+            additional_features: dict = {},
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -81,43 +81,15 @@ class RankingModel(RelevanceModel):
             logging_frequency=logging_frequency,
         )
 
-    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
-        """
-        Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
-        Parameters
-        ----------
-        mean: float
-            The mean of the rank differences for the entire dataset
-        variance: float
-            The variance of the rank differences for the entire dataset
-        n: int
-            The number of samples in the entire dataset
-        ttest_pvalue_threshold: float
-            P-value threshold for student t-test
-
-        Returns
-        -------
-        t_test_metrics_dict: Dictionary
-            A dictionary with the t-test metrics recorded.
-        """
-        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
-        t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, self.logger)
-
-        # Log t-test statistic and p-value
-        t_test_metrics_dict = {'Rank distribution t-test statistic': t_test_stat,
-                               'Rank distribution t-test pvalue': pvalue,
-                               'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
-        return t_test_metrics_dict
-
     def evaluate(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = None,
-        additional_features: dict = {},
-        group_metrics_min_queries: int = 50,
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
-        compute_intermediate_stats: bool = True,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = None,
+            additional_features: dict = {},
+            group_metrics_min_queries: int = 50,
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
+            compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -161,21 +133,21 @@ class RankingModel(RelevanceModel):
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         evaluation_features = (
-            group_metrics_keys
-            + [
-                self.feature_config.get_query_key(),
-                self.feature_config.get_label(),
-                self.feature_config.get_rank(),
-            ]
-            + [
-                f
-                for f in self.feature_config.get_secondary_labels()
-                if f.get(
-                    "node_name",
-                    f["name"] not in self.feature_config.get_group_metrics_keys(
-                        "node_name"),
-                )
-            ]
+                group_metrics_keys
+                + [
+                    self.feature_config.get_query_key(),
+                    self.feature_config.get_label(),
+                    self.feature_config.get_rank(),
+                ]
+                + [
+                    f
+                    for f in self.feature_config.get_secondary_labels()
+                    if f.get(
+                "node_name",
+                f["name"] not in self.feature_config.get_group_metrics_keys(
+                    "node_name"),
+            )
+                ]
         )
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
@@ -195,7 +167,8 @@ class RankingModel(RelevanceModel):
         df_grouped_stats = pd.DataFrame()
         # defining variables to compute running mean and variance for t-test computations
         agg_count, agg_mean, agg_M2 = 0, 0, 0
-        orgs_metric_running_variance_params = {}
+        group_metric_running_variance_params = {}
+        group_key = list(set(self.feature_config.get_group_metrics_keys("node_name")))
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
@@ -203,21 +176,9 @@ class RankingModel(RelevanceModel):
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
-
-            # computing batch-wise mean and variance per metric
-            metric_stat_df_list = []
-            clicked_records.set_index("organization_id")
-            for metric in RankingConstants.VARIANCE_METRIC_LIST:
-                temp_df = clicked_records.groupby('organization_id').agg({
-                    metric: ['mean', 'var'],
-                    "organization_id": ['count']
-                })
-                metric_stat_df_list.append(temp_df)
-            running_stats_df = pd.concat(metric_stat_df_list, axis=1)
-
-            # Accumulating batch-wise mean and variances
-            compute_org_running_variance_for_metrics(RankingConstants.VARIANCE_METRIC_LIST,
-                                                     orgs_metric_running_variance_params, running_stats_df)
+            # Statistical analysis pre-processing
+            statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
+                                               RankingConstants.VARIANCE_METRIC_LIST)
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
@@ -228,8 +189,7 @@ class RankingModel(RelevanceModel):
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
                 new_rank_col=RankingConstants.NEW_RANK,
-                group_keys=list(set(self.feature_config.get_group_metrics_keys(
-                    "node_name"))),
+                group_keys=group_key,
                 secondary_labels=list(set(self.feature_config.get_secondary_labels(
                     "node_name"))),
             )
@@ -244,14 +204,16 @@ class RankingModel(RelevanceModel):
                     "Finished evaluating {} batches".format(batch_count))
 
         # performing click rank distribution t-test
-        t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, RankingConstants.TTEST_PVALUE_THRESHOLD)
+        t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
+                                             RankingConstants.TTEST_PVALUE_THRESHOLD)
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
-        org_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS,
-                                                  orgs_metric_running_variance_params,
-                                                  RankingConstants.STATISTICAL_POWER,
-                                                  RankingConstants.TTEST_PVALUE_THRESHOLD)
+        group_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS,
+                                                    group_key,
+                                                    group_metric_running_variance_params,
+                                                    RankingConstants.STATISTICAL_POWER,
+                                                    RankingConstants.TTEST_PVALUE_THRESHOLD)
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
@@ -261,7 +223,7 @@ class RankingModel(RelevanceModel):
         # Log metrics to weights and biases
         metrics_dict.update(
             {"test_{}".format(k): v for k,
-             v in df_overall_metrics.to_dict().items()}
+                                        v in df_overall_metrics.to_dict().items()}
         )
 
         df_group_metrics = None
@@ -270,14 +232,19 @@ class RankingModel(RelevanceModel):
             # Filter groups by min_query_count
             df_grouped_stats = df_grouped_stats[
                 df_grouped_stats["query_count"] >= group_metrics_min_queries
-            ]
+                ]
 
             # Compute group metrics
             df_group_metrics = df_grouped_stats.apply(
                 metrics_helper.summarize_grouped_stats, axis=1
             )
-            # Add power analysis
-            df_group_metrics = pd.merge(df_group_metrics, org_metrics_stat_sig, on='organization_id', how='left')
+            # Add power analysis to group metric dataframe
+            df_group_metrics = df_group_metrics.reset_index()
+            if len(group_key) > 1:
+                df_group_metrics[str(group_key)] = df_group_metrics[group_key].apply(tuple, axis=1)
+            df_group_metrics[str(group_key)] = df_group_metrics[group_key]
+            df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_key), how='left').drop(
+                columns=[str(group_key)])
 
             if logs_dir:
                 self.file_io.write_df(
@@ -307,14 +274,14 @@ class RankingModel(RelevanceModel):
         return df_overall_metrics, df_group_metrics, metrics_dict
 
     def save(
-        self,
-        models_dir: str,
-        preprocessing_keys_to_fns={},
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        dataset: Optional[RelevanceDataset] = None,
-        experiment_details: Optional[dict] = None
+            self,
+            models_dir: str,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only: bool = True,
+            pad_sequence: bool = False,
+            dataset: Optional[RelevanceDataset] = None,
+            experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -399,14 +366,14 @@ class LinearRankingModel(RankingModel):
     """
 
     def save(
-        self,
-        models_dir: str,
-        preprocessing_keys_to_fns={},
-        postprocessing_fn=None,
-        required_fields_only: bool = True,
-        pad_sequence: bool = False,
-        dataset: Optional[RelevanceDataset] = None,
-        experiment_details: Optional[dict] = None
+            self,
+            models_dir: str,
+            preprocessing_keys_to_fns={},
+            postprocessing_fn=None,
+            required_fields_only: bool = True,
+            pad_sequence: bool = False,
+            dataset: Optional[RelevanceDataset] = None,
+            experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
