@@ -84,7 +84,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
             assert np.isclose(group_metric_running_variance_params['B'][var_metric_list[i]].var,
                               np.var(b_bucket * (i + 1) - i, ddof=1), atol=0.0001)
 
-        self.test_running_power_analysis(metric_list, group_key, group_metric_running_variance_params)
+        self.running_power_analysis_test(metric_list, group_key, group_metric_running_variance_params)
 
     def running_power_analysis_test(self, metric_list, group_key, group_metric_running_variance_params):
         # performing power analysis
