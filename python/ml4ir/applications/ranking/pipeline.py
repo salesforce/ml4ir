@@ -1,7 +1,7 @@
 import pathlib
 import sys
 from argparse import Namespace
-from typing import List, Union, Type
+from typing import List, Union
 
 import pandas as pd
 from ml4ir.applications.ranking.config.keys import LossKey
@@ -36,7 +36,6 @@ class RankingPipeline(RelevancePipeline):
         """
         self.scoring_type = args.scoring_type
         self.loss_type = args.loss_type
-        self.aux_loss_key = args.aux_loss_key
         self.batch_size = args.batch_size
 
         super().__init__(args)
@@ -84,16 +83,22 @@ class RankingPipeline(RelevancePipeline):
         else:
             return None
 
-    def get_metrics(self) -> List[Union[Type[Metric], str]]:
+    @staticmethod
+    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
+
+        Parameters
+        ----------
+        metrics_keys: List of str
+            List of strings indicating the metrics to instantiate and retrieve
 
         Returns
         -------
         list of keras Metric objects
         """
         return [
-            metrics_factory.get_metric(metric_key=metric_key) for metric_key in self.metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
         ]
 
     def validate_args(self):

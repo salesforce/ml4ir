@@ -123,6 +123,10 @@ class RelevancePipeline(object):
         self.data_format: str = self.args.data_format
         self.tfrecord_type: str = self.args.tfrecord_type
 
+        # Setup auxiliary label arguments
+        self.aux_loss_key = args.aux_loss_key
+        self.aux_metrics_keys = args.aux_metrics_keys
+
         # RankLib/LibSVM data format specific setup
         if args.data_format == DataFormatKey.RANKLIB:
             try:
@@ -331,9 +335,15 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    def get_metrics(self) -> List[Union[Type[Metric], str]]:
+    @staticmethod
+    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
+
+        Parameters
+        ----------
+        metrics_keys: List of str
+            List of strings indicating the metrics to instantiate and retrieve
 
         Returns
         -------
@@ -372,10 +382,15 @@ class RelevancePipeline(object):
         # Define loss object from loss key
         loss: RelevanceLossBase = self.get_loss()
 
-        # Define auxiliary loss object
+        # Define metrics objects from metrics keys
+        metrics: List[Union[Metric, str]] = self.get_metrics(self.metrics_keys)
+
+        # Define auxiliary loss and metrics objects
         aux_loss: Optional[RelevanceLossBase] = None
+        aux_metrics: Optional[List[Union[Metric, str]]] = None
         if self.args.aux_loss_weight > 0:
             aux_loss = self.get_aux_loss()
+            aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
         scorer: RelevanceScorer = RelevanceScorer(
@@ -385,14 +400,12 @@ class RelevancePipeline(object):
             loss=loss,
             aux_loss=aux_loss,
             aux_loss_weight=self.args.aux_loss_weight,
+            aux_metrics=aux_metrics,
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
             logs_dir=self.logs_dir_local
         )
-
-        # Define metrics objects from metrics keys
-        metrics: List[Union[Type[Metric], str]] = self.get_metrics()
 
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 

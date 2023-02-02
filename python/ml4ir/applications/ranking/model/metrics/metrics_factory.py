@@ -23,8 +23,8 @@ def get_metric(metric_key: str) -> Metric:
         return MRR(name="MRR")
     elif metric_key == MetricKey.ACR:
         return ACR(name="ACR")
-    elif metric_key == MetricKey.RankMatchFailure:
-        return RankMatchFailure
+    elif metric_key == MetricKey.RANK_MATCH_FAILURE:
+        return RankMatchFailure(name="AuxRMF")
     elif metric_key == MetricKey.NDCG:
         raise NotImplementedError
     else:
