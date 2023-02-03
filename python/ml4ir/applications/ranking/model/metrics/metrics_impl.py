@@ -1,25 +1,11 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
-import numpy as np
-from tensorflow import Tensor
-from tensorflow import dtypes
-
-from ml4ir.base.features.feature_config import FeatureConfig
-
-from typing import Optional, Dict
 
 
 class MeanRankMetric(metrics.Mean):
     """
-    Class that wraps a stateless metric function with the Mean metric.
-
-    Notes
-    -----
-    Original tensorflow implementation ->
-    https://github.com/tensorflow/tensorflow/blob/r2.0/tensorflow/python/keras/metrics.py#L541-L590
-
-    MeanMetricWrapper is not a public Class on tf.keras.metrics
+    Mean metric for the ranks of a query
     """
     def update_state(self, y_true, y_pred, sample_weight=None):
         """
@@ -29,9 +15,9 @@ class MeanRankMetric(metrics.Mean):
         Parameters
         ----------
         y_true : Tensor object
-            The ground truth values. Shape : [batch_size, max_sequence_size, 1]
+            The ground truth values. Shape : [batch_size, max_sequence_size]
         y_pred : Tensor object
-            The predicted values. Shape : [batch_size, max_sequence_size, 1]
+            The predicted values. Shape : [batch_size, max_sequence_size]
         sample_weight : Tensor object
             Optional weighting of each example. Defaults to 1. Can be
             a `Tensor` whose rank is either 0, or the same rank as `y_true`,
@@ -39,7 +25,7 @@ class MeanRankMetric(metrics.Mean):
 
         Returns
         -------
-            Update state of the metric
+            Updated state of the metric
 
         Notes
         -----
@@ -60,9 +46,9 @@ class MeanRankMetric(metrics.Mean):
         click_ranks = tf.gather_nd(y_pred_ranks, indices=y_true_clicks)
 
         # Post processing on click ranks before mean
-        click_ranks = self._process_click_ranks(click_ranks)
+        query_scores = self._process_click_ranks(click_ranks)
 
-        return super().update_state(click_ranks, sample_weight=sample_weight)
+        return super().update_state(query_scores, sample_weight=sample_weight)
 
     def _process_click_ranks(self, click_ranks):
         raise NotImplementedError
@@ -126,9 +112,3 @@ class ACR(MeanRankMetric):
             Ranks tensor cast to float
         """
         return tf.cast(click_ranks, tf.float32)
-
-
-class RankMatchFailure(metrics.Mean):
-
-    def test(self):
-        pass
