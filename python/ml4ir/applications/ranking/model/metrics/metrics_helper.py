@@ -275,7 +275,7 @@ def get_grouped_stats(
     # Compute metrics on aux labels
     df_aux_metrics = pd.DataFrame()
     if aux_label:
-        df_aux_labels_metrics = df.groupby(query_key_col).apply(
+        df_aux_metrics = df.groupby(query_key_col).apply(
             lambda grp: compute_aux_metrics_on_query_group(
                 query_group=grp,
                 label_col=label_col,
