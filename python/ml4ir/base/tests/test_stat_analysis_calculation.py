@@ -69,7 +69,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
     def test_stream_variance_computation(self):
         n = 100
         batch_size = 10
-        a_bucket = [-1.0856306, 0.99734545, 0.2829785, -1.50629471, -0.57860025, 1.65143654, -2.42667924, -0.42891263,
+        a_bucket = np.array([-1.0856306, 0.99734545, 0.2829785, -1.50629471, -0.57860025, 1.65143654, -2.42667924, -0.42891263,
                     1.26593626, -0.8667404, -0.67888615, -0.09470897, 1.49138963, -0.638902, -0.44398196, -0.43435128,
                     2.20593008, 2.18678609, 1.0040539, 0.3861864, 0.73736858, 1.49073203, -0.93583387, 1.17582904,
                     -1.25388067, -0.6377515, 0.9071052, -1.4286807, -0.14006872, -0.8617549, -0.25561937, -2.79858911,
@@ -81,7 +81,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
                     1.16220405, -1.09720305, -2.12310035, 1.03972709, -0.40336604, -0.12602959, -0.83751672,
                     -1.60596276, 1.25523737, -0.68886898, 1.66095249, 0.80730819, -0.31475815, -1.0859024, -0.73246199,
                     -1.21252313, 2.08711336, 0.16444123, 1.15020554, -1.26735205, 0.18103513, 1.17786194, -0.33501076,
-                    1.03111446, -1.08456791, -1.36347154, 0.37940061, -0.37917643]
+                    1.03111446, -1.08456791, -1.36347154, 0.37940061, -0.37917643])
         b_bucket = a_bucket + 0.5
         n = len(a_bucket)
         group_metric_running_variance_params = {}
@@ -112,7 +112,8 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
         for row in group_metrics_stat_sig.iterrows():
             for m in metric_list:
                 stat_check = "is_" + m + "_lift_stat_sig"
-                if m == "metric1":
+                group_name = row[1][str(group_key)]
+                if m == "metric1" and group_name == 'A':
                     assert row[1][stat_check] == True
                 else:
                     assert row[1][stat_check] == False
