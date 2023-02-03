@@ -1,20 +1,22 @@
 import unittest
 from unittest.mock import patch
 
+import pandas as pd
+import numpy as np
 from pandas import testing as pd_testing
 
 from ml4ir.applications.ranking.model.metrics.metrics_helper import *
 
 
-class ComputeSecondaryMetricsTest(unittest.TestCase):
+class ComputeAuxMetricsTest(unittest.TestCase):
     """Test suite for ml4ir.applications.ranking.model.metrics.metrics_helper"""
 
-    def test_compute_secondary_label_metrics_1(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([10, 10, 10, 10, 10, 10, 10, 10, 1]),
+    def test_compute_aux_metrics_1(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([10, 10, 10, 10, 10, 10, 10, 10, 1]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -27,12 +29,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
                 "test_label_failure_any_fraction": 0.0}),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_2(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 1, 1, 1, 1, 1, 1, 1, 10]),
+    def test_compute_aux_metrics_2(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 1, 1, 1, 1, 1, 1, 1, 10]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -46,12 +48,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_3(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([10, 10, 10, 1]),
+    def test_compute_aux_metrics_3(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([10, 10, 10, 1]),
             ranks=pd.Series(list(range(1, 5))),
             click_rank=4,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -65,12 +67,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_4(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 1, 1, 10]),
+    def test_compute_aux_label_metrics_4(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 1, 1, 10]),
             ranks=pd.Series(list(range(1, 5))),
             click_rank=4,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -84,12 +86,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_5(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 1, 1, 5]),
+    def test_compute_aux_label_metrics_5(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 1, 1, 5]),
             ranks=pd.Series(list(range(1, 5))),
             click_rank=4,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -103,12 +105,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_6(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([5, 5, 5, 10]),
+    def test_compute_aux_label_metrics_6(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([5, 5, 5, 10]),
             ranks=pd.Series(list(range(1, 5))),
             click_rank=4,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -122,12 +124,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_7(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 1, 1, 1, 5, 5, 5, 5, 10]),
+    def test_compute_aux_label_metrics_7(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 1, 1, 1, 5, 5, 5, 5, 10]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -141,12 +143,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_8(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([5, 5, 5, 5, 1, 1, 1, 1, 10]),
+    def test_compute_aux_label_metrics_8(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([5, 5, 5, 5, 1, 1, 1, 1, 10]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -160,12 +162,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_9(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 5, 1, 5, 1, 5, 1, 5, 10]),
+    def test_compute_aux_label_metrics_9(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 5, 1, 5, 1, 5, 1, 5, 10]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -179,12 +181,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_10(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([5, 1, 5, 1, 5, 1, 5, 1, 10]),
+    def test_compute_aux_label_metrics_10(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([5, 1, 5, 1, 5, 1, 5, 1, 10]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -198,12 +200,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_11(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 1, 1, 1, 10, 10, 10, 10, 5]),
+    def test_compute_aux_label_metrics_11(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 1, 1, 1, 10, 10, 10, 10, 5]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -217,12 +219,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_12(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([10, 10, 10, 10, 1, 1, 1, 1, 5]),
+    def test_compute_aux_label_metrics_12(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([10, 10, 10, 10, 1, 1, 1, 1, 5]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -236,12 +238,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_13(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([1, 10, 1, 10, 1, 10, 1, 10, 5]),
+    def test_compute_aux_label_metrics_13(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([1, 10, 1, 10, 1, 10, 1, 10, 5]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -255,12 +257,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_14(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
+    def test_compute_aux_label_metrics_14(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=9,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -274,12 +276,12 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    def test_compute_secondary_label_metrics_invalid_click(self):
-        computed_metrics = compute_secondary_label_metrics(
-            secondary_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
+    def test_compute_aux_label_metrics_invalid_click(self):
+        computed_metrics = compute_aux_metrics(
+            aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
             ranks=pd.Series(list(range(1, 10))),
             click_rank=15,
-            secondary_label="test_label")
+            aux_label="test_label")
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
@@ -293,59 +295,56 @@ class ComputeSecondaryMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    @patch("ml4ir.applications.ranking.model.metrics.metrics_helper.compute_secondary_label_metrics")
-    def test_compute_secondary_labels_metrics_on_query_group(self, mock_compute_secondary_label_metrics):
+    @patch("ml4ir.applications.ranking.model.metrics.metrics_helper.compute_aux_metrics")
+    def test_compute_aux_metrics_on_query_group(self, mock_compute_aux_metrics):
         query_group = pd.DataFrame({
             "old_rank": [1, 2, 3, 4, 5],
             "new_rank": [3, 2, 1, 5, 4],
             "click": [0, 0, 1, 0, 0],
-            "secondary_label_1": [5, 5, 5, 2, 2],
-            "secondary_label_2": [3, 1, 2, 2, 5]
+            "aux_label": [5, 5, 5, 2, 2]
         })
-        mock_compute_secondary_label_metrics.return_value = {}
-        compute_secondary_labels_metrics_on_query_group(
+        mock_compute_aux_metrics.return_value = {}
+        compute_aux_metrics_on_query_group(
             query_group=query_group,
             label_col="click",
             old_rank_col="old_rank",
             new_rank_col="new_rank",
-            secondary_labels=["secondary_label_1", "secondary_label_2"])
+            aux_label="aux_label")
 
-        assert mock_compute_secondary_label_metrics.call_count == 2 * 2
+        assert mock_compute_aux_metrics.call_count == 2 * 1
 
-        call_args = [args[1] for args in mock_compute_secondary_label_metrics.call_args_list]
+        call_args = [args[1] for args in mock_compute_aux_metrics.call_args_list]
         i = 0
-        for secondary_label in ["secondary_label_1", "secondary_label_2"]:
-            for state in ["old", "new"]:
-                assert pd.Series.equals(
-                    call_args[i]["secondary_label_values"], query_group[secondary_label])
-                assert pd.Series.equals(call_args[i]["ranks"], query_group["{}_rank".format(state)])
-                assert call_args[i]["click_rank"] == query_group[query_group["click"]
-                                                                 == 1]["{}_rank".format(state)].values[0]
-                assert call_args[i]["secondary_label"] == secondary_label
-                assert call_args[i]["prefix"] == "{}_".format(state)
+        for state in ["old", "new"]:
+            assert pd.Series.equals(
+                call_args[i]["aux_label_values"], query_group["aux_label"])
+            assert pd.Series.equals(call_args[i]["ranks"], query_group["{}_rank".format(state)])
+            assert call_args[i]["click_rank"] == query_group[query_group["click"]
+                                                             == 1]["{}_rank".format(state)].values[0]
+            assert call_args[i]["aux_label"] == "aux_label"
+            assert call_args[i]["prefix"] == "{}_".format(state)
 
-                i += 1
+            i += 1
 
-    def test_compute_secondary_labels_metrics_on_query_group_invalid_click(self):
+    def test_compute_aux_metrics_on_query_group_invalid_click(self):
         query_group = pd.DataFrame({
             "old_rank": [1, 2, 3, 4, 5],
             "new_rank": [3, 2, 1, 5, 4],
             "click": [0, 0, 0, 0, 0],
-            "secondary_label_1": [5, 5, 5, 2, 2],
-            "secondary_label_2": [3, 1, 2, 2, 5]
+            "aux_label": [5, 5, 5, 2, 2]
         })
 
-        secondary_labels_metrics = compute_secondary_labels_metrics_on_query_group(
+        aux_metrics = compute_aux_metrics_on_query_group(
             query_group=query_group,
             label_col="click",
             old_rank_col="old_rank",
             new_rank_col="new_rank",
-            secondary_labels=["secondary_label_1", "secondary_label_2"])
-        ndcg_rows = secondary_labels_metrics.index.str.contains("NDCG")
-        self.assertEqual((secondary_labels_metrics[ndcg_rows] > 0).sum(),
-                         len(secondary_labels_metrics[ndcg_rows]),
+            aux_label="aux_label")
+        ndcg_rows = aux_metrics.index.str.contains("NDCG")
+        self.assertEqual((aux_metrics[ndcg_rows] > 0).sum(),
+                         len(aux_metrics[ndcg_rows]),
                          "NDCG should be >0 in all cases")
-        self.assertEqual(secondary_labels_metrics[~ndcg_rows].sum(),
+        self.assertEqual(aux_metrics[~ndcg_rows].sum(),
                          0,
                          "All metrics should have default values")
 

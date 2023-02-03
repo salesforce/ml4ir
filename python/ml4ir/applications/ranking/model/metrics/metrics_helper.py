@@ -64,26 +64,26 @@ def compute_ndcg(relevance_grades: List[float]):
     return compute_dcg(relevance_grades) / compute_dcg(sorted(relevance_grades, reverse=True))
 
 
-def compute_secondary_label_metrics(
-        secondary_label_values: pd.Series,
+def compute_aux_metrics(
+        aux_label_values: pd.Series,
         ranks: pd.Series,
         click_rank: int,
-        secondary_label: str,
+        aux_label: str,
         prefix: str = "",
 ):
     """
-    Computes the secondary ranking metrics using a secondary label for a single query
+    Computes the secondary ranking metrics using a aux label for a single query
 
     Parameters
     ----------
-    secondary_label_values: pd.Series
-        Series object containing the secondary label values for a given query
+    aux_label_values: pd.Series
+        Series object containing the aux label values for a given query
     ranks: pd.Series
-        Series object containing the ranks corresponding to the secondary label values
+        Series object containing the ranks corresponding to the aux label values
     click_rank: int
         Rank of the clicked record
-    secondary_label: str
-        Name of the secondary label used to define metric name
+    aux_label: str
+        Name of the aux label used to define metric name
     prefix: str
         Prefix attached to the metric name
 
@@ -91,11 +91,11 @@ def compute_secondary_label_metrics(
     -------
     dict
         Key value pairs of the metric names and the associated computed values
-        using the secondary label
+        using the aux label
 
     Notes
     -----
-    A secondary label is any feature/value that serves as a proxy relevance assessment that
+    An auxiliary label is any feature/value that serves as a proxy relevance assessment that
     the user might be interested to measure on the dataset in addition to the primary click labels.
     For example, this could be used with an exact query match feature. In that case, the metric
     sheds light on scenarios where the records with an exact match are ranked lower than those without.
@@ -108,28 +108,28 @@ def compute_secondary_label_metrics(
     failure_fraction = 0.0
     # We need to have at least one relevant document.
     # If not, any ordering is considered ideal
-    secondary_label_ndcg = 1
+    aux_label_ndcg = 1
 
     try:
-        click_secondary_label_value = secondary_label_values[ranks == click_rank].values[0]
-        pre_click_secondary_label_values = secondary_label_values[ranks < click_rank]
+        click_aux_label_value = aux_label_values[ranks == click_rank].values[0]
+        pre_click_aux_label_values = aux_label_values[ranks < click_rank]
 
-        if pre_click_secondary_label_values.size > 0:
+        if pre_click_aux_label_values.size > 0:
             # Query failure only if failure on all records
             failure_all = (
                 1
-                if (pre_click_secondary_label_values < click_secondary_label_value).all()
+                if (pre_click_aux_label_values < click_aux_label_value).all()
                 else 0
             )
             # Query failure if failure on at least one record
             failure_any = (
                 1
-                if (pre_click_secondary_label_values < click_secondary_label_value).any()
+                if (pre_click_aux_label_values < click_aux_label_value).any()
                 else 0
             )
             # Count of failure records
             failure_count = (
-                    pre_click_secondary_label_values < click_secondary_label_value
+                    pre_click_aux_label_values < click_aux_label_value
             ).sum()
             # Normalizing to fraction of potential records
             failure_fraction = failure_count / (click_rank - 1)
@@ -138,44 +138,44 @@ def compute_secondary_label_metrics(
         # Ignore queries with missing or invalid click labels
         pass
 
-    # Compute NDCG metric on the secondary label
+    # Compute NDCG metric on the aux label
     # NOTE: Here we are passing the relevance grades ordered by the ranking
-    if secondary_label_values.sum() > 0:
-        secondary_label_ndcg = compute_ndcg(
-            secondary_label_values.values[np.argsort(ranks.values)]
+    if aux_label_values.sum() > 0:
+        aux_label_ndcg = compute_ndcg(
+            aux_label_values.values[np.argsort(ranks.values)]
         )
 
     return {
-        "{}{}_NDCG".format(prefix, secondary_label): secondary_label_ndcg,
-        "{}{}_failure_all".format(prefix, secondary_label): failure_all,
-        "{}{}_failure_any".format(prefix, secondary_label): failure_any,
-        "{}{}_failure_all_rank".format(prefix, secondary_label): click_rank
+        "{}{}_NDCG".format(prefix, aux_label): aux_label_ndcg,
+        "{}{}_failure_all".format(prefix, aux_label): failure_all,
+        "{}{}_failure_any".format(prefix, aux_label): failure_any,
+        "{}{}_failure_all_rank".format(prefix, aux_label): click_rank
         if failure_all
         else 0,
-        "{}{}_failure_any_rank".format(prefix, secondary_label): click_rank
+        "{}{}_failure_any_rank".format(prefix, aux_label): click_rank
         if failure_any
         else 0,
-        "{}{}_failure_any_count".format(prefix, secondary_label): failure_count,
-        "{}{}_failure_any_fraction".format(prefix, secondary_label): failure_fraction,
+        "{}{}_failure_any_count".format(prefix, aux_label): failure_count,
+        "{}{}_failure_any_fraction".format(prefix, aux_label): failure_fraction,
     }
 
 
-def compute_secondary_labels_metrics_on_query_group(
+def compute_aux_metrics_on_query_group(
         query_group: pd.DataFrame,
         label_col: str,
         old_rank_col: str,
         new_rank_col: str,
-        secondary_labels: List[str],
+        aux_label: str,
         group_keys: List[str] = []
 ):
     """
-    Compute the old and new secondary ranking metrics for a given
-    query on a list of secondary labels
+    Compute the old and new auxiliary ranking metrics for a given
+    query on a list of aux labels
 
     Parameters
     ----------
     query_group : `pd.DataFrame` object
-        DataFrame group object for a single query to compute secondary metrics on
+        DataFrame group object for a single query to compute auxiliary metrics on
     label_col : str
         Name of the label column in the query_group
     old_rank_col : str
@@ -183,8 +183,8 @@ def compute_secondary_labels_metrics_on_query_group(
     new_rank_col : str
         Name of the column that represents the newly computed rank of the records
         after reordering based on new model scores
-    secondary_labels : list
-        List of features used to compute secondary metrics
+    aux_label : str
+        Features used to compute auxiliary failure metrics
     group_keys : list, optional
         List of features used to compute groupwise metrics
 
@@ -192,44 +192,43 @@ def compute_secondary_labels_metrics_on_query_group(
     -------
     `pd.Series` object
         Series object containing the ranking metrics
-        computed using the list of secondary labels
+        computed using the list of aux labels
         on the old and new ranks generated by the model
     Returns
     -------
     """
-    secondary_labels_metrics_dict = {
+    aux_metrics_dict = {
         k: v[0] for k, v in query_group[group_keys].to_dict(orient="list").items()
     }
-    for secondary_label in secondary_labels:
-        try:
-            # Compute failure stats for before and after ranking with model
-            secondary_labels_metrics_dict.update(
-                compute_secondary_label_metrics(
-                    secondary_label_values=query_group[secondary_label],
-                    ranks=query_group[old_rank_col],
-                    click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0]
-                    if (query_group[label_col] == 1).sum() != 0
-                    else float("inf"),
-                    secondary_label=secondary_label,
-                    prefix="old_",
-                )
+    try:
+        # Compute failure stats for before and after ranking with model
+        aux_metrics_dict.update(
+            compute_aux_metrics(
+                aux_label_values=query_group[aux_label],
+                ranks=query_group[old_rank_col],
+                click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0]
+                if (query_group[label_col] == 1).sum() != 0
+                else float("inf"),
+                aux_label=aux_label,
+                prefix="old_",
             )
-            secondary_labels_metrics_dict.update(
-                compute_secondary_label_metrics(
-                    secondary_label_values=query_group[secondary_label],
-                    ranks=query_group[new_rank_col],
-                    click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0]
-                    if (query_group[label_col] == 1).sum() != 0
-                    else float("inf"),
-                    secondary_label=secondary_label,
-                    prefix="new_",
-                )
+        )
+        aux_metrics_dict.update(
+            compute_aux_metrics(
+                aux_label_values=query_group[aux_label],
+                ranks=query_group[new_rank_col],
+                click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0]
+                if (query_group[label_col] == 1).sum() != 0
+                else float("inf"),
+                aux_label=aux_label,
+                prefix="new_",
             )
-        except IndexError:
-            # Ignore queries with no/invalid click ranks
-            continue
+        )
+    except IndexError:
+        # Ignore queries with no/invalid click ranks
+        pass
 
-    return pd.Series(secondary_labels_metrics_dict)
+    return pd.Series(aux_metrics_dict)
 
 
 def get_grouped_stats(
@@ -239,7 +238,7 @@ def get_grouped_stats(
         old_rank_col: str,
         new_rank_col: str,
         group_keys: List[str] = [],
-        secondary_labels: List[str] = [],
+        aux_label: str = None,
 ):
     """
     Compute query stats that can be used to compute ranking metrics
@@ -259,30 +258,30 @@ def get_grouped_stats(
         after reordering based on new model scores
     group_keys : list, optional
         List of features used to compute groupwise metrics
-    secondary_labels : list, optional
-        List of features used to compute failure metrics
+    aux_label : str, optional
+        Feature used to compute auxiliary failure metrics
 
     Returns
     -------
     `pd.DataFrame` object
         DataFrame object containing the ranking stats and failure stats
-        computed from the old and new ranks and secondary labels generated
+        computed from the old and new ranks and aux labels generated
         by the model
     """
     # Filter unclicked queries
     df_clicked = df[df[label_col] == 1.0]
     df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
-    # Compute metrics on secondary labels
-    df_secondary_labels_metrics = pd.DataFrame()
-    if secondary_labels:
-        df_secondary_labels_metrics = df.groupby(query_key_col).apply(
-            lambda grp: compute_secondary_labels_metrics_on_query_group(
+    # Compute metrics on aux labels
+    df_aux_metrics = pd.DataFrame()
+    if aux_label:
+        df_aux_labels_metrics = df.groupby(query_key_col).apply(
+            lambda grp: compute_aux_metrics_on_query_group(
                 query_group=grp,
                 label_col=label_col,
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
-                secondary_labels=secondary_labels,
+                aux_label=aux_label,
                 group_keys=group_keys
             ))
 
@@ -296,9 +295,9 @@ def get_grouped_stats(
         sum_old_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[old_rank_col]).sum())
         sum_new_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[new_rank_col]).sum())
 
-        # Aggregate secondary label metrics by group keys
-        if secondary_labels:
-            df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
+        # Aggregate aux label metrics by group keys
+        if aux_label:
+            df_aux_metrics = df_aux_metrics.groupby(group_keys).sum()
     else:
         # Compute overall stats if group keys are not specified
         query_count = [df_clicked.shape[0]]
@@ -307,9 +306,9 @@ def get_grouped_stats(
         sum_old_reciprocal_rank = [(1.0 / df_clicked[old_rank_col]).sum()]
         sum_new_reciprocal_rank = [(1.0 / df_clicked[new_rank_col]).sum()]
 
-        # Aggregate secondary label metrics
-        if secondary_labels:
-            df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
+        # Aggregate aux label metrics
+        if aux_label:
+            df_aux_metrics = df_aux_metrics.sum().to_frame().T
 
     df_label_stats = pd.DataFrame(
         {
@@ -321,7 +320,7 @@ def get_grouped_stats(
         }
     )
 
-    df_stats = pd.concat([df_label_stats, df_secondary_labels_metrics], axis=1)
+    df_stats = pd.concat([df_label_stats, df_aux_metrics], axis=1)
 
     return df_stats
 
