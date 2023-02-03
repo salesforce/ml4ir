@@ -194,7 +194,7 @@ class RankingModel(RelevanceModel):
                 new_rank_col=RankingConstants.NEW_RANK,
                 group_keys=list(set(self.feature_config.get_group_metrics_keys(
                     "node_name"))),
-                aux_label==self.feature_config.get_aux_label("node_name"),
+                aux_label=self.feature_config.get_aux_label("node_name"),
             )
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
