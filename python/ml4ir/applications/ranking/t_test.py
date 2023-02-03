@@ -606,7 +606,6 @@ def run_power_analysis(metric_list, group_key, group_metric_running_variance_par
             sv_new = group_metric_running_variance_params[group][new_metric]
             req_sample_size = compute_required_sample_size(sv_old.mean, sv_new.mean, sv_old.var, sv_new.var,
                                                            statistical_power, pvalue)
-            print(group, metric, sv_old.mean, sv_new.mean, sv_old.var, sv_new.var, req_sample_size, sv_new.count)
             if sv_new.count >= req_sample_size:
                 is_stat_sig = True
             else:
