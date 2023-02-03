@@ -217,7 +217,7 @@ class FeatureConfig:
         str or bool or dict
             Dictionary value if key is passed, otherwise return input dictionary
         """
-        if key:
+        if dict_ and key:
             if key == "node_name":
                 return dict_.get("node_name", dict_["name"])
             else:
