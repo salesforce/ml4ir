@@ -564,7 +564,10 @@ def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pv
     alternative = "two-sided"
     try:
         # compute the effect size (d)
-        d = np.abs(float(mean1) - float(mean2)) / np.sqrt((float(var1) + float(var2)) / 2)
+        denominator = np.sqrt((float(var1) + float(var2)) / 2)
+        if denominator == 0:
+            return np.inf
+        d = np.abs(float(mean1) - float(mean2)) / denominator
         req_sample_sz = power_ttest(d, n, statistical_power, pvalue, contrast=typ, alternative=alternative)
         return req_sample_sz
     except:
@@ -596,6 +599,7 @@ def run_power_analysis(metric_list, group_key, group_metric_running_variance_par
     group_metrics_stat_sig: Pandas dataframe
         A dataframe listing each org and for each metric whether the change is statistically significant
     """
+    # 00D5f000004anzC, 00DE0000000ZFsW, 00DG0000000CLUj
     group_metrics_stat_sig = []
     for group in group_metric_running_variance_params:
         group_entry = {}
