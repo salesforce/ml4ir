@@ -157,15 +157,7 @@ class RankingModel(RelevanceModel):
                 self.feature_config.get_label(),
                 self.feature_config.get_rank(),
             ]
-            + [
-                f
-                for f in self.feature_config.get_secondary_labels()
-                if f.get(
-                    "node_name",
-                    f["name"] not in self.feature_config.get_group_metrics_keys(
-                        "node_name"),
-                )
-            ]
+            + [self.feature_config.get_aux_label()]
         )
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
@@ -202,8 +194,7 @@ class RankingModel(RelevanceModel):
                 new_rank_col=RankingConstants.NEW_RANK,
                 group_keys=list(set(self.feature_config.get_group_metrics_keys(
                     "node_name"))),
-                secondary_labels=list(set(self.feature_config.get_secondary_labels(
-                    "node_name"))),
+                aux_label==self.feature_config.get_aux_label("node_name"),
             )
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
