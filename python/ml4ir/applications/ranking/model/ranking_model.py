@@ -80,14 +80,14 @@ class RankingModel(RelevanceModel):
         )
 
     def evaluate(
-            self,
-            test_dataset: data.TFRecordDataset,
-            inference_signature: str = None,
-            additional_features: dict = {},
-            group_metrics_min_queries: int = 50,
-            logs_dir: Optional[str] = None,
-            logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True,
+        self,
+        test_dataset: data.TFRecordDataset,
+        inference_signature: str = None,
+        additional_features: dict = {},
+        group_metrics_min_queries: int = 50,
+        logs_dir: Optional[str] = None,
+        logging_frequency: int = 25,
+        compute_intermediate_stats: bool = True,
     ):
         """
         Evaluate the RelevanceModel
@@ -131,22 +131,21 @@ class RankingModel(RelevanceModel):
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         evaluation_features = (
-                group_metrics_keys
-                + [
-                    self.feature_config.get_query_key(),
-                    self.feature_config.get_label(),
-                    self.feature_config.get_rank(),
-                ]
-                + [
-                    f
-                    for f in self.feature_config.get_secondary_labels()
-                    if f.get(
-                "node_name",
-                f["name"] not in self.feature_config.get_group_metrics_keys(
-                    "node_name"),
-            )
-                ]
+            group_metrics_keys
+            + [
+                self.feature_config.get_query_key(),
+                self.feature_config.get_label(),
+                self.feature_config.get_rank(),
+            ]
         )
+
+        # Add aux_label if present
+        aux_label = self.feature_config.get_aux_label()
+        if aux_label and (
+                aux_label.get("node_name") or (
+                aux_label["name"] not in self.feature_config.get_group_metrics_keys("node_name"))):
+            evaluation_features += [aux_label]
+
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
         _predict_fn = get_predict_fn(
@@ -170,7 +169,7 @@ class RankingModel(RelevanceModel):
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
-            # Add necessary columns for power analysis
+            # Accumulating statistics for t-test calculation using 1/rank
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
@@ -183,17 +182,20 @@ class RankingModel(RelevanceModel):
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
-                df=clicked_records,
+                df=predictions_df,
                 query_key_col=self.feature_config.get_query_key("node_name"),
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
                 new_rank_col=RankingConstants.NEW_RANK,
-                group_keys=group_key,
-                secondary_labels=list(set(self.feature_config.get_secondary_labels(
+                group_keys=list(set(self.feature_config.get_group_metrics_keys(
                     "node_name"))),
-                variance_list=RankingConstants.VARIANCE_METRIC_LIST,
-                group_metric_running_variance_params=group_metric_running_variance_params
+                aux_label=self.feature_config.get_aux_label("node_name"),
             )
+            if df_grouped_stats.empty:
+                df_grouped_stats = df_batch_grouped_stats
+            else:
+                df_grouped_stats = df_grouped_stats.add(
+                    df_batch_grouped_stats, fill_value=0.0)
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info(
@@ -219,7 +221,7 @@ class RankingModel(RelevanceModel):
         # Log metrics to weights and biases
         metrics_dict.update(
             {"test_{}".format(k): v for k,
-                                        v in df_overall_metrics.to_dict().items()}
+             v in df_overall_metrics.to_dict().items()}
         )
 
         df_group_metrics = None
@@ -228,7 +230,7 @@ class RankingModel(RelevanceModel):
             # Filter groups by min_query_count
             df_grouped_stats = df_grouped_stats[
                 df_grouped_stats["query_count"] >= group_metrics_min_queries
-                ]
+            ]
 
             # Compute group metrics
             df_group_metrics = df_grouped_stats.apply(
@@ -271,14 +273,14 @@ class RankingModel(RelevanceModel):
         return df_overall_metrics, df_group_metrics, metrics_dict
 
     def save(
-            self,
-            models_dir: str,
-            preprocessing_keys_to_fns={},
-            postprocessing_fn=None,
-            required_fields_only: bool = True,
-            pad_sequence: bool = False,
-            dataset: Optional[RelevanceDataset] = None,
-            experiment_details: Optional[dict] = None
+        self,
+        models_dir: str,
+        preprocessing_keys_to_fns={},
+        postprocessing_fn=None,
+        required_fields_only: bool = True,
+        pad_sequence: bool = False,
+        dataset: Optional[RelevanceDataset] = None,
+        experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`
@@ -363,14 +365,14 @@ class LinearRankingModel(RankingModel):
     """
 
     def save(
-            self,
-            models_dir: str,
-            preprocessing_keys_to_fns={},
-            postprocessing_fn=None,
-            required_fields_only: bool = True,
-            pad_sequence: bool = False,
-            dataset: Optional[RelevanceDataset] = None,
-            experiment_details: Optional[dict] = None
+        self,
+        models_dir: str,
+        preprocessing_keys_to_fns={},
+        postprocessing_fn=None,
+        required_fields_only: bool = True,
+        pad_sequence: bool = False,
+        dataset: Optional[RelevanceDataset] = None,
+        experiment_details: Optional[dict] = None
     ):
         """
         Save the RelevanceModel as a tensorflow SavedModel to the `models_dir`

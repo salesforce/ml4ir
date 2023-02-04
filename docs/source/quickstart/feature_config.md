@@ -107,9 +107,9 @@ Value representing if the feature should be used for computing groupwise metrics
 
 -----
 
-**`is_secondary_label | bool | default=False`**
+**`is_aux_label | bool | default=False`**
 
-Value representing if the feature is used as a secondary label to compute failure metrics. The usage of the feature to compute the failure metrics is left to the user to be customized. The Ranking models come prepackaged with failure metrics computation that can be used, for example, to compute rate of clicks on documents without a match on the subject field.
+Value representing if the feature is used as an auxiliary label to compute failure metrics and auxiliary loss. The usage of the feature to compute the failure metrics is left to the user to be customized. The Ranking models come prepackaged with failure metrics computation that can be used, for example, to compute rate of clicks on documents without a match on the subject field.
 
 In Ranking applications,
 

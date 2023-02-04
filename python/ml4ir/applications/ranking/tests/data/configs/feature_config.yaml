@@ -87,7 +87,7 @@ features:
     trainable: false
     dtype: float
     log_at_inference: true
-    is_secondary_label: true
+    is_aux_label: true
     feature_layer_info:
       type: numeric
       shape: null
