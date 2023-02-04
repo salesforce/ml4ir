@@ -5,6 +5,8 @@ import pandas as pd
 from ml4ir.applications.ranking.model.metrics.helpers.metric_key import Metric
 from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import compute_aux_metrics_on_query_group
 
+DELTA = 1e-20
+
 
 def get_grouped_stats(
         df: pd.DataFrame,
@@ -149,14 +151,14 @@ def summarize_grouped_stats(df_grouped):
             df_grouped_metrics[perc_improv_metric_name] = 100. * (
                     (df_grouped_metrics["new_{}".format(metric_name_suffix)] -
                      df_grouped_metrics["old_{}".format(metric_name_suffix)])
-                    / df_grouped_metrics["old_{}".format(metric_name_suffix)])
+                    / (df_grouped_metrics["old_{}".format(metric_name_suffix)]) + DELTA)
 
         # If lower values of the metric are better/desirable
         elif metric_name_suffix.endswith(tuple(Metric.get_negative_metrics())):
             df_grouped_metrics[perc_improv_metric_name] = 100. * (
                     (df_grouped_metrics["old_{}".format(metric_name_suffix)] -
                      df_grouped_metrics["new_{}".format(metric_name_suffix)])
-                    / df_grouped_metrics["old_{}".format(metric_name_suffix)])
+                    / (df_grouped_metrics["old_{}".format(metric_name_suffix)]) + DELTA)
 
         processed_metric_name_suffixes.add(metric_name_suffix)
 

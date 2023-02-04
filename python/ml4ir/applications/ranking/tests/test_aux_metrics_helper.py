@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from pandas import testing as pd_testing
 
-from ml4ir.applications.ranking.model.metrics.metrics.helper.aux_metrics_helper import *
+from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import *
 
 
 class ComputeAuxMetricsTest(unittest.TestCase):
