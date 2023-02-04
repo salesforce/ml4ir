@@ -50,6 +50,45 @@ def compute_ndcg(relevance_grades: List[float]):
     return compute_dcg(relevance_grades) / compute_dcg(sorted(relevance_grades, reverse=True))
 
 
+def compute_rank_match_failure(df_query, name_match_score_col="field_score_sum_knowledgeArticleTitleUnstemmed"):
+    # If there is no clicked record or more than 1 clicked record, then return None
+    num_clicks = df_query["clicked"].sum()
+    if num_clicks != 1:
+        return None
+
+    click_rank = df_query[df_query["clicked"] == 1]["fr"].values[0]
+
+    # If click is on the first record, there is no NMF
+    if click_rank == 1:
+        return 0.
+
+    df_query = df_query[df_query["fr"] <= click_rank]
+    df_query[name_match_score_col] = df_query[name_match_score_col].fillna(0.)
+
+    # If all records above the clicked record have some match on title, then there is no NMF
+    if (df_query[name_match_score_col] > 0.).all():
+        return 0.
+
+    # Convert name match scores to ranks
+    df_query["name_match_rank"] = df_query[name_match_score_col].rank(
+        method="dense")  # Also, try using min method
+
+    # Convert name match ranks to relevance grades (higher is better) for use with NDCG metric
+    df_query["name_match_relevance_grade"] = df_query.apply(
+        func=(lambda x: 0. if x[name_match_score_col] != 0. else (1. / x["name_match_rank"])), axis="columns")
+
+    # If no records have a match on the title
+    if df_query["name_match_relevance_grade"].sum() == 0:
+        return None
+
+    # Sort based on ranks
+    df_query = df_query.sort_values("fr")
+
+    rank_nmf = 1 - compute_ndcg(df_query["name_match_relevance_grade"].values)
+
+    return rank_nmf
+
+
 def compute_aux_metrics(
         aux_label_values: pd.Series,
         ranks: pd.Series,

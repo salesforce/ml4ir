@@ -21,6 +21,5 @@ class Metric:
         return [
             Metric.ACR,
             Metric.AUX_ALL_FAILURE,
-            Metric.AUX_INTRINSIC_FAILURE,
-            Metric.AUX_RANK_MATCH_FAILURE
+            Metric.AUX_INTRINSIC_FAILURE
         ]
