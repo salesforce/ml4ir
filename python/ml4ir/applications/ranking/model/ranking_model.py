@@ -28,6 +28,7 @@ class RankingConstants:
     OLD_MRR = "old_MRR"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
+    TTEST_PVALUE_THRESHOLD = 0.1
 
 
 class RankingModel(RelevanceModel):
@@ -76,18 +77,25 @@ class RankingModel(RelevanceModel):
 
     def prepare_eval_config(self, file_io, evaluation_config_path, group_key):
         eval_dict = {}
-        eval_config = file_io.read_yaml(evaluation_config_path)
-        if "group_by" in eval_config["power_analysis"] and eval_config["power_analysis"]["group_by"]:
-            eval_dict["group_by"] = eval_config["power_analysis"]["group_by"].split(',')
+        if file_io:
+            eval_config = file_io.read_yaml(evaluation_config_path)
+            if "group_by" in eval_config["power_analysis"] and eval_config["power_analysis"]["group_by"]:
+                eval_dict["group_by"] = eval_config["power_analysis"]["group_by"].split(',')
+            else:
+                eval_dict["group_by"] = group_key
+            eval_dict["metrics"] = eval_config["power_analysis"]["metrics"].replace(" ","").split(',')
+            eval_dict["variance_list"] = []
+            for m in eval_dict["metrics"]:
+                eval_dict["variance_list"].append("old_" + m)
+                eval_dict["variance_list"].append("new_" + m)
+            eval_dict["power"] = float(eval_config["power_analysis"]["power"])
+            eval_dict["pvalue"] = float(eval_config["power_analysis"]["pvalue"])
         else:
             eval_dict["group_by"] = group_key
-        eval_dict["metrics"] = eval_config["power_analysis"]["metrics"].replace(" ","").split(',')
-        eval_dict["variance_list"] = []
-        for m in eval_dict["metrics"]:
-            eval_dict["variance_list"].append("old_" + m)
-            eval_dict["variance_list"].append("new_" + m)
-        eval_dict["power"] = float(eval_config["power_analysis"]["power"])
-        eval_dict["pvalue"] = float(eval_config["power_analysis"]["pvalue"])
+            eval_dict["metrics"] = []
+            eval_dict["variance_list"] = []
+            eval_dict["power"] = None
+            eval_dict["pvalue"] = RankingConstants.TTEST_PVALUE_THRESHOLD
         return eval_dict
 
     def evaluate(
@@ -190,7 +198,7 @@ class RankingModel(RelevanceModel):
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
             # Statistical analysis pre-processing
-            if len(group_key) > 0:
+            if len(group_key) > 0 and len(eval_dict["metrics"]) > 0:
                 statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
                                                    eval_dict["variance_list"])
 
@@ -253,7 +261,7 @@ class RankingModel(RelevanceModel):
                 metrics_helper.summarize_grouped_stats, axis=1
             )
             # Add power analysis to group metric dataframe
-            if len(group_key) > 0:
+            if len(group_key) > 0 and len(eval_dict["metrics"]) > 0:
                 df_group_metrics = df_group_metrics.reset_index()
                 if len(group_key) > 1:
                     df_group_metrics[str(group_key)] = df_group_metrics[group_key].apply(tuple, axis=1)
