@@ -87,7 +87,7 @@ class RelevanceArgParser(ArgumentParser):
             "--evaluation_config",
             type=str,
             help="Path to YAML file or YAML string with parameters needed for model evaluation of the test set.",
-            default="python/ml4ir/base/config/default_evaluation_config.yaml"
+            default="ml4ir/base/config/default_evaluation_config.yaml"
         )
 
         self.add_argument(

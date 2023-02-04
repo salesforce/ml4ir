@@ -99,7 +99,7 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
-        evaluation_config_path: str = "python/ml4ir/base/config/default_evaluation_config.yaml",
+        evaluation_config_path: str = "ml4ir/base/config/default_evaluation_config.yaml",
         file_io: FileIO = None,
     ):
         """
