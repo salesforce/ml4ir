@@ -197,6 +197,7 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 check_less_precise=True)
 
     def test_compute_aux_label_metrics_invalid_click(self):
+        """Testing compute_aux_metrics method with invalid click values"""
         computed_metrics = compute_aux_metrics(
             aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
             ranks=pd.Series(list(range(1, 10))),
@@ -211,6 +212,7 @@ class ComputeAuxMetricsTest(unittest.TestCase):
 
     @patch("ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper.compute_aux_metrics")
     def test_compute_aux_metrics_on_query_group(self, mock_compute_aux_metrics):
+        """Testing compute_aux_metrics_on_query_group wrapper for compute_aux_metrics"""
         query_group = pd.DataFrame({
             "old_rank": [1, 2, 3, 4, 5],
             "new_rank": [3, 2, 1, 5, 4],
@@ -240,6 +242,7 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             i += 1
 
     def test_compute_aux_metrics_on_query_group_invalid_click(self):
+        """Testing compute_aux_metrics_on_query_group wrapper function with invalid click values"""
         query_group = pd.DataFrame({
             "old_rank": [1, 2, 3, 4, 5],
             "new_rank": [3, 2, 1, 5, 4],
@@ -262,6 +265,7 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                          "All metrics should have default values")
 
     def test_compute_dcg(self):
+        """Test DCG computation"""
         with self.subTest("Worst ordering of grade values"):
             self.assertTrue(np.isclose(compute_dcg([1., 2., 3.]), 6.39278, atol=3))
 
@@ -275,6 +279,7 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             self.assertTrue(np.isclose(compute_dcg([0., 0., 0.]), 1.065, atol=3))
 
     def test_compute_ndcg(self):
+        """Test NDCG computation"""
         with self.subTest("Worst ordering of grade values"):
             self.assertTrue(np.isclose(compute_ndcg([1., 2., 3.]), 0.6806, atol=3))
 
