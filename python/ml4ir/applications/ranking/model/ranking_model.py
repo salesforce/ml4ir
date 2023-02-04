@@ -12,7 +12,7 @@ from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
-from ml4ir.applications.ranking.model.metrics import metrics_helper
+from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, t_test_log_results
 
