@@ -14,8 +14,8 @@ from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
-    t_test_log_results, run_ttest, power_ttest, power_ttest2n, compute_org_running_variance_for_metrics, run_power_analysis, \
+from ml4ir.base.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
+    t_test_log_results, run_ttest, power_ttest, compute_groupwise_running_variance_for_metrics, run_power_analysis, \
     StreamVariance, statistical_analysis_preprocessing
 
 pd.set_option("display.max_rows", 500)
@@ -26,8 +26,6 @@ class RankingConstants:
     NEW_RANK = "new_rank"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
-    OLD_RANKNMF = "old_RankNMF"
-    NEW_RANKNMF = "new_RANKNMF"
     MRR_DIFF = "MRR_diff"
     TTEST_PVALUE_THRESHOLD = 0.1
     STATISTICAL_POWER = 0.9
@@ -185,7 +183,7 @@ class RankingModel(RelevanceModel):
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
-                df=predictions_df,
+                df=clicked_records,
                 query_key_col=self.feature_config.get_query_key("node_name"),
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
@@ -193,12 +191,9 @@ class RankingModel(RelevanceModel):
                 group_keys=group_key,
                 secondary_labels=list(set(self.feature_config.get_secondary_labels(
                     "node_name"))),
+                variance_list=RankingConstants.VARIANCE_METRIC_LIST,
+                group_metric_running_variance_params=group_metric_running_variance_params
             )
-            if df_grouped_stats.empty:
-                df_grouped_stats = df_batch_grouped_stats
-            else:
-                df_grouped_stats = df_grouped_stats.add(
-                    df_batch_grouped_stats, fill_value=0.0)
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info(

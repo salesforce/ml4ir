@@ -5,7 +5,7 @@ from scipy import stats
 import unittest
 import warnings
 from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
-    compute_org_running_variance_for_metrics, StreamVariance, run_power_analysis, compute_required_sample_size
+    compute_groupwise_running_variance_for_metrics, StreamVariance, run_power_analysis, compute_required_sample_size
 
 warnings.filterwarnings("ignore")
 
@@ -63,7 +63,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
 
             running_stats_df = pd.concat(metric_stat_df_list, axis=1)
             running_stats_df = running_stats_df.loc[:, ~running_stats_df.columns.duplicated()]
-            compute_org_running_variance_for_metrics(metric_list, group_metric_running_variance_params,
+            compute_groupwise_running_variance_for_metrics(metric_list, group_metric_running_variance_params,
                                                      running_stats_df, group_key)
 
     def test_stream_variance_computation(self):

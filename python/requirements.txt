@@ -21,3 +21,6 @@ tensorflow-probability==0.15.0
 
 # DAG visualization
 pygraphviz==1.7
+
+# statistics
+pingouin==0.5.3

@@ -232,6 +232,59 @@ def compute_secondary_labels_metrics_on_query_group(
     return pd.Series(secondary_labels_metrics_dict)
 
 
+def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_running_variance_params, running_stats_df, group_key):
+    """
+    This function updates the intermediate mean and variance with each batch.
+    ----------
+    metric_list: list
+            Lists of metrics for variance computation in batches
+
+    group_metric_running_variance_params: dict
+        A dictionary containing intermediate mean, variance and sample size for each org for each metric
+
+    running_stats_df: pandas dataframe
+        The incoming batch of mean and variance
+
+    group_key: list
+        The list of keys used to aggregate the metrics
+    """
+    running_stats_df = running_stats_df.fillna(0)
+    for row in running_stats_df.iterrows():
+        group_name = row[1][str(group_key)]
+        if group_name in group_metric_running_variance_params:
+            group_params = group_metric_running_variance_params[group_name]
+        else:
+            group_params = {}
+            group_metric_running_variance_params[group_name] = group_params
+
+        for metric in metric_list:
+            new_mean = row[1][str([metric, "mean"])]
+            new_var = row[1][str([metric, "var"])]
+            new_count = row[1][str([metric, "count"])]
+
+            if metric in group_params:
+                sv = group_metric_running_variance_params[group_name][metric]
+            else:
+                sv = StreamVariance()
+
+            # update the current mean and variance
+            # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
+            combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
+            combine_count = sv.count + new_count
+            if (sv.count + new_count - 1) != 0:
+                combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
+                          ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
+            else:
+                combine_var = 0
+
+            sv.count = combine_count
+            sv.mean = combined_mean
+            sv.var = combine_var
+
+            group_params[metric] = sv
+            group_metric_running_variance_params[group_name] = group_params
+
+
 def get_grouped_stats(
         df: pd.DataFrame,
         query_key_col: str,
@@ -240,6 +293,8 @@ def get_grouped_stats(
         new_rank_col: str,
         group_keys: List[str] = [],
         secondary_labels: List[str] = [],
+        variance_list: List[str] = [],
+        group_metric_running_variance_params: dict = {},
 ):
     """
     Compute query stats that can be used to compute ranking metrics
@@ -270,60 +325,36 @@ def get_grouped_stats(
         by the model
     """
     # Filter unclicked queries
-    df_clicked = df[df[label_col] == 1.0]
-    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
-
-    # Compute metrics on secondary labels
-    df_secondary_labels_metrics = pd.DataFrame()
-    if secondary_labels:
-        df_secondary_labels_metrics = df.groupby(query_key_col).apply(
-            lambda grp: compute_secondary_labels_metrics_on_query_group(
-                query_group=grp,
-                label_col=label_col,
-                old_rank_col=old_rank_col,
-                new_rank_col=new_rank_col,
-                secondary_labels=secondary_labels,
-                group_keys=group_keys
-            ))
+    df = df[df[query_key_col].isin(df[query_key_col])]
 
     if group_keys:
-        df_grouped_batch = df_clicked.groupby(group_keys)
+        metric_stat_df_list = []
+        df_used = df.groupby(group_keys)
 
-        # Compute groupwise stats
-        query_count = df_grouped_batch[query_key_col].nunique()
-        sum_old_rank = df_grouped_batch.apply(lambda x: x[old_rank_col].sum())
-        sum_new_rank = df_grouped_batch.apply(lambda x: x[new_rank_col].sum())
-        sum_old_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[old_rank_col]).sum())
-        sum_new_reciprocal_rank = df_grouped_batch.apply(lambda x: (1.0 / x[new_rank_col]).sum())
-
-        # Aggregate secondary label metrics by group keys
-        if secondary_labels:
-            df_secondary_labels_metrics = df_secondary_labels_metrics.groupby(group_keys).sum()
     else:
         # Compute overall stats if group keys are not specified
-        query_count = [df_clicked.shape[0]]
-        sum_old_rank = [df_clicked[old_rank_col].sum()]
-        sum_new_rank = [df_clicked[new_rank_col].sum()]
-        sum_old_reciprocal_rank = [(1.0 / df_clicked[old_rank_col]).sum()]
-        sum_new_reciprocal_rank = [(1.0 / df_clicked[new_rank_col]).sum()]
+        df_used = df
 
-        # Aggregate secondary label metrics
-        if secondary_labels:
-            df_secondary_labels_metrics = df_secondary_labels_metrics.sum().to_frame().T
+    for metric in variance_list:
+        grouped_agg = df_used.apply(lambda x: x[metric].mean())
+        mean_df = pd.DataFrame(
+            {str(group_keys): grouped_agg.keys().values, str([metric, "mean"]): grouped_agg.values})
 
-    df_label_stats = pd.DataFrame(
-        {
-            "query_count": query_count,
-            "sum_old_rank": sum_old_rank,
-            "sum_new_rank": sum_new_rank,
-            "sum_old_reciprocal_rank": sum_old_reciprocal_rank,
-            "sum_new_reciprocal_rank": sum_new_reciprocal_rank
-        }
-    )
+        grouped_agg = df_used.apply(lambda x: x[metric].var())
+        var_df = pd.DataFrame({str(group_keys): grouped_agg.keys().values, str([metric, "var"]): grouped_agg.values})
 
-    df_stats = pd.concat([df_label_stats, df_secondary_labels_metrics], axis=1)
+        grouped_agg = df_used.apply(lambda x: x[metric].count())
+        count_df = pd.DataFrame(
+            {str(group_keys): grouped_agg.keys().values, str([metric, "count"]): grouped_agg.values})
 
-    return df_stats
+        concat_df = pd.concat([mean_df, var_df, count_df], axis=1)
+        metric_stat_df_list.append(concat_df)
+    running_stats_df = pd.concat(metric_stat_df_list, axis=1)
+    running_stats_df = running_stats_df.loc[:, ~running_stats_df.columns.duplicated()]
+    # Accumulating batch-wise mean and variances
+    compute_groupwise_running_variance_for_metrics(variance_list, group_metric_running_variance_params, running_stats_df,
+                                                 group_keys)
+    return running_stats_df
 
 
 def summarize_grouped_stats(df_grouped):
