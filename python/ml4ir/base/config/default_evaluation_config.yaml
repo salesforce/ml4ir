@@ -1,0 +1,22 @@
+power_analysis:
+  # a list of input feature names (comma separated) used to aggregate results. Leave blank if not used
+  group_by:
+  # a list of metrics (comma separated) to be used in the stat. analysis
+  metrics: MRR
+  power: 0.9
+  pvalue: 0.1
+
+
+#
+#
+#  class RankingConstants:
+#    NEW_RANK = "new_rank"
+#    NEW_MRR = "new_MRR"
+#    OLD_MRR = "old_MRR"
+#    MRR_DIFF = "MRR_diff"
+#    TTEST_PVALUE_THRESHOLD = 0.1
+#    STATISTICAL_POWER = 0.9
+#    # list of metrics for which to compute the variance in batches.
+#    VARIANCE_METRIC_LIST = [NEW_MRR, OLD_MRR]
+#    # list of metrics for which power analysis to be used.
+#    METRIC_POWER_ANALYSIS = ["MRR"]

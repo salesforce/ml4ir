@@ -14,6 +14,7 @@ from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
+from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
     t_test_log_results, run_ttest, power_ttest, compute_groupwise_running_variance_for_metrics, run_power_analysis, \
     StreamVariance, statistical_analysis_preprocessing
@@ -24,15 +25,9 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
+    OLD_MRR = "old_MRR"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
-    MRR_DIFF = "MRR_diff"
-    TTEST_PVALUE_THRESHOLD = 0.1
-    STATISTICAL_POWER = 0.9
-    # list of metrics for which to compute the variance in batches.
-    VARIANCE_METRIC_LIST = [NEW_MRR, OLD_MRR]
-    # list of metrics for which power analysis to be used.
-    METRIC_POWER_ANALYSIS = ["MRR"]
 
 
 class RankingModel(RelevanceModel):
@@ -79,6 +74,22 @@ class RankingModel(RelevanceModel):
             logging_frequency=logging_frequency,
         )
 
+    def prepare_eval_config(self, file_io, evaluation_config_path, group_key):
+        eval_dict = {}
+        eval_config = file_io.read_yaml(evaluation_config_path)
+        if "group_by" in eval_config["power_analysis"] and eval_config["power_analysis"]["group_by"]:
+            eval_dict["group_by"] = eval_config["power_analysis"]["group_by"].split(',')
+        else:
+            eval_dict["group_by"] = group_key
+        eval_dict["metrics"] = eval_config["power_analysis"]["metrics"].replace(" ","").split(',')
+        eval_dict["variance_list"] = []
+        for m in eval_dict["metrics"]:
+            eval_dict["variance_list"].append("old_" + m)
+            eval_dict["variance_list"].append("new_" + m)
+        eval_dict["power"] = float(eval_config["power_analysis"]["power"])
+        eval_dict["pvalue"] = float(eval_config["power_analysis"]["pvalue"])
+        return eval_dict
+
     def evaluate(
         self,
         test_dataset: data.TFRecordDataset,
@@ -88,6 +99,8 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
+        evaluation_config_path: str = "python/ml4ir/base/config/default_evaluation_config.yaml",
+        file_io: FileIO = None,
     ):
         """
         Evaluate the RelevanceModel
@@ -128,6 +141,10 @@ class RankingModel(RelevanceModel):
 
         Override this method to implement your own evaluation metrics.
         """
+        group_key = list(set(self.feature_config.get_group_metrics_keys("node_name")))
+        eval_dict = self.prepare_eval_config(file_io, evaluation_config_path, group_key)
+        group_key = eval_dict["group_by"]
+
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         evaluation_features = (
@@ -143,7 +160,7 @@ class RankingModel(RelevanceModel):
         aux_label = self.feature_config.get_aux_label()
         if aux_label and (
                 aux_label.get("node_name") or (
-                aux_label["name"] not in self.feature_config.get_group_metrics_keys("node_name"))):
+                aux_label["name"] not in eval_dict["group_by"])):
             evaluation_features += [aux_label]
 
         additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
@@ -165,7 +182,6 @@ class RankingModel(RelevanceModel):
         # defining variables to compute running mean and variance for t-test computations
         agg_count, agg_mean, agg_M2 = 0, 0, 0
         group_metric_running_variance_params = {}
-        group_key = list(set(self.feature_config.get_group_metrics_keys("node_name")))
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
@@ -176,7 +192,7 @@ class RankingModel(RelevanceModel):
             # Statistical analysis pre-processing
             if len(group_key) > 0:
                 statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
-                                                   RankingConstants.VARIANCE_METRIC_LIST)
+                                                   eval_dict["variance_list"])
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
@@ -203,15 +219,15 @@ class RankingModel(RelevanceModel):
 
         # performing click rank distribution t-test
         t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
-                                             RankingConstants.TTEST_PVALUE_THRESHOLD, self.logger)
+                                             eval_dict["pvalue"], self.logger)
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
-        group_metrics_stat_sig = run_power_analysis(RankingConstants.METRIC_POWER_ANALYSIS,
+        group_metrics_stat_sig = run_power_analysis(eval_dict["metrics"],
                                                     group_key,
                                                     group_metric_running_variance_params,
-                                                    RankingConstants.STATISTICAL_POWER,
-                                                    RankingConstants.TTEST_PVALUE_THRESHOLD)
+                                                    eval_dict["power"],
+                                                    eval_dict["pvalue"])
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
@@ -256,7 +272,7 @@ class RankingModel(RelevanceModel):
             df_group_metrics_summary = df_group_metrics.describe()
             self.logger.info(
                 "Computing group metrics using keys: {}".format(
-                    self.feature_config.get_group_metrics_keys("node_name")
+                    eval_dict["group_by"]
                 )
             )
             self.logger.info("Groupwise Metrics: \n{}".format(
