@@ -11,291 +11,205 @@ from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import 
 class ComputeAuxMetricsTest(unittest.TestCase):
     """Test suite for ml4ir.applications.ranking.model.metrics.metrics_helper"""
 
-    def test_compute_aux_metrics_1(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([10, 10, 10, 10, 10, 10, 10, 10, 1]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 1.,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 0,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 0,
-                "test_label_failure_any_count": 0,
-                "test_label_failure_any_fraction": 0.0}),
-            check_less_precise=True)
+    def test_compute_aux_metrics(self):
+        """Test the auxiliary metrics computation in aux_metrics_helper with different input values"""
+        with self.subTest("Test Case: 1"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([10, 10, 10, 10, 10, 10, 10, 10, 1]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_metrics_2(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 1, 1, 1, 1, 1, 1, 1, 10]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.30392,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 9,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 8,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 2"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 1, 1, 1, 1, 1, 1, 1, 10]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
 
-    def test_compute_aux_metrics_3(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([10, 10, 10, 1]),
-            ranks=pd.Series(list(range(1, 5))),
-            click_rank=4,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 1.,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 0,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 0,
-                "test_label_failure_any_count": 0,
-                "test_label_failure_any_fraction": 0.0
-            }),
-            check_less_precise=True)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.69608
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_4(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 1, 1, 10]),
-            ranks=pd.Series(list(range(1, 5))),
-            click_rank=4,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.432,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 4,
-                "test_label_failure_any_rank": 4,
-                "test_label_failure_any_count": 3,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 3"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([10, 10, 10, 1]),
+                ranks=pd.Series(list(range(1, 5))),
+                click_rank=4)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_5(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 1, 1, 5]),
-            ranks=pd.Series(list(range(1, 5))),
-            click_rank=4,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.475,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 4,
-                "test_label_failure_any_rank": 4,
-                "test_label_failure_any_count": 3,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 4"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 1, 1, 10]),
+                ranks=pd.Series(list(range(1, 5))),
+                click_rank=4)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.568
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_6(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([5, 5, 5, 10]),
-            ranks=pd.Series(list(range(1, 5))),
-            click_rank=4,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.47287,
-                "test_label_failure_all": 1.0,
-                "test_label_failure_any": 1.0,
-                "test_label_failure_all_rank": 4.0,
-                "test_label_failure_any_rank": 4.0,
-                "test_label_failure_any_count": 3.0,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 5"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 1, 1, 5]),
+                ranks=pd.Series(list(range(1, 5))),
+                click_rank=4)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.525
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_7(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 1, 1, 1, 5, 5, 5, 5, 10]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.326,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 9,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 8,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 6"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([5, 5, 5, 10]),
+                ranks=pd.Series(list(range(1, 5))),
+                click_rank=4)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1.0,
+                    "AuxIntrinsicFailure": 0.52723
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_8(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([5, 5, 5, 5, 1, 1, 1, 1, 10]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.358,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 9,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 8,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 7"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 1, 1, 1, 5, 5, 5, 5, 10]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.674
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_9(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 5, 1, 5, 1, 5, 1, 5, 10]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.33548,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 9,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 8,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 8"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([5, 5, 5, 5, 1, 1, 1, 1, 10]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.6416
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_10(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([5, 1, 5, 1, 5, 1, 5, 1, 10]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.348953,
-                "test_label_failure_all": 1,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 9,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 8,
-                "test_label_failure_any_fraction": 1.0
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 9"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 5, 1, 5, 1, 5, 1, 5, 10]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.66452
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_11(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 1, 1, 1, 10, 10, 10, 10, 5]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.545,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 4,
-                "test_label_failure_any_fraction": 0.5
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 10"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([5, 1, 5, 1, 5, 1, 5, 1, 10]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 1,
+                    "AuxIntrinsicFailure": 0.651047
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_12(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([10, 10, 10, 10, 1, 1, 1, 1, 5]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.999,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 4,
-                "test_label_failure_any_fraction": 0.5
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 11"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 1, 1, 1, 10, 10, 10, 10, 5]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.455
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_13(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([1, 10, 1, 10, 1, 10, 1, 10, 5]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.6776,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 4,
-                "test_label_failure_any_fraction": 0.5
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 12"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([10, 10, 10, 10, 1, 1, 1, 1, 5]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.001
+                }),
+                check_less_precise=True)
 
-    def test_compute_aux_label_metrics_14(self):
-        computed_metrics = compute_aux_metrics(
-            aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
-            ranks=pd.Series(list(range(1, 10))),
-            click_rank=9,
-            aux_label="test_label")
-        pd_testing.assert_series_equal(
-            pd.Series(computed_metrics),
-            pd.Series({
-                "test_label_NDCG": 0.8665,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 1,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 9,
-                "test_label_failure_any_count": 4,
-                "test_label_failure_any_fraction": 0.5
-            }),
-            check_less_precise=True)
+        with self.subTest("Test Case: 13"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([1, 10, 1, 10, 1, 10, 1, 10, 5]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.3224
+                }),
+                check_less_precise=True)
+
+        with self.subTest("Test Case: 14"):
+            computed_metrics = compute_aux_metrics(
+                aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
+                ranks=pd.Series(list(range(1, 10))),
+                click_rank=9)
+            pd_testing.assert_series_equal(
+                pd.Series(computed_metrics),
+                pd.Series({
+                    "AuxAllFailure": 0,
+                    "AuxIntrinsicFailure": 0.1335
+                }),
+                check_less_precise=True)
 
     def test_compute_aux_label_metrics_invalid_click(self):
         computed_metrics = compute_aux_metrics(
             aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
             ranks=pd.Series(list(range(1, 10))),
-            click_rank=15,
-            aux_label="test_label")
+            click_rank=15)
         pd_testing.assert_series_equal(
             pd.Series(computed_metrics),
             pd.Series({
-                "test_label_NDCG": 0.866541,
-                "test_label_failure_all": 0,
-                "test_label_failure_any": 0,
-                "test_label_failure_all_rank": 0,
-                "test_label_failure_any_rank": 0,
-                "test_label_failure_any_count": 0,
-                "test_label_failure_any_fraction": 0.
+                "AuxAllFailure": 0,
+                "AuxIntrinsicFailure": 0.133459
             }),
             check_less_precise=True)
 
-    @patch("ml4ir.applications.ranking.model.metrics.metrics_helper.compute_aux_metrics")
+    @patch("ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper.compute_aux_metrics")
     def test_compute_aux_metrics_on_query_group(self, mock_compute_aux_metrics):
         query_group = pd.DataFrame({
             "old_rank": [1, 2, 3, 4, 5],
@@ -321,7 +235,6 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             assert pd.Series.equals(call_args[i]["ranks"], query_group["{}_rank".format(state)])
             assert call_args[i]["click_rank"] == query_group[query_group["click"]
                                                              == 1]["{}_rank".format(state)].values[0]
-            assert call_args[i]["aux_label"] == "aux_label"
             assert call_args[i]["prefix"] == "{}_".format(state)
 
             i += 1
@@ -340,11 +253,11 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             old_rank_col="old_rank",
             new_rank_col="new_rank",
             aux_label="aux_label")
-        ndcg_rows = aux_metrics.index.str.contains("NDCG")
-        self.assertEqual((aux_metrics[ndcg_rows] > 0).sum(),
-                         len(aux_metrics[ndcg_rows]),
-                         "NDCG should be >0 in all cases")
-        self.assertEqual(aux_metrics[~ndcg_rows].sum(),
+        intrinsic_failure_rows = aux_metrics.index.str.contains("IntrinsicFailure")
+        self.assertEqual((aux_metrics[intrinsic_failure_rows] < 1).sum(),
+                         len(aux_metrics[intrinsic_failure_rows]),
+                         "IntrinsicFailure should be <1 in all cases")
+        self.assertEqual(aux_metrics[~intrinsic_failure_rows].sum(),
                          0,
                          "All metrics should have default values")
 

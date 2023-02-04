@@ -89,7 +89,6 @@ def compute_aux_metrics(
     # We need to have at least one relevant document.
     # If not, any ordering is considered ideal
     intrinsic_failure = 0.
-    rank_match_failure = 0.
 
     try:
         click_aux_label_value = aux_label_values[ranks == click_rank].values[0]
@@ -114,8 +113,7 @@ def compute_aux_metrics(
 
     return {
         f"{prefix}{Metric.AUX_ALL_FAILURE}": all_failure,
-        f"{prefix}{Metric.AUX_INTRINSIC_FAILURE}": intrinsic_failure,
-        f"{prefix}{Metric.AUX_RANK_MATCH_FAILURE}": rank_match_failure
+        f"{prefix}{Metric.AUX_INTRINSIC_FAILURE}": intrinsic_failure
     }
 
 
