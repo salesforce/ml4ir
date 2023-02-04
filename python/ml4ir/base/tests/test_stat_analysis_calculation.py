@@ -4,7 +4,7 @@ import pandas as pd
 from scipy import stats
 import unittest
 import warnings
-from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
+from ml4ir.applications.ranking.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
     compute_groupwise_running_variance_for_metrics, StreamVariance, run_power_analysis, compute_required_sample_size
 
 warnings.filterwarnings("ignore")
