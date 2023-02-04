@@ -62,11 +62,6 @@ class FeatureConfig:
     group_metrics_keys : list of dict
         List of dictionaries containing configurations for all the features
         which will be used to compute groupwise metrics
-    secondary_labels : list of dict
-        List of dictionaries containing configurations for all the features
-        which will be used as secondary labels to compute secondary metrics.
-        The implementation of the secondary metrics and the usage of the secondary
-        labels is up to the users of ml4ir
 
     Notes
     -----
@@ -119,10 +114,6 @@ class FeatureConfig:
         # Features to be used as keys for computing group metrics
         # NOTE: Implementation is open-ended
         self.group_metrics_keys: List[Dict] = list()
-
-        # Features to be used as secondary labels for computing secondary metrics
-        # NOTE: Implementation is open-ended
-        self.secondary_labels: List[Dict] = list()
 
     @staticmethod
     def get_instance(feature_config_dict: dict, tfrecord_type: str, logger: Logger):
@@ -191,9 +182,6 @@ class FeatureConfig:
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
 
-            if feature_info.get("is_secondary_label", False):
-                self.secondary_labels.append(feature_info)
-
             if feature_info.get("is_aux_label", False):
                 self.aux_label = feature_info
 
@@ -229,7 +217,7 @@ class FeatureConfig:
         str or bool or dict
             Dictionary value if key is passed, otherwise return input dictionary
         """
-        if key:
+        if dict_ and key:
             if key == "node_name":
                 return dict_.get("node_name", dict_["name"])
             else:
@@ -524,25 +512,6 @@ class FeatureConfig:
         """
         return self._get_list_of_keys_or_dicts(self.group_metrics_keys, key=key)
 
-    def get_secondary_labels(self, key: str = None):
-        """
-        Getter method for secondary_labels in FeatureConfig object
-        Can additionally be used to only fetch a particular value from the dict
-
-        Parameters
-        ----------
-        key : str, optional
-            Name of the configuration key to be fetched.
-            If None, then entire dictionary for the feature is returned
-
-        Returns
-        -------
-        list
-            Lift of feature configuration dictionaries or values for
-            features to be used as secondary labels
-        """
-        return self._get_list_of_keys_or_dicts(self.secondary_labels, key=key)
-
     def get_dtype(self, feature_info: dict):
         """
         Retrieve data type of a feature
@@ -688,11 +657,6 @@ class ExampleFeatureConfig(FeatureConfig):
     group_metrics_keys : list of dict
         List of dictionaries containing configurations for all the features
         which will be used to compute groupwise metrics
-    secondary_labels : list of dict
-        List of dictionaries containing configurations for all the features
-        which will be used as secondary labels to compute secondary metrics.
-        The implementation of the secondary metrics and the usage of the secondary
-        labels is up to the users of ml4ir
     """
 
     def create_dummy_protobuf(self, num_records=1, required_only=False):
@@ -756,11 +720,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
     group_metrics_keys : list of dict
         List of dictionaries containing configurations for all the features
         which will be used to compute groupwise metrics
-    secondary_labels : list of dict
-        List of dictionaries containing configurations for all the features
-        which will be used as secondary labels to compute secondary metrics.
-        The implementation of the secondary metrics and the usage of the secondary
-        labels is up to the users of ml4ir
     """
 
     def __init__(self, features_dict, logger):
@@ -829,9 +788,6 @@ class SequenceExampleFeatureConfig(FeatureConfig):
 
             if feature_info.get("is_group_metric_key", False):
                 self.group_metrics_keys.append(feature_info)
-
-            if feature_info.get("is_secondary_label", False):
-                self.secondary_labels.append(feature_info)
 
         self.mask = self.generate_mask()
         self.all_features.append(self.get_mask())

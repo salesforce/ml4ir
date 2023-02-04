@@ -684,7 +684,7 @@ class RelevancePipeline(object):
 
         except Exception as e:
             self.logger.error(
-                "!!! Error Training Model: !!!\n{}".format(str(e)))
+                "!!! Error Training Model: !!!\n{}".format(traceback.format_exc()))
             traceback.print_exc()
             job_status = "_FAILURE"
             job_info = "{}\n{}".format(str(e), traceback.format_exc())
