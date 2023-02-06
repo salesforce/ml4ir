@@ -22,7 +22,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.
+                    "AuxIntrinsicFailure": 0.,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -36,7 +37,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.69608
+                    "AuxIntrinsicFailure": 0.69608,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -49,7 +51,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.
+                    "AuxIntrinsicFailure": 0.,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -62,7 +65,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.568
+                    "AuxIntrinsicFailure": 0.568,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -75,7 +79,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.525
+                    "AuxIntrinsicFailure": 0.525,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -88,7 +93,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1.0,
-                    "AuxIntrinsicFailure": 0.52723
+                    "AuxIntrinsicFailure": 0.52723,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -101,7 +107,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.674
+                    "AuxIntrinsicFailure": 0.674,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -114,7 +121,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.6416
+                    "AuxIntrinsicFailure": 0.6416,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -127,7 +135,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.66452
+                    "AuxIntrinsicFailure": 0.66452,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -140,7 +149,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 1,
-                    "AuxIntrinsicFailure": 0.651047
+                    "AuxIntrinsicFailure": 0.651047,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -153,7 +163,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.455
+                    "AuxIntrinsicFailure": 0.455,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -166,7 +177,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.001
+                    "AuxIntrinsicFailure": 0.001,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -179,7 +191,8 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.3224
+                    "AuxIntrinsicFailure": 0.3224,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
@@ -192,11 +205,12 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 pd.Series(computed_metrics),
                 pd.Series({
                     "AuxAllFailure": 0,
-                    "AuxIntrinsicFailure": 0.1335
+                    "AuxIntrinsicFailure": 0.1335,
+                    "AuxRankMF": 0.0
                 }),
                 check_less_precise=True)
 
-    def test_compute_aux_label_metrics_invalid_click(self):
+    def test_compute_aux_metrics_invalid_click(self):
         """Testing compute_aux_metrics method with invalid click values"""
         computed_metrics = compute_aux_metrics(
             aux_label_values=pd.Series([10, 1, 10, 1, 10, 1, 10, 1, 5]),
@@ -206,9 +220,18 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             pd.Series(computed_metrics),
             pd.Series({
                 "AuxAllFailure": 0,
-                "AuxIntrinsicFailure": 0.133459
+                "AuxIntrinsicFailure": 0.133459,
+                "AuxRankMF": 0.0
             }),
             check_less_precise=True)
+
+    # def test_compute_rank_match_failure(self):
+    #     """Test computation of RankMatchFailure metric"""
+    #     with self.subTest(""):
+    #         assert(0.,
+    #                compute_rank_match_failure(aux_label_values=pd.Series([]),
+    #                                           ranks=pd.Series([]),
+    #                                           click_rank=5))
 
     @patch("ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper.compute_aux_metrics")
     def test_compute_aux_metrics_on_query_group(self, mock_compute_aux_metrics):
