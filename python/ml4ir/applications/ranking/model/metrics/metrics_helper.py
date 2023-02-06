@@ -443,3 +443,26 @@ def summarize_grouped_stats(df_grouped):
         processed_metric_name_suffixes.add(metric_name_suffix)
 
     return df_grouped_metrics
+
+
+def generate_stat_sig_based_metrics(df, metric, group_keys):
+    """
+    compute stats for stat sig groups
+
+    Parameters
+    ----------
+    df : `pd.DataFrame` object
+        prediction dataframe of aggregated results by group keys
+    metric : str
+        The metric used to filter the stat sig groups
+    """
+    stat_sig_df = df.loc[df["is_" + metric + "_lift_stat_sig"] == True]
+    improved = stat_sig_df.loc[stat_sig_df["perc_improv_"+metric] >= 0]
+    degraded = stat_sig_df.loc[stat_sig_df["perc_improv_"+metric] < 0]
+    stat_sig_groupwise_metric_old = stat_sig_df["old_"+metric].mean()
+    stat_sig_groupwise_metric_new = stat_sig_df["new_" + metric].mean()
+    if metric in POSITIVE_METRIC_SUFFIXES:
+        stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_new - stat_sig_groupwise_metric_old) /  stat_sig_groupwise_metric_old * 100
+    else:
+        stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_old - stat_sig_groupwise_metric_new) / stat_sig_groupwise_metric_old * 100
+    return stat_sig_df, list(improved[group_keys].values.squeeze()), list(improved[degraded].values.squeeze()), stat_sig_groupwise_metric_improv

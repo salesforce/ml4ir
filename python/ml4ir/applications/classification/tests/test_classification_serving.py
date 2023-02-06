@@ -73,7 +73,8 @@ class ClassificationServingTest(ClassificationTestBase):
             tfrecord_signature(protos=tf.gather(sequence_example_protos, [i]))[
                 self.args.output_name
             ]
-            for i in range(self.args.batch_size)
+            for
+            i in range(self.args.batch_size)
         ]
 
         # Compare the scores from the different versions of the model

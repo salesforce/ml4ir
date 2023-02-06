@@ -14,7 +14,7 @@ from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from ml4ir.base.io.file_io import FileIO
+#from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
     t_test_log_results, run_ttest, power_ttest, compute_groupwise_running_variance_for_metrics, run_power_analysis, \
     StreamVariance, statistical_analysis_preprocessing
@@ -25,10 +25,17 @@ pd.set_option("display.max_columns", 500)
 
 class RankingConstants:
     NEW_RANK = "new_rank"
-    OLD_MRR = "old_MRR"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
     TTEST_PVALUE_THRESHOLD = 0.1
+
+    # Eval config constants
+    GROUP_BY = "group_by"
+    POWER_ANALYSIS = "power_analysis"
+    VARIANCE_LIST = "variance_list"
+    POWER = "power"
+    PVALUE = "pvalue"
+    METRICS = "metrics"
 
 
 class RankingModel(RelevanceModel):
@@ -75,27 +82,48 @@ class RankingModel(RelevanceModel):
             logging_frequency=logging_frequency,
         )
 
-    def prepare_eval_config(self, file_io, evaluation_config_path, group_key):
+    def prepare_eval_config(self, eval_config, group_key):
+        """
+        Reads the evaluation config yaml file and convert it into an eval config dict
+
+        Parameters
+        ----------
+        evaluation_config_path : str
+            Path of the yaml file
+        group_key : List[str]
+            list of keys used in metric aggregation
+
+        Returns
+        -------
+        eval_dict: Dict
+            evaluation config yaml converted into a dict
+        """
         eval_dict = {}
-        if file_io:
-            eval_config = file_io.read_yaml(evaluation_config_path)
-            if "group_by" in eval_config["power_analysis"] and eval_config["power_analysis"]["group_by"]:
-                eval_dict["group_by"] = eval_config["power_analysis"]["group_by"].split(',')
+        if len(eval_config) != 0:
+            if RankingConstants.GROUP_BY in eval_config[RankingConstants.POWER_ANALYSIS] and \
+                    eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.GROUP_BY]:
+                eval_dict[RankingConstants.GROUP_BY] = eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.GROUP_BY].split(',')
             else:
-                eval_dict["group_by"] = group_key
-            eval_dict["metrics"] = eval_config["power_analysis"]["metrics"].replace(" ","").split(',')
-            eval_dict["variance_list"] = []
-            for m in eval_dict["metrics"]:
-                eval_dict["variance_list"].append("old_" + m)
-                eval_dict["variance_list"].append("new_" + m)
-            eval_dict["power"] = float(eval_config["power_analysis"]["power"])
-            eval_dict["pvalue"] = float(eval_config["power_analysis"]["pvalue"])
+                eval_dict[RankingConstants.GROUP_BY] = group_key
+
+            if RankingConstants.METRICS in eval_config[RankingConstants.POWER_ANALYSIS] and \
+                    eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.METRICS]:
+                eval_dict[RankingConstants.METRICS] = eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.METRICS].replace(" ","").split(',')
+            else:
+                eval_dict[RankingConstants.METRICS] = []
+
+            eval_dict[RankingConstants.VARIANCE_LIST] = []
+            for m in eval_dict[RankingConstants.METRICS]:
+                eval_dict[RankingConstants.VARIANCE_LIST].append("old_" + m)
+                eval_dict[RankingConstants.VARIANCE_LIST].append("new_" + m)
+            eval_dict[RankingConstants.POWER] = float(eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.POWER])
+            eval_dict[RankingConstants.PVALUE] = float(eval_config[RankingConstants.POWER_ANALYSIS][RankingConstants.PVALUE])
         else:
-            eval_dict["group_by"] = group_key
-            eval_dict["metrics"] = []
-            eval_dict["variance_list"] = []
-            eval_dict["power"] = None
-            eval_dict["pvalue"] = RankingConstants.TTEST_PVALUE_THRESHOLD
+            eval_dict[RankingConstants.GROUP_BY] = group_key
+            eval_dict[RankingConstants.METRICS] = []
+            eval_dict[RankingConstants.VARIANCE_LIST] = []
+            eval_dict[RankingConstants.POWER] = None
+            eval_dict[RankingConstants.PVALUE] = RankingConstants.TTEST_PVALUE_THRESHOLD
         return eval_dict
 
     def evaluate(
@@ -107,8 +135,6 @@ class RankingModel(RelevanceModel):
         logs_dir: Optional[str] = None,
         logging_frequency: int = 25,
         compute_intermediate_stats: bool = True,
-        evaluation_config_path: str = "ml4ir/base/config/default_evaluation_config.yaml",
-        file_io: FileIO = None,
     ):
         """
         Evaluate the RelevanceModel
@@ -149,9 +175,9 @@ class RankingModel(RelevanceModel):
 
         Override this method to implement your own evaluation metrics.
         """
-        group_key = list(set(self.feature_config.get_group_metrics_keys("node_name")))
-        eval_dict = self.prepare_eval_config(file_io, evaluation_config_path, group_key)
-        group_key = eval_dict["group_by"]
+        group_keys = list(set(self.feature_config.get_group_metrics_keys("node_name")))
+        eval_dict = self.prepare_eval_config(self.eval_config, group_keys)
+        group_keys = eval_dict["group_by"]
 
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
@@ -198,8 +224,8 @@ class RankingModel(RelevanceModel):
             clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
             # Statistical analysis pre-processing
-            if len(group_key) > 0 and len(eval_dict["metrics"]) > 0:
-                statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key,
+            if len(group_keys) > 0 and len(eval_dict["metrics"]) > 0:
+                statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_keys,
                                                    eval_dict["variance_list"])
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
@@ -232,7 +258,7 @@ class RankingModel(RelevanceModel):
 
         # performing power analysis
         group_metrics_stat_sig = run_power_analysis(eval_dict["metrics"],
-                                                    group_key,
+                                                    group_keys,
                                                     group_metric_running_variance_params,
                                                     eval_dict["power"],
                                                     eval_dict["pvalue"])
@@ -261,13 +287,37 @@ class RankingModel(RelevanceModel):
                 metrics_helper.summarize_grouped_stats, axis=1
             )
             # Add power analysis to group metric dataframe
-            if len(group_key) > 0 and len(eval_dict["metrics"]) > 0:
+            if len(group_keys) > 0 and len(eval_dict["metrics"]) > 0:
                 df_group_metrics = df_group_metrics.reset_index()
-                if len(group_key) > 1:
-                    df_group_metrics[str(group_key)] = df_group_metrics[group_key].apply(tuple, axis=1)
-                df_group_metrics[str(group_key)] = df_group_metrics[group_key]
-                df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_key), how='left').drop(
-                    columns=[str(group_key)])
+                if len(group_keys) > 1:
+                    df_group_metrics[str(group_keys)] = df_group_metrics[group_keys].apply(tuple, axis=1)
+                df_group_metrics[str(group_keys)] = df_group_metrics[group_keys]
+                df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_keys), how='left').drop(
+                    columns=[str(group_keys)])
+
+            # Writing stat sig. groupwise results per metric
+            for metric in eval_dict[RankingConstants.METRICS]:
+                stat_sig_df, improved, degraded, stat_sig_groupwise_metric_improv = metrics_helper.generate_stat_sig_based_metrics(
+                    df_group_metrics, metric, group_keys)
+                improv_count = len(improved)
+                degrad_count = len(degraded)
+                if logs_dir:
+                    self.file_io.write_df(
+                        stat_sig_df,
+                        outfile=os.path.join(
+                            logs_dir, "stat_sig_" + metric + '_' + RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                    )
+                # Compute group metrics summary
+                stat_sig_df_summary = stat_sig_df.describe(include='all')
+                self.logger.info(
+                    "\nComputing group metrics for {} stat. sig. lifts using keys: {}".format(metric,
+                                                                                              group_keys))
+                self.logger.info("\nGroupwise Metrics for {}: \n{}".format(metric, stat_sig_df_summary.T))
+                metrics_dict["stat_sig_" + metric + "_improved_groups"] = improv_count
+                metrics_dict["stat_sig_" + metric + "_degraded_groups"] = degrad_count
+                metrics_dict["stat_sig_" + metric + "_group_improv_perc"] = stat_sig_groupwise_metric_improv
+                metrics_dict["stat_sig_improved_" + metric + "_groups"] = sorted(improved)
+                metrics_dict["stat_sig_degraded_" + metric + "_groups"] = sorted(degraded)
 
             if logs_dir:
                 self.file_io.write_df(

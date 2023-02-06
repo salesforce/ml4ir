@@ -148,9 +148,10 @@ class RelevancePipeline(object):
         self.pre_processing_step()
         self.logger.info("Pre-processing step done.")
 
-        # Read/Parse feature_config and model_config YAML
+        # Read/Parse feature_config, model_config and evaluation_config YAML
         feature_config_dict = self.file_io.read_yaml(args.feature_config)
         model_config_dict = self.file_io.read_yaml(args.model_config)
+        eval_config_dict = self.file_io.read_yaml(args.evaluation_config)
 
         # Customize feature_config and model_config dictionaries
         if "feature_config_custom" in args:
@@ -162,6 +163,7 @@ class RelevancePipeline(object):
                 base_dict=model_config_dict,
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
+        self.eval_config = eval_config_dict
 
         # Define a FeatureConfig object from loaded YAML
         self.feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -423,6 +425,7 @@ class RelevancePipeline(object):
             output_name=self.args.output_name,
             file_io=self.local_io,
             logger=self.logger,
+            eval_config=self.eval_config,
         )
 
         return relevance_model
@@ -579,8 +582,6 @@ class RelevancePipeline(object):
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
                     compute_intermediate_stats=self.args.compute_intermediate_stats,
-                    evaluation_config_path=self.args.evaluation_config,
-                    file_io=self.file_io,
                 )
 
             if self.args.execution_mode in {

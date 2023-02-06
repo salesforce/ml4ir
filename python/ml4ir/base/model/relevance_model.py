@@ -30,6 +30,7 @@ class RelevanceModelConstants:
     METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
     CHECKPOINT_FNAME = "checkpoint.tf"
+    DEFAULT_EVAL_CONFIG_YAML = "ml4ir/base/config/default_evaluation_config.yaml"
 
 
 class RelevanceModel:
@@ -47,6 +48,7 @@ class RelevanceModel:
             compile_keras_model: bool = False,
             output_name: str = "score",
             logger=None,
+            eval_config: dict = {}
     ):
         """
         Constructor to instantiate a RelevanceModel that can be used for
@@ -83,6 +85,8 @@ class RelevanceModel:
             Name of the output tensorflow node that captures the score
         logger : `Logger`, optional
             logging handler for status messages
+        eval_config : dict
+            A dictionary of Evaluation config parameters
         """
         self.feature_config: FeatureConfig = feature_config
         self.logger: Logger = logger
@@ -90,6 +94,11 @@ class RelevanceModel:
         self.scorer = scorer
         self.tfrecord_type = tfrecord_type
         self.file_io = file_io
+
+        if len(eval_config) == 0:
+            self.eval_config = self.file_io.read_yaml(RelevanceModelConstants.DEFAULT_EVAL_CONFIG_YAML)
+        else:
+            self.eval_config = eval_config
 
         if scorer:
             self.max_sequence_size = scorer.interaction_model.max_sequence_size
