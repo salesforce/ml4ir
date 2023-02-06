@@ -9,31 +9,21 @@ from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
 
 # Constants
-GOLD_METRICS = {'query_count': 1500.0,
-                'old_ACR': 1.656,
-                'new_ACR': 2.410,
-                'old_MRR': 0.783,
-                'new_MRR': 0.597,
-                'old_name_match_failure_all_mean': 0.061,
-                'old_name_match_failure_any_mean': 0.111,
-                'old_name_match_failure_all_rank_mean': 0.142,
-                'old_name_match_failure_any_rank_mean': 0.351,
-                'old_name_match_failure_any_count_mean': 0.165,
-                'old_name_match_failure_any_fraction_mean': 0.087,
-                'new_name_match_failure_all_mean': 0.086,
-                'new_name_match_failure_any_mean': 0.218,
-                'new_name_match_failure_all_rank_mean': 0.196,
-                'new_name_match_failure_any_rank_mean': 0.788,
-                'new_name_match_failure_any_count_mean': 0.342,
-                'new_name_match_failure_any_fraction_mean': 0.153,
-                'perc_improv_ACR': -45.513,
-                'perc_improv_MRR': -23.760,
-                'perc_improv_name_match_failure_all_mean': -40.217,
-                'perc_improv_name_match_failure_any_mean': -96.407,
-                'perc_improv_name_match_failure_all_rank_mean': -38.028,
-                'perc_improv_name_match_failure_any_rank_mean': -124.478,
-                'perc_improv_name_match_failure_any_count_mean': -106.854,
-                'perc_improv_name_match_failure_any_fraction_mean': -75.401}
+GOLD_METRICS = {
+    "query_count": 1500.0,
+    "old_ACR": 1.656,
+    "new_ACR": 2.410,
+    "old_MRR": 0.783,
+    "new_MRR": 0.597,
+    "old_AuxAllFailure": 0.061,
+    "old_AuxIntrinsicFailure": 0.154,
+    "new_AuxAllFailure": 0.086,
+    "new_AuxIntrinsicFailure": 0.153,
+    "perc_improv_ACR": -45.513,
+    "perc_improv_MRR": -23.760,
+    "perc_improv_AuxAllFailure": -40.217,
+    "perc_improv_AuxIntrinsicFailure": 0.235
+}
 
 
 class RankingModelTest(RankingTestBase):
@@ -96,6 +86,7 @@ class RankingModelTest(RankingTestBase):
             assert gold_metric_name in metrics
             assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
 
+
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
 
@@ -106,4 +97,3 @@ class RankingMetricsTest(unittest.TestCase):
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           1.5)
-
