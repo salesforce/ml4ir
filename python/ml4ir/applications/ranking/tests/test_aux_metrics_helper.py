@@ -225,13 +225,67 @@ class ComputeAuxMetricsTest(unittest.TestCase):
             }),
             check_less_precise=True)
 
-    # def test_compute_rank_match_failure(self):
-    #     """Test computation of RankMatchFailure metric"""
-    #     with self.subTest(""):
-    #         assert(0.,
-    #                compute_rank_match_failure(aux_label_values=pd.Series([]),
-    #                                           ranks=pd.Series([]),
-    #                                           click_rank=5))
+    def test_compute_rank_match_failure(self):
+        """Test computation of RankMatchFailure metric"""
+        with self.subTest("Click at rank 1 should get RankMF 0."):
+            self.assertEqual(0.,
+                             compute_rank_match_failure(aux_label_values=pd.Series([]),
+                                                        ranks=pd.Series([]),
+                                                        click_rank=1))
+
+        with self.subTest("Only records above clicked record should be used"):
+            self.assertEqual(compute_rank_match_failure(aux_label_values=pd.Series([2, 0, 4, 5, 6]),
+                                                        ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                        click_rank=3),
+                             compute_rank_match_failure(aux_label_values=pd.Series([2, 0, 4]),
+                                                        ranks=pd.Series([1, 2, 3]),
+                                                        click_rank=3))
+
+        with self.subTest("Records are being sorted correctly before computation"):
+            self.assertEqual(compute_rank_match_failure(aux_label_values=pd.Series([2, 3, 0, 5, 6]),
+                                                        ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                        click_rank=5),
+                             compute_rank_match_failure(aux_label_values=pd.Series([5, 6, 0, 3, 2]),
+                                                        ranks=pd.Series([4, 5, 3, 2, 1]),
+                                                        click_rank=5))
+
+        with self.subTest(
+                "If all records above clicked record have aux values greater than 0, then score should be 0."):
+            self.assertEqual(0.,
+                             compute_rank_match_failure(aux_label_values=pd.Series([1, 1.1, 1.2, 0., 0.]),
+                                                        ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                        click_rank=3))
+
+        with self.subTest("Same ordering of aux scores with different values produce same scores"):
+            self.assertEqual(compute_rank_match_failure(aux_label_values=pd.Series([5, 0, 3, 4, 1]),
+                                                        ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                        click_rank=5),
+                             compute_rank_match_failure(aux_label_values=pd.Series([10, 0, 6, 8, 2]),
+                                                        ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                        click_rank=5))
+
+        with self.subTest("Dense method should be used to resolve ties in ranking aux labels"):
+            self.assertTrue(np.isclose(0.090804,
+                                       compute_rank_match_failure(aux_label_values=pd.Series([2, 0, 2, 4, 5]),
+                                                                  ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                                  click_rank=5)))
+
+        with self.subTest("Case: All records above and including clicked record do not have a aux label score"):
+            self.assertIsNone(compute_rank_match_failure(aux_label_values=pd.Series([0, 0, 0, 0, 0]),
+                                                         ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                         click_rank=5))
+
+        with self.subTest("Case: All records above clicked record do not have aux label scores"):
+            self.assertTrue(np.isclose(0.61314719,
+                                       compute_rank_match_failure(aux_label_values=pd.Series([0, 0, 0, 0, 1.5]),
+                                                                  ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                                  click_rank=5)))
+
+        with self.subTest("Case: Some records above clicked record do not have aux label scores"):
+            self.assertTrue(np.isclose(0.49810195,
+                                       compute_rank_match_failure(aux_label_values=pd.Series([0, 0, 3.5, 0, 1.5]),
+                                                                  ranks=pd.Series([1, 2, 3, 4, 5]),
+                                                                  click_rank=5)))
 
     @patch("ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper.compute_aux_metrics")
     def test_compute_aux_metrics_on_query_group(self, mock_compute_aux_metrics):

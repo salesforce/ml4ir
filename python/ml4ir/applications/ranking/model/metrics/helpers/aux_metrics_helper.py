@@ -165,7 +165,7 @@ def compute_rank_match_failure(aux_label_values: pd.Series,
     # Convert aux label values to ranks
     aux_label_ranks = rankdata(aux_label_values, method="dense")
 
-    # Convert aux ranks ranks to relevance grades (higher is better) for use with NDCG metric
+    # Convert aux ranks to relevance grades (higher is better) for use with NDCG metric
     aux_label_relevance_grades = (1. / aux_label_ranks)
     # If the aux label value is 0, then assign a relevance grade of 0 to account for variable sequence length
     aux_label_relevance_grades = aux_label_relevance_grades * (aux_label_values > 0.).astype(int)
