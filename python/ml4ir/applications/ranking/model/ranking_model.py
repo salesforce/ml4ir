@@ -221,12 +221,12 @@ class RankingModel(RelevanceModel):
 
             # Accumulating statistics for t-test calculation using 1/rank
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records["new_rank"]
+            clicked_records[RankingConstants.NEW_MRR] = 1.0 / clicked_records[RankingConstants.NEW_RANK]
             clicked_records[RankingConstants.OLD_MRR] = 1.0 / clicked_records[self.feature_config.get_rank("node_name")]
             # Statistical analysis pre-processing
-            if len(group_keys) > 0 and len(eval_dict["metrics"]) > 0:
+            if len(group_keys) > 0 and len(eval_dict[RankingConstants.METRICS]) > 0:
                 statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_keys,
-                                                   eval_dict["variance_list"])
+                                                   eval_dict[RankingConstants.VARIANCE_LIST])
 
             diff = (clicked_records[RankingConstants.NEW_MRR] - clicked_records[RankingConstants.OLD_MRR]).to_list()
             agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
@@ -253,15 +253,15 @@ class RankingModel(RelevanceModel):
 
         # performing click rank distribution t-test
         t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
-                                             eval_dict["pvalue"], self.logger)
+                                             eval_dict[RankingConstants.PVALUE], self.logger)
         metrics_dict.update(t_test_metrics_dict)
 
         # performing power analysis
-        group_metrics_stat_sig = run_power_analysis(eval_dict["metrics"],
+        group_metrics_stat_sig = run_power_analysis(eval_dict[RankingConstants.METRICS],
                                                     group_keys,
                                                     group_metric_running_variance_params,
-                                                    eval_dict["power"],
-                                                    eval_dict["pvalue"])
+                                                    eval_dict[RankingConstants.POWER],
+                                                    eval_dict[RankingConstants.PVALUE])
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
@@ -287,7 +287,7 @@ class RankingModel(RelevanceModel):
                 metrics_helper.summarize_grouped_stats, axis=1
             )
             # Add power analysis to group metric dataframe
-            if len(group_keys) > 0 and len(eval_dict["metrics"]) > 0:
+            if len(group_keys) > 0 and len(eval_dict[RankingConstants.METRICS]) > 0:
                 df_group_metrics = df_group_metrics.reset_index()
                 if len(group_keys) > 1:
                     df_group_metrics[str(group_keys)] = df_group_metrics[group_keys].apply(tuple, axis=1)
@@ -330,7 +330,7 @@ class RankingModel(RelevanceModel):
             df_group_metrics_summary = df_group_metrics.describe()
             self.logger.info(
                 "Computing group metrics using keys: {}".format(
-                    eval_dict["group_by"]
+                    eval_dict[RankingConstants.GROUP_BY]
                 )
             )
             self.logger.info("Groupwise Metrics: \n{}".format(

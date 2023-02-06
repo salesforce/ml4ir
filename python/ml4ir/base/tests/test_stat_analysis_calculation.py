@@ -118,70 +118,63 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
                 else:
                     assert row[1][stat_check] == False
 
-    def test_1(self):
-        n = 100
-        batch_size = 10
-        batch_a = np.random.randn(n) + 1
-        batch_b = np.random.randn(n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+    def test_t_test_calculations(self):
+        with self.subTest("Sample size=100, batch size=10, increment=1"):
+            n = 100
+            batch_size = 10
+            batch_a = np.random.randn(n) + 1
+            batch_b = np.random.randn(n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_2(self):
-        n = 10
-        batch_size = 3
-        batch_a = np.random.randn(n) + 20
-        batch_b = np.random.randn(n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=10, batch size=3, increment=20"):
+            n = 10
+            batch_size = 3
+            batch_a = np.random.randn(n) + 20
+            batch_b = np.random.randn(n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_3(self):
-        n = 50
-        batch_size = 5
-        batch_a = np.random.randn(n)
-        batch_b = np.array(batch_a)
-        batch_b[0] += 1
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=50, batch size=5, one element off"):
+            n = 50
+            batch_size = 5
+            batch_a = np.random.randn(n)
+            batch_b = np.array(batch_a)
+            batch_b[0] += 1
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_4(self):
-        n = 50
-        batch_size = 5
-        batch_a = np.random.randn(n)
-        batch_b = np.array(batch_a)
-        batch_b[0] += 1
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=100, batch size=5, two random batches"):
+            n = 100
+            batch_size = 5
+            batch_a = np.random.randn(n)
+            batch_b = np.random.randn(n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_5(self):
-        n = 100
-        batch_size = 5
-        batch_a = np.random.randn(n)
-        batch_b = np.random.randn(n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=100, batch size=5, batch~(exponential)"):
+            n = 100
+            batch_size = 5
+            batch_a = np.random.exponential(scale=0.1, size=n)
+            batch_b = np.random.exponential(scale=0.5, size=n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_6(self):
-        n = 100
-        batch_size = 5
-        batch_a = np.random.exponential(scale=0.1, size=n)
-        batch_b = np.random.exponential(scale=0.5, size=n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=10, batch size=2, batch~(exponential)"):
+            n = 10
+            batch_size = 2
+            batch_a = np.random.exponential(scale=1.0, size=n)
+            batch_b = np.random.exponential(scale=0.2, size=n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_7(self):
-        n = 10
-        batch_size = 2
-        batch_a = np.random.exponential(scale=1.0, size=n)
-        batch_b = np.random.exponential(scale=0.2, size=n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=50, batch size=10, batch1,2~(exponential)"):
+            n = 50
+            batch_size = 10
+            batch_a = np.random.exponential(scale=0.1, size=n)
+            batch_b = np.random.exponential(scale=0.1, size=n)
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
-    def test_8(self):
-        n = 50
-        batch_size = 10
-        batch_a = np.random.exponential(scale=0.1, size=n)
-        batch_b = np.random.exponential(scale=0.1, size=n)
-        self.t_test_calculation(batch_a, batch_b, batch_size)
-
-    def test_9(self):
-        n = 50
-        batch_size = 5
-        batch_a = np.random.exponential(scale=0.1, size=n)
-        batch_b = batch_a + 0.001
-        self.t_test_calculation(batch_a, batch_b, batch_size)
+        with self.subTest("Sample size=50, batch size=5, uniforma and exp dist."):
+            n = 50
+            batch_size = 5
+            batch_a = np.random.exponential(scale=0.1, size=n)
+            batch_b = batch_a + 0.001
+            self.t_test_calculation(batch_a, batch_b, batch_size)
 
 
 if __name__ == "__main__":
