@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.16] - 2023-02-06
+
+### Added
+- RankMatchFailure metric for evaluation
+- Statistical significance and power analysis utilities
+- Stat analysis for groupwise metrics in Ranking
+
 ## [0.1.15] - 2023-01-20
 
 ### Changed
@@ -18,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AutoDAGNetwork which allows for building flexible connected architectures using config files
 - SetRankEncoder keras Layer to train SetRank like Ranking models
 - Support for using tf-models-official deep learning garden library
-- RankMatchFailure metric for validation and test
+- RankMatchFailure metric for validation
 
 ## [0.1.14] - 2022-11-18
 
