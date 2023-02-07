@@ -19,6 +19,7 @@ from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_t
 
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
+pd.set_option("display.width", None)
 
 
 class RankingConstants:
