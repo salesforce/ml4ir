@@ -9,6 +9,13 @@ from ml4ir.base.stats.t_test import StreamVariance
 DELTA = 1e-20
 
 
+class RankingConstants:
+    NEW_RANK = "new_rank"
+    NEW_MRR = "new_MRR"
+    OLD_MRR = "old_MRR"
+    TTEST_PVALUE_THRESHOLD = 0.1
+
+
 def get_grouped_stats(
         df: pd.DataFrame,
         query_key_col: str,
@@ -166,60 +173,7 @@ def summarize_grouped_stats(df_grouped):
     return df_grouped_metrics
 
 
-def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_running_variance_params, running_stats_df, group_key):
-    """
-    This function updates the intermediate mean and variance with each batch.
-    ----------
-    metric_list: list
-            Lists of metrics for variance computation in batches
-
-    group_metric_running_variance_params: dict
-        A dictionary containing intermediate mean, variance and sample size for each org for each metric
-
-    running_stats_df: pandas dataframe
-        The incoming batch of mean and variance
-
-    group_key: list
-        The list of keys used to aggregate the metrics
-    """
-    running_stats_df = running_stats_df.fillna(0)
-    for row in running_stats_df.iterrows():
-        group_name = row[1][str(group_key)]
-        if group_name in group_metric_running_variance_params:
-            group_params = group_metric_running_variance_params[group_name]
-        else:
-            group_params = {}
-            group_metric_running_variance_params[group_name] = group_params
-
-        for metric in metric_list:
-            new_mean = row[1][str([metric, "mean"])]
-            new_var = row[1][str([metric, "var"])]
-            new_count = row[1][str([metric, "count"])]
-
-            if metric in group_params:
-                sv = group_metric_running_variance_params[group_name][metric]
-            else:
-                sv = StreamVariance()
-
-            # update the current mean and variance
-            # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-            combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
-            combine_count = sv.count + new_count
-            if (sv.count + new_count - 1) != 0:
-                combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
-                          ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
-            else:
-                combine_var = 0
-
-            sv.count = combine_count
-            sv.mean = combined_mean
-            sv.var = combine_var
-
-            group_params[metric] = sv
-            group_metric_running_variance_params[group_name] = group_params
-
-
-def generate_stat_sig_based_metrics(df, metric, group_keys):
+def generate_stat_sig_based_metrics(df, metric, group_keys, metrics_dict):
     """
     compute stats for stat sig groups
 
@@ -239,4 +193,23 @@ def generate_stat_sig_based_metrics(df, metric, group_keys):
         stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_new - stat_sig_groupwise_metric_old) /  stat_sig_groupwise_metric_old * 100
     else:
         stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_old - stat_sig_groupwise_metric_new) / stat_sig_groupwise_metric_old * 100
-    return stat_sig_df, list(improved[group_keys].values.squeeze()), list(improved[degraded].values.squeeze()), stat_sig_groupwise_metric_improv
+
+    improv_count = len(improved)
+    degrad_count = len(degraded)
+    metrics_dict["stat_sig_" + metric + "_improved_groups"] = improv_count
+    metrics_dict["stat_sig_" + metric + "_degraded_groups"] = degrad_count
+    metrics_dict["stat_sig_" + metric + "_group_improv_perc"] = stat_sig_groupwise_metric_improv
+    metrics_dict["stat_sig_improved_" + metric + "_groups"] = sorted(improved[group_keys].values.squeeze().tolist())
+    metrics_dict["stat_sig_degraded_" + metric + "_groups"] = sorted(degraded[group_keys].values.squeeze().tolist())
+    return stat_sig_df
+
+
+def join_stat_sig_signal(df_group_metrics, group_keys, metrics, group_metrics_stat_sig):
+    if len(group_keys) > 0 and len(metrics) > 0:
+        df_group_metrics = df_group_metrics.reset_index()
+        if len(group_keys) > 1:
+            df_group_metrics[str(group_keys)] = df_group_metrics[group_keys].apply(tuple, axis=1)
+        df_group_metrics[str(group_keys)] = df_group_metrics[group_keys]
+        df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_keys), how='left').drop(
+            columns=[str(group_keys)])
+    return df_group_metrics

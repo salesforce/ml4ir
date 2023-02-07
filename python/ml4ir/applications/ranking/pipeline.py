@@ -10,7 +10,9 @@ from ml4ir.applications.ranking.config.keys import ScoringTypeKey
 from ml4ir.applications.ranking.config.parse_args import get_args
 from ml4ir.applications.ranking.model.losses import loss_factory
 from ml4ir.applications.ranking.model.metrics import metrics_factory
-from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel, RankingConstants
+from ml4ir.applications.ranking.model.ranking_model import RankingModel, LinearRankingModel
+from ml4ir.applications.ranking.model.metrics.helpers.metrics_helper import RankingConstants
+
 from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.pipeline import RelevancePipeline
 from scipy import stats

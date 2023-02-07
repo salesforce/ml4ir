@@ -5,13 +5,39 @@ import pandas as pd
 from scipy import stats
 from scipy.optimize import brenth
 from pingouin import power_ttest
-
+from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 
 class StreamVariance:
     # Wrapper class to store mean, variance in batches
     count = 0
     mean = 0
     var = 0
+
+
+def update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2, baseline_rank_name):
+    """
+
+    Parameters
+    ----------
+    clicked_records: Dataframe
+        prediction dataframe with only clicked records
+    agg_count, agg_mean, agg_M2: float
+        running aggregates used to compute count, mean, variance
+    baseline_rank_name: str
+        column name of the baseline rank
+
+    Returns
+    -------
+    Updated version of: agg_count, agg_mean, agg_M2
+
+    """
+    clicked_records[metrics_helper.RankingConstants.NEW_MRR] = 1.0 / clicked_records[
+        metrics_helper.RankingConstants.NEW_RANK]
+    clicked_records[metrics_helper.RankingConstants.OLD_MRR] = 1.0 / clicked_records[baseline_rank_name]
+    diff = (clicked_records[metrics_helper.RankingConstants.NEW_MRR] - clicked_records[
+        metrics_helper.RankingConstants.OLD_MRR]).to_list()
+    agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+    return agg_count, agg_mean, agg_M2
 
 
 def perform_click_rank_dist_paired_t_test(mean, variance, n):
@@ -133,7 +159,7 @@ def run_ttest(mean, variance, n, ttest_pvalue_threshold, logger):
     return t_test_metrics_dict
 
 
-def statistical_analysis_preprocessing(clicked_records, group_metric_running_variance_params, group_key, variance_list):
+def compute_batched_stats(clicked_records, group_metric_running_variance_params, group_key, variance_list):
     """
     This function computes the mean, variance of the provided metrics for the current batch of prediction.
     ----------
@@ -172,7 +198,7 @@ def statistical_analysis_preprocessing(clicked_records, group_metric_running_var
     running_stats_df = pd.concat(metric_stat_df_list, axis=1)
     running_stats_df = running_stats_df.loc[:, ~running_stats_df.columns.duplicated()]
     # Accumulating batch-wise mean and variances
-    compute_groupwise_running_variance_for_metrics(variance_list, group_metric_running_variance_params, running_stats_df, group_key)
+    return compute_groupwise_running_variance_for_metrics(variance_list, group_metric_running_variance_params, running_stats_df, group_key)
 
 
 def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_running_variance_params, running_stats_df, group_key):
@@ -226,6 +252,7 @@ def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_run
 
             group_params[metric] = sv
             group_metric_running_variance_params[group_name] = group_params
+    return group_metric_running_variance_params
 
 
 def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pvalue):
@@ -291,7 +318,6 @@ def run_power_analysis(metric_list, group_key, group_metric_running_variance_par
     group_metrics_stat_sig: Pandas dataframe
         A dataframe listing each org and for each metric whether the change is statistically significant
     """
-    # 00D5f000004anzC, 00DE0000000ZFsW, 00DG0000000CLUj
     group_metrics_stat_sig = []
     for group in group_metric_running_variance_params:
         group_entry = {}
