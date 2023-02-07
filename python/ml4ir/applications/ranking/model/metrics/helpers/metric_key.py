@@ -7,6 +7,7 @@ class Metric:
     # Failure metrics on aux label
     AUX_ALL_FAILURE = "AuxAllFailure"
     AUX_INTRINSIC_FAILURE = "AuxIntrinsicFailure"  # 1 - NDCG on the aux_label
+    AUX_RANKMF = "AuxRankMF"  # RankMatchFailure computed on the auxiliary label
 
     @staticmethod
     def get_positive_metrics():
@@ -21,5 +22,6 @@ class Metric:
         return [
             Metric.ACR,
             Metric.AUX_ALL_FAILURE,
-            Metric.AUX_INTRINSIC_FAILURE
+            Metric.AUX_INTRINSIC_FAILURE,
+            Metric.AUX_RANKMF
         ]
