@@ -136,7 +136,7 @@ class RankingModel(RelevanceModel):
         aux_label = self.feature_config.get_aux_label()
         if aux_label and (
                 aux_label.get("node_name") or (
-                aux_label["name"] not in eval_dict[EvalConfigConstants.GROUP_BY]])):
+                aux_label["name"] not in eval_dict[EvalConfigConstants.GROUP_BY])):
             evaluation_features += [aux_label]
 
         additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
