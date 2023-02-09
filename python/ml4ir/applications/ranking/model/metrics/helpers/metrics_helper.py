@@ -4,7 +4,6 @@ import pandas as pd
 
 from ml4ir.applications.ranking.model.metrics.helpers.metric_key import Metric
 from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import compute_aux_metrics_on_query_group
-from ml4ir.base.stats.t_test import StreamVariance
 
 DELTA = 1e-20
 
@@ -183,6 +182,15 @@ def generate_stat_sig_based_metrics(df, metric, group_keys, metrics_dict):
         prediction dataframe of aggregated results by group keys
     metric : str
         The metric used to filter the stat sig groups
+    group_keys: List
+        List of keys used to group and aggregate results
+    metrics_dict: Dictionary
+        Logging dictionary
+
+    Returns
+    ----------
+    stat_sig_df: Dataframe
+        A dataframe of only stat sig groups (Improving and degrading).
     """
     stat_sig_df = df.loc[df["is_" + metric + "_lift_stat_sig"] == True]
     improved = stat_sig_df.loc[stat_sig_df["perc_improv_"+metric] >= 0]
@@ -205,11 +213,31 @@ def generate_stat_sig_based_metrics(df, metric, group_keys, metrics_dict):
 
 
 def join_stat_sig_signal(df_group_metrics, group_keys, metrics, group_metrics_stat_sig):
+    """
+    Parameters
+    ----------
+    df_group_metrics: Dataframe
+        The dataframe holding the groupwise metrics
+    group_keys: List
+        List of keys used to group and aggregate metrics
+    metrics: List
+        List of metrics requiring power analysis
+    group_metrics_stat_sig: Dataframe
+        Dataframe containing whether the required metric is stat. sig. for each group
+
+
+    Returns
+    -------
+    df_group_metrics: Dataframe
+        Joined dataframe with the stat. sig. signals
+
+    """
     if len(group_keys) > 0 and len(metrics) > 0:
         df_group_metrics = df_group_metrics.reset_index()
         if len(group_keys) > 1:
             df_group_metrics[str(group_keys)] = df_group_metrics[group_keys].apply(tuple, axis=1)
-        df_group_metrics[str(group_keys)] = df_group_metrics[group_keys]
+        else:
+            df_group_metrics[str(group_keys)] = df_group_metrics[group_keys]
         df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_keys), how='left').drop(
             columns=[str(group_keys)])
     return df_group_metrics
