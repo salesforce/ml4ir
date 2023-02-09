@@ -167,7 +167,7 @@ def compute_batched_stats(clicked_records, group_metric_running_variance_params,
             A batch of the model's prediction
 
     group_metric_running_variance_params: dict
-        A dictionary containing intermediate mean, variance and sample size for each org for each metric
+        A dictionary containing intermediate mean, variance and sample size for each group for each metric
 
      group_key: list
         The list of keys used to aggregate the metrics
@@ -209,7 +209,7 @@ def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_run
             Lists of metrics for variance computation in batches
 
     group_metric_running_variance_params: dict
-        A dictionary containing intermediate mean, variance and sample size for each org for each metric
+        A dictionary containing intermediate mean, variance and sample size for each group for each metric
 
     running_stats_df: pandas dataframe
         The incoming batch of mean and variance
@@ -305,7 +305,7 @@ def run_power_analysis(metric_list, group_key, group_metric_running_variance_par
         The list of keys used to aggregate the metrics
 
     group_metric_running_variance_params: dict
-        A dictionary containing mean, variance and sample size for each org for each metric
+        A dictionary containing mean, variance and sample size for each group for each metric
 
     statistical_power: float
         Required statistical power
@@ -316,7 +316,7 @@ def run_power_analysis(metric_list, group_key, group_metric_running_variance_par
     Returns
     -------
     group_metrics_stat_sig: Pandas dataframe
-        A dataframe listing each org and for each metric whether the change is statistically significant
+        A dataframe listing each group and for each metric whether the change is statistically significant
     """
     group_metrics_stat_sig = []
     for group in group_metric_running_variance_params:
