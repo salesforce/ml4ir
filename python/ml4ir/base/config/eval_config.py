@@ -16,8 +16,8 @@ def prepare_eval_config_for_ranking(eval_config, group_key):
 
     Parameters
     ----------
-    evaluation_config_path : str
-        Path of the yaml file
+    evaluation_config_path : Dict
+        dictionary for eval config parameters
     group_key : List[str]
         list of keys used in metric aggregation
 
