@@ -12,7 +12,7 @@ mypy
 tensorflow==2.9.3
 numpy==1.21.6
 pandas==1.2.1
-scipy==1.7
+scipy==1.7.3
 
 # transformers
 tf-models-official==2.9.2
