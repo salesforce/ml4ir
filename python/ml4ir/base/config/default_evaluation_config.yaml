@@ -2,6 +2,14 @@ power_analysis:
   # a list of input feature names (comma separated) used to aggregate results. Leave blank if not used
   group_by:
   # a list of metrics (comma separated) to be used in the stat. analysis
-  metrics:
+  metrics: MRR, AuxRankMF
   power: 0.9
   pvalue: 0.1
+
+
+#Example
+#power_analysis:
+#  group_by: domain
+#  metrics: MRR, AuxRankMF
+#  power: 0.9
+#  pvalue: 0.1
