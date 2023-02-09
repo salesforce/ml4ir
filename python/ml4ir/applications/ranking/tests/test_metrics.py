@@ -2,11 +2,13 @@ import os
 import numpy as np
 import unittest
 
+import pandas as pd
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
+from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 
 # Constants
 GOLD_METRICS = {
@@ -97,3 +99,45 @@ class RankingMetricsTest(unittest.TestCase):
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           1.5)
+
+
+class MetricHelperTest(unittest.TestCase):
+    """Unit tests for metric helper functions"""
+
+    def test_generate_stat_sig_based_metrics(self):
+        metric = "m1"
+        group_keys = ["col1", "col2"]
+        metrics_dict = {}
+        r1 = {
+            "is_" + metric + "_lift_stat_sig": True,
+            "perc_improv_" + metric: 7.14,
+            "old_" + metric: 0.7,
+            "new_" + metric: 0.75,
+            str(group_keys): "('g1', 'g2')"
+        }
+        r2 = {
+            "is_" + metric + "_lift_stat_sig": True,
+            "perc_improv_" + metric: -7.14,
+            "old_" + metric: 0.75,
+            "new_" + metric: 0.7,
+            str(group_keys): "('g3', 'g4')"
+        }
+        r3 = {
+            "is_" + metric + "_lift_stat_sig": False,
+            "perc_improv_" + metric: -7.14,
+            "old_" + metric: 0.75,
+            "new_" + metric: 0.7,
+            str(group_keys): "('g5', 'g6')"
+        }
+        r4 = {
+            "is_" + metric + "_lift_stat_sig": False,
+            "perc_improv_" + metric: 1.4,
+            "old_" + metric: 0.7,
+            "new_" + metric: 0.71,
+            str(group_keys): "('g7', 'g8')"
+        }
+        df = pd.DataFrame([r1, r2, r3, r4])
+        stat_sig = metrics_helper.generate_stat_sig_based_metrics(df, metric, str(group_keys), metrics_dict)
+        assert metrics_dict["stat_sig_" + metric + "_improved_groups"] == 1
+        assert metrics_dict["stat_sig_" + metric + "_degraded_groups"] == 1
+        assert metrics_dict["stat_sig_" + metric + "_group_improv_perc"] == 0
