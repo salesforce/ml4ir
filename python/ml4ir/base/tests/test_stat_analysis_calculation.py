@@ -87,7 +87,7 @@ class TestStatisticalAnalysisCalculation(unittest.TestCase):
         group_metric_running_variance_params = {}
         var_metric_list = ['old_metric1', 'new_metric1', 'old_metric2', 'new_metric2']
         metric_list = ["metric1", "metric2"]
-        group_key = ["organization_id"]
+        group_key = ["group_id"]
         self.prepare_variance_stream_test(n, batch_size, var_metric_list, group_key,
                                           group_metric_running_variance_params, a_bucket, b_bucket)
         for i in range(len(var_metric_list)):
