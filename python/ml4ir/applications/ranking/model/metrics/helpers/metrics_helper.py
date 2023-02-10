@@ -8,6 +8,13 @@ from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import 
 DELTA = 1e-20
 
 
+class RankingConstants:
+    NEW_RANK = "new_rank"
+    NEW_MRR = "new_MRR"
+    OLD_MRR = "old_MRR"
+    TTEST_PVALUE_THRESHOLD = 0.1
+
+
 def get_grouped_stats(
         df: pd.DataFrame,
         query_key_col: str,
@@ -163,3 +170,74 @@ def summarize_grouped_stats(df_grouped):
         processed_metric_name_suffixes.add(metric_name_suffix)
 
     return df_grouped_metrics
+
+
+def generate_stat_sig_based_metrics(df, metric, group_keys, metrics_dict):
+    """
+    compute stats for stat sig groups
+
+    Parameters
+    ----------
+    df : `pd.DataFrame` object
+        prediction dataframe of aggregated results by group keys
+    metric : str
+        The metric used to filter the stat sig groups
+    group_keys: List
+        List of keys used to group and aggregate results
+    metrics_dict: Dictionary
+        Logging dictionary
+
+    Returns
+    ----------
+    stat_sig_df: Dataframe
+        A dataframe of only stat sig groups (Improving and degrading).
+    """
+    stat_sig_df = df.loc[df["is_" + metric + "_lift_stat_sig"] == True]
+    improved = stat_sig_df.loc[stat_sig_df["perc_improv_"+metric] >= 0]
+    degraded = stat_sig_df.loc[stat_sig_df["perc_improv_"+metric] < 0]
+    stat_sig_groupwise_metric_old = stat_sig_df["old_"+metric].mean()
+    stat_sig_groupwise_metric_new = stat_sig_df["new_" + metric].mean()
+    if metric in Metric.get_positive_metrics():
+        stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_new - stat_sig_groupwise_metric_old) /  stat_sig_groupwise_metric_old * 100
+    else:
+        stat_sig_groupwise_metric_improv = (stat_sig_groupwise_metric_old - stat_sig_groupwise_metric_new) / stat_sig_groupwise_metric_old * 100
+
+    improv_count = len(improved)
+    degrad_count = len(degraded)
+    metrics_dict["stat_sig_" + metric + "_improved_groups"] = improv_count
+    metrics_dict["stat_sig_" + metric + "_degraded_groups"] = degrad_count
+    metrics_dict["stat_sig_" + metric + "_group_improv_perc"] = stat_sig_groupwise_metric_improv
+    metrics_dict["stat_sig_improved_" + metric + "_groups"] = sorted(improved[group_keys].values.squeeze().tolist())
+    metrics_dict["stat_sig_degraded_" + metric + "_groups"] = sorted(degraded[group_keys].values.squeeze().tolist())
+    return stat_sig_df
+
+
+def join_stat_sig_signal(df_group_metrics, group_keys, metrics, group_metrics_stat_sig):
+    """
+    Parameters
+    ----------
+    df_group_metrics: Dataframe
+        The dataframe holding the groupwise metrics
+    group_keys: List
+        List of keys used to group and aggregate metrics
+    metrics: List
+        List of metrics requiring power analysis
+    group_metrics_stat_sig: Dataframe
+        Dataframe containing whether the required metric is stat. sig. for each group
+
+
+    Returns
+    -------
+    df_group_metrics: Dataframe
+        Joined dataframe with the stat. sig. signals
+
+    """
+    if len(group_keys) > 0 and len(metrics) > 0:
+        df_group_metrics = df_group_metrics.reset_index()
+        if len(group_keys) > 1:
+            df_group_metrics[str(group_keys)] = df_group_metrics[group_keys].apply(tuple, axis=1)
+        else:
+            df_group_metrics[str(group_keys)] = df_group_metrics[group_keys]
+        df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_keys), how='left').drop(
+            columns=[str(group_keys)])
+    return df_group_metrics

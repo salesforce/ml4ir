@@ -14,27 +14,24 @@ from ml4ir.base.model.architectures.dnn import DNNLayerKey
 from ml4ir.applications.ranking.model.scoring import prediction_helper
 from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
-from ml4ir.applications.ranking.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, t_test_log_results
-
+from ml4ir.base.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
+    t_test_log_results, run_ttest, power_ttest, compute_groupwise_running_variance_for_metrics, run_power_analysis, \
+    StreamVariance, compute_batched_stats, update_running_stats_for_t_test
+from ml4ir.base.config.eval_config import EvalConfigConstants, prepare_eval_config_for_ranking
 
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
 pd.set_option("display.width", None)
 
 
-class RankingConstants:
-    NEW_RANK = "new_rank"
-    TTEST_PVALUE_THRESHOLD = 0.1
-
-
 class RankingModel(RelevanceModel):
     def predict(
-        self,
-        test_dataset: data.TFRecordDataset,
-        inference_signature: str = "serving_default",
-        additional_features: dict = {},
-        logs_dir: Optional[str] = None,
-        logging_frequency: int = 25,
+            self,
+            test_dataset: data.TFRecordDataset,
+            inference_signature: str = "serving_default",
+            additional_features: dict = {},
+            logs_dir: Optional[str] = None,
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -61,7 +58,7 @@ class RankingModel(RelevanceModel):
             pandas DataFrame containing the predictions on the test dataset
             made with the `RelevanceModel`
         """
-        additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
+        additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
         return super().predict(
             test_dataset=test_dataset,
@@ -70,35 +67,6 @@ class RankingModel(RelevanceModel):
             logs_dir=logs_dir,
             logging_frequency=logging_frequency,
         )
-
-
-    def run_ttest(self, mean, variance, n, ttest_pvalue_threshold):
-        """
-        Compute the paired t-test statistic and its p-value given mean, standard deviation and sample count
-        Parameters
-        ----------
-        mean: float
-            The mean of the rank differences for the entire dataset
-        variance: float
-            The variance of the rank differences for the entire dataset
-        n: int
-            The number of samples in the entire dataset
-        ttest_pvalue_threshold: float
-            P-value threshold for student t-test
-
-        Returns
-        -------
-        t_test_metrics_dict: Dictionary
-            A dictionary with the t-test metrics recorded.
-        """
-        t_test_stat, pvalue = perform_click_rank_dist_paired_t_test(mean, variance, n)
-        t_test_log_results(t_test_stat, pvalue, ttest_pvalue_threshold, self.logger)
-
-        # Log t-test statistic and p-value
-        t_test_metrics_dict = {'Rank distribution t-test statistic': t_test_stat,
-                               'Rank distribution t-test pvalue': pvalue,
-                               'Rank distribution t-test difference is statistically significant': pvalue < ttest_pvalue_threshold}
-        return t_test_metrics_dict
 
     def evaluate(
         self,
@@ -149,6 +117,10 @@ class RankingModel(RelevanceModel):
 
         Override this method to implement your own evaluation metrics.
         """
+        group_keys = list(set(self.feature_config.get_group_metrics_keys("node_name")))
+        eval_dict = prepare_eval_config_for_ranking(self.eval_config, group_keys)
+        group_keys = eval_dict[EvalConfigConstants.GROUP_BY]
+
         metrics_dict = dict()
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
         evaluation_features = (
@@ -164,10 +136,10 @@ class RankingModel(RelevanceModel):
         aux_label = self.feature_config.get_aux_label()
         if aux_label and (
                 aux_label.get("node_name") or (
-                aux_label["name"] not in self.feature_config.get_group_metrics_keys("node_name"))):
+                aux_label["name"] not in eval_dict[EvalConfigConstants.GROUP_BY])):
             evaluation_features += [aux_label]
 
-        additional_features[RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
+        additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
         _predict_fn = get_predict_fn(
             model=self.model,
@@ -185,21 +157,26 @@ class RankingModel(RelevanceModel):
         df_grouped_stats = pd.DataFrame()
         # defining variables to compute running mean and variance for t-test computations
         agg_count, agg_mean, agg_M2 = 0, 0, 0
+        group_metric_running_variance_params = {}
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
             # Accumulating statistics for t-test calculation using 1/rank
             clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            diff = (1/clicked_records[RankingConstants.NEW_RANK] - 1/clicked_records[
-                self.feature_config.get_rank("node_name")]).to_list()
-            agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
+            agg_count, agg_mean, agg_M2 = update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2,
+                                                                          self.feature_config.get_rank("node_name"))
+            # Statistical analysis pre-processing
+            if len(group_keys) > 0 and len(eval_dict[EvalConfigConstants.METRICS]) > 0:
+                # compute stats(mean, variance, count) of the current batch and update the overall stats.
+                group_metric_running_variance_params = compute_batched_stats(clicked_records, group_metric_running_variance_params, group_keys,
+                                                   eval_dict[EvalConfigConstants.VARIANCE_LIST])
 
             df_batch_grouped_stats = metrics_helper.get_grouped_stats(
                 df=predictions_df,
                 query_key_col=self.feature_config.get_query_key("node_name"),
                 label_col=self.feature_config.get_label("node_name"),
                 old_rank_col=self.feature_config.get_rank("node_name"),
-                new_rank_col=RankingConstants.NEW_RANK,
+                new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
                 group_keys=list(set(self.feature_config.get_group_metrics_keys(
                     "node_name"))),
                 aux_label=self.feature_config.get_aux_label("node_name"),
@@ -215,8 +192,16 @@ class RankingModel(RelevanceModel):
                     "Finished evaluating {} batches".format(batch_count))
 
         # performing click rank distribution t-test
-        t_test_metrics_dict = self.run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count, RankingConstants.TTEST_PVALUE_THRESHOLD)
+        t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
+                                             eval_dict[EvalConfigConstants.PVALUE], self.logger)
         metrics_dict.update(t_test_metrics_dict)
+
+        # performing power analysis
+        group_metrics_stat_sig = run_power_analysis(eval_dict[EvalConfigConstants.METRICS],
+                                                    group_keys,
+                                                    group_metric_running_variance_params,
+                                                    eval_dict[EvalConfigConstants.POWER],
+                                                    eval_dict[EvalConfigConstants.PVALUE])
 
         # Compute overall metrics
         df_overall_metrics = metrics_helper.summarize_grouped_stats(
@@ -241,6 +226,28 @@ class RankingModel(RelevanceModel):
             df_group_metrics = df_grouped_stats.apply(
                 metrics_helper.summarize_grouped_stats, axis=1
             )
+
+            # Add power analysis to group metric dataframe
+            df_group_metrics = metrics_helper.join_stat_sig_signal(df_group_metrics, group_keys,
+                                                                   eval_dict[EvalConfigConstants.METRICS],
+                                                                   group_metrics_stat_sig)
+
+            # Writing stat sig. groupwise results per metric
+            for metric in eval_dict[EvalConfigConstants.METRICS]:
+                stat_sig_df = metrics_helper.generate_stat_sig_based_metrics(df_group_metrics, metric, group_keys, metrics_dict)
+                if logs_dir:
+                    self.file_io.write_df(
+                        stat_sig_df,
+                        outfile=os.path.join(
+                            logs_dir, "stat_sig_" + metric + '_' + RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                    )
+                # Compute group metrics summary
+                stat_sig_df_summary = stat_sig_df.describe(include='all')
+                self.logger.info(
+                    "\nComputing group metrics for {} stat. sig. lifts using keys: {}".format(metric,
+                                                                                              group_keys))
+                self.logger.info("\nGroupwise Metrics for {}: \n{}".format(metric, stat_sig_df_summary.T))
+
             if logs_dir:
                 self.file_io.write_df(
                     df_group_metrics,
@@ -252,7 +259,7 @@ class RankingModel(RelevanceModel):
             df_group_metrics_summary = df_group_metrics.describe()
             self.logger.info(
                 "Computing group metrics using keys: {}".format(
-                    self.feature_config.get_group_metrics_keys("node_name")
+                    eval_dict[EvalConfigConstants.GROUP_BY]
                 )
             )
             self.logger.info("Groupwise Metrics: \n{}".format(
