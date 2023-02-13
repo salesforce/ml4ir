@@ -89,7 +89,7 @@ def get_grouped_stats(
 
     if group_keys:
         # group df by group_keys
-        df_grouped_batch = df.groupby(group_keys)
+        df_grouped_batch = df_clicked.groupby(group_keys)
 
         # get the power analysis metrics column names
         primary_power_metrics = set(power_analysis_metrics) & set(
