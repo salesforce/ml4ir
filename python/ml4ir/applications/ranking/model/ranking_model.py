@@ -236,6 +236,17 @@ class RankingModel(RelevanceModel):
                         outfile=os.path.join(
                             logs_dir, "stat_sig_" + metric + '_' + RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
                     )
+                    self.logger.info("\nNumber of stat sig {} improved groups = {}".format(metric,
+                                     str(metrics_dict["stat_sig_" + metric + "_improved_groups"])))
+                    self.logger.info("\nNumber of stat_sig {} degraded groups = {}".format(metric,
+                                     str(metrics_dict["stat_sig_" + metric + "_degraded_groups"])))
+                    self.logger.info("\nStat. sig. {} group perc improvement = {}".format(metric,
+                                     str(metrics_dict["stat_sig_" + metric + "_group_improv_perc"])))
+                    self.logger.info("\nStat. sig. improved {} groups = {}".format(metric,
+                                     str(metrics_dict["stat_sig_improved_" + metric + "_groups"])))
+                    self.logger.info("\nStat. sig. degraded {} groups = {}".format(metric,
+                                     str(metrics_dict["stat_sig_degraded_" + metric + "_groups"])))
+
                 # Compute group metrics summary
                 stat_sig_df_summary = stat_sig_df.describe(include='all')
                 self.logger.info(
