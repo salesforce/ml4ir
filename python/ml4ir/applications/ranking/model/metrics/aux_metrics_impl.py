@@ -5,8 +5,6 @@ from tensorflow.keras import metrics
 
 class RankMatchFailure(metrics.Mean):
     """Custom metric implementation to compute the ranking performance on an auxiliary label"""
-    def __init__(self, name):
-        self.name = name
 
     def update_state(self, y_true, y_pred, y_aux, y_true_ranks, mask, sample_weight=None):
         """
@@ -162,7 +160,6 @@ class RankMatchFailure(metrics.Mean):
         idxs = tf.expand_dims(tf.range(tf.shape(ranks)[0]), -1)
         y_true_click_ranks = tf.expand_dims(tf.cast(y_true_click_ranks, tf.int32), axis=-1)
         y_true_click_idx = tf.where(y_true_click_ranks > 0, y_true_click_ranks - 1, 0)
-
         clicked_records_score = tf.gather_nd(
             y_aux, indices=tf.concat([idxs, y_true_click_idx], axis=-1)
         )
