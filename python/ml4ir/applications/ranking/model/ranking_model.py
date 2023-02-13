@@ -161,14 +161,6 @@ class RankingModel(RelevanceModel):
         for predictions_dict in test_dataset.map(_predict_fn).take(-1):
             predictions_df = pd.DataFrame(predictions_dict)
 
-            # Accumulating statistics for t-test calculation using 1/rank
-            #clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            # Statistical analysis pre-processing
-            # if len(group_keys) > 0 and len(eval_dict[EvalConfigConstants.METRICS]) > 0:
-            #     # compute stats(mean, variance, count) of the current batch and update the overall stats.
-            #     group_metric_running_variance_params = compute_batched_stats(clicked_records, group_metric_running_variance_params, group_keys,
-            #                                        eval_dict[EvalConfigConstants.VARIANCE_LIST])
-
             df_batch_grouped_stats, group_metric_running_variance_params, predictions_df = metrics_helper.get_grouped_stats(
                                                 df=predictions_df,
                                                 query_key_col=self.feature_config.get_query_key("node_name"),

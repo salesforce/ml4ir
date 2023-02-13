@@ -79,14 +79,15 @@ def get_grouped_stats(
                 group_keys=group_keys,
             ))
 
-    if group_keys:
-        # Adding ranking metrics: MRR, ACR
-        df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[old_rank_col]
-        df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[new_rank_col]
-        df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[RankingConstants.OLD_MRR]
-        df_clicked[RankingConstants.OLD_ACR] = df_clicked[old_rank_col]
-        df_clicked[RankingConstants.NEW_ACR] = df_clicked[new_rank_col]
+    # Adding ranking metrics: MRR, ACR
+    df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[old_rank_col]
+    df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[new_rank_col]
+    df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[
+        RankingConstants.OLD_MRR]
+    df_clicked[RankingConstants.OLD_ACR] = df_clicked[old_rank_col]
+    df_clicked[RankingConstants.NEW_ACR] = df_clicked[new_rank_col]
 
+    if group_keys:
         # group df by group_keys
         df_grouped_batch = df.groupby(group_keys)
 

@@ -172,7 +172,6 @@ def compute_batched_stats(df, group_metric_running_variance_params, group_key, v
 
     # computing batch-wise mean and variance per metric
     metric_stat_df_list = []
-    #df.set_index(group_key)
     grouped = df.groupby(group_key)
     for metric in variance_list:
         grouped_agg = grouped.apply(lambda x: x[metric].mean())

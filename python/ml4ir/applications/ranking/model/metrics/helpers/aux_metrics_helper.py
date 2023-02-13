@@ -228,8 +228,7 @@ def compute_aux_metrics_on_query_group(query_group: pd.DataFrame,
                                        old_rank_col: str,
                                        new_rank_col: str,
                                        aux_label: str,
-                                       group_keys: List[str] = [],
-                                       ):
+                                       group_keys: List[str] = []):
     """
     Compute the old and new auxiliary ranking metrics for a given
     query on a list of aux labels
