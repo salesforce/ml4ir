@@ -162,25 +162,28 @@ class RankingModel(RelevanceModel):
             predictions_df = pd.DataFrame(predictions_dict)
 
             # Accumulating statistics for t-test calculation using 1/rank
-            clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
-            agg_count, agg_mean, agg_M2 = update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2,
-                                                                          self.feature_config.get_rank("node_name"))
+            #clicked_records = predictions_df[predictions_df[self.feature_config.get_label("node_name")] == 1.0]
             # Statistical analysis pre-processing
-            if len(group_keys) > 0 and len(eval_dict[EvalConfigConstants.METRICS]) > 0:
-                # compute stats(mean, variance, count) of the current batch and update the overall stats.
-                group_metric_running_variance_params = compute_batched_stats(clicked_records, group_metric_running_variance_params, group_keys,
-                                                   eval_dict[EvalConfigConstants.VARIANCE_LIST])
+            # if len(group_keys) > 0 and len(eval_dict[EvalConfigConstants.METRICS]) > 0:
+            #     # compute stats(mean, variance, count) of the current batch and update the overall stats.
+            #     group_metric_running_variance_params = compute_batched_stats(clicked_records, group_metric_running_variance_params, group_keys,
+            #                                        eval_dict[EvalConfigConstants.VARIANCE_LIST])
 
-            df_batch_grouped_stats = metrics_helper.get_grouped_stats(
-                df=predictions_df,
-                query_key_col=self.feature_config.get_query_key("node_name"),
-                label_col=self.feature_config.get_label("node_name"),
-                old_rank_col=self.feature_config.get_rank("node_name"),
-                new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
-                group_keys=list(set(self.feature_config.get_group_metrics_keys(
-                    "node_name"))),
-                aux_label=self.feature_config.get_aux_label("node_name"),
-            )
+            df_batch_grouped_stats, group_metric_running_variance_params, predictions_df = metrics_helper.get_grouped_stats(
+                                                df=predictions_df,
+                                                query_key_col=self.feature_config.get_query_key("node_name"),
+                                                label_col=self.feature_config.get_label("node_name"),
+                                                old_rank_col=self.feature_config.get_rank("node_name"),
+                                                new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
+                                                group_keys=list(set(self.feature_config.get_group_metrics_keys(
+                                                    "node_name"))),
+                                                aux_label=self.feature_config.get_aux_label("node_name"),
+                                                power_analysis_metrics=eval_dict[EvalConfigConstants.VARIANCE_LIST],
+                                                group_metric_running_variance_params=group_metric_running_variance_params,
+                                            )
+
+            agg_count, agg_mean, agg_M2 = update_running_stats_for_t_test(predictions_df, agg_count, agg_mean, agg_M2)
+
             if df_grouped_stats.empty:
                 df_grouped_stats = df_batch_grouped_stats
             else:

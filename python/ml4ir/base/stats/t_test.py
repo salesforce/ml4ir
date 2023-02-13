@@ -14,7 +14,7 @@ class StreamVariance:
     var = 0
 
 
-def update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2, baseline_rank_name):
+def update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2):
     """
 
     Parameters
@@ -23,19 +23,13 @@ def update_running_stats_for_t_test(clicked_records, agg_count, agg_mean, agg_M2
         prediction dataframe with only clicked records
     agg_count, agg_mean, agg_M2: float
         running aggregates used to compute count, mean, variance
-    baseline_rank_name: str
-        column name of the baseline rank
 
     Returns
     -------
     Updated version of: agg_count, agg_mean, agg_M2
 
     """
-    clicked_records[metrics_helper.RankingConstants.NEW_MRR] = 1.0 / clicked_records[
-        metrics_helper.RankingConstants.NEW_RANK]
-    clicked_records[metrics_helper.RankingConstants.OLD_MRR] = 1.0 / clicked_records[baseline_rank_name]
-    diff = (clicked_records[metrics_helper.RankingConstants.NEW_MRR] - clicked_records[
-        metrics_helper.RankingConstants.OLD_MRR]).to_list()
+    diff = (clicked_records[metrics_helper.RankingConstants.DIFF_MRR]).to_list()
     agg_count, agg_mean, agg_M2 = compute_stats_from_stream(diff, agg_count, agg_mean, agg_M2)
     return agg_count, agg_mean, agg_M2
 
@@ -159,11 +153,11 @@ def run_ttest(mean, variance, n, ttest_pvalue_threshold, logger):
     return t_test_metrics_dict
 
 
-def compute_batched_stats(clicked_records, group_metric_running_variance_params, group_key, variance_list):
+def compute_batched_stats(df, group_metric_running_variance_params, group_key, variance_list):
     """
     This function computes the mean, variance of the provided metrics for the current batch of prediction.
     ----------
-    clicked_records: dataframe
+    df: dataframe
             A batch of the model's prediction
 
     group_metric_running_variance_params: dict
@@ -178,8 +172,8 @@ def compute_batched_stats(clicked_records, group_metric_running_variance_params,
 
     # computing batch-wise mean and variance per metric
     metric_stat_df_list = []
-    clicked_records.set_index(group_key)
-    grouped = clicked_records.groupby(group_key)
+    #df.set_index(group_key)
+    grouped = df.groupby(group_key)
     for metric in variance_list:
         grouped_agg = grouped.apply(lambda x: x[metric].mean())
         mean_df = pd.DataFrame(

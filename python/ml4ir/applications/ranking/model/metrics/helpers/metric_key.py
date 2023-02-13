@@ -25,3 +25,29 @@ class Metric:
             Metric.AUX_INTRINSIC_FAILURE,
             Metric.AUX_RANKMF
         ]
+
+    @staticmethod
+    def get_all_metrics():
+        return[
+            Metric.MRR,
+            Metric.ACR,
+            Metric.AUX_ALL_FAILURE,
+            Metric.AUX_INTRINSIC_FAILURE,
+            Metric.AUX_RANKMF]
+
+    @staticmethod
+    def get_all_aux_metrics():
+        return [
+            Metric.AUX_ALL_FAILURE,
+            Metric.AUX_INTRINSIC_FAILURE,
+            Metric.AUX_RANKMF]
+
+    @staticmethod
+    def get_metrics_with_new_old_prefix(metric_list):
+        new_old_list = []
+        for m in metric_list:
+            new_old_list.append("old_"+m)
+            new_old_list.append("new_" + m)
+        return new_old_list
+
+

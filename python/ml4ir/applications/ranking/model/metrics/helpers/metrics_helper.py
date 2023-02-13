@@ -4,6 +4,7 @@ import pandas as pd
 
 from ml4ir.applications.ranking.model.metrics.helpers.metric_key import Metric
 from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import compute_aux_metrics_on_query_group
+from ml4ir.base.stats.t_test import compute_batched_stats
 
 DELTA = 1e-20
 
@@ -12,6 +13,9 @@ class RankingConstants:
     NEW_RANK = "new_rank"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
+    DIFF_MRR = "diff_MRR"
+    OLD_ACR = "old_ACR"
+    NEW_ACR = "new_ACR"
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
@@ -23,6 +27,8 @@ def get_grouped_stats(
         new_rank_col: str,
         group_keys: List[str] = [],
         aux_label: str = None,
+        power_analysis_metrics: List[str] = [],
+        group_metric_running_variance_params = {},
 ):
     """
     Compute query stats that can be used to compute ranking metrics
@@ -44,6 +50,10 @@ def get_grouped_stats(
         List of features used to compute groupwise metrics
     aux_label : str, optional
         Feature used to compute auxiliary failure metrics
+    power_analysis_metrics: list
+        List of metrics require power analysis computation
+    group_metric_running_variance_params: dict
+        A dictionary containing intermediate mean, variance and sample size for each group for each metric
 
     Returns
     -------
@@ -66,12 +76,29 @@ def get_grouped_stats(
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
                 aux_label=aux_label,
-                group_keys=group_keys
+                group_keys=group_keys,
             ))
 
     if group_keys:
-        df_grouped_batch = df_clicked.groupby(group_keys)
+        # Adding ranking metrics: MRR, ACR
+        df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[old_rank_col]
+        df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[new_rank_col]
+        df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[RankingConstants.OLD_MRR]
+        df_clicked[RankingConstants.OLD_ACR] = df_clicked[old_rank_col]
+        df_clicked[RankingConstants.NEW_ACR] = df_clicked[new_rank_col]
 
+        # group df by group_keys
+        df_grouped_batch = df.groupby(group_keys)
+
+        # get the power analysis metrics column names
+        primary_power_metrics = set(power_analysis_metrics) & set(
+            Metric.get_metrics_with_new_old_prefix(Metric.get_all_metrics())) - set(
+            Metric.get_metrics_with_new_old_prefix(Metric.get_all_aux_metrics()))
+
+        if len(primary_power_metrics) != 0:
+            # compute & accumulate batched mean, variance, count
+            group_metric_running_variance_params = compute_batched_stats(df_clicked, group_metric_running_variance_params,
+                                                                            group_keys, primary_power_metrics)
         # Compute groupwise stats
         query_count = df_grouped_batch[query_key_col].nunique()
         sum_old_rank = df_grouped_batch.apply(lambda x: x[old_rank_col].sum())
@@ -81,6 +108,13 @@ def get_grouped_stats(
 
         # Aggregate aux label metrics by group keys
         if aux_label:
+            aux_power_metrics = set(power_analysis_metrics) & set(
+                Metric.get_metrics_with_new_old_prefix(Metric.get_all_aux_metrics()))
+            if len(aux_power_metrics) != 0:
+                group_metric_running_variance_params = compute_batched_stats(df_aux_metrics,
+                                                                             group_metric_running_variance_params,
+                                                                             group_keys, aux_power_metrics)
+
             df_aux_metrics = df_aux_metrics.groupby(group_keys).sum()
     else:
         # Compute overall stats if group keys are not specified
@@ -106,7 +140,7 @@ def get_grouped_stats(
 
     df_stats = pd.concat([df_label_stats, df_aux_metrics], axis=1)
 
-    return df_stats
+    return df_stats, group_metric_running_variance_params, df_clicked
 
 
 def summarize_grouped_stats(df_grouped):
@@ -241,3 +275,4 @@ def join_stat_sig_signal(df_group_metrics, group_keys, metrics, group_metrics_st
         df_group_metrics = pd.merge(df_group_metrics, group_metrics_stat_sig, on=str(group_keys), how='left').drop(
             columns=[str(group_keys)])
     return df_group_metrics
+
