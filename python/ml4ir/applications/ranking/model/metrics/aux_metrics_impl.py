@@ -5,6 +5,8 @@ from tensorflow.keras import metrics
 
 class RankMatchFailure(metrics.Mean):
     """Custom metric implementation to compute the ranking performance on an auxiliary label"""
+    def __init__(self, name):
+        self.name = name
 
     def update_state(self, y_true, y_pred, y_aux, y_true_ranks, mask, sample_weight=None):
         """
@@ -34,9 +36,9 @@ class RankMatchFailure(metrics.Mean):
         `y_aux` is a mandatory argument as this is a metric designed for the auxiliary label
         """
         query_scores = self._compute_query_scores(y_true, y_pred, y_aux, y_true_ranks, mask)
+        inf_masked_query_scores = self._mask_inf_scores(query_scores)
         sample_weight = self._get_sample_weight(query_scores)
-
-        return super().update_state(query_scores, sample_weight)
+        return super().update_state(inf_masked_query_scores, sample_weight)
 
     def _compute_query_scores(self, y_true, y_pred, y_aux, y_true_ranks, mask):
         """
@@ -103,6 +105,21 @@ class RankMatchFailure(metrics.Mean):
         )
 
     @staticmethod
+    def _mask_inf_scores(query_scores):
+        masked = tf.where(
+            query_scores == tf.constant(-np.inf, dtype=tf.float32),
+            tf.constant(0, dtype=tf.float32),
+            query_scores,
+        )
+        masked = tf.where(
+            masked == tf.constant(np.inf, dtype=tf.float32),
+            tf.constant(0, dtype=tf.float32),
+            masked,
+        )
+        return masked
+
+
+    @staticmethod
     def _compute_match_failure(ranks, y_true_click_ranks, y_pred_click_ranks, y_aux):
         """
         Compute match failure metric for a batch
@@ -145,6 +162,7 @@ class RankMatchFailure(metrics.Mean):
         idxs = tf.expand_dims(tf.range(tf.shape(ranks)[0]), -1)
         y_true_click_ranks = tf.expand_dims(tf.cast(y_true_click_ranks, tf.int32), axis=-1)
         y_true_click_idx = tf.where(y_true_click_ranks > 0, y_true_click_ranks - 1, 0)
+
         clicked_records_score = tf.gather_nd(
             y_aux, indices=tf.concat([idxs, y_true_click_idx], axis=-1)
         )
