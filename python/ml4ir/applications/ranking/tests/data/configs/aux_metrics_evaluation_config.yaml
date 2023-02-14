@@ -1,0 +1,5 @@
+power_analysis:
+  group_by:
+  metrics: MRR, AuxIntrinsicFailure, AuxRankMF
+  power: 0.9
+  pvalue: 0.1
