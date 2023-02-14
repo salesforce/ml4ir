@@ -70,6 +70,25 @@ class RankMachFailureTest(tf.test.TestCase):
         )
         assert np.isclose(actual_dcg, expected_dcg).all()
 
+    def test__mask_inf_scores(self):
+        """Test masking inf, -inf for a given vector"""
+        tf_Vec = tf.constant(
+            [
+                0.0,
+                4.0,
+                np.inf,
+                np.inf,
+                -np.inf,
+                4.0,
+                -np.inf,
+            ]
+        )
+        expected_vec = tf.constant(
+            [0, 4, 0, 0, 0, 4, 0]
+        )
+        masked_vec = RankMatchFailure._mask_inf_scores(tf_Vec)
+        self.assertAllClose(masked_vec, expected_vec, atol=1e-04)
+
     def test__compute_match_failure(self):
         y_true_click_rank = tf.constant(
             [
