@@ -34,9 +34,9 @@ class RankMatchFailure(metrics.Mean):
         `y_aux` is a mandatory argument as this is a metric designed for the auxiliary label
         """
         query_scores = self._compute_query_scores(y_true, y_pred, y_aux, y_true_ranks, mask)
+        inf_masked_query_scores = self._mask_inf_scores(query_scores)
         sample_weight = self._get_sample_weight(query_scores)
-
-        return super().update_state(query_scores, sample_weight)
+        return super().update_state(inf_masked_query_scores, sample_weight)
 
     def _compute_query_scores(self, y_true, y_pred, y_aux, y_true_ranks, mask):
         """
@@ -101,6 +101,21 @@ class RankMatchFailure(metrics.Mean):
             tf.constant(0, dtype=tf.float32),
             mask,
         )
+
+    @staticmethod
+    def _mask_inf_scores(query_scores):
+        masked = tf.where(
+            query_scores == tf.constant(-np.inf, dtype=tf.float32),
+            tf.constant(0, dtype=tf.float32),
+            query_scores,
+        )
+        masked = tf.where(
+            masked == tf.constant(np.inf, dtype=tf.float32),
+            tf.constant(0, dtype=tf.float32),
+            masked,
+        )
+        return masked
+
 
     @staticmethod
     def _compute_match_failure(ranks, y_true_click_ranks, y_pred_click_ranks, y_aux):
