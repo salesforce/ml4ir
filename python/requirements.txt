@@ -17,7 +17,7 @@ pytest-html==3.1.1
 PyYAML==5.4.1
 
 # Pyspark for spark_io
-pyspark==3.0.1
+pyspark==3.2.2
 
 #calibration
 tensorflow-probability==0.15.0
