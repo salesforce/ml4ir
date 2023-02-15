@@ -34,13 +34,6 @@ GOLD_METRICS = {
 
 class RankingModelTest(RankingTestBase):
     """End-to-End tests for Ranking models"""
-    def setUp(self):
-        self.dir = pathlib.Path(__file__).parent
-        self.working_dir = TempDirectory()
-        self.log_dir = self.working_dir.makedir("logs")
-
-    def tearDown(self):
-        TempDirectory.cleanup_all()
 
     def train_ml4ir(self, data_dir, feature_config, model_config, eval_config, logs_dir, aux_loss):
         argv = [
@@ -101,7 +94,7 @@ class RankingModelTest(RankingTestBase):
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
             logger=self.logger,
         )
-        self.root_data_dir = "ml4ir/applications/ranking/tests/data"
+
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         data_format = "tfrecord"
 
@@ -140,7 +133,6 @@ class RankingModelTest(RankingTestBase):
         """
 
         # Test model training on TFRecord SequenceExample data
-        self.root_data_dir = "ml4ir/applications/ranking/tests/data"
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
@@ -155,6 +147,9 @@ class RankingModelTest(RankingTestBase):
 
     def test_stat_sig_evaluation(self):
         """testing ml4ir stat sig computation end-to-end"""
+        self.dir = pathlib.Path(__file__).parent
+        self.working_dir = TempDirectory()
+        self.log_dir = self.working_dir.makedir("logs")
 
         ROOT_DATA_DIR = "ml4ir/applications/ranking/tests/data"
         feature_config_path = os.path.join(
@@ -183,6 +178,7 @@ class RankingModelTest(RankingTestBase):
         }
         for metric in expected_metrics:
             np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
+        TempDirectory.cleanup_all()
 
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
