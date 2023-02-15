@@ -242,8 +242,8 @@ def generate_stat_sig_based_metrics(df, metric, group_keys, metrics_dict):
     metrics_dict["stat_sig_" + metric + "_improved_groups"] = improv_count
     metrics_dict["stat_sig_" + metric + "_degraded_groups"] = degrad_count
     metrics_dict["stat_sig_" + metric + "_group_improv_perc"] = stat_sig_groupwise_metric_improv
-    metrics_dict["stat_sig_improved_" + metric + "_groups"] = sorted(improved[group_keys].values.squeeze().tolist())
-    metrics_dict["stat_sig_degraded_" + metric + "_groups"] = sorted(degraded[group_keys].values.squeeze().tolist())
+    metrics_dict["stat_sig_improved_" + metric + "_groups"] = improved[group_keys].values.squeeze().tolist()
+    metrics_dict["stat_sig_degraded_" + metric + "_groups"] = degraded[group_keys].values.squeeze().tolist()
     return stat_sig_df
 
 

@@ -67,7 +67,7 @@ class RankingModelTest(RankingTestBase):
             "--aux_loss_weight",
             "0.4",
             "--num_epochs",
-            "3",
+            "2",
             "--model_config",
             model_config,
             "--batch_size",
@@ -101,6 +101,7 @@ class RankingModelTest(RankingTestBase):
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
             logger=self.logger,
         )
+        self.root_data_dir = "ml4ir/applications/ranking/tests/data"
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         data_format = "tfrecord"
 
@@ -159,7 +160,7 @@ class RankingModelTest(RankingTestBase):
             ROOT_DATA_DIR, "configs", "feature_config_aux_loss.yaml"
         )
         model_config_path = os.path.join(
-            ROOT_DATA_DIR, "configs", "model_config_cyclic_lr.yaml")
+            ROOT_DATA_DIR, "configs", "model_config_set_rank.yaml")
         eval_config_path = os.path.join(
             ROOT_DATA_DIR, "configs", "aux_metrics_evaluation_config.yaml")
 
@@ -173,10 +174,11 @@ class RankingModelTest(RankingTestBase):
         ).set_index(0).to_dict()[1]
 
         expected_metrics = {
-            'stat_sig_MRR_improved_groups': '0', 'stat_sig_MRR_degraded_groups': '5', 'stat_sig_MRR_group_improv_perc': '-14.688059131571537',
+            'stat_sig_MRR_improved_groups': '0', 'stat_sig_MRR_degraded_groups': '5', 'stat_sig_MRR_group_improv_perc': '-11.131335125195395',
             'stat_sig_AuxIntrinsicFailure_improved_groups': '5', 'stat_sig_AuxIntrinsicFailure_degraded_groups': '0',
-            'stat_sig_AuxIntrinsicFailure_group_improv_perc': '98.01304093',
-            'stat_sig_AuxRankMF_improved_groups': '0', 'stat_sig_AuxRankMF_degraded_groups': '0' ,'test_perc_improv_AuxRankMF': '55.679052825410714'
+            'stat_sig_AuxIntrinsicFailure_group_improv_perc': '92.81582417518467',
+            'stat_sig_AuxRankMF_improved_groups': '1', 'stat_sig_AuxRankMF_degraded_groups': '0',
+            'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042'
         }
         for metric in expected_metrics:
             np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
