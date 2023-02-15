@@ -200,13 +200,14 @@ class LayerGraph:
         path: str
             Path to the output visualization file
         """
-        vis_graph = pgv.AGraph(directed=True)
-        vis_graph.add_edges_from([
-            (str(from_node), str(to_node))
-            for from_node in self.nodes.values()
-            for to_node in from_node.dependent_children
-        ])
-        vis_graph.draw(path, prog="dot")
+        if pgv:
+            vis_graph = pgv.AGraph(directed=True)
+            vis_graph.add_edges_from([
+                (str(from_node), str(to_node))
+                for from_node in self.nodes.values()
+                for to_node in from_node.dependent_children
+            ])
+            vis_graph.draw(path, prog="dot")
 
 
 class AutoDagNetwork(keras.Model):
