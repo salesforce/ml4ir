@@ -140,6 +140,7 @@ class RankingModelTest(RankingTestBase):
         """
 
         # Test model training on TFRecord SequenceExample data
+        self.root_data_dir = "ml4ir/applications/ranking/tests/data"
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         feature_config_path = os.path.join(self.root_data_dir, "configs", self.feature_config_fname)
 
