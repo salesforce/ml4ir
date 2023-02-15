@@ -1,7 +1,10 @@
 import json
 import yaml
 import pandas as pd
-from pyspark.sql import SparkSession
+try:
+    from pyspark.sql import SparkSession
+except ImportError:
+    SparkSession = None
 from logging import Logger
 
 from ml4ir.base.io.file_io import FileIO
