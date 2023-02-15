@@ -2,7 +2,7 @@
 tensorflow==2.9.3
 numpy==1.21.6
 pandas==1.2.1
-scipy==1.7.3
+scipy==1.5.4
 
 # transformers
 # NOTE: There's a bug with the latest version - https://github.com/opencv/opencv-python/issues/772
@@ -24,6 +24,3 @@ tensorflow-probability==0.15.0
 
 # DAG visualization
 pygraphviz==1.7
-
-# statistics
-pingouin==0.5.3

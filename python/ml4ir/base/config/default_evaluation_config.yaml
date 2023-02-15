@@ -10,6 +10,6 @@ power_analysis:
 #Example
 #power_analysis:
 #  group_by: domain
-#  metrics: MRR, AuxRankMF
+#  metrics: MRR, AuxIntrinsicFailure, AuxRankMF
 #  power: 0.9
 #  pvalue: 0.1
