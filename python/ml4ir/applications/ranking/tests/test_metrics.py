@@ -146,6 +146,7 @@ class RankingModelTest(RankingTestBase):
             assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
 
     def test_stat_sig_evaluation(self):
+        # FIXME: Avoid end to end test
         """testing ml4ir stat sig computation end-to-end"""
         self.dir = pathlib.Path(__file__).parent
         self.working_dir = TempDirectory()
