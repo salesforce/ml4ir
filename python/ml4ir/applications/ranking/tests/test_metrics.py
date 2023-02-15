@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import unittest
+import pathlib
 
 import pandas as pd
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
@@ -9,6 +10,9 @@ from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
 from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
 from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
+from ml4ir.applications.ranking.config.parse_args import get_args
+from ml4ir.applications.ranking.pipeline import RankingPipeline
+from testfixtures import TempDirectory
 
 # Constants
 GOLD_METRICS = {
@@ -31,6 +35,58 @@ GOLD_METRICS = {
 class RankingModelTest(RankingTestBase):
     """End-to-End tests for Ranking models"""
 
+    def train_ml4ir(self, data_dir, feature_config, model_config, eval_config, logs_dir, aux_loss):
+        argv = [
+            "--data_dir",
+            data_dir,
+            "--feature_config",
+            feature_config,
+            "--evaluation_config",
+            eval_config,
+            "--loss_type",
+            "listwise",
+            "--scoring_type",
+            "listwise",
+            "--run_id",
+            "test_aux_loss",
+            "--data_format",
+            "tfrecord",
+            "--execution_mode",
+            "train_evaluate",
+            "--loss_key",
+            "softmax_cross_entropy",
+            "--aux_loss_key",
+            aux_loss,
+            "--aux_loss_weight",
+            "0.4",
+            "--num_epochs",
+            "2",
+            "--model_config",
+            model_config,
+            "--batch_size",
+            "32",
+            "--logs_dir",
+            logs_dir,
+            "--max_sequence_size",
+            "25",
+            "--train_pcent_split",
+            "0.7",
+            "--val_pcent_split",
+            "0.15",
+            "--test_pcent_split",
+            "0.15",
+            "--early_stopping_patience",
+            "25",
+            "--metrics_keys",
+            "MRR",
+            "categorical_accuracy",
+            "--monitor_metric",
+            "categorical_accuracy",
+        ]
+        args = get_args(argv)
+        rp = RankingPipeline(args=args)
+        rp.run()
+
     def run_default_pipeline(self, data_dir: str, data_format: str, feature_config_path: str):
         """Train a model with the default set of args"""
         feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -38,6 +94,7 @@ class RankingModelTest(RankingTestBase):
             feature_config_dict=self.file_io.read_yaml(feature_config_path),
             logger=self.logger,
         )
+
         data_dir = os.path.join(self.root_data_dir, "tfrecord")
         data_format = "tfrecord"
 
@@ -88,6 +145,41 @@ class RankingModelTest(RankingTestBase):
             assert gold_metric_name in metrics
             assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
 
+    def test_stat_sig_evaluation(self):
+        # FIXME: Avoid end to end test
+        """testing ml4ir stat sig computation end-to-end"""
+        self.dir = pathlib.Path(__file__).parent
+        self.working_dir = TempDirectory()
+        self.log_dir = self.working_dir.makedir("logs")
+
+        ROOT_DATA_DIR = "ml4ir/applications/ranking/tests/data"
+        feature_config_path = os.path.join(
+            ROOT_DATA_DIR, "configs", "feature_config_aux_loss.yaml"
+        )
+        model_config_path = os.path.join(
+            ROOT_DATA_DIR, "configs", "model_config_set_rank.yaml")
+        eval_config_path = os.path.join(
+            ROOT_DATA_DIR, "configs", "aux_metrics_evaluation_config.yaml")
+
+        data_dir = os.path.join(ROOT_DATA_DIR, "tfrecord")
+        aux_loss = "aux_one_hot_cross_entropy"
+        self.train_ml4ir(data_dir, feature_config_path,
+                    model_config_path, eval_config_path, self.log_dir, aux_loss)
+
+        results_dict = pd.read_csv(
+            os.path.join(self.log_dir, "test_aux_loss", "_SUCCESS"), header=None
+        ).set_index(0).to_dict()[1]
+
+        expected_metrics = {
+            'stat_sig_MRR_improved_groups': '0', 'stat_sig_MRR_degraded_groups': '5', 'stat_sig_MRR_group_improv_perc': '-11.131335125195395',
+            'stat_sig_AuxIntrinsicFailure_improved_groups': '5', 'stat_sig_AuxIntrinsicFailure_degraded_groups': '0',
+            'stat_sig_AuxIntrinsicFailure_group_improv_perc': '92.81582417518467',
+            'stat_sig_AuxRankMF_improved_groups': '1', 'stat_sig_AuxRankMF_degraded_groups': '0',
+            'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042'
+        }
+        for metric in expected_metrics:
+            np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
+        TempDirectory.cleanup_all()
 
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
