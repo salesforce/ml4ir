@@ -12,7 +12,7 @@ mypy
 tensorflow==2.9.3
 numpy==1.21.6
 pandas==1.2.1
-scipy==1.7.3
+scipy==1.5.4
 
 # transformers
 # NOTE: There's a bug with the latest verion - https://github.com/opencv/opencv-python/issues/772
