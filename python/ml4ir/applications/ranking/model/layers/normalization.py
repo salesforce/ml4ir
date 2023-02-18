@@ -9,18 +9,21 @@ class QueryNormalization(layers.Layer):
     DELTA = tf.constant(1e-15)
 
     def __init__(self,
+                 name="query_norm",
                  requires_mask: bool = True,
                  **kwargs):
         """
         Parameters
         ----------
+        name: str
+            Layer name
         requires_mask: bool
             Indicates if the layer requires a mask to be passed to it during forward pass
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
-        super().__init__(**kwargs)
-        self.requires_mask = True
+        super().__init__(name=name, **kwargs)
+        self.requires_mask = requires_mask
 
     def call(self, inputs, mask=None, training=None):
         """
