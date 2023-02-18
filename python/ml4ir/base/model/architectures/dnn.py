@@ -11,6 +11,7 @@ from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
 from ml4ir.base.model.architectures.utils import get_keras_layer_subclasses, instantiate_keras_layer
 from ml4ir.applications.ranking.model.layers.set_rank_encoder import SetRankEncoder
+from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization
 
 OOV = 1
 
@@ -22,6 +23,7 @@ class DNNLayerKey:
     TYPE = "type"
     NAME = "name"
     BATCH_NORMALIZATION = "batch_norm"
+    QUERY_NORMALIZATION = "query_norm"
     DROPOUT = "dropout"
     ACTIVATION = "activation"
     POSITIONAL_BIAS_HANDLER = "positional_bias_handler"
@@ -111,6 +113,8 @@ class DNN(keras.Model):
                 return layers.Activation(**layer_args)
             elif layer_type == DNNLayerKey.SET_RANK_ENCODER:
                 return SetRankEncoder(**layer_args)
+            elif layer_type == DNNLayerKey.QUERY_NORMALIZATION:
+                return QueryNormalization(**layer_args)
             elif layer_type in self.available_keras_layers:
                 # This allows users to use any predefined or custom ml4ir layers inheriting tf.keras.layers.Layer
                 # easily from the config
