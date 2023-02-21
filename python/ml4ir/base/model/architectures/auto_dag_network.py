@@ -377,7 +377,11 @@ class AutoDagNetwork(keras.Model):
 
                 # Handle tensor/list[tensors] as inputs
                 if node.inputs_as_list:
-                    outputs[node.name] = node.layer(layer_input, training=training)
+                    # Single input is always sent as a tensor
+                    if len(layer_input) == 1:
+                        outputs[node.name] = node.layer(layer_input[0], training=training)
+                    else:
+                        outputs[node.name] = node.layer(layer_input, training=training)
                 else:
                     # NOTE: Arguments are passed to the layer in the order they were specified in the model config
                     outputs[node.name] = node.layer(*layer_input, training=training)
