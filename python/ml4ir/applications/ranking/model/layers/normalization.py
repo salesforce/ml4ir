@@ -10,7 +10,7 @@ class QueryNormalization(layers.Layer):
 
     def __init__(self,
                  name="query_norm",
-                 requires_mask: bool = True,
+                 requires_mask: bool = False,
                  **kwargs):
         """
         Parameters
@@ -19,11 +19,13 @@ class QueryNormalization(layers.Layer):
             Layer name
         requires_mask: bool
             Indicates if the layer requires a mask to be passed to it during forward pass
+            NOTE: This needs to be True to use the layer
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
         super().__init__(name=name, **kwargs)
         self.requires_mask = requires_mask
+        assert self.requires_mask, "requires_mask needs to be set to True to use QueryNormalization"
 
     def call(self, inputs, mask=None, training=None):
         """
