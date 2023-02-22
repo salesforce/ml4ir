@@ -400,7 +400,8 @@ def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_run
             # update the current mean and variance
             # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
             if (sv.count + new_count) == 0:
-                # pypass the current batch
+                # skip the current batch when there is no new samples for the metric in the current batch.
+                # this can happen when the batch has bad queries
                 combine_count = sv.count
                 combined_mean = sv.mean
                 combine_var = sv.var
