@@ -399,13 +399,21 @@ def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_run
 
             # update the current mean and variance
             # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-            combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
-            combine_count = sv.count + new_count
-            if (sv.count + new_count - 1) != 0:
-                combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
-                          ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
+            if (sv.count + new_count) == 0:
+                # pypass the current batch
+                combine_count = sv.count
+                combined_mean = sv.mean
+                combine_var = sv.var
             else:
-                combine_var = 0
+                combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
+
+                combine_count = sv.count + new_count
+
+                if (sv.count + new_count - 1) != 0:
+                    combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
+                              ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
+                else:
+                    combine_var = 0
 
             sv.count = combine_count
             sv.mean = combined_mean
