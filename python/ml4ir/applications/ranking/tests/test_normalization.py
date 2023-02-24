@@ -2,7 +2,6 @@ import unittest
 
 import numpy as np
 from scipy.stats import zscore
-import tensorflow as tf
 
 from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization
 
