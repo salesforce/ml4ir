@@ -359,27 +359,32 @@ class AutoDagNetwork(keras.Model):
         tf.Tensor
             Logits tensor computed with the forward pass of the architecture layer
         """
-        train_features = inputs[FeatureTypeKey.TRAIN]
+        all_features = {**inputs[FeatureTypeKey.TRAIN], **inputs[FeatureTypeKey.METADATA]}
 
         # Do not modify the input
-        outputs = {k: v for k, v in train_features.items()}
+        outputs = {k: v for k, v in all_features.items()}
 
         # Pass features through all the layers of the Model
         for node in self.execution_order:
             # Input nodes don't need any execution
             if node.is_input_node:
-                if node.name not in train_features:
+                if node.name not in all_features:
                     raise KeyError(f"Input feature {node.name} cannot be found in the feature ops outputs")
             else:
                 # Dict inputs is the default
                 layer_input = {k: outputs[k] for k in node.inputs}
+                layer_input = list(layer_input.values())
+
                 # Handle tensor/list[tensors] as inputs
-                if node.inputs_as_list or len(layer_input) == 1:
-                    layer_input = list(layer_input.values())
+                if node.inputs_as_list:
                     # Single input is always sent as a tensor
                     if len(layer_input) == 1:
-                        layer_input = layer_input[0]
-                outputs[node.name] = node.layer(layer_input, training=training)
+                        outputs[node.name] = node.layer(layer_input[0], training=training)
+                    else:
+                        outputs[node.name] = node.layer(layer_input, training=training)
+                else:
+                    # NOTE: Arguments are passed to the layer in the order they were specified in the model config
+                    outputs[node.name] = node.layer(*layer_input, training=training)
 
         # Collapse extra dimensions
         output_layer = self.output_node
