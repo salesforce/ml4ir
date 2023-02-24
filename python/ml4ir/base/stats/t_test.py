@@ -399,17 +399,27 @@ def compute_groupwise_running_variance_for_metrics(metric_list, group_metric_run
 
             # update the current mean and variance
             # https://math.stackexchange.com/questions/2971315/how-do-i-combine-standard-deviations-of-two-groups
-            combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
-            combine_count = sv.count + new_count
-            if (sv.count + new_count - 1) != 0:
-                combine_var = (((sv.count-1) * sv.var + (new_count-1) * new_var) / (sv.count + new_count - 1)) + \
-                          ((sv.count * new_count * (sv.mean - new_mean)**2) / ((sv.count + new_count)*(sv.count + new_count - 1)))
+            if (sv.count + new_count) == 0:
+                # skip the current batch when there is no new samples for the metric in the current batch.
+                # this can happen when the batch has bad queries
+                combined_count = sv.count
+                combined_mean = sv.mean
+                combined_var = sv.var
             else:
-                combine_var = 0
+                combined_mean = (sv.count * sv.mean + new_count * new_mean) / (sv.count + new_count)
 
-            sv.count = combine_count
+                combined_count = sv.count + new_count
+
+                if (sv.count + new_count - 1) != 0:
+                    combined_var = (((sv.count - 1) * sv.var + (new_count - 1) * new_var) / (sv.count + new_count - 1)) + \
+                                  ((sv.count * new_count * (sv.mean - new_mean) ** 2) / (
+                                              (sv.count + new_count) * (sv.count + new_count - 1)))
+                else:
+                    combined_var = 0
+
+            sv.count = combined_count
             sv.mean = combined_mean
-            sv.var = combine_var
+            sv.var = combined_var
 
             group_params[metric] = sv
             group_metric_running_variance_params[group_name] = group_params
