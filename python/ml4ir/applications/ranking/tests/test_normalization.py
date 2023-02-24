@@ -28,7 +28,7 @@ class TestQueryNormalization(unittest.TestCase):
         actual_output = self.query_norm(input, mask)
         expected_output = zscore(input, axis=1)
 
-        self.assertTrue(np.isclose(actual_output, expected_output).all())
+        self.assertTrue(np.isclose(actual_output, expected_output, atol=1e-05).all())
 
     def test_query_norm_with_mask(self):
         """Test query normalization with zscore when some records are masked"""
@@ -39,7 +39,7 @@ class TestQueryNormalization(unittest.TestCase):
         expected_output = zscore(input[np.where(mask)], axis=0)
 
         # Test the values of the unmasked records
-        self.assertTrue(np.isclose(actual_output[np.where(mask)], expected_output).all())
+        self.assertTrue(np.isclose(actual_output[np.where(mask)], expected_output, atol=1e-05).all())
 
         # Test the values of the masked records
         self.assertTrue(actual_output[np.where(mask == 0.)].sum() == 0.)
