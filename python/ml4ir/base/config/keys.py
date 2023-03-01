@@ -32,6 +32,7 @@ class OptimizerKey(Key):
     NADAM = "nadam"
     SGD = "sgd"
     RMS_PROP = "rms_prop"
+    LION = "lion"
 
 class LearningRateScheduleKey(Key):
     """Learning rate schedule keys"""

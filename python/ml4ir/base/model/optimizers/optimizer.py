@@ -1,6 +1,7 @@
 import tensorflow.keras.optimizers as tf_optimizers
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 from ml4ir.base.model.optimizers import cyclic_learning_rate
+from ml4ir.base.model.optimizers.lion import Lion
 from ml4ir.base.config.keys import OptimizerKey, LearningRateScheduleKey, CyclicLearningRateType
 import tensorflow as tf
 
@@ -15,6 +16,13 @@ class OptimizerDefaultValues(object):
     CYCLIC_MAXIMAL_LEARNING_RATE = 0.01
     CYCLIC_STEP_SIZE = 10
     CYCLIC_GAMMA = 1.0
+
+
+class OptimizerConfigKey:
+    """Keys used to define optimizers in the model config"""
+    OPTIMIZER = "optimizer"
+    KEY = "key"
+    GRADIENT_CLIP_VALUE = "gradient_clip_value"
 
 
 def choose_optimizer(model_config, learning_rate_schedule):
@@ -38,17 +46,23 @@ def choose_optimizer(model_config, learning_rate_schedule):
     - https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/schedules/ExponentialDecay
     - https://arxiv.org/pdf/1506.01186.pdf
     """
-
-    if 'optimizer' not in model_config:
+    if OptimizerConfigKey.OPTIMIZER not in model_config:
         return tf_optimizers.Adam(learning_rate=learning_rate_schedule, clipvalue=5.0)
     else:
-        optimizer_key = model_config['optimizer']['key']
-        if 'gradient_clip_value' in model_config['optimizer']:
-            config = {'learning_rate': learning_rate_schedule,
-                      'clipvalue': model_config['optimizer']['gradient_clip_value']}
+        optimizer_config = model_config[OptimizerConfigKey.OPTIMIZER]
+        optimizer_key = optimizer_config[OptimizerConfigKey.KEY]
+        clipvalue = optimizer_config.get(OptimizerConfigKey.GRADIENT_CLIP_VALUE)
+
+        # TODO: Consolidate optimizer and schedule sections of the model config and support kwargs from configs
+        config = {
+            "learning_rate": learning_rate_schedule,
+            "clipvalue": clipvalue}
+
+        # TODO: Expand this to other custom ml4ir optimizers, but we only have 1 for now
+        if optimizer_key == OptimizerKey.LION:
+            return Lion(learning_rate=learning_rate_schedule, clipvalue=clipvalue)
         else:
-            config = {'learning_rate': learning_rate_schedule}
-        return tf.keras.optimizers.get({'class_name': optimizer_key, 'config': config})
+            return tf.keras.optimizers.get({"class_name": optimizer_key, "config": config})
 
 
 def choose_scheduler(model_config):
