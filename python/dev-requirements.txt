@@ -1,0 +1,9 @@
+# Python dependencies for developing on ml4ir and for use in the CircleCI builds
+Sphinx
+coverage
+flake8
+python-dotenv>=0.15.0
+flake8-black
+flake8-mypy
+pre-commit
+mypy
