@@ -2,6 +2,8 @@
 Implementation of the Lion optimizer.
 Source : https://github.com/google/automl/blob/master/lion/lion_tf2.py
 Paper : https://arxiv.org/pdf/2302.06675.pdf
+
+TODO: Replace this with tensorflow.keras implementation once it is released
 """
 
 import tensorflow as tf
