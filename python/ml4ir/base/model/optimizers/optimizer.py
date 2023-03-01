@@ -53,15 +53,15 @@ def choose_optimizer(model_config, learning_rate_schedule):
         optimizer_key = optimizer_config[OptimizerConfigKey.KEY]
         clipvalue = optimizer_config.get(OptimizerConfigKey.GRADIENT_CLIP_VALUE)
 
-        # TODO: Consolidate optimizer and schedule sections of the model config and support kwargs from configs
-        config = {
-            "learning_rate": learning_rate_schedule,
-            "clipvalue": clipvalue}
-
         # TODO: Expand this to other custom ml4ir optimizers, but we only have 1 for now
         if optimizer_key == OptimizerKey.LION:
             return Lion(learning_rate=learning_rate_schedule, clipvalue=clipvalue)
         else:
+            # TODO: Consolidate optimizer and schedule sections of the model config and support kwargs from configs
+            config = {
+                "learning_rate": learning_rate_schedule,
+                "clipvalue": clipvalue
+            }
             return tf.keras.optimizers.get({"class_name": optimizer_key, "config": config})
 
 
