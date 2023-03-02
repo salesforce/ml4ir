@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.16] - 2023-02-06
 
+### Changed
+- Upgraded min version for project from python37 to python39
+- Dependency versions in requirements.txt
+
 ### Added
 - RankMatchFailure metric for evaluation
 - Statistical significance and power analysis utilities

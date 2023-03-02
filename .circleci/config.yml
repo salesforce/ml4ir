@@ -4,28 +4,28 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: lastmansleeping/ml4ir:0.1
+      - image: lastmansleeping/ml4ir:0.2
     resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt-get --allow-releaseinfo-change update
-            sudo apt-get install graphviz graphviz-dev
+            export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
-            pip install -r python/build-requirements.txt
+            pip install -r python/requirements.txt
       - run:
           name: Build
           command: |
             cd jvm
+            sudo chmod -R 777 /home/circleci/
             mvn clean -Dmaven.test.skip=true install
       - save_cache:
-          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/build-requirements.txt" }}
+          key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
           paths:
             - ~/.m2
             - "venv"
@@ -40,12 +40,12 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: circleci/python:3.7.7
+      - image: cimg/python:3.9.7
     resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
@@ -55,9 +55,9 @@ jobs:
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r build-requirements.txt
+            pip install -r requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -76,12 +76,12 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: circleci/python:3.7.7
+      - image: cimg/python:3.9.7
     resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
@@ -91,9 +91,9 @@ jobs:
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r build-requirements.txt
+            pip install -r requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -112,12 +112,12 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: circleci/python:3.7.7
+      - image: cimg/python:3.9.7
     resource_class: xlarge
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
@@ -127,9 +127,9 @@ jobs:
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r build-requirements.txt
+            pip install -r requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -148,12 +148,12 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: circleci/python:3.7.7
+      - image: cimg/python:3.9.7
     resource_class: medium
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
@@ -163,9 +163,9 @@ jobs:
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r build-requirements.txt
+            pip install -r requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/build-requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}
           paths:
             - "venv"
       - attach_workspace:
