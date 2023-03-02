@@ -22,7 +22,7 @@ jobs:
           name: Build
           command: |
             cd jvm
-            mvn clean -Dmaven.test.skip=true install
+            sudo mvn clean -Dmaven.test.skip=true install
       - save_cache:
           key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
           paths:
