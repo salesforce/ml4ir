@@ -45,19 +45,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt-get --allow-releaseinfo-change update
-            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -81,19 +79,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt-get --allow-releaseinfo-change update
-            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -117,19 +113,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt-get --allow-releaseinfo-change update
-            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
       - run:
@@ -153,19 +147,17 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
           name: Install Python deps in a venv
           command: |
-            sudo apt-get --allow-releaseinfo-change update
-            sudo apt-get install graphviz graphviz-dev
             python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
-          key: python-deps-{{ checksum "python/requirements.txt" }}
+          key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
       - attach_workspace:
