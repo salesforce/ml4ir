@@ -47,8 +47,8 @@ class QueryNormalization(layers.Layer):
             Normed input feature tensor
             Shape: [batch_size, sequence_len, encoding_size]
         """
-        # NOTE: Tensorflow math ops are consistent on saving and reloading only if they are float16.
-        #       Using float32 leads to strange mismatch errors.
+        # NOTE: Tensorflow math ops are not consistent on saving and reloading if they are float32.
+        #       Both float16 and float64 give consistent results.
         inputs = tf.cast(inputs, tf.float64)
         mask = tf.expand_dims(tf.cast(mask, tf.float64), axis=-1)
 
