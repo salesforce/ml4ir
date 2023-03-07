@@ -152,7 +152,7 @@ class RankingModelTest(RankingTestBase):
             loss_key=self.args.loss_key, feature_config=feature_config, metrics_keys=metrics_keys
         )
         dataset = self.get_dataset()
-        model.build(dataset)
+        model.build(dataset.train)
         model.save(
             models_dir=self.args.models_dir,
             preprocessing_keys_to_fns={},
