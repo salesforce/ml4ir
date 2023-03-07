@@ -544,7 +544,15 @@ class RelevancePipeline(object):
 
             # Build model
             relevance_model = self.get_relevance_model()
+            if self.args.compile_keras_model or not self.args.model_file:
+                relevance_model.build(relevance_dataset.train)
             self.logger.info("Relevance Model created successfully")
+
+            # Load weights from model file if specified
+            if self.args.model_file and self.args.compile_keras_model:
+                relevance_model.load_weights(self.args.model_file)
+                self.logger.info("Relevance Model initialized with weights loaded from -> {}".format(
+                    self.args.model_file))
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
@@ -615,7 +623,12 @@ class RelevancePipeline(object):
             experiment_tracking_dict.update(test_metrics)
 
             # Add optimizer and lr schedule
-            if self.args.execution_mode not in {ExecutionModeKey.EVALUATE_ONLY}:
+            if self.args.execution_mode in {
+                ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
+                ExecutionModeKey.TRAIN_EVALUATE,
+                ExecutionModeKey.TRAIN_INFERENCE,
+                ExecutionModeKey.TRAIN_ONLY,
+            }:
                 experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
 
             # Save model
