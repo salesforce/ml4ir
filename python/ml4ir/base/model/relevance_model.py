@@ -116,6 +116,7 @@ class RelevanceModel:
             """
             self.model: Model = self.load(model_file)
             self.is_compiled = False
+            self.is_built = False
         else:
 
             """
@@ -336,14 +337,14 @@ class RelevanceModel:
             logger=logger,
         )
 
-    def build(self, dataset: RelevanceDataset):
+    def build(self, dataset: tf.data.Dataset):
         """
         Build the model layers and connect them to form a network
 
         Parameters
         ----------
-        dataset: RelevanceDataset
-            RelevanceDataset object used to initialize the weights and input/output
+        dataset: tf.data.Dataset
+            Dataset object used to initialize the weights and input/output
             spec for the network
 
         Notes
@@ -352,7 +353,7 @@ class RelevanceModel:
         of the actual inputs to expect. So we do one forward pass to initialize all the internal
         weights and connections
         """
-        self.model(next(iter(dataset.train))[0])
+        self.model(next(iter(dataset))[0])
         self.model.summary(print_fn=self.logger.info, expand_nested=True)
 
         self.is_built = True
@@ -445,8 +446,8 @@ class RelevanceModel:
             This dictionary will be used for experiment tracking for each ml4ir run
         """
         # Build the network if it hasn't been built yet
-        if not self.is_built:
-            self.build(dataset)
+        if self.is_compiled and not self.is_built:
+            self.build(dataset.train)
 
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
@@ -527,6 +528,10 @@ class RelevanceModel:
             pandas DataFrame containing the predictions on the test dataset
             made with the `RelevanceModel`
         """
+        # Build the network if it hasn't been built yet
+        if self.is_compiled and not self.is_built:
+            self.build(test_dataset)
+
         if logs_dir:
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
@@ -630,6 +635,10 @@ class RelevanceModel:
 
         Override this method to implement your own evaluation metrics.
         """
+        # Build the network if it hasn't been built yet
+        if self.is_compiled and not self.is_built:
+            self.build(test_dataset)
+
         if self.is_compiled:
             metrics_dict = self.model.evaluate(test_dataset)
             return None, None, dict(zip(self.model.metrics_names, metrics_dict))
@@ -714,6 +723,10 @@ class RelevanceModel:
         All the functions passed under `preprocessing_keys_to_fns` here must be
         serializable tensor graph operations
         """
+        # Build the network if it hasn't been built yet
+        if self.is_compiled and not self.is_built:
+            if dataset:
+                self.build(dataset.train)
 
         model_file = os.path.join(models_dir, sub_dir)
 
