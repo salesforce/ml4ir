@@ -116,6 +116,7 @@ class RelevanceModel:
             """
             self.model: Model = self.load(model_file)
             self.is_compiled = False
+            self.is_built = False
         else:
 
             """
@@ -136,14 +137,8 @@ class RelevanceModel:
             self.is_built = False
 
             if model_file:
-                """
-                If model file is specified, load the weights from the SavedModel
-
-                NOTE:
-                The architecture, loss and metrics of self.model need to
-                be the same as the loaded SavedModel
-                """
-                self.load_weights(model_file)
+                self.logger.warning("Model should be built before loading. "
+                                    "Call model.build(dataset) and then model.load_weights(model_file)")
 
             # Initialize layer weights
             for layer_name, layer_file in initialize_layers_dict.items():
@@ -444,10 +439,6 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        # Build the network if it hasn't been built yet
-        if not self.is_built:
-            self.build(dataset)
-
         if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
@@ -714,7 +705,6 @@ class RelevanceModel:
         All the functions passed under `preprocessing_keys_to_fns` here must be
         serializable tensor graph operations
         """
-
         model_file = os.path.join(models_dir, sub_dir)
 
         # Save model with default signature
@@ -807,7 +797,10 @@ class RelevanceModel:
         loaded_model = self.load(model_file)
 
         # Set weights of Keras model from the loaded model weights
-        self.model.set_weights(loaded_model.get_weights())
+        for layer in self.model.layers:
+            layer.set_weights(loaded_model.get_layer(layer.name).get_weights())
+            self.logger.info("Weights set from SavedModel for layer -> {}".format(layer.name))
+
         self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
