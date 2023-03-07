@@ -129,7 +129,7 @@ class RankingModelTest(RankingTestBase):
             file_io=self.file_io,
             logger=self.logger,
         )
-        ranking_model.build(ranking_dataset.train)
+        ranking_model.build(ranking_dataset)
 
         # Save the model and check if coefficients file was saved
         ranking_model.save(models_dir=self.args.models_dir)

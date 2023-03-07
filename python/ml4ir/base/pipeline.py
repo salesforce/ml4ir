@@ -545,7 +545,7 @@ class RelevancePipeline(object):
             # Build model
             relevance_model = self.get_relevance_model()
             if self.args.compile_keras_model or not self.args.model_file:
-                relevance_model.build(relevance_dataset.train)
+                relevance_model.build(relevance_dataset)
             self.logger.info("Relevance Model created successfully")
 
             # Load weights from model file if specified

@@ -331,14 +331,14 @@ class RelevanceModel:
             logger=logger,
         )
 
-    def build(self, dataset: tf.data.Dataset):
+    def build(self, dataset: RelevanceDataset):
         """
         Build the model layers and connect them to form a network
 
         Parameters
         ----------
-        dataset: tf.data.Dataset
-            Dataset object used to initialize the weights and input/output
+        dataset: RelevanceDataset
+            RelevanceDataset object used to initialize the weights and input/output
             spec for the network
 
         Notes
