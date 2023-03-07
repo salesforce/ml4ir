@@ -347,7 +347,7 @@ class RelevanceModel:
         of the actual inputs to expect. So we do one forward pass to initialize all the internal
         weights and connections
         """
-        self.model(next(iter(dataset))[0])
+        self.model(next(iter(dataset.train))[0])
         self.model.summary(print_fn=self.logger.info, expand_nested=True)
 
         self.is_built = True
