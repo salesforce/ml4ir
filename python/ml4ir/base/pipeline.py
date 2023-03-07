@@ -560,7 +560,6 @@ class RelevancePipeline(object):
                 ExecutionModeKey.TRAIN_INFERENCE,
                 ExecutionModeKey.TRAIN_ONLY,
             }:
-
                 # Train
                 train_metrics = relevance_model.fit(
                     dataset=relevance_dataset,
@@ -572,6 +571,8 @@ class RelevancePipeline(object):
                     monitor_mode=self.args.monitor_mode,
                     patience=self.args.early_stopping_patience,
                 )
+                # Add optimizer and learning rate schedule to experiment tracking dict
+                experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
 
             if self.args.execution_mode in {
                 ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
@@ -621,15 +622,6 @@ class RelevancePipeline(object):
             # Add train and test metrics
             experiment_tracking_dict.update(train_metrics)
             experiment_tracking_dict.update(test_metrics)
-
-            # Add optimizer and lr schedule
-            if self.args.execution_mode in {
-                ExecutionModeKey.TRAIN_INFERENCE_EVALUATE,
-                ExecutionModeKey.TRAIN_EVALUATE,
-                ExecutionModeKey.TRAIN_INFERENCE,
-                ExecutionModeKey.TRAIN_ONLY,
-            }:
-                experiment_tracking_dict.update(relevance_model.model.optimizer.get_config())
 
             # Save model
             # NOTE: Model will be saved with the latest serving signatures
