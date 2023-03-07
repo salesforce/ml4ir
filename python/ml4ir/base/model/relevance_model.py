@@ -797,7 +797,8 @@ class RelevanceModel:
         loaded_model = self.load(model_file)
 
         # Set weights of Keras model from the loaded model weights
-        self.model.set_weights(loaded_model.get_weights())
+        # NOTE: The first 2 weights are unsaved as they are empty
+        self.model.set_weights([0., 0., loaded_model.get_weights()])
         self.logger.info("Weights have been set from SavedModel. RankingModel can now be trained.")
 
     def _build_callback_hooks(
