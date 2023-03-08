@@ -5,11 +5,5 @@ pandas==1.5.3
 scipy==1.10.0
 PyYAML==5.4.1
 
-# transformers
-# NOTE: There's a bug with the latest version - https://github.com/opencv/opencv-python/issues/772
-# TODO: We should remove the tf-models-official dependency and just copy-paste the code - https://github.com/tensorflow/models/issues/10927
-opencv-python-headless==4.6.0.66
-tf-models-official==2.9.2
-
 # calibration
 tensorflow-probability==0.15.0
