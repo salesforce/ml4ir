@@ -1,5 +1,5 @@
 """
-Source : https://github.com/tensorflow/models/blob/master/official/nlp/modeling/models/seq2seq_transformer.py#L360
+Source : https://github.com/tensorflow/models/blob/r2.9.0/official/nlp/modeling/models/seq2seq_transformer.py
 Relevant Github Issue : https://github.com/tensorflow/models/issues/10927
 """
 
