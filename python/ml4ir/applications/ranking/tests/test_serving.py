@@ -185,10 +185,18 @@ class RankingModelTest(RankingTestBase):
 
     def test_model_serving_set_rank(self):
         """
-        Train a simple auto-dag-network model and test serving flow by loading the SavedModel
+        Train a simple DNN model with SetRankEncoder and test serving flow by loading the SavedModel
         """
         self.check_model_serving(
             model_config_path="ml4ir/applications/ranking/tests/data/configs/model_config_set_rank.yaml"
+        )
+
+    def test_model_serving_query_norm(self):
+        """
+        Train a simple DNN model with QueryNormalization and test serving flow by loading the SavedModel
+        """
+        self.check_model_serving(
+            model_config_path="ml4ir/applications/ranking/tests/data/configs/model_config_query_norm.yaml"
         )
 
     def test_serving_n_records(self):
