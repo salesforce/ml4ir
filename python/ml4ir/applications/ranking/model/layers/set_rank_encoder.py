@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
-import tensorflow_models as tfm
+
+from ml4ir.base.model.layers.transformer_encoder import TransformerEncoder
 
 
 class SetRankEncoder(layers.Layer):
@@ -45,7 +46,7 @@ class SetRankEncoder(layers.Layer):
 
         self.input_projection_op = layers.Dense(units=self.encoding_size)
         self.projection_dropout_op = layers.Dropout(rate=self.projection_dropout_rate)
-        self.transformer_encoder = tfm.nlp.models.TransformerEncoder(**kwargs)
+        self.transformer_encoder = TransformerEncoder(**kwargs)
 
     def call(self, inputs, mask=None, training=None):
         """
