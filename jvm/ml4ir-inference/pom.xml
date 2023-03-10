@@ -150,6 +150,9 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <addScalacArgs>-target:jvm-1.8</addScalacArgs>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
