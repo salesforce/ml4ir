@@ -66,6 +66,9 @@ def get_grouped_stats(
     df_clicked = df[df[label_col] == 1.0]
     df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
+    # Pick most relevant record for each query to compute ranking metrics
+    df_clicked = df_clicked.groupby(query_key_col).apply(min)
+
     # Compute metrics on aux labels
     df_aux_metrics = pd.DataFrame()
     if aux_label:

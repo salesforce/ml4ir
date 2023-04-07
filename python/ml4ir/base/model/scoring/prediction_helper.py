@@ -86,6 +86,7 @@ def get_predict_fn(
         if is_compiled:
             scores = infer(features)[output_name]
         else:
+            import pdb; pdb.set_trace()
             scores = infer(**features)[output_name]
 
         # Set scores of padded records to 0
