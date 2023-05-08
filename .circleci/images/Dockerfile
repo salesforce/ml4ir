@@ -1,2 +1,2 @@
-FROM circleci/openjdk:11-jdk
-COPY --from=circleci/python:3.7.7 / /
+FROM cimg/openjdk:11.0
+COPY --from=cimg/python:3.9.7 / /

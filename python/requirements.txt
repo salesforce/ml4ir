@@ -1,26 +1,9 @@
 # ml4ir dependencies
 tensorflow==2.9.3
-numpy==1.21.6
-pandas==1.2.1
-scipy==1.5.4
-
-# transformers
-# NOTE: There's a bug with the latest version - https://github.com/opencv/opencv-python/issues/772
-# TODO: We should remove the tf-models-official dependency and just copy-paste the code - https://github.com/tensorflow/models/issues/10927
-opencv-python-headless==4.6.0.66
-tf-models-official==2.9.2
-
-# pytest
-pytest==6.2.1
-pytest-cov==2.11.0
-pytest-html==3.1.1
+numpy==1.24.2
+pandas==1.5.3
+scipy==1.10.0
 PyYAML==5.4.1
 
-# Pyspark for spark_io
-pyspark==3.0.1
-
-#calibration
+# calibration
 tensorflow-probability==0.15.0
-
-# DAG visualization
-pygraphviz==1.7

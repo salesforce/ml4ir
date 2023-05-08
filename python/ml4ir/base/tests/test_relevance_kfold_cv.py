@@ -72,11 +72,11 @@ class TestML4IRKfoldCV(unittest.TestCase):
         feature_config_file = pathlib.Path(__file__).parent / "data" / "configs" / fconfig_name
         model_config_file = pathlib.Path(__file__).parent / "data" / "configs" / "model_config_sanity_tests.yaml"
 
-        queries = df.groupby('query_id')
-        dfs = np.array_split(queries, 3)
-        pd.concat([dfs[0][i][-1] for i in range(len(dfs[0]))]).to_csv(working_dir / 'train' / 'data.csv')
-        pd.concat([dfs[1][i][-1] for i in range(len(dfs[1]))]).to_csv(working_dir / 'validation' / 'data.csv')
-        pd.concat([dfs[2][i][-1] for i in range(len(dfs[2]))]).to_csv(working_dir / 'test' / 'data.csv')
+        query_split = np.array_split(df["query_id"].drop_duplicates().values, 3)
+        df[df["query_id"].isin(query_split[0])].to_csv(working_dir / "train" / "data.csv")
+        df[df["query_id"].isin(query_split[1])].to_csv(working_dir / "validation" / "data.csv")
+        df[df["query_id"].isin(query_split[2])].to_csv(working_dir / "test" / "data.csv")
+
         return create_parse_args(data_dir=working_dir.as_posix(),
                                  feature_config=feature_config_file.as_posix(),
                                  model_config=model_config_file.as_posix(),

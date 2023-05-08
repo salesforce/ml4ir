@@ -6,7 +6,6 @@ class QueryNormalization(layers.Layer):
     """
     Zscore normalization of the feature dimension in a batch along the query axis
     """
-    DELTA = tf.constant(1e-15)
 
     def __init__(self,
                  name="query_norm",
@@ -48,17 +47,20 @@ class QueryNormalization(layers.Layer):
             Normed input feature tensor
             Shape: [batch_size, sequence_len, encoding_size]
         """
-        mask = tf.cast(mask, inputs.dtype)[:, :, tf.newaxis]
+        # NOTE: Tensorflow math ops are not consistent on saving and reloading if they are float32.
+        #       Both float16 and float64 give consistent results.
+        inputs = tf.cast(inputs, tf.float64)
+        mask = tf.expand_dims(tf.cast(mask, tf.float64), axis=-1)
 
         inputs = tf.multiply(inputs, mask)
 
         count = tf.math.reduce_sum(mask, axis=1)
-        mean = tf.math.reduce_sum(inputs, axis=1) / count
-        mean = tf.multiply(mean[:, tf.newaxis, :], mask)
+        mean = tf.math.divide(tf.math.reduce_sum(inputs, axis=1), count)
+        mean = tf.multiply(tf.expand_dims(mean, axis=1), mask)
 
-        var = tf.math.reduce_sum(tf.math.pow((inputs - mean), 2), axis=1) / count
-        std = tf.math.sqrt(var)[:, tf.newaxis, :] + QueryNormalization.DELTA
+        var = tf.math.divide(tf.math.reduce_sum(tf.math.pow(tf.math.subtract(inputs, mean), 2), axis=1), count)
+        std = tf.expand_dims(tf.math.sqrt(var), axis=1)
 
-        zscore = (inputs - mean) / std
+        zscore = tf.math.divide_no_nan(tf.math.subtract(inputs, mean), std)
 
-        return zscore
+        return tf.cast(zscore, tf.float32)

@@ -101,7 +101,7 @@ export PYTHONPATH=$PYTHONPATH:`pwd`
 For more information in pygraphviz and its prerequisites, refer to [pygraphviz documentation](https://pygraphviz.github.io/documentation/stable/index.html)
 
 #### Contributing to ml4ir
-* Install python dependencies from the `build-requirements.txt` to setup the dependencies required for pre-commit hooks.
+* Install python dependencies from the `requirements.txt` and `dev-requirements.txt` to setup the dependencies required for pre-commit hooks.
 * `pre-commit-hooks` are required, and installed as a requirement for contributing to ml4ir.
   If an error results that they didn't install, execute `pre-commit install` to install git hooks in your .git/ directory.
 
