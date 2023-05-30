@@ -129,6 +129,7 @@ class RankingModel(RelevanceModel):
                 self.feature_config.get_query_key(),
                 self.feature_config.get_label(),
                 self.feature_config.get_rank(),
+                self.feature_config.get_feature("s")  #this is needed for computing old_NDCG
             ]
         )
 
