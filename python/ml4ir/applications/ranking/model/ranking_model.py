@@ -129,9 +129,13 @@ class RankingModel(RelevanceModel):
                 self.feature_config.get_query_key(),
                 self.feature_config.get_label(),
                 self.feature_config.get_rank(),
-                self.feature_config.get_feature("s")  #this is needed for computing old_NDCG
             ]
         )
+        try:
+            # this is needed for computing old_NDCG
+            evaluation_features.append(self.feature_config.get_feature("s"))
+        except:
+            pass
 
         # Add aux_label if present
         aux_label = self.feature_config.get_aux_label()
