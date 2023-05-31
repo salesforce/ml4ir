@@ -46,7 +46,7 @@ def add_top_graded_relevance(df, label_col, new_col_name):
     df_with_relevance_scores[new_col_name] = 0.0
 
     # Set the 'top_target_relevance' value to 1 for the top records
-    df_with_relevance_scores.at[top_records.values, new_col_name] = 1.0
+    df_with_relevance_scores.loc[top_records.values, new_col_name] = 1.0
 
     return df_with_relevance_scores
 
