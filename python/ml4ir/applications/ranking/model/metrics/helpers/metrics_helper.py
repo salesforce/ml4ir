@@ -18,7 +18,7 @@ class RankingConstants:
     OLD_ACR = "old_ACR"
     NEW_ACR = "new_ACR"
     OLD_NDCG = "old_NDCG"
-    NEW_NDCG = "NEW_NDCG"
+    NEW_NDCG = "new_NDCG"
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
