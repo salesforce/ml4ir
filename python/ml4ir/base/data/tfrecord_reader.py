@@ -741,6 +741,7 @@ def read(
         feature_config: FeatureConfig,
         tfrecord_type: str,
         file_io: FileIO,
+        data_compression: str = None,
         max_sequence_size: int = 0,
         batch_size: int = 0,
         preprocessing_keys_to_fns: dict = {},
@@ -764,6 +765,9 @@ def read(
         Type of the TFRecord protobuf message to be used for TFRecordDataset
     file_io: `FileIO` object
         file I/O handler objects for reading and writing data
+    data_compression: str
+        Type of data compression used for the input data files.
+        Should be one of GZIP or ZLIB.
     max_sequence_size: int, optional
         maximum number of sequence to be used with a single SequenceExample proto message
         The data will be appropriately padded or clipped to fit the max value specified
@@ -802,7 +806,7 @@ def read(
     )
 
     # Parse the protobuf data to create a TFRecordDataset
-    dataset = data.TFRecordDataset(tfrecord_files)
+    dataset = data.TFRecordDataset(tfrecord_files, compression_type=data_compression)
 
     if parse_tfrecord:
         # Parallel calls set to AUTOTUNE: improved training performance by 40% with a classification model
