@@ -286,6 +286,7 @@ class RelevancePipeline(object):
         relevance_dataset = KfoldRelevanceDataset(
             data_dir=self.data_dir_local,
             data_format=self.data_format,
+            data_compression=self.args.data_compression,
             feature_config=self.feature_config,
             tfrecord_type=self.tfrecord_type,
             max_sequence_size=self.args.max_sequence_size,
