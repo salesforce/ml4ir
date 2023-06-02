@@ -91,6 +91,7 @@ class RelevanceDataset:
         self.max_sequence_size = max_sequence_size
         self.logger = logger
         self.data_dir = data_dir
+        self.data_compression = data_compression
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
@@ -178,6 +179,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
@@ -194,6 +196,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
@@ -210,6 +213,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,

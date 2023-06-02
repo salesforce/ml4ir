@@ -801,7 +801,7 @@ def read(
     # Get all tfrecord files in directory
     tfrecord_files = file_io.get_files_in_directory(
         data_dir,
-        extension="" if use_part_files else ".tfrecord",
+        extension="" if use_part_files else (".tfrecord.gz" if data_compression else ".tfrecord"),
         prefix="part-" if use_part_files else "",
     )
 
