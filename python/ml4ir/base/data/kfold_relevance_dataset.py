@@ -15,6 +15,7 @@ class KfoldRelevanceDataset(RelevanceDataset):
             feature_config: FeatureConfig,
             tfrecord_type: str,
             file_io: FileIO,
+            data_compression: str = None,
             max_sequence_size: int = 0,
             batch_size: int = 128,
             preprocessing_keys_to_fns: dict = {},
@@ -40,6 +41,7 @@ class KfoldRelevanceDataset(RelevanceDataset):
         self.logger = logger
         self.data_dir = data_dir
         self.data_format: str = data_format
+        self.data_compression: str = data_compression
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
         self.preprocessing_keys_to_fns = preprocessing_keys_to_fns
