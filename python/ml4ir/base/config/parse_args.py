@@ -75,7 +75,8 @@ class RelevanceArgParser(ArgumentParser):
             default=None,
             help="Compression format for the input data. "
                  "Should be one of ZLIB or GZIP. "
-                 "Leave empty for no compression",
+                 "Leave empty for no compression."
+                 "Currently only supported for TFRecord data_format",
         )
 
         self.add_argument(
