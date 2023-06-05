@@ -22,6 +22,7 @@ class RelevanceDataset:
             feature_config: FeatureConfig,
             tfrecord_type: str,
             file_io: FileIO,
+            data_compression: str = None,
             max_sequence_size: int = 0,
             batch_size: int = 128,
             preprocessing_keys_to_fns: dict = {},
@@ -52,6 +53,9 @@ class RelevanceDataset:
             Type of the TFRecord protobuf message to be used for TFRecordDataset
         file_io : `FileIO` object
             file I/O handler objects for reading and writing data
+        data_compression: str
+            Type of data compression used for the input data files.
+            Should be one of GZIP or ZLIB.
         max_sequence_size : int, optional
             maximum number of sequence to be used with a single SequenceExample proto message
             The data will be appropriately padded or clipped to fit the max value specified
@@ -87,6 +91,7 @@ class RelevanceDataset:
         self.max_sequence_size = max_sequence_size
         self.logger = logger
         self.data_dir = data_dir
+        self.data_compression = data_compression
         self.data_format: str = data_format
         self.tfrecord_type = tfrecord_type
         self.batch_size: int = batch_size
@@ -174,6 +179,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TRAIN),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
@@ -190,6 +196,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.VALIDATION),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,
@@ -206,6 +213,7 @@ class RelevanceDataset:
                 feature_config=self.feature_config,
                 tfrecord_type=self.tfrecord_type,
                 tfrecord_dir=os.path.join(self.data_dir, "tfrecord", DataSplitKey.TEST),
+                data_compression=self.data_compression,
                 max_sequence_size=self.max_sequence_size,
                 batch_size=self.batch_size,
                 preprocessing_keys_to_fns=self.preprocessing_keys_to_fns,

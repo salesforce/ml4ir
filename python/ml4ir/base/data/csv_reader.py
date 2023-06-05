@@ -17,6 +17,7 @@ def read(
     tfrecord_type: str,
     tfrecord_dir: str,
     file_io: FileIO,
+    data_compression: str = None,
     batch_size: int = 128,
     preprocessing_keys_to_fns: dict = {},
     use_part_files: bool = False,
@@ -43,6 +44,9 @@ def read(
         and the preprocessing functions to be applied to each of them
     tfrecord_dir : str
         Path to directory where the serialized .tfrecord files will be stored
+    data_compression: str
+        Type of data compression used for the input data files.
+        NOTE - Not implemented for CSV reader.
     batch_size : int
         value specifying the size of the data batch
     use_part_files : bool

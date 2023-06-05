@@ -69,6 +69,17 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
+            "--data_compression",
+            type=str,
+            choices=["ZLIB", "GZIP", ""],
+            default=None,
+            help="Compression format for the input data. "
+                 "Should be one of ZLIB or GZIP. "
+                 "Leave empty for no compression."
+                 "Currently only supported for TFRecord data_format",
+        )
+
+        self.add_argument(
             "--tfrecord_type",
             type=str,
             choices=TFRecordTypeKey.get_all_keys(),
