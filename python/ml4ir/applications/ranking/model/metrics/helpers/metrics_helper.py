@@ -18,11 +18,11 @@ class RankingConstants:
     OLD_ACR = "old_ACR"
     NEW_ACR = "new_ACR"
     OLD_NDCG = "old_NDCG"
-    NEW_NDCG = "NEW_NDCG"
+    NEW_NDCG = "new_NDCG"
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
-def add_top_graded_relevance(df, label_col, new_col_name):
+def add_top_graded_relevance_record_column(df, label_col, new_col_name):
     """
     Adds a new column indicating the top graded relevance record per query in the DataFrame.
 
@@ -140,7 +140,7 @@ def get_grouped_stats(
     # adding "top_graded_relevance" to be the artificial click such that the record with the highest graded
     # relevance is considered to be clicked nad will be used in MRR computation
     artificial_click_col = "top_graded_relevance"
-    df = add_top_graded_relevance(df, label_col, artificial_click_col)
+    df = add_top_graded_relevance_record_column(df, label_col, artificial_click_col)
     if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
         df = compute_ndcg(df, label_col, pred_col="ranking_score", new_col=RankingConstants.NEW_NDCG)
         df = compute_ndcg(df, label_col, pred_col="s", new_col=RankingConstants.OLD_NDCG)

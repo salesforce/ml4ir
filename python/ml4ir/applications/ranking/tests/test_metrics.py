@@ -4,11 +4,12 @@ import unittest
 import pathlib
 
 import pandas as pd
+import tensorflow as tf
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, NDCG
 from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 from ml4ir.applications.ranking.config.parse_args import get_args
 from ml4ir.applications.ranking.pipeline import RankingPipeline
@@ -181,6 +182,7 @@ class RankingModelTest(RankingTestBase):
             np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
         TempDirectory.cleanup_all()
 
+
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
 
@@ -191,6 +193,41 @@ class RankingMetricsTest(unittest.TestCase):
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           1.5)
+
+    def test_NDCG(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores and predicted scores
+        y_true = tf.constant([3, 2, 1], dtype=tf.float32)
+        y_pred = tf.constant([0.3, 0.2, 0.1], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        # Expected result: 1.0 (perfect ranking)
+        assert result == 1.0
+
+    def test_NDCG_mask(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores, predicted scores, and mask
+        y_true = tf.constant([3, 2, 1], dtype=tf.float32)
+        y_pred = tf.constant([0.3, 0.5, 0.1], dtype=tf.float32)
+        mask = tf.constant([1, 0, 1], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred, mask)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        # Expected result: 1.0 (only considering the relevant items)
+        assert result == 1.0
 
 
 class MetricHelperTest(unittest.TestCase):
