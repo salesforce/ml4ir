@@ -177,7 +177,10 @@ class RankingModelTest(RankingTestBase):
             'stat_sig_AuxIntrinsicFailure_group_improv_perc': '92.81582417518467',
             'stat_sig_AuxRankMF_improved_groups': '1', 'stat_sig_AuxRankMF_degraded_groups': '0',
             'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042',
-            'new_NDCG': '0.772084'
+            'train_NDCG': '0.7625430226325989',
+            'val_NDCG': '0.7833980321884155',
+            'test_new_NDCG': '0.772084332112937'
+
         }
         for metric in expected_metrics:
             np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
