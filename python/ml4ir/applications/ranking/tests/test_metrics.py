@@ -329,9 +329,9 @@ class MetricHelperTest(unittest.TestCase):
 
     def test_compute_NDCG_1(self):
         # Create an instance of the NDCG metric
-        data = { #compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
+        data = {
             'query_id': [1, 1, 1, 2, 2, 2],
-            'y_true': [3, 2, 1, 1, 2, 3],
+            'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
             'y_pred': [0.3, 0.2, 0.1, 10, 20, 30]
         }
         df = pd.DataFrame(data)
@@ -345,9 +345,9 @@ class MetricHelperTest(unittest.TestCase):
         np.testing.assert_array_equal(result['ndcg'].values, expected_values)
 
     def test_compute_NDCG_2(self):
-        data = {  # compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
+        data = {
             'query_id': [1, 1, 1, 2, 2, 2],
-            'y_true': [3, 2, 1, 1, 2, 3],
+            'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
             'y_pred': [0.3, 0.2, 0.1, 30, 20, 10]
         }
 
