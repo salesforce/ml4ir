@@ -89,7 +89,7 @@ def compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
         # Compute the Normalized Discounted Cumulative Gain (NDCG)
         ndcg = dcg / idcg
 
-        df.at[df.loc[df["query_id"] == qid].index, new_col] = ndcg.item()
+        df.loc[df.loc[df["query_id"] == qid].index, new_col] = ndcg.item()
 
     return df
 
