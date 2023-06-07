@@ -143,7 +143,12 @@ def get_grouped_stats(
     df = add_top_graded_relevance_record_column(df, label_col, artificial_click_col)
     if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
         df = compute_ndcg(df, label_col, pred_col="ranking_score", new_col=RankingConstants.NEW_NDCG)
-        df = compute_ndcg(df, label_col, pred_col="s", new_col=RankingConstants.OLD_NDCG)
+        if "s" in df.columns:
+            df = compute_ndcg(df, label_col, pred_col="s", new_col=RankingConstants.OLD_NDCG)
+        else:
+            # we cannot compute old NDCG
+            df[RankingConstants.OLD_NDCG] = 0.0
+
 
     df_clicked = df[df[artificial_click_col] == 1.0]
     df = df[df[query_key_col].isin(df_clicked[query_key_col])]
