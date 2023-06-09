@@ -303,13 +303,18 @@ class RelevanceScorer(keras.Model):
         - Currently only support pre-compiled Keras metrics
         """
         # Compute metrics on primary label
-        self.compiled_metrics.update_state(y_true, y_pred)
+        try:
+            mask = inputs[self.feature_config.get_mask("node_name")]
+        except KeyError:
+            mask = None
+        except AttributeError:
+            mask = None
+        self.compiled_metrics.update_state(tf.cast(y_true, tf.float32), y_pred, mask)
 
         # Compute metrics on auxiliary label
         if self.aux_label:
             y_aux = inputs[self.aux_label]
             y_true_ranks = inputs[self.feature_config.get_rank("node_name")]
-            mask = inputs[self.feature_config.get_mask("node_name")]
             for metric in self.aux_metrics:
                 # TODO: The function definition could be made more generic
                 #       to accommodate more metrics in the future,

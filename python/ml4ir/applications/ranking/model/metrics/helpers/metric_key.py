@@ -3,6 +3,7 @@ class Metric:
     # Primary metrics
     MRR = "MRR"
     ACR = "ACR"
+    NDCG = "NDCG"
 
     # Failure metrics on aux label
     AUX_ALL_FAILURE = "AuxAllFailure"
@@ -13,7 +14,8 @@ class Metric:
     def get_positive_metrics():
         """Metrics where higher value is better/desirable"""
         return [
-            Metric.MRR
+            Metric.MRR,
+            Metric.NDCG
         ]
 
     @staticmethod
@@ -32,6 +34,7 @@ class Metric:
         return[
             Metric.MRR,
             Metric.ACR,
+            Metric.NDCG,
             Metric.AUX_ALL_FAILURE,
             Metric.AUX_INTRINSIC_FAILURE,
             Metric.AUX_RANKMF]

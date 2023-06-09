@@ -7,7 +7,8 @@ class MeanRankMetric(metrics.Mean):
     """
     Mean metric for the ranks of a query
     """
-    def update_state(self, y_true, y_pred, sample_weight=None):
+
+    def update_state(self, y_true, y_pred, mask=None, sample_weight=None):
         """
         Accumulates metric statistics by computing the mean of the
         metric function
@@ -110,5 +111,68 @@ class ACR(MeanRankMetric):
         -------
         Tensor object
             Ranks tensor cast to float
+        """
+        return tf.cast(click_ranks, tf.float32)
+
+
+class NDCG(metrics.Mean):
+    """
+    Custom metric class for computing the Normalized Discounted Cumulative Gain (NDCG).
+
+    Inherits from tf.keras.metrics.Mean.
+    """
+    def update_state(self, y_true, y_pred, mask=None, sample_weight=None):
+        """
+        Update the metric state with new inputs.
+
+        Parameters:
+            y_true (tf.Tensor): The tensor containing the true relevance scores.
+            y_pred (tf.Tensor): The tensor containing the predicted scores.
+            mask (tf.Tensor, optional): The tensor containing the mask values. Default is None.
+            sample_weight (tf.Tensor, optional): The tensor containing the sample weights. Default is None.
+        """
+        y_true_masked = y_true
+        y_pred_masked = y_pred
+        if mask is not None:
+            mask_float = tf.cast(mask, dtype=tf.float32)  # Convert mask to float32
+
+            # Apply mask to the true relevance scores and predicted scores
+            y_true_masked = y_true * mask_float
+            y_pred_masked = y_pred * mask_float
+
+        # Sort the predicted scores in descending order
+        sorted_indices = tf.argsort(y_pred_masked, axis=-1, direction='DESCENDING')
+        sorted_labels = tf.gather(y_true_masked, sorted_indices, axis=-1, batch_dims=len(y_true_masked.shape) - 1)
+
+        # Compute the Discounted Cumulative Gain (DCG)
+        positions = tf.range(1, tf.shape(y_true_masked)[-1] + 1, dtype=tf.float32)
+        discounts = tf.math.log1p(positions) / tf.math.log1p(2.0)  # log base 2
+        dcg = tf.reduce_sum(sorted_labels / discounts, axis=-1)
+
+        # Sort the true relevance scores in descending order
+        true_sorted_indices = tf.argsort(y_true_masked, axis=-1, direction='DESCENDING')
+        true_sorted_labels = tf.gather(y_true_masked, true_sorted_indices, axis=-1,
+                                       batch_dims=len(y_true_masked.shape) - 1)
+
+        # Compute the Ideal Discounted Cumulative Gain (IDCG)
+        idcg = tf.reduce_sum(true_sorted_labels / discounts, axis=-1)
+
+        # Compute the Normalized Discounted Cumulative Gain (NDCG)
+        ndcg = dcg / idcg
+
+        # removing nans coming from having no relevance signals in y_true
+        ndcg = tf.where(tf.math.is_nan(ndcg), tf.zeros_like(ndcg), ndcg)
+
+        return super().update_state(ndcg, sample_weight=sample_weight)
+
+    def _process_click_ranks(self, click_ranks):
+        """
+        Process the click ranks.
+
+        Parameters:
+            click_ranks (tf.Tensor): The tensor containing the click ranks.
+
+        Returns:
+            tf.Tensor: The processed click ranks.
         """
         return tf.cast(click_ranks, tf.float32)

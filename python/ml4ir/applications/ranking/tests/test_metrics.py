@@ -4,11 +4,12 @@ import unittest
 import pathlib
 
 import pandas as pd
+import tensorflow as tf
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, NDCG
 from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 from ml4ir.applications.ranking.config.parse_args import get_args
 from ml4ir.applications.ranking.pipeline import RankingPipeline
@@ -78,7 +79,7 @@ class RankingModelTest(RankingTestBase):
             "--early_stopping_patience",
             "25",
             "--metrics_keys",
-            "MRR",
+            "MRR", "NDCG",
             "categorical_accuracy",
             "--monitor_metric",
             "categorical_accuracy",
@@ -175,11 +176,16 @@ class RankingModelTest(RankingTestBase):
             'stat_sig_AuxIntrinsicFailure_improved_groups': '5', 'stat_sig_AuxIntrinsicFailure_degraded_groups': '0',
             'stat_sig_AuxIntrinsicFailure_group_improv_perc': '92.81582417518467',
             'stat_sig_AuxRankMF_improved_groups': '1', 'stat_sig_AuxRankMF_degraded_groups': '0',
-            'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042'
+            'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042',
+            'train_NDCG': '0.7625430226325989',
+            'val_NDCG': '0.7833980321884155',
+            'test_new_NDCG': '0.772084332112937'
+
         }
         for metric in expected_metrics:
             np.isclose(float(expected_metrics[metric]), float(results_dict[metric]), atol=0.0001)
         TempDirectory.cleanup_all()
+
 
 class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
@@ -191,6 +197,74 @@ class RankingMetricsTest(unittest.TestCase):
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           1.5)
+
+    def test_NDCG_1(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores and predicted scores
+        y_true = tf.constant([[3.0, 2.0, 1.0], [1.0, 2.0, 3.0]])
+        y_pred = tf.constant([[0.3, 0.2, 0.1], [10, 20, 30]], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        # Expected result: 1.0 (perfect ranking)
+        assert result == 1.0
+
+    def test_NDCG_2(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores and predicted scores
+        y_true = tf.constant([[3.0, 2.0, 1.0], [1.0, 2.0, 3.0]])
+        y_pred = tf.constant([[0.3, 0.2, 0.1], [30, 20, 10]], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        assert np.isclose(result,  0.894999, atol=0.0001)
+
+    def test_NDCG_mask_1(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores, predicted scores, and mask
+        y_true = tf.constant([[3, 2, 1], [1, 2, 3]], dtype=tf.float32)
+        y_pred = tf.constant([[0.3, 0.5, 0.1], [50, 20, 30]], dtype=tf.float32)
+        mask = tf.constant([[1, 0, 1], [0, 1, 1]], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred, mask)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        # Expected result: 1.0 (only considering the relevant items)
+        assert result == 1.0
+
+    def test_NDCG_mask_2(self):
+        # Create an instance of the NDCG metric
+        ndcg_metric = NDCG()
+
+        # Define the true relevance scores, predicted scores, and mask
+        y_true = tf.constant([[3, 2, 1], [1, 2, 3]], dtype=tf.float32)
+        y_pred = tf.constant([[0.3, 0.5, 0.1], [10, 10, 30]], dtype=tf.float32)
+        mask = tf.constant([[1, 0, 1], [1, 1, 0]], dtype=tf.float32)
+
+        # Update the metric state
+        ndcg_metric.update_state(y_true, y_pred, mask)
+
+        # Retrieve the result
+        result = ndcg_metric.result().numpy()
+
+        assert np.isclose(result,  0.9298594, atol=0.0001)
 
 
 class MetricHelperTest(unittest.TestCase):
@@ -233,3 +307,50 @@ class MetricHelperTest(unittest.TestCase):
         assert metrics_dict["stat_sig_" + metric + "_improved_groups"] == 1
         assert metrics_dict["stat_sig_" + metric + "_degraded_groups"] == 1
         assert metrics_dict["stat_sig_" + metric + "_group_improv_perc"] == 0
+
+    def test_add_top_graded_relevance_record_column(self):
+        # Create a sample DataFrame
+        data = {
+            'query_id': [1, 1, 2, 2, 3, 4, 4, 5, 5],
+            'relevance_score': [0.8, 0.5, 0.6, 0.9, 0.7, 0, 0, 10, 10],
+            'ranking_score': [5, 7, 1, 1, 1, 1, 1, 1, 10]
+        }
+        df = pd.DataFrame(data)
+
+        # Call the function
+        new_col_name = 'top_relevance'
+        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'query_id', 'ranking_score', 'relevance_score', new_col_name)
+
+        # Verify the new column is added
+        self.assertTrue(new_col_name in df_with_new_column.columns)
+
+        expected_values = np.array([1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0])
+        np.testing.assert_array_equal(df_with_new_column[new_col_name].values, expected_values)
+
+        # Verify rows with no relevance scores are removed
+        self.assertEqual(len(df_with_new_column['query_id'].unique()), 4)
+
+    def test_compute_NDCG_1(self):
+        data = {
+            'query_id': [1, 1, 1, 2, 2, 2],
+            'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
+            'y_pred': [0.3, 0.2, 0.1, 10, 20, 30]
+        }
+        expected_values = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+        self.comput_and_assert_NDCG(data, expected_values)
+
+    def test_compute_NDCG_2(self):
+        data = {
+            'query_id': [1, 1, 1, 2, 2, 2],
+            'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
+            'y_pred': [0.3, 0.2, 0.1, 30, 20, 10]
+        }
+        expected_values = np.array([1.0, 1.0, 1.0, 0.789998, 0.789998, 0.789998])
+        self.comput_and_assert_NDCG(data, expected_values)
+
+    def comput_and_assert_NDCG(self, data, expected_values):
+        df = pd.DataFrame(data)
+        result = metrics_helper.compute_ndcg(df, "query_id", "y_true", pred_col="y_pred", new_col="ndcg")
+        assert np.isclose(result['ndcg'].values, expected_values).all()
+
+

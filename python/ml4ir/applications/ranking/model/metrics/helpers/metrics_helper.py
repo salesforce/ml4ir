@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import numpy as np
 
 from ml4ir.applications.ranking.model.metrics.helpers.metric_key import Metric
 from ml4ir.applications.ranking.model.metrics.helpers.aux_metrics_helper import compute_aux_metrics_on_query_group
@@ -16,7 +17,89 @@ class RankingConstants:
     DIFF_MRR = "diff_MRR"
     OLD_ACR = "old_ACR"
     NEW_ACR = "new_ACR"
+    OLD_NDCG = "old_NDCG"
+    NEW_NDCG = "new_NDCG"
+    OLD_RANKING_SCORE = "s"
+    NEW_RANKING_SCORE = "ranking_score"
     TTEST_PVALUE_THRESHOLD = 0.1
+
+
+def add_top_graded_relevance_record_column(df, query_key_col, ranking_score_col, label_col, new_col_name):
+    """
+    Adds a new column indicating the top graded relevance record per query in the DataFrame.
+
+    Args:
+        df (pandas.DataFrame): The input DataFrame.
+        query_key_col(str): Name of the query key column
+        ranking_score_col (str): Name of the column containing the ranking score. Used to break ties.
+        label_col (str): The column name containing the relevance scores.
+        new_col_name (str): The name for the new column indicating the top graded relevance.
+
+    Returns:
+        pandas.DataFrame: The input DataFrame with the new column added.
+        """
+    # remove queries with no relevance scores
+    grouped_sum = df.groupby(query_key_col)[label_col].sum()
+    queries_with_relevance_scores = grouped_sum[grouped_sum > 0]
+    df_with_relevance_scores = df.loc[df[query_key_col].isin(queries_with_relevance_scores.index)]
+
+    # Group the DataFrame by query_key_col and find the record with the highest label_col
+    top_records = df_with_relevance_scores.groupby(query_key_col)[[label_col, ranking_score_col]].apply(
+        lambda x: x.nlargest(1, [label_col, ranking_score_col]))
+
+    top_indexes = np.array([idx[-1] for idx in list(top_records.transpose().to_dict().keys())])
+
+    # Create a new column 'top_target_relevance' and initialize with 0
+    df_with_relevance_scores[new_col_name] = 0.0
+
+    # Set the 'top_target_relevance' value to 1 for the top records
+    df_with_relevance_scores.loc[top_indexes, new_col_name] = 1.0
+
+    return df_with_relevance_scores
+
+
+def compute_ndcg(df, query_key_col, label_col, pred_col="ranking_score", new_col="new_NDCG"):
+    """
+    Computes the Normalized Discounted Cumulative Gain (NDCG) for each query in the DataFrame.
+
+    Args:
+        df (pandas.DataFrame): The input DataFrame.
+        query_key_col (str): The name of the column containing the query id.
+        label_col (str): The column name containing the true relevance scores.
+        pred_col (str, optional): The column name containing the predicted scores. Default is "ranking_score".
+        new_col (str, optional): The name for the new column containing the computed NDCG values. Default is "new_NDCG".
+
+    Returns:
+        pandas.DataFrame: The input DataFrame with the new column containing the computed NDCG values.
+    """
+    grouped = df.groupby(query_key_col)
+    for qid, group in grouped:
+
+        y_true = group[label_col].values
+        y_pred = group[pred_col].values
+
+        # Sort the predicted scores in descending order
+        sorted_indices = np.argsort(-y_pred, axis=-1)
+        sorted_labels = np.take_along_axis(y_true, sorted_indices, axis=-1)
+
+        # Compute the Discounted Cumulative Gain (DCG)
+        positions = np.arange(1, y_true.shape[-1] + 1, dtype=float)
+        discounts = np.log1p(positions) / np.log1p(2.0)  # log base 2
+        dcg = np.sum(sorted_labels / discounts, axis=-1)
+
+        # Sort the true relevance scores in descending order
+        true_sorted_indices = np.argsort(-y_true, axis=-1)
+        true_sorted_labels = np.take_along_axis(y_true, true_sorted_indices, axis=-1)
+
+        # Compute the Ideal Discounted Cumulative Gain (IDCG)
+        idcg = np.sum(true_sorted_labels / discounts, axis=-1)
+
+        # Compute the Normalized Discounted Cumulative Gain (NDCG)
+        ndcg = dcg / idcg
+
+        df.loc[np.array(df.loc[df[query_key_col] == qid].index), new_col] = ndcg.item()
+
+    return df
 
 
 def get_grouped_stats(
@@ -25,6 +108,8 @@ def get_grouped_stats(
         label_col: str,
         old_rank_col: str,
         new_rank_col: str,
+        old_ranking_score: str = None,
+        new_ranking_score: str = None,
         group_keys: List[str] = [],
         aux_label: str = None,
         power_analysis_metrics: List[str] = [],
@@ -45,7 +130,10 @@ def get_grouped_stats(
         Name of the column that represents the original rank of the records
     new_rank_col : str
         Name of the column that represents the newly computed rank of the records
-        after reordering based on new model scores
+    old_ranking_score : str
+        Name of the column that represents the ranking score of the old model
+    new_ranking_score : str
+        Name of the column that represents the ranking score of the new model
     group_keys : list, optional
         List of features used to compute groupwise metrics
     aux_label : str, optional
@@ -62,8 +150,20 @@ def get_grouped_stats(
         computed from the old and new ranks and aux labels generated
         by the model
     """
-    # Filter unclicked queries
-    df_clicked = df[df[label_col] == 1.0]
+    # adding "top_graded_relevance" to be the artificial click such that the record with the highest graded
+    # relevance is considered to be clicked and will be used in MRR computation
+    artificial_click_col = "top_graded_relevance"
+    df = add_top_graded_relevance_record_column(df, query_key_col, new_ranking_score, label_col, artificial_click_col)
+    if np.array([Metric.NDCG in metric for metric in power_analysis_metrics]).any():
+        df = compute_ndcg(df, query_key_col, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
+
+        if old_ranking_score in df.columns:  # if the old model ranking score is available
+            df = compute_ndcg(df, query_key_col, label_col, pred_col=old_ranking_score, new_col=RankingConstants.OLD_NDCG)
+        else:
+            # we cannot compute old NDCG
+            df[RankingConstants.OLD_NDCG] = 0.0
+
+    df_clicked = df[df[artificial_click_col] == 1.0]
     df = df[df[query_key_col].isin(df_clicked[query_key_col])]
 
     # Compute metrics on aux labels
@@ -72,7 +172,7 @@ def get_grouped_stats(
         df_aux_metrics = df.groupby(query_key_col).apply(
             lambda grp: compute_aux_metrics_on_query_group(
                 query_group=grp,
-                label_col=label_col,
+                label_col=artificial_click_col,
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
                 aux_label=aux_label,
@@ -80,8 +180,8 @@ def get_grouped_stats(
             ))
 
     # Adding ranking metrics: MRR, ACR
-    df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[old_rank_col]
-    df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[new_rank_col]
+    df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[new_rank_col]
+    df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[old_rank_col]
     df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[
         RankingConstants.OLD_MRR]
     df_clicked[RankingConstants.OLD_ACR] = df_clicked[old_rank_col]
@@ -129,16 +229,19 @@ def get_grouped_stats(
         if aux_label:
             df_aux_metrics = df_aux_metrics.sum().to_frame().T
 
-    df_label_stats = pd.DataFrame(
-        {
+    stats_dict = {
             "query_count": query_count,
             "sum_old_rank": sum_old_rank,
             "sum_new_rank": sum_new_rank,
             "sum_old_reciprocal_rank": sum_old_reciprocal_rank,
             "sum_new_reciprocal_rank": sum_new_reciprocal_rank,
         }
-    )
 
+    if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
+        stats_dict[RankingConstants.NEW_NDCG] = df_grouped_batch.apply(lambda x: x[RankingConstants.NEW_NDCG].sum())
+        stats_dict[RankingConstants.OLD_NDCG] = df_grouped_batch.apply(lambda x: x[RankingConstants.OLD_NDCG].sum())
+
+    df_label_stats = pd.DataFrame(stats_dict)
     df_stats = pd.concat([df_label_stats, df_aux_metrics], axis=1)
 
     return df_stats, group_metric_running_variance_params, df_clicked
