@@ -131,11 +131,10 @@ class RankingModel(RelevanceModel):
                 self.feature_config.get_rank(),
             ]
         )
-        try:
+        old_ranking_score = self.feature_config.get_old_ranking_score(metrics_helper.RankingConstants.OLD_RANKING_SCORE)
+        if old_ranking_score:
             # Adding the old model ranking score. This is needed for computing old_NDCG
-            evaluation_features.append(self.feature_config.get_old_ranking_score())
-        except:
-            pass
+            evaluation_features.append(old_ranking_score)
 
         # Add aux_label if present
         aux_label = self.feature_config.get_aux_label()
@@ -172,7 +171,8 @@ class RankingModel(RelevanceModel):
                                                 label_col=self.feature_config.get_label("node_name"),
                                                 old_rank_col=self.feature_config.get_rank("node_name"),
                                                 new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
-                                                old_ranking_score=self.feature_config.get_old_ranking_score(),
+                                                old_ranking_score=old_ranking_score,
+                                                new_ranking_score=metrics_helper.RankingConstants.NEW_RANKING_SCORE,
                                                 group_keys=list(set(self.feature_config.get_group_metrics_keys(
                                                     "node_name"))),
                                                 aux_label=self.feature_config.get_aux_label("node_name"),

@@ -19,15 +19,18 @@ class RankingConstants:
     NEW_ACR = "new_ACR"
     OLD_NDCG = "old_NDCG"
     NEW_NDCG = "new_NDCG"
+    OLD_RANKING_SCORE = "s"
+    NEW_RANKING_SCORE = "ranking_score"
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
-def add_top_graded_relevance_record_column(df, label_col, new_col_name):
+def add_top_graded_relevance_record_column(df, query_key_col, label_col, new_col_name):
     """
     Adds a new column indicating the top graded relevance record per query in the DataFrame.
 
     Args:
         df (pandas.DataFrame): The input DataFrame.
+        query_key_col(str): Name of the query key column
         label_col (str): The column name containing the relevance scores.
         new_col_name (str): The name for the new column indicating the top graded relevance.
 
@@ -35,12 +38,12 @@ def add_top_graded_relevance_record_column(df, label_col, new_col_name):
         pandas.DataFrame: The input DataFrame with the new column added.
         """
     # remove queries with no relevance scores
-    grouped_sum = df.groupby('query_id')[label_col].sum()
+    grouped_sum = df.groupby(query_key_col)[label_col].sum()
     queries_with_relevance_scores = grouped_sum[grouped_sum > 0]
-    df_with_relevance_scores = df.loc[df["query_id"].isin(queries_with_relevance_scores.index)]
+    df_with_relevance_scores = df.loc[df[query_key_col].isin(queries_with_relevance_scores.index)]
 
     # Group the DataFrame by 'query_id' and find the record with the highest 'target_relevance'
-    top_records = df_with_relevance_scores.groupby('query_id')[label_col].idxmax()
+    top_records = df_with_relevance_scores.groupby(query_key_col)[label_col].idxmax()
 
     # Create a new column 'top_target_relevance' and initialize with 0
     df_with_relevance_scores[new_col_name] = 0.0
@@ -101,6 +104,7 @@ def get_grouped_stats(
         old_rank_col: str,
         new_rank_col: str,
         old_ranking_score: str = None,
+        new_ranking_score: str = None,
         group_keys: List[str] = [],
         aux_label: str = None,
         power_analysis_metrics: List[str] = [],
@@ -123,6 +127,8 @@ def get_grouped_stats(
         Name of the column that represents the newly computed rank of the records
     old_ranking_score : str
         Name of the column that represents the ranking score of the old model
+    new_ranking_score : str
+        Name of the column that represents the ranking score of the new model
     group_keys : list, optional
         List of features used to compute groupwise metrics
     aux_label : str, optional
@@ -140,11 +146,11 @@ def get_grouped_stats(
         by the model
     """
     # adding "top_graded_relevance" to be the artificial click such that the record with the highest graded
-    # relevance is considered to be clicked nad will be used in MRR computation
+    # relevance is considered to be clicked and will be used in MRR computation
     artificial_click_col = "top_graded_relevance"
-    df = add_top_graded_relevance_record_column(df, label_col, artificial_click_col)
-    if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
-        df = compute_ndcg(df, label_col, pred_col="ranking_score", new_col=RankingConstants.NEW_NDCG)
+    df = add_top_graded_relevance_record_column(df, query_key_col, label_col, artificial_click_col)
+    if np.array([Metric.NDCG in metric for metric in power_analysis_metrics]).any():
+        df = compute_ndcg(df, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
 
         if old_ranking_score in df.columns:  # if the old model ranking score is available
             df = compute_ndcg(df, label_col, pred_col=old_ranking_score, new_col=RankingConstants.OLD_NDCG)

@@ -305,7 +305,7 @@ class RelevanceScorer(keras.Model):
         # Compute metrics on primary label
         try:
             mask = inputs[self.feature_config.get_mask("node_name")]
-        except:
+        except KeyError:
             mask = None
         self.compiled_metrics.update_state(tf.cast(y_true, tf.float32), y_pred, mask)
 
@@ -313,7 +313,6 @@ class RelevanceScorer(keras.Model):
         if self.aux_label:
             y_aux = inputs[self.aux_label]
             y_true_ranks = inputs[self.feature_config.get_rank("node_name")]
-            mask = inputs[self.feature_config.get_mask("node_name")]
             for metric in self.aux_metrics:
                 # TODO: The function definition could be made more generic
                 #       to accommodate more metrics in the future,

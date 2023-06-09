@@ -18,7 +18,6 @@ class FeatureConfigKey:
     LABEL = "label"
     FEATURES = "features"
     RANK = "rank"
-    OLD_RANKING_SCORE = "s"
 
 
 class FeatureConfig:
@@ -336,7 +335,7 @@ class FeatureConfig:
 
         raise KeyError("No feature with node name {} in FeatureConfig".format(name))
 
-    def get_old_ranking_score(self, name: str = FeatureConfigKey.OLD_RANKING_SCORE):
+    def get_old_ranking_score(self, name: str):
         """
         Getter method for the old ranking score feature in FeatureConfig object
 
@@ -350,7 +349,10 @@ class FeatureConfig:
         dict
             Feature config dictionary for the name of the feature passed
         """
-        return self.feature_config.get_feature(name)
+        try:
+            return self.get_feature(name)
+        except KeyError:
+            return None
 
     def get_feature(self, name: str):
         """
