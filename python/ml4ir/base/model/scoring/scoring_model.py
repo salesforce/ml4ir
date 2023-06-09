@@ -307,6 +307,8 @@ class RelevanceScorer(keras.Model):
             mask = inputs[self.feature_config.get_mask("node_name")]
         except KeyError:
             mask = None
+        except AttributeError:
+            mask = None
         self.compiled_metrics.update_state(tf.cast(y_true, tf.float32), y_pred, mask)
 
         # Compute metrics on auxiliary label
