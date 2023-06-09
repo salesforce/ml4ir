@@ -311,24 +311,24 @@ class MetricHelperTest(unittest.TestCase):
     def test_add_top_graded_relevance_record_column(self):
         # Create a sample DataFrame
         data = {
-            'query_id': [1, 1, 2, 2, 3, 4, 4],
-            'relevance_score': [0.8, 0.5, 0.6, 0.9, 0.7, 0, 0]
+            'query_id': [1, 1, 2, 2, 3, 4, 4, 5, 5],
+            'relevance_score': [0.8, 0.5, 0.6, 0.9, 0.7, 0, 0, 10, 10],
+            'ranking_score': [5, 7, 1, 1, 1, 1, 1, 1, 10]
         }
         df = pd.DataFrame(data)
 
         # Call the function
         new_col_name = 'top_relevance'
-        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'query_id', 'relevance_score', new_col_name)
+        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'query_id', 'ranking_score', 'relevance_score', new_col_name)
 
         # Verify the new column is added
         self.assertTrue(new_col_name in df_with_new_column.columns)
 
-        # Verify the values in the new column
-        expected_values = np.array([1.0, 0.0, 0.0, 1.0, 1.0])
+        expected_values = np.array([1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0])
         np.testing.assert_array_equal(df_with_new_column[new_col_name].values, expected_values)
 
         # Verify rows with no relevance scores are removed
-        self.assertEqual(len(df_with_new_column['query_id'].unique()), 3)
+        self.assertEqual(len(df_with_new_column['query_id'].unique()), 4)
 
     def test_compute_NDCG_1(self):
         data = {
@@ -350,7 +350,7 @@ class MetricHelperTest(unittest.TestCase):
 
     def comput_and_assert_NDCG(self, data, expected_values):
         df = pd.DataFrame(data)
-        result = metrics_helper.compute_ndcg(df, "y_true", pred_col="y_pred", new_col="ndcg")
+        result = metrics_helper.compute_ndcg(df, "query_id", "y_true", pred_col="y_pred", new_col="ndcg")
         assert np.isclose(result['ndcg'].values, expected_values).all()
 
 
