@@ -330,37 +330,26 @@ class MetricHelperTest(unittest.TestCase):
         # Verify rows with no relevance scores are removed
         self.assertEqual(len(df_with_new_column['query_id'].unique()), 3)
 
-    def test_compute_NDCG_1(self):
-        # Create an instance of the NDCG metric
+    def test_compute_NDCG(self):
         data = {
             'query_id': [1, 1, 1, 2, 2, 2],
             'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
             'y_pred': [0.3, 0.2, 0.1, 10, 20, 30]
         }
-        df = pd.DataFrame(data)
-
-        # Retrieve the result
-        result = metrics_helper.compute_ndcg(df, "y_true", pred_col="y_pred", new_col="ndcg")
-        print(result)
-
-        # Verify the values in the new column
         expected_values = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-        np.testing.assert_array_equal(result['ndcg'].values, expected_values)
+        self.comput_and_assert_NDCG(data, expected_values)
 
-    def test_compute_NDCG_2(self):
         data = {
             'query_id': [1, 1, 1, 2, 2, 2],
             'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
             'y_pred': [0.3, 0.2, 0.1, 30, 20, 10]
         }
-
-        df = pd.DataFrame(data)
-
-        # Retrieve the result
-        result = metrics_helper.compute_ndcg(df, "y_true", pred_col="y_pred", new_col="ndcg")
-
-        # Verify the values in the new column
         expected_values = np.array([1.0, 1.0, 1.0, 0.789998, 0.789998, 0.789998])
+        self.comput_and_assert_NDCG(data, expected_values)
+
+    def comput_and_assert_NDCG(self, data, expected_values):
+        df = pd.DataFrame(data)
+        result = metrics_helper.compute_ndcg(df, "y_true", pred_col="y_pred", new_col="ndcg")
         assert np.isclose(result['ndcg'].values, expected_values).all()
 
 

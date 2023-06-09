@@ -143,7 +143,7 @@ def get_grouped_stats(
     df = add_top_graded_relevance_record_column(df, label_col, artificial_click_col)
     if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
         df = compute_ndcg(df, label_col, pred_col="ranking_score", new_col=RankingConstants.NEW_NDCG)
-        if "s" in df.columns:
+        if "s" in df.columns:  # s is the old model(Prod model at the time of data collection) ranking score
             df = compute_ndcg(df, label_col, pred_col="s", new_col=RankingConstants.OLD_NDCG)
         else:
             # we cannot compute old NDCG
