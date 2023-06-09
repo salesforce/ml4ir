@@ -100,6 +100,7 @@ def get_grouped_stats(
         label_col: str,
         old_rank_col: str,
         new_rank_col: str,
+        old_ranking_score: str = None,
         group_keys: List[str] = [],
         aux_label: str = None,
         power_analysis_metrics: List[str] = [],
@@ -120,7 +121,8 @@ def get_grouped_stats(
         Name of the column that represents the original rank of the records
     new_rank_col : str
         Name of the column that represents the newly computed rank of the records
-        after reordering based on new model scores
+    old_ranking_score : str
+        Name of the column that represents the ranking score of the old model
     group_keys : list, optional
         List of features used to compute groupwise metrics
     aux_label : str, optional
@@ -143,12 +145,12 @@ def get_grouped_stats(
     df = add_top_graded_relevance_record_column(df, label_col, artificial_click_col)
     if np.array([Metric.NDCG in m for m in power_analysis_metrics]).any():
         df = compute_ndcg(df, label_col, pred_col="ranking_score", new_col=RankingConstants.NEW_NDCG)
-        if "s" in df.columns:  # s is the old model(Prod model at the time of data collection) ranking score
-            df = compute_ndcg(df, label_col, pred_col="s", new_col=RankingConstants.OLD_NDCG)
+
+        if old_ranking_score in df.columns:  # if the old model ranking score is available
+            df = compute_ndcg(df, label_col, pred_col=old_ranking_score, new_col=RankingConstants.OLD_NDCG)
         else:
             # we cannot compute old NDCG
             df[RankingConstants.OLD_NDCG] = 0.0
-
 
     df_clicked = df[df[artificial_click_col] == 1.0]
     df = df[df[query_key_col].isin(df_clicked[query_key_col])]
