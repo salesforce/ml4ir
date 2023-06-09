@@ -131,10 +131,12 @@ class RankingModel(RelevanceModel):
                 self.feature_config.get_rank(),
             ]
         )
-        old_ranking_score = self.feature_config.get_old_ranking_score(metrics_helper.RankingConstants.OLD_RANKING_SCORE)
-        if old_ranking_score:
+        try:
+            old_ranking_score = self.feature_config.get_feature(metrics_helper.RankingConstants.OLD_RANKING_SCORE)
             # Adding the old model ranking score. This is needed for computing old_NDCG
             evaluation_features.append(old_ranking_score)
+        except KeyError:
+            old_ranking_score = None
 
         # Add aux_label if present
         aux_label = self.feature_config.get_aux_label()

@@ -54,12 +54,13 @@ def add_top_graded_relevance_record_column(df, query_key_col, label_col, new_col
     return df_with_relevance_scores
 
 
-def compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
+def compute_ndcg(df, query_key_col, label_col, pred_col="ranking_score", new_col="new_NDCG"):
     """
     Computes the Normalized Discounted Cumulative Gain (NDCG) for each query in the DataFrame.
 
     Args:
         df (pandas.DataFrame): The input DataFrame.
+        query_key_col (str): The name of the column containing the query id.
         label_col (str): The column name containing the true relevance scores.
         pred_col (str, optional): The column name containing the predicted scores. Default is "ranking_score".
         new_col (str, optional): The name for the new column containing the computed NDCG values. Default is "new_NDCG".
@@ -67,7 +68,7 @@ def compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
     Returns:
         pandas.DataFrame: The input DataFrame with the new column containing the computed NDCG values.
     """
-    grouped = df.groupby('query_id')
+    grouped = df.groupby(query_key_col)
     for qid, group in grouped:
 
         y_true = group[label_col].values
@@ -92,7 +93,7 @@ def compute_ndcg(df, label_col, pred_col="ranking_score", new_col="new_NDCG"):
         # Compute the Normalized Discounted Cumulative Gain (NDCG)
         ndcg = dcg / idcg
 
-        df.loc[np.array(df.loc[df["query_id"] == qid].index), new_col] = ndcg.item()
+        df.loc[np.array(df.loc[df[query_key_col] == qid].index), new_col] = ndcg.item()
 
     return df
 
@@ -150,10 +151,10 @@ def get_grouped_stats(
     artificial_click_col = "top_graded_relevance"
     df = add_top_graded_relevance_record_column(df, query_key_col, label_col, artificial_click_col)
     if np.array([Metric.NDCG in metric for metric in power_analysis_metrics]).any():
-        df = compute_ndcg(df, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
+        df = compute_ndcg(df, query_key_col, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
 
         if old_ranking_score in df.columns:  # if the old model ranking score is available
-            df = compute_ndcg(df, label_col, pred_col=old_ranking_score, new_col=RankingConstants.OLD_NDCG)
+            df = compute_ndcg(df, query_key_col, label_col, pred_col=old_ranking_score, new_col=RankingConstants.OLD_NDCG)
         else:
             # we cannot compute old NDCG
             df[RankingConstants.OLD_NDCG] = 0.0

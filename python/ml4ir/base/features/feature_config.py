@@ -335,25 +335,6 @@ class FeatureConfig:
 
         raise KeyError("No feature with node name {} in FeatureConfig".format(name))
 
-    def get_old_ranking_score(self, name: str):
-        """
-        Getter method for the old ranking score feature in FeatureConfig object
-
-        Parameters
-        ----------
-        name : str
-            Name of the feature to fetch
-
-        Returns
-        -------
-        dict
-            Feature config dictionary for the name of the feature passed
-        """
-        try:
-            return self.get_feature(name)
-        except KeyError:
-            return None
-
     def get_feature(self, name: str):
         """
         Getter method for feature in FeatureConfig object

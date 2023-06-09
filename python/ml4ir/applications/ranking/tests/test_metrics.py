@@ -330,7 +330,7 @@ class MetricHelperTest(unittest.TestCase):
         # Verify rows with no relevance scores are removed
         self.assertEqual(len(df_with_new_column['query_id'].unique()), 3)
 
-    def test_compute_NDCG(self):
+    def test_compute_NDCG_1(self):
         data = {
             'query_id': [1, 1, 1, 2, 2, 2],
             'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
@@ -339,6 +339,7 @@ class MetricHelperTest(unittest.TestCase):
         expected_values = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         self.comput_and_assert_NDCG(data, expected_values)
 
+    def test_compute_NDCG_2(self):
         data = {
             'query_id': [1, 1, 1, 2, 2, 2],
             'y_true': [3.0, 2.0, 1.0, 1.0, 2.0, 3.0],
