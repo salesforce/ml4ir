@@ -318,7 +318,7 @@ class MetricHelperTest(unittest.TestCase):
 
         # Call the function
         new_col_name = 'top_relevance'
-        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'relevance_score', new_col_name)
+        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'query_id', 'relevance_score', new_col_name)
 
         # Verify the new column is added
         self.assertTrue(new_col_name in df_with_new_column.columns)
