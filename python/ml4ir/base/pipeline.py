@@ -186,9 +186,7 @@ class RelevancePipeline(object):
                 self.logs_dir_local, status_file))
 
         return logging_utils.setup_logging(
-            reset=True,
-            file_name=os.path.join(self.logs_dir_local, "output_log.csv"),
-            log_to_file=True,
+            file_name=os.path.join(self.logs_dir_local, "output_log.csv")
         )
 
     def set_seeds(self, reset_graph=True):
