@@ -95,7 +95,7 @@ def setup_logging(file_io: LocalIO):
     file_io.make_directory(logs_dir, clear_dir=True)
 
     outfile: str = os.path.join(logs_dir, "output_log.csv")
-    logger = logging_utils.setup_logging(reset=True, file_name=outfile, log_to_file=True)
+    logger = logging_utils.setup_logging(file_name=outfile)
 
     logger.info("Logging initialized. Saving logs to : {}".format(logs_dir))
     logger.info("Run ID: {}".format(run_id))

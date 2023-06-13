@@ -51,7 +51,7 @@ class RelevanceTestBase(unittest.TestCase):
         # Setup logging
         outfile: str = os.path.join(self.args.logs_dir, "output_log.csv")
 
-        self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
+        self.logger = setup_logging(file_name=outfile)
 
         self.file_io.set_logger(self.logger)
 

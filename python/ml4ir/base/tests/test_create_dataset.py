@@ -32,7 +32,7 @@ class RankingCreateDatasetTest(unittest.TestCase):
         # Set up logging
         self.file_io.make_directory(self.log_dir, clear_dir=True)
         outfile: str = os.path.join(self.log_dir, "output_log.csv")
-        self.logger = setup_logging(reset=True, file_name=outfile, log_to_file=True)
+        self.logger = setup_logging(file_name=outfile)
 
     def test_synthetic_data(self):
 

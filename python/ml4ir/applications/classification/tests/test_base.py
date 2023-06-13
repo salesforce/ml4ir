@@ -76,9 +76,7 @@ class ClassificationTestBase(unittest.TestCase):
         # Setup logging
         outfile: str = os.path.join(cls.args.logs_dir, "output_log.csv")
 
-        cls.logger = setup_logging(reset=True,
-                                   file_name=outfile,
-                                   log_to_file=True)
+        cls.logger = setup_logging(file_name=outfile)
         cls.run_default_pipeline(data_format="csv")
 
     @classmethod
