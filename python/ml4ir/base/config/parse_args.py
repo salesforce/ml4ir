@@ -160,7 +160,7 @@ class RelevanceArgParser(ArgumentParser):
             "--monitor_metric",
             type=str,
             default=None,
-            choices=RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
+            choices=["loss", "primary_loss", "aux_loss"] + RankingMetricKey.get_all_keys() + ClassificationMetricKey.get_all_keys(),
             help="Metric name to use for monitoring training loop in callbacks.",
         )
 
