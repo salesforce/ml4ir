@@ -144,9 +144,7 @@ class TestLrSchedules(unittest.TestCase):
     def test_cyclic_lr_in_training_pipeline(self):
         """Test a cyclic learning rate in model training"""
         Logger = logging_utils.setup_logging(
-            reset=True,
-            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv"),
-            log_to_file=True,
+            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv")
         )
 
         io = LocalIO()
@@ -229,9 +227,7 @@ class TestLrSchedules(unittest.TestCase):
         """Test reduce lr on plateau"""
         self.model_config_file = MODEL_CONFIG_REDUCE_LR_ON_PLATEAU
         Logger = logging_utils.setup_logging(
-            reset=True,
-            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv"),
-            log_to_file=True,
+            file_name=os.path.join(INPUT_DIR + 'ranklib', "output_log.csv")
         )
 
         io = LocalIO()
