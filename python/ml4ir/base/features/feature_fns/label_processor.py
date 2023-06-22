@@ -55,17 +55,20 @@ class StringMultiLabelProcessor(BaseFeatureLayerOp):
         self.num_labels = self.feature_layer_args.get(self.NUM_LABELS, None)
         assert self.num_labels, "The num_labels argument needs to be specified in order to handle missing labels"
         self.default_value = "_".join(["0"] * self.num_labels)
-        self.binarize = self.feature_layer_args.get(self.BINARIZE, True)
+        self.binarize = self.feature_layer_args.get(self.BINARIZE, False)
 
-        self.label_weights = self.feature_layer_args.get(self.LABEL_WEIGHTS, None)
+        self.label_weights = self.feature_layer_args.get(
+            self.LABEL_WEIGHTS, None)
         if not self.label_weights:
             self.label_weights = [1.0] * self.num_labels
-        self.test_label_weights = self.feature_layer_args.get(self.TEST_LABEL_WEIGHTS, self.label_weights)
+        self.test_label_weights = self.feature_layer_args.get(
+            self.TEST_LABEL_WEIGHTS, self.label_weights)
         assert len(self.label_weights) == len(
             self.test_label_weights), "The label_weights and test_label_weights arguments should contain the same number of weights"
 
         self.label_weights = tf.constant(self.label_weights, tf.float32)
-        self.test_label_weights = tf.constant(self.test_label_weights, tf.float32)
+        self.test_label_weights = tf.constant(
+            self.test_label_weights, tf.float32)
 
     def call(self, inputs, training=None):
         """
@@ -90,7 +93,8 @@ class StringMultiLabelProcessor(BaseFeatureLayerOp):
         label = tf.strings.regex_replace(inputs, r"^$", self.default_value)
 
         # Split and convert to numeric label tensor
-        label = tf.strings.split(label, sep=self.separator, maxsplit=self.num_labels)
+        label = tf.strings.split(
+            label, sep=self.separator, maxsplit=self.num_labels)
         label = tf.strings.to_number(label, tf.float32).to_tensor()
 
         # Binarize the multi labels if greater than 0
@@ -99,10 +103,10 @@ class StringMultiLabelProcessor(BaseFeatureLayerOp):
 
         # Weighted sum of the labels with the specified weights
         if training:
-            label = tf.reduce_sum(tf.multiply(label, self.label_weights), axis=-1)
+            label = tf.reduce_sum(tf.multiply(
+                label, self.label_weights), axis=-1)
         else:
-            label = tf.reduce_sum(tf.multiply(label, self.test_label_weights), axis=-1)
+            label = tf.reduce_sum(tf.multiply(
+                label, self.test_label_weights), axis=-1)
 
-        # Adjusting the shape to comply with the label shape
-        label = tf.squeeze(label, axis=-1)
         return label

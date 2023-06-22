@@ -89,7 +89,7 @@ class RelevanceScorer(keras.Model):
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
-
+        
         self.loss_op = loss
         self.aux_loss_op = aux_loss
         self.aux_loss_weight = aux_loss_weight
@@ -338,6 +338,10 @@ class RelevanceScorer(keras.Model):
             Dictionary of metrics and loss computed for this training step
         """
         X, y = data
+        
+        # Process labels if necessary
+        if self.interaction_model.label_transform_op:
+            y = self.interaction_model.label_transform_op(y, training=True)
 
         with tf.GradientTape() as tape:
             y_pred = self(X, training=True)[self.output_name]
@@ -371,6 +375,10 @@ class RelevanceScorer(keras.Model):
             Dictionary of metrics and loss computed for this evaluation step
         """
         X, y = data
+        
+        # Process labels if necessary
+        if self.label_transform_op:
+            y = self.interaction_model.label_transform_op(y, training=False)
 
         y_pred = self(X, training=False)[self.output_name]
 
