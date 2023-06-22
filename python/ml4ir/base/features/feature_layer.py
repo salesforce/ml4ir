@@ -7,6 +7,7 @@ from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWith
 from ml4ir.base.features.feature_fns.sequence import BytesSequenceToEncodingBiLSTM
 from ml4ir.base.features.feature_fns.sequence import Global1dPooling
 from ml4ir.base.features.feature_fns.tf_native import TFNativeOpLayer
+from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProcessor
 
 
 class FeatureLayerMap:
@@ -25,7 +26,8 @@ class FeatureLayerMap:
             CategoricalEmbeddingWithVocabularyFile.LAYER_NAME: CategoricalEmbeddingWithVocabularyFile,
             CategoricalEmbeddingWithVocabularyFileAndDropout.LAYER_NAME: CategoricalEmbeddingWithVocabularyFileAndDropout,
             CategoricalIndicatorWithVocabularyFile.LAYER_NAME: CategoricalIndicatorWithVocabularyFile,
-            TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer
+            TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer,
+            StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor
         }
 
     def add_fn(self, key, fn):
