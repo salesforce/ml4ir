@@ -153,13 +153,13 @@ class RankMachFailureTest(tf.test.TestCase):
     def test__compute_query_scores(self):
         ranks = tf.constant(
             [
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
-                [1.0, 2.0, 3.0, 4.0, 5.0, -np.inf, -np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
             ]
         )
         y_true = tf.constant(
