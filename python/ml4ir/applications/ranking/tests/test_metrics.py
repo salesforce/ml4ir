@@ -191,11 +191,32 @@ class RankingMetricsTest(unittest.TestCase):
     """Unit tests for ml4ir.applications.ranking.model.metrics"""
 
     def test_mrr(self):
+        """Test MRR computation for single clicks"""
         self.assertEquals(MRR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          0.75)
+
+    def test_mrr_graded_relevance(self):
+        """Test MRR computation for graded relevance"""
+        self.assertEquals(MRR()([[1, 0, 0], [1, 2, 3]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          0.75)
+
+    def test_mrr_graded_relevance_with_ties(self):
+        """Test MRR computation for graded relevance_with_ties"""
+        self.assertEquals(MRR()([[1, 0, 0], [1, 2, 2]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           0.75)
 
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          1.5)
+
+    def test_acr_graded_relevance(self):
+        """Test ACR computation for graded relevance"""
+        self.assertEquals(ACR()([[1, 0, 0], [1, 2, 3]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
+                          1.5)
+
+    def test_acr_graded_relevance_with_ties(self):
+        """Test ACR computation for graded relevance_with_ties"""
+        self.assertEquals(ACR()([[1, 0, 0], [1, 2, 2]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           1.5)
 
     def test_NDCG_1(self):
