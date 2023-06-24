@@ -83,6 +83,7 @@ class RankMatchFailure(metrics.Mean):
         # Compute rank of clicked record from predictions and y_true_ranks
         # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
         y_pred_click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
+        y_true_ranks = tf.cast(y_true_ranks, tf.float32)
         y_true_click_ranks = tf.reduce_min(tf.divide(y_true_ranks, y_true_clicks), axis=-1)
 
         # Mask ranks with max possible value so that they are ignored downstream
