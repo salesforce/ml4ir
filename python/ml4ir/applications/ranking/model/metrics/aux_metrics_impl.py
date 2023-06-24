@@ -67,14 +67,11 @@ class RankMatchFailure(metrics.Mean):
         # Convert predicted ranking scores into ranks for each record per query
         # TODO: Currently these ranks are defined below the clicked document too.
         #       Scores below the clicked document shouldn't affect the final rank for NDCG
-        y_pred_ranks = tf.cast(
-            tf.add(
-                tf.argsort(
-                    tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
-                ),
-                tf.constant(1),
+        y_pred_ranks = tf.add(
+            tf.argsort(
+                tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
             ),
-            tf.float32
+            tf.constant(1),
         )
 
         # Fetch highest relevance grade from the y_true labels
@@ -82,9 +79,8 @@ class RankMatchFailure(metrics.Mean):
 
         # Compute rank of clicked record from predictions and y_true_ranks
         # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
-        y_pred_click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
-        y_true_ranks = tf.cast(y_true_ranks, tf.float32)
-        y_true_click_ranks = tf.reduce_min(tf.divide(y_true_ranks, y_true_clicks), axis=-1)
+        y_pred_click_ranks = tf.reduce_min(tf.divide(tf.cast(y_pred_ranks, tf.float32), y_true_clicks), axis=-1)
+        y_true_click_ranks = tf.reduce_min(tf.divide(tf.cast(y_true_ranks, tf.float32), y_true_clicks), axis=-1)
 
         # Mask ranks with max possible value so that they are ignored downstream
         ranks = tf.where(tf.equal(mask, 0), tf.constant(np.inf), tf.cast(y_pred_ranks, tf.float32))
