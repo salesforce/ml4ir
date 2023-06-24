@@ -235,6 +235,90 @@ class RankMachFailureTest(tf.test.TestCase):
         )
         self.assertAllClose(actual_rmfs, expected_rmfs, atol=1e-04)
 
+    def test__compute_query_scores_graded_relevance(self):
+        ranks = tf.constant(
+            [
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+                [1.0, 2.0, 3.0, 4.0, 5.0, np.inf, np.inf],
+            ]
+        )
+        y_true = tf.constant(
+            [
+                # Clicked record stays in same position
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0],  # clicks with ties
+                # RR improves/degrades
+                [2.0, 3.0, 1.0, 5.0, 1.0, 1.0, 1.0],  # graded relevance with no ties
+                [3.0, 3.0, 4.0, 5.0, 0.0, 0.0, 0.0],
+                [4.0, 3.0, 4.0, 5.0, 5.0, 1.0, 0.0],  # graded relevance with ties
+            ]
+        )
+        y_pred = tf.constant(
+            [
+                # Clicked record stays in same position
+                [0.7, 0.15, 0.07, 0.05, 0.03, 0.0, 0.0],
+                [0.7, 0.15, 0.03, 0.05, 0.07, 0.0, 0.0],
+                [0.07, 0.15, 0.03, 0.05, 0.7, 0.0, 0.0],
+                [0.07, 0.15, 0.70, 0.05, 0.03, 0.0, 0.0],
+                # MRR improves/degrades
+                [0.7, 0.05, 0.03, 0.15, 0.07, 0.0, 0.0],
+                [0.15, 0.05, 0.03, 0.7, 0.07, 0.0, 0.0],
+                [0.07, 0.05, 0.7, 0.15, 0.03, 0.0, 0.0],
+            ]
+        )
+        y_aux = tf.constant(
+            [
+                # Clicked record stays in same position
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                [0.0, 1.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                # MRR improves/degrades
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+                [0.0, 2.0, 3.0, 4.0, 5.0, 0.0, 0.0],
+            ]
+        )
+        mask = tf.constant(
+            [
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+            ]
+        )
+        with open(
+                "ml4ir/applications/ranking/tests/data/configs/feature_config_aux_loss.yaml"
+        ) as feature_config_file:
+            feature_config: FeatureConfig = FeatureConfig.get_instance(
+                tfrecord_type="sequence",
+                feature_config_dict=yaml.safe_load(feature_config_file),
+                logger=logging.Logger("test_logger"),
+            )
+        rmf = RankMatchFailure()
+        actual_rmfs = rmf._compute_query_scores(y_true, y_pred, y_aux, ranks, mask)
+        expected_rmfs = tf.constant(
+            [
+                0.42372233,
+                0.3945347,
+                0.03515863,
+                0.274864,
+                0.36907023,
+                0.0,
+                0.0,
+            ]
+        )
+        self.assertAllClose(actual_rmfs, expected_rmfs, atol=1e-04)
 
 if __name__ == "__main__":
     unittest.main()
