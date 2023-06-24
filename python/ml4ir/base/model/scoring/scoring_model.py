@@ -375,10 +375,10 @@ class RelevanceScorer(keras.Model):
             Dictionary of metrics and loss computed for this evaluation step
         """
         X, y = data
-        
+
         # Process labels if necessary
-        if self.label_transform_op:
-            y = self.interaction_model.label_transform_op(y, training=False)
+        if self.interaction_model.label_transform_op:
+            y = self.interaction_model.label_transform_op(y, training=True)
 
         y_pred = self(X, training=False)[self.output_name]
 
