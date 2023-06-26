@@ -176,7 +176,6 @@ def get_one_hot_label_vectorizer(feature_info, file_io: FileIO):
     Output:
         >>> [[1, 0, 0], [0, 1, 0], [1, 0, 0]]
     """
-    feature_info["feature_layer_info"]["args"] = feature_info["preprocessing_info"]["args"]
     one_hot_vectorizer = CategoricalIndicatorWithVocabularyFile(feature_info, file_io)
 
     @tf.function
