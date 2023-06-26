@@ -33,18 +33,22 @@ class MeanRankMetric(metrics.Mean):
         `y_true` and `y_pred` should have the same shape.
         """
         # Convert predicted ranking scores into ranks for each record per query
-        y_pred_ranks = tf.add(
-            tf.argsort(
-                tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
+        y_pred_ranks = tf.cast(
+            tf.add(
+                tf.argsort(
+                    tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
+                ),
+                tf.constant(1),
             ),
-            tf.constant(1),
+            tf.float32
         )
 
-        # Fetch indices of clicked records from y_true
-        y_true_clicks = tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)))
+        # Fetch highest relevance grade from the y_true labels
+        y_true_clicks = tf.cast(tf.equal(y_true, tf.math.reduce_max(y_true, axis=-1)[:, tf.newaxis]), tf.float32)
 
         # Compute rank of clicked record from predictions
-        click_ranks = tf.gather_nd(y_pred_ranks, indices=y_true_clicks)
+        # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
+        click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
 
         # Post processing on click ranks before mean
         query_scores = self._process_click_ranks(click_ranks)

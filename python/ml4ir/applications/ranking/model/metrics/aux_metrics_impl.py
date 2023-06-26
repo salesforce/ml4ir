@@ -73,15 +73,14 @@ class RankMatchFailure(metrics.Mean):
             ),
             tf.constant(1),
         )
-        y_pred_click_ranks = tf.reduce_sum(
-            tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), y_pred_ranks, 0),
-            axis=-1,
-        )
 
-        # Compute original rank of the clicked record
-        y_true_click_ranks = tf.reduce_sum(
-            tf.where(tf.equal(tf.cast(y_true, tf.int32), tf.constant(1)), y_true_ranks, 0), axis=-1
-        )
+        # Fetch highest relevance grade from the y_true labels
+        y_true_clicks = tf.cast(tf.equal(y_true, tf.math.reduce_max(y_true, axis=-1)[:, tf.newaxis]), tf.float32)
+
+        # Compute rank of clicked record from predictions and y_true_ranks
+        # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
+        y_pred_click_ranks = tf.reduce_min(tf.divide(tf.cast(y_pred_ranks, tf.float32), y_true_clicks), axis=-1)
+        y_true_click_ranks = tf.reduce_min(tf.divide(tf.cast(y_true_ranks, tf.float32), y_true_clicks), axis=-1)
 
         # Mask ranks with max possible value so that they are ignored downstream
         ranks = tf.where(tf.equal(mask, 0), tf.constant(np.inf), tf.cast(y_pred_ranks, tf.float32))
