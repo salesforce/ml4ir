@@ -121,167 +121,173 @@ class RankingModel(RelevanceModel):
         eval_dict = prepare_eval_config_for_ranking(self.eval_config, group_keys)
         group_keys = eval_dict[EvalConfigConstants.GROUP_BY]
 
-        metrics_dict = dict()
-        group_metrics_keys = self.feature_config.get_group_metrics_keys()
-        evaluation_features = (
-            group_metrics_keys
-            + [
-                self.feature_config.get_query_key(),
-                self.feature_config.get_label(),
-                self.feature_config.get_rank(),
-            ]
-        )
-
-        # Add aux_label if present
-        aux_label = self.feature_config.get_aux_label()
-        if aux_label and (
-                aux_label.get("node_name") or (
-                aux_label["name"] not in eval_dict[EvalConfigConstants.GROUP_BY])):
-            evaluation_features += [aux_label]
-
-        additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
-
-        _predict_fn = get_predict_fn(
-            model=self.model,
-            tfrecord_type=self.tfrecord_type,
-            feature_config=self.feature_config,
-            label_processor=self.model.interaction_model.label_transform_op,
-            inference_signature=inference_signature,
-            is_compiled=self.is_compiled,
-            output_name=self.output_name,
-            features_to_return=evaluation_features,
-            additional_features=additional_features,
-            max_sequence_size=self.max_sequence_size,
-        )
-
-        batch_count = 0
-        df_grouped_stats = pd.DataFrame()
-        # defining variables to compute running mean and variance for t-test computations
-        agg_count, agg_mean, agg_M2 = 0, 0, 0
-        group_metric_running_variance_params = {}
-        for predictions_dict in test_dataset.map(_predict_fn).take(-1):
-            predictions_df = pd.DataFrame(predictions_dict)
-
-            df_batch_grouped_stats, group_metric_running_variance_params, predictions_df = metrics_helper.get_grouped_stats(
-                                                df=predictions_df,
-                                                query_key_col=self.feature_config.get_query_key("node_name"),
-                                                label_col=self.feature_config.get_label("node_name"),
-                                                old_rank_col=self.feature_config.get_rank("node_name"),
-                                                new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
-                                                new_ranking_score=metrics_helper.RankingConstants.NEW_RANKING_SCORE,
-                                                group_keys=list(set(self.feature_config.get_group_metrics_keys(
-                                                    "node_name"))),
-                                                aux_label=self.feature_config.get_aux_label("node_name"),
-                                                power_analysis_metrics=eval_dict[EvalConfigConstants.VARIANCE_LIST],
-                                                group_metric_running_variance_params=group_metric_running_variance_params,
-                                            )
-
-            agg_count, agg_mean, agg_M2 = update_running_stats_for_t_test(predictions_df, agg_count, agg_mean, agg_M2)
-
-            if df_grouped_stats.empty:
-                df_grouped_stats = df_batch_grouped_stats
-            else:
-                df_grouped_stats = df_grouped_stats.add(
-                    df_batch_grouped_stats, fill_value=0.0)
-            batch_count += 1
-            if batch_count % logging_frequency == 0:
-                self.logger.info(
-                    "Finished evaluating {} batches".format(batch_count))
-
-        # performing click rank distribution t-test
-        t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
-                                             eval_dict[EvalConfigConstants.PVALUE], self.logger)
-        metrics_dict.update(t_test_metrics_dict)
-
-        # performing power analysis
-        group_metrics_stat_sig = run_power_analysis(eval_dict[EvalConfigConstants.METRICS],
-                                                    group_keys,
-                                                    group_metric_running_variance_params,
-                                                    eval_dict[EvalConfigConstants.POWER],
-                                                    eval_dict[EvalConfigConstants.PVALUE])
-
-        # Compute overall metrics
-        df_overall_metrics = metrics_helper.summarize_grouped_stats(
-            df_grouped_stats)
-        self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
-
-        # Log metrics to weights and biases
-        metrics_dict.update(
-            {"test_{}".format(k): v for k,
-             v in df_overall_metrics.to_dict().items()}
-        )
-
-        df_group_metrics = None
-        df_group_metrics_summary = None
-        if group_metrics_keys:
-            # Filter groups by min_query_count
-            df_grouped_stats = df_grouped_stats[
-                df_grouped_stats["query_count"] >= group_metrics_min_queries
-            ]
-
-            # Compute group metrics
-            df_group_metrics = df_grouped_stats.apply(
-                metrics_helper.summarize_grouped_stats, axis=1
+        # If basic mode is specified, only compute the keras Model metrics
+        # By default, use the extended mode and compute metrics as defined in this function
+        if eval_dict.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE) == EvalConfigConstants.BASIC_MODE:
+            metrics_dict = self.model.evaluate(test_dataset, return_dict=True)
+            return None, None, metrics_dict
+        else:
+            metrics_dict = dict()
+            group_metrics_keys = self.feature_config.get_group_metrics_keys()
+            evaluation_features = (
+                group_metrics_keys
+                + [
+                    self.feature_config.get_query_key(),
+                    self.feature_config.get_label(),
+                    self.feature_config.get_rank(),
+                ]
             )
 
-            # Add power analysis to group metric dataframe
-            df_group_metrics = metrics_helper.join_stat_sig_signal(df_group_metrics, group_keys,
-                                                                   eval_dict[EvalConfigConstants.METRICS],
-                                                                   group_metrics_stat_sig)
+            # Add aux_label if present
+            aux_label = self.feature_config.get_aux_label()
+            if aux_label and (
+                    aux_label.get("node_name") or (
+                    aux_label["name"] not in eval_dict[EvalConfigConstants.GROUP_BY])):
+                evaluation_features += [aux_label]
 
-            # Writing stat sig. groupwise results per metric
-            for metric in eval_dict[EvalConfigConstants.METRICS]:
-                stat_sig_df = metrics_helper.generate_stat_sig_based_metrics(df_group_metrics, metric, group_keys, metrics_dict)
-                if logs_dir:
-                    self.file_io.write_df(
-                        stat_sig_df,
-                        outfile=os.path.join(
-                            logs_dir, "stat_sig_" + metric + '_' + RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
-                    )
-                    self.logger.info("\nNumber of stat sig {} improved groups = {}".format(metric,
-                                     str(metrics_dict["stat_sig_" + metric + "_improved_groups"])))
-                    self.logger.info("\nNumber of stat_sig {} degraded groups = {}".format(metric,
-                                     str(metrics_dict["stat_sig_" + metric + "_degraded_groups"])))
-                    self.logger.info("\nStat. sig. {} group perc improvement = {}".format(metric,
-                                     str(metrics_dict["stat_sig_" + metric + "_group_improv_perc"])))
-                    self.logger.info("\nStat. sig. improved {} groups = {}".format(metric,
-                                     str(metrics_dict["stat_sig_improved_" + metric + "_groups"])))
-                    self.logger.info("\nStat. sig. degraded {} groups = {}".format(metric,
-                                     str(metrics_dict["stat_sig_degraded_" + metric + "_groups"])))
+            additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
-                # Compute group metrics summary
-                stat_sig_df_summary = stat_sig_df.describe(include='all')
-                self.logger.info(
-                    "\nComputing group metrics for {} stat. sig. lifts using keys: {}".format(metric,
-                                                                                              group_keys))
-                self.logger.info("\nGroupwise Metrics for {}: \n{}".format(metric, stat_sig_df_summary.T))
-
-            if logs_dir:
-                self.file_io.write_df(
-                    df_group_metrics,
-                    outfile=os.path.join(
-                        logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
-                )
-
-            # Compute group metrics summary
-            df_group_metrics_summary = df_group_metrics.describe()
-            self.logger.info(
-                "Computing group metrics using keys: {}".format(
-                    eval_dict[EvalConfigConstants.GROUP_BY]
-                )
+            _predict_fn = get_predict_fn(
+                model=self.model,
+                tfrecord_type=self.tfrecord_type,
+                feature_config=self.feature_config,
+                label_processor=self.model.interaction_model.label_transform_op,
+                inference_signature=inference_signature,
+                is_compiled=self.is_compiled,
+                output_name=self.output_name,
+                features_to_return=evaluation_features,
+                additional_features=additional_features,
+                max_sequence_size=self.max_sequence_size,
             )
-            self.logger.info("Groupwise Metrics: \n{}".format(
-                df_group_metrics_summary.T))
+
+            batch_count = 0
+            df_grouped_stats = pd.DataFrame()
+            # defining variables to compute running mean and variance for t-test computations
+            agg_count, agg_mean, agg_M2 = 0, 0, 0
+            group_metric_running_variance_params = {}
+            for predictions_dict in test_dataset.map(_predict_fn).take(-1):
+                predictions_df = pd.DataFrame(predictions_dict)
+
+                df_batch_grouped_stats, group_metric_running_variance_params, predictions_df = metrics_helper.get_grouped_stats(
+                                                    df=predictions_df,
+                                                    query_key_col=self.feature_config.get_query_key("node_name"),
+                                                    label_col=self.feature_config.get_label("node_name"),
+                                                    old_rank_col=self.feature_config.get_rank("node_name"),
+                                                    new_rank_col=metrics_helper.RankingConstants.NEW_RANK,
+                                                    new_ranking_score=metrics_helper.RankingConstants.NEW_RANKING_SCORE,
+                                                    group_keys=list(set(self.feature_config.get_group_metrics_keys(
+                                                        "node_name"))),
+                                                    aux_label=self.feature_config.get_aux_label("node_name"),
+                                                    power_analysis_metrics=eval_dict[EvalConfigConstants.VARIANCE_LIST],
+                                                    group_metric_running_variance_params=group_metric_running_variance_params,
+                                                )
+
+                agg_count, agg_mean, agg_M2 = update_running_stats_for_t_test(predictions_df, agg_count, agg_mean, agg_M2)
+
+                if df_grouped_stats.empty:
+                    df_grouped_stats = df_batch_grouped_stats
+                else:
+                    df_grouped_stats = df_grouped_stats.add(
+                        df_batch_grouped_stats, fill_value=0.0)
+                batch_count += 1
+                if batch_count % logging_frequency == 0:
+                    self.logger.info(
+                        "Finished evaluating {} batches".format(batch_count))
+
+            # performing click rank distribution t-test
+            t_test_metrics_dict = run_ttest(agg_mean, (agg_M2 / (agg_count - 1)), agg_count,
+                                                 eval_dict[EvalConfigConstants.PVALUE], self.logger)
+            metrics_dict.update(t_test_metrics_dict)
+
+            # performing power analysis
+            group_metrics_stat_sig = run_power_analysis(eval_dict[EvalConfigConstants.METRICS],
+                                                        group_keys,
+                                                        group_metric_running_variance_params,
+                                                        eval_dict[EvalConfigConstants.POWER],
+                                                        eval_dict[EvalConfigConstants.PVALUE])
+
+            # Compute overall metrics
+            df_overall_metrics = metrics_helper.summarize_grouped_stats(
+                df_grouped_stats)
+            self.logger.info("Overall Metrics: \n{}".format(df_overall_metrics))
 
             # Log metrics to weights and biases
             metrics_dict.update(
-                {
-                    "test_group_mean_{}".format(k): v
-                    for k, v in df_group_metrics_summary.T["mean"].to_dict().items()
-                }
+                {"test_{}".format(k): v for k,
+                 v in df_overall_metrics.to_dict().items()}
             )
 
-        return df_overall_metrics, df_group_metrics, metrics_dict
+            df_group_metrics = None
+            df_group_metrics_summary = None
+            if group_metrics_keys:
+                # Filter groups by min_query_count
+                df_grouped_stats = df_grouped_stats[
+                    df_grouped_stats["query_count"] >= group_metrics_min_queries
+                ]
+
+                # Compute group metrics
+                df_group_metrics = df_grouped_stats.apply(
+                    metrics_helper.summarize_grouped_stats, axis=1
+                )
+
+                # Add power analysis to group metric dataframe
+                df_group_metrics = metrics_helper.join_stat_sig_signal(df_group_metrics, group_keys,
+                                                                       eval_dict[EvalConfigConstants.METRICS],
+                                                                       group_metrics_stat_sig)
+
+                # Writing stat sig. groupwise results per metric
+                for metric in eval_dict[EvalConfigConstants.METRICS]:
+                    stat_sig_df = metrics_helper.generate_stat_sig_based_metrics(df_group_metrics, metric, group_keys, metrics_dict)
+                    if logs_dir:
+                        self.file_io.write_df(
+                            stat_sig_df,
+                            outfile=os.path.join(
+                                logs_dir, "stat_sig_" + metric + '_' + RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                        )
+                        self.logger.info("\nNumber of stat sig {} improved groups = {}".format(metric,
+                                         str(metrics_dict["stat_sig_" + metric + "_improved_groups"])))
+                        self.logger.info("\nNumber of stat_sig {} degraded groups = {}".format(metric,
+                                         str(metrics_dict["stat_sig_" + metric + "_degraded_groups"])))
+                        self.logger.info("\nStat. sig. {} group perc improvement = {}".format(metric,
+                                         str(metrics_dict["stat_sig_" + metric + "_group_improv_perc"])))
+                        self.logger.info("\nStat. sig. improved {} groups = {}".format(metric,
+                                         str(metrics_dict["stat_sig_improved_" + metric + "_groups"])))
+                        self.logger.info("\nStat. sig. degraded {} groups = {}".format(metric,
+                                         str(metrics_dict["stat_sig_degraded_" + metric + "_groups"])))
+
+                    # Compute group metrics summary
+                    stat_sig_df_summary = stat_sig_df.describe(include='all')
+                    self.logger.info(
+                        "\nComputing group metrics for {} stat. sig. lifts using keys: {}".format(metric,
+                                                                                                  group_keys))
+                    self.logger.info("\nGroupwise Metrics for {}: \n{}".format(metric, stat_sig_df_summary.T))
+
+                if logs_dir:
+                    self.file_io.write_df(
+                        df_group_metrics,
+                        outfile=os.path.join(
+                            logs_dir, RelevanceModelConstants.GROUP_METRICS_CSV_FILE),
+                    )
+
+                # Compute group metrics summary
+                df_group_metrics_summary = df_group_metrics.describe()
+                self.logger.info(
+                    "Computing group metrics using keys: {}".format(
+                        eval_dict[EvalConfigConstants.GROUP_BY]
+                    )
+                )
+                self.logger.info("Groupwise Metrics: \n{}".format(
+                    df_group_metrics_summary.T))
+
+                # Log metrics to weights and biases
+                metrics_dict.update(
+                    {
+                        "test_group_mean_{}".format(k): v
+                        for k, v in df_group_metrics_summary.T["mean"].to_dict().items()
+                    }
+                )
+
+            return df_overall_metrics, df_group_metrics, metrics_dict
 
     def save(
         self,
