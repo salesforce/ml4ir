@@ -10,10 +10,29 @@ class StringMultiLabelProcessor(BaseFeatureLayerOp):
 
     Example
     -------
-    x = <>
-    string_label_multi_processor = StringMultiLabelProcessor(<>)
-    string_label_multi_processor(x)
-    <>
+    x = [["1-0", "1-1", "0-1"], ["5-0", "5-8", "0-5"]]
+    string_multi_label_processor = StringMultiLabelProcessor({
+        "name": "test",
+        "feature_layer_info": {
+            "args": {
+                "separator": "-",
+                "num_labels": 2,
+                "binarize": True,
+                "label_weights": [10, 1],
+                "test_label_weights": [1, 1]
+            }
+        }
+    })
+
+    # At training time
+    In:  string_label_multi_processor(x, training=True)
+    Out: array([[10., 11.,  1.],
+                [10., 11.,  1.]])
+
+    # At inference time
+    In:  string_label_multi_processor(x)
+    Out: array([[1., 2., 1.],
+                [1., 2., 1.]])
     """
     LAYER_NAME = "string_multi_label_processor"
     SEPERATOR = "separator"
@@ -22,7 +41,7 @@ class StringMultiLabelProcessor(BaseFeatureLayerOp):
     LABEL_WEIGHTS = "label_weights"
     TEST_LABEL_WEIGHTS = "test_label_weights"
 
-    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
+    def __init__(self, feature_info: dict, file_io: FileIO = None, **kwargs):
         """
         Initialize the feature layer
 
