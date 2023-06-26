@@ -22,11 +22,11 @@ label:
   log_at_inference: true
   preprocessing_info:
     - fn: one_hot_vectorize_label
+      args:
+        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
   feature_layer_info:
     type: numeric
-    fn: categorical_indicator_with_vocabulary_file
-    args:
-      vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
+    shape: null
   serving_info:
     name: entity_id
     required: false

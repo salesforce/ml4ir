@@ -12,6 +12,7 @@ def get_predict_fn(
     model: keras.Model,
     tfrecord_type: str,
     feature_config: FeatureConfig,
+    label_processor: keras.layers.Layer = None,
     inference_signature: str = "serving_default",
     is_compiled: bool = False,
     output_name: str = "relevance_score",
@@ -26,6 +27,8 @@ def get_predict_fn(
     ----------
     model : `keras.Model`
         Tensorflow keras model to be used for prediction
+    label_processor: keras.layers.Layer
+        Tensorflow layer to process the label
     tfrecord_type : {"example", "sequence_example"}
         Type of the TFRecord data we want to run prediction with the model on.
     feature_config : `FeatureConfig` object
@@ -97,7 +100,11 @@ def get_predict_fn(
         predictions_dict = dict()
         for feature_name in features_to_log:
             if feature_name == feature_config.get_label(key="node_name"):
-                feat_ = label
+                # Apply label_processor if configured
+                if label_processor:
+                    feat_ = label_processor(label)
+                else:
+                    feat_ = label
             elif feature_name == output_name:
                 feat_ = scores
             else:

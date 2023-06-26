@@ -89,7 +89,7 @@ class RelevanceScorer(keras.Model):
         self.model_config = model_config
         self.feature_config = feature_config
         self.interaction_model = interaction_model
-        
+
         self.loss_op = loss
         self.aux_loss_op = aux_loss
         self.aux_loss_weight = aux_loss_weight
