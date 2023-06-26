@@ -125,6 +125,8 @@ class RankingModel(RelevanceModel):
         # By default, use the extended mode and compute metrics as defined in this function
         if eval_dict.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE) == EvalConfigConstants.BASIC_MODE:
             metrics_dict = self.model.evaluate(test_dataset, return_dict=True)
+            metrics_dict = {f"test_{key}": val for key, val in metrics_dict.items()}
+            self.logger.info("Overall Metrics: \n{}".format(pd.Series(metrics_dict)))
             return None, None, metrics_dict
         else:
             metrics_dict = dict()
