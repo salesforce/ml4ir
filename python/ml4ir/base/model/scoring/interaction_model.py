@@ -63,6 +63,9 @@ class InteractionModel(keras.Model):
 
         self.feature_layer_map = FeatureLayerMap()
         self.feature_layer_map.add_fns(feature_layer_keys_to_fns)
+        
+        self.feature_transform_ops = dict()
+        self.label_transform_op = None
 
 
 class UnivariateInteractionModel(InteractionModel):
@@ -104,20 +107,48 @@ class UnivariateInteractionModel(InteractionModel):
         self.feature_transform_ops = dict()
         for feature_info in self.all_features:
             feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
-            feature_layer_info = feature_info.get(FEATURE_LAYER_INFO, {})
-            if FN in feature_layer_info:
-                feature_transform_cls = self.feature_layer_map.get_fn(
-                    feature_layer_info[FN])
-                if feature_transform_cls:
-                    self.feature_transform_ops[feature_node_name] = feature_transform_cls(
-                        feature_info=feature_info,
-                        file_io=file_io,
-                        **kwargs)
-                else:
-                    raise RuntimeError(
-                        "Unsupported feature function: {}".format(feature_layer_info[FN])
-                    )
-
+            feature_transform_op = self.__define_feature_transform_op(feature_info, file_io, **kwargs)
+            if feature_transform_op:
+                self.feature_transform_ops[feature_node_name] = feature_transform_op
+            
+        # Define a one-to-one feature transform for the label
+        self.label_transform_op = self.__define_feature_transform_op(self.feature_config.get_label(), file_io, **kwargs)
+    
+    def __define_feature_transform_op(self,
+                                      feature_info: Dict,
+                                      file_io: FileIO = None,
+                                      **kwargs):
+        """
+        Define the feature transformation function for a single feature based on the FeatureConfig
+        
+        Parameters
+        ----------
+        feature_info: dict
+            Information about the feature we want to define transformation for from the FeatureConfig
+        file_io : FileIO object
+            `FileIO` object that handles read write operations
+        
+        Returns
+        -------
+        tf.keras.Layer
+            Tensorflow layer to transform input feature
+        """
+        feature_layer_info = feature_info.get(FEATURE_LAYER_INFO, {})
+        if FN in feature_layer_info:
+            feature_transform_cls = self.feature_layer_map.get_fn(
+                feature_layer_info[FN])
+            if feature_transform_cls:
+                return feature_transform_cls(
+                    feature_info=feature_info,
+                    file_io=file_io,
+                    **kwargs)
+            else:
+                raise RuntimeError(
+                    "Unsupported feature function: {}".format(feature_layer_info[FN])
+                )
+        else:
+            return None
+    
     def call(self, inputs, training=None):
         """
         Apply the feature transform op to each feature

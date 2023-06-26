@@ -24,7 +24,6 @@ label:
     - fn: one_hot_vectorize_label
   feature_layer_info:
     type: numeric
-    fn: categorical_indicator_with_vocabulary_file
     args:
       vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
   serving_info:

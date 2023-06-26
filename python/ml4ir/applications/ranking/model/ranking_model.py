@@ -145,6 +145,7 @@ class RankingModel(RelevanceModel):
             model=self.model,
             tfrecord_type=self.tfrecord_type,
             feature_config=self.feature_config,
+            label_processor=self.model.interaction_model.label_transform_op,
             inference_signature=inference_signature,
             is_compiled=self.is_compiled,
             output_name=self.output_name,
