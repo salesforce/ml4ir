@@ -2,6 +2,9 @@ from ml4ir.applications.ranking.model.metrics.helpers.metrics_helper import Rank
 
 class EvalConfigConstants:
     # Eval config constants
+    MODE = "mode"
+    BASIC_MODE = "basic"  # Just runs keras.Model.evaluate()
+    EXTENDED_MODE = "extended"  # Runs the full evaluation function configured in the RelevanceModel
     GROUP_BY = "group_by"
     POWER_ANALYSIS = "power_analysis"
     VARIANCE_LIST = "variance_list"
