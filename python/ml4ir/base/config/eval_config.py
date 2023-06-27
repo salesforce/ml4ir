@@ -30,6 +30,8 @@ def prepare_eval_config_for_ranking(eval_config, group_key):
         evaluation config yaml converted into a dict
     """
     eval_dict = {}
+    eval_dict[EvalConfigConstants.MODE] = eval_config.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE)
+
     if len(eval_config) != 0:
         if EvalConfigConstants.GROUP_BY in eval_config[EvalConfigConstants.POWER_ANALYSIS] and \
                 eval_config[EvalConfigConstants.POWER_ANALYSIS][EvalConfigConstants.GROUP_BY]:
