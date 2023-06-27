@@ -378,7 +378,7 @@ class RelevanceScorer(keras.Model):
 
         # Process labels if necessary
         if self.interaction_model.label_transform_op:
-            y = self.interaction_model.label_transform_op(y, training=True)
+            y = self.interaction_model.label_transform_op(y, training=False)
 
         y_pred = self(X, training=False)[self.output_name]
 
