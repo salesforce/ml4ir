@@ -24,40 +24,6 @@ class RankingConstants:
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
-def add_top_graded_relevance_record_column(df, query_key_col, ranking_score_col, label_col, new_col_name):
-    """
-    Adds a new column indicating the top graded relevance record per query in the DataFrame.
-
-    Args:
-        df (pandas.DataFrame): The input DataFrame.
-        query_key_col(str): Name of the query key column
-        ranking_score_col (str): Name of the column containing the ranking score. Used to break ties.
-        label_col (str): The column name containing the relevance scores.
-        new_col_name (str): The name for the new column indicating the top graded relevance.
-
-    Returns:
-        pandas.DataFrame: The input DataFrame with the new column added.
-        """
-    # remove queries with no relevance scores
-    grouped_sum = df.groupby(query_key_col)[label_col].sum()
-    queries_with_relevance_scores = grouped_sum[grouped_sum > 0]
-    df_with_relevance_scores = df.loc[df[query_key_col].isin(queries_with_relevance_scores.index)]
-
-    # Group the DataFrame by query_key_col and find the record with the highest label_col
-    top_records = df_with_relevance_scores.groupby(query_key_col)[[label_col, ranking_score_col]].apply(
-        lambda x: x.nlargest(1, [label_col, ranking_score_col]))
-
-    top_indexes = np.array([idx[-1] for idx in list(top_records.transpose().to_dict().keys())])
-
-    # Create a new column 'top_target_relevance' and initialize with 0
-    df_with_relevance_scores[new_col_name] = 0.0
-
-    # Set the 'top_target_relevance' value to 1 for the top records
-    df_with_relevance_scores.loc[top_indexes, new_col_name] = 1.0
-
-    return df_with_relevance_scores
-
-
 def compute_ndcg(df, query_key_col, label_col, pred_col="ranking_score", new_col="new_NDCG"):
     """
     Computes the Normalized Discounted Cumulative Gain (NDCG) for each query in the DataFrame.
