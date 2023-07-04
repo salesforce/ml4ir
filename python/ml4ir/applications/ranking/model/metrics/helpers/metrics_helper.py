@@ -11,6 +11,7 @@ DELTA = 1e-20
 
 
 class RankingConstants:
+    PROXY_CLICK = "proxy_click"
     NEW_RANK = "new_rank"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
@@ -149,10 +150,6 @@ def get_grouped_stats(
         computed from the old and new ranks and aux labels generated
         by the model
     """
-    # adding "top_graded_relevance" to be the artificial click such that the record with the highest graded
-    # relevance is considered to be clicked and will be used in MRR computation
-    artificial_click_col = "top_graded_relevance"
-    df = add_top_graded_relevance_record_column(df, query_key_col, new_ranking_score, label_col, artificial_click_col)
     if np.array([Metric.NDCG in metric for metric in power_analysis_metrics]).any():
         df = compute_ndcg(df, query_key_col, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
 
@@ -162,16 +159,25 @@ def get_grouped_stats(
             # we cannot compute old NDCG
             df[RankingConstants.OLD_NDCG] = 0.0
 
-    df_clicked = df[df[artificial_click_col] == 1.0]
-    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
+    # Find the records with the highest relevance grade from the label column
+    df[RankingConstants.PROXY_CLICK] = df.groupby(query_key_col, group_keys=False)[label_col].apply(lambda x: x == x.max()).astype(float)
+    df_clicked = df[df[RankingConstants.PROXY_CLICK] == 1.0]
+
+    # Resolve ties by selecting the min rank from old and new ranks each
+    # FIXME: The ranking_score is not used beyond this point in the code,
+    #        but if it has to be, we need to do a max() for it instead of min()
+    df_clicked = df_clicked.groupby(query_key_col).min().reset_index()
 
     # Compute metrics on aux labels
     df_aux_metrics = pd.DataFrame()
     if aux_label:
+        # Filter to only queries with at least 1 click label
+        df = df[df[query_key_col].isin(df_clicked[query_key_col])]
+
         df_aux_metrics = df.groupby(query_key_col).apply(
             lambda grp: compute_aux_metrics_on_query_group(
                 query_group=grp,
-                label_col=artificial_click_col,
+                label_col=RankingConstants.PROXY_CLICK,
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
                 aux_label=aux_label,
@@ -179,6 +185,7 @@ def get_grouped_stats(
             ))
 
     # Adding ranking metrics: MRR, ACR
+    df_clicked_grouped = df_clicked.groupby(query_key_col)
     df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[new_rank_col]
     df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[old_rank_col]
     df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[
