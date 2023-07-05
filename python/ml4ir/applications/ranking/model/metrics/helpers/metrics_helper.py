@@ -151,7 +151,6 @@ def get_grouped_stats(
             ))
 
     # Adding ranking metrics: MRR, ACR
-    df_clicked_grouped = df_clicked.groupby(query_key_col)
     df_clicked[RankingConstants.NEW_MRR] = 1.0 / df_clicked[new_rank_col]
     df_clicked[RankingConstants.OLD_MRR] = 1.0 / df_clicked[old_rank_col]
     df_clicked[RankingConstants.DIFF_MRR] = df_clicked[RankingConstants.NEW_MRR] - df_clicked[
