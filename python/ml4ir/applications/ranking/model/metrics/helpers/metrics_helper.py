@@ -25,6 +25,28 @@ class RankingConstants:
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
+def generate_proxy_click(labels):
+    """
+    Generate a series of proxy clicks using the graded relevance labels of a grouped dataframe
+
+    Parameters
+    ----------
+    labels : pd.Series
+        Column of a grouped dataframe object to compute proxy clicks
+
+    Returns
+    -------
+    pandas Series with proxy clicks for given dataframe group
+    """
+    if labels.sum() > 0:
+        # Find the records with the highest relevance grade from the label column
+        max_label = labels.max()
+        return (labels == max_label).astype(float)
+    else:
+        # If there are no non-zero labels, return 0s
+        return labels.astype(float)
+
+
 def compute_ndcg(df, query_key_col, label_col, pred_col="ranking_score", new_col="new_NDCG"):
     """
     Computes the Normalized Discounted Cumulative Gain (NDCG) for each query in the DataFrame.
@@ -126,10 +148,11 @@ def get_grouped_stats(
             # we cannot compute old NDCG
             df[RankingConstants.OLD_NDCG] = 0.0
 
-    # Find the records with the highest relevance grade from the label column
-    df[RankingConstants.PROXY_CLICK] = df.groupby(query_key_col, group_keys=False)[label_col].apply(lambda x: x == x.max()).astype(float)
-    df_clicked = df[df[RankingConstants.PROXY_CLICK] == 1.0]
+    # Find the records with the highest relevance grade from the label column and generate a proxy click
+    df[RankingConstants.PROXY_CLICK] = df.groupby(query_key_col, group_keys=False)[label_col].apply(generate_proxy_click)
 
+    # Filter to only clicked records in a query to compute click based metrics
+    df_clicked = df[df[RankingConstants.PROXY_CLICK] == 1.0]
     # Resolve ties by selecting the min rank from old and new ranks each
     # FIXME: The ranking_score is not used beyond this point in the code,
     #        but if it has to be, we need to do a max() for it instead of min()
