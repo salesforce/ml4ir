@@ -329,28 +329,6 @@ class MetricHelperTest(unittest.TestCase):
         assert metrics_dict["stat_sig_" + metric + "_degraded_groups"] == 1
         assert metrics_dict["stat_sig_" + metric + "_group_improv_perc"] == 0
 
-    def test_add_top_graded_relevance_record_column(self):
-        # Create a sample DataFrame
-        data = {
-            'query_id': [1, 1, 2, 2, 3, 4, 4, 5, 5],
-            'relevance_score': [0.8, 0.5, 0.6, 0.9, 0.7, 0, 0, 10, 10],
-            'ranking_score': [5, 7, 1, 1, 1, 1, 1, 1, 10]
-        }
-        df = pd.DataFrame(data)
-
-        # Call the function
-        new_col_name = 'top_relevance'
-        df_with_new_column = metrics_helper.add_top_graded_relevance_record_column(df, 'query_id', 'ranking_score', 'relevance_score', new_col_name)
-
-        # Verify the new column is added
-        self.assertTrue(new_col_name in df_with_new_column.columns)
-
-        expected_values = np.array([1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0])
-        np.testing.assert_array_equal(df_with_new_column[new_col_name].values, expected_values)
-
-        # Verify rows with no relevance scores are removed
-        self.assertEqual(len(df_with_new_column['query_id'].unique()), 4)
-
     def test_compute_NDCG_1(self):
         data = {
             'query_id': [1, 1, 1, 2, 2, 2],
@@ -358,7 +336,7 @@ class MetricHelperTest(unittest.TestCase):
             'y_pred': [0.3, 0.2, 0.1, 10, 20, 30]
         }
         expected_values = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
-        self.comput_and_assert_NDCG(data, expected_values)
+        self.compute_and_assert_NDCG(data, expected_values)
 
     def test_compute_NDCG_2(self):
         data = {
@@ -367,11 +345,34 @@ class MetricHelperTest(unittest.TestCase):
             'y_pred': [0.3, 0.2, 0.1, 30, 20, 10]
         }
         expected_values = np.array([1.0, 1.0, 1.0, 0.789998, 0.789998, 0.789998])
-        self.comput_and_assert_NDCG(data, expected_values)
+        self.compute_and_assert_NDCG(data, expected_values)
 
-    def comput_and_assert_NDCG(self, data, expected_values):
+    def compute_and_assert_NDCG(self, data, expected_values):
         df = pd.DataFrame(data)
         result = metrics_helper.compute_ndcg(df, "query_id", "y_true", pred_col="y_pred", new_col="ndcg")
         assert np.isclose(result['ndcg'].values, expected_values).all()
 
+    def test_generate_proxy_click_zero_labels(self):
+        """Test geneate_proxy_click utility when all relevance labels are 0s"""
+        self.assertEquals(metrics_helper.generate_proxy_click(pd.Series([0., 0., 0., 0., 0.])).tolist(),
+                          [0., 0., 0., 0., 0.])
 
+    def test_generate_proxy_click_non_zero_labels(self):
+        """Test geneate_proxy_click utility when there are non zero relevance labels"""
+        self.assertEquals(metrics_helper.generate_proxy_click(pd.Series([0., 1., 2., 3., 0.])).tolist(),
+                          [0., 0., 0., 1., 0.])
+
+    def test_generate_proxy_click_non_zero_labels_with_ties(self):
+        """Test geneate_proxy_click utility when there are non zero relevance labels with ties"""
+        self.assertEquals(metrics_helper.generate_proxy_click(pd.Series([0., 1., 3., 3., 0.])).tolist(),
+                          [0., 0., 1., 1., 0.])
+
+    def test_generate_proxy_click_non_zero_labels_binary(self):
+        """Test geneate_proxy_click utility when there are non zero binary relevance labels"""
+        self.assertEquals(metrics_helper.generate_proxy_click(pd.Series([0., 0., 0., 1., 0.])).tolist(),
+                          [0., 0., 0., 1., 0.])
+
+    def test_generate_proxy_click_non_zero_labels_binary_with_ties(self):
+        """Test geneate_proxy_click utility when there are non zero binary relevance labels with ties"""
+        self.assertEquals(metrics_helper.generate_proxy_click(pd.Series([0., 0., 1., 1., 0.])).tolist(),
+                          [0., 0., 1., 1., 0.])

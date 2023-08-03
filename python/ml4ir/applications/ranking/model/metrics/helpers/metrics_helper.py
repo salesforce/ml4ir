@@ -11,6 +11,7 @@ DELTA = 1e-20
 
 
 class RankingConstants:
+    PROXY_CLICK = "proxy_click"
     NEW_RANK = "new_rank"
     NEW_MRR = "new_MRR"
     OLD_MRR = "old_MRR"
@@ -19,42 +20,31 @@ class RankingConstants:
     NEW_ACR = "new_ACR"
     OLD_NDCG = "old_NDCG"
     NEW_NDCG = "new_NDCG"
+    OLD_RANKING_SCORE = "s"
     NEW_RANKING_SCORE = "ranking_score"
     TTEST_PVALUE_THRESHOLD = 0.1
 
 
-def add_top_graded_relevance_record_column(df, query_key_col, ranking_score_col, label_col, new_col_name):
+def generate_proxy_click(labels):
     """
-    Adds a new column indicating the top graded relevance record per query in the DataFrame.
+    Generate a series of proxy clicks using the graded relevance labels of a grouped dataframe
 
-    Args:
-        df (pandas.DataFrame): The input DataFrame.
-        query_key_col(str): Name of the query key column
-        ranking_score_col (str): Name of the column containing the ranking score. Used to break ties.
-        label_col (str): The column name containing the relevance scores.
-        new_col_name (str): The name for the new column indicating the top graded relevance.
+    Parameters
+    ----------
+    labels : pd.Series
+        Column of a grouped dataframe object to compute proxy clicks
 
-    Returns:
-        pandas.DataFrame: The input DataFrame with the new column added.
-        """
-    # remove queries with no relevance scores
-    grouped_sum = df.groupby(query_key_col)[label_col].sum()
-    queries_with_relevance_scores = grouped_sum[grouped_sum > 0]
-    df_with_relevance_scores = df.loc[df[query_key_col].isin(queries_with_relevance_scores.index)]
-
-    # Group the DataFrame by query_key_col and find the record with the highest label_col
-    top_records = df_with_relevance_scores.groupby(query_key_col)[[label_col, ranking_score_col]].apply(
-        lambda x: x.nlargest(1, [label_col, ranking_score_col]))
-
-    top_indexes = np.array([idx[-1] for idx in list(top_records.transpose().to_dict().keys())])
-
-    # Create a new column 'top_target_relevance' and initialize with 0
-    df_with_relevance_scores[new_col_name] = 0.0
-
-    # Set the 'top_target_relevance' value to 1 for the top records
-    df_with_relevance_scores.loc[top_indexes, new_col_name] = 1.0
-
-    return df_with_relevance_scores
+    Returns
+    -------
+    pandas Series with proxy clicks for given dataframe group
+    """
+    if labels.sum() > 0:
+        # Find the records with the highest relevance grade from the label column
+        max_label = labels.max()
+        return (labels == max_label).astype(float)
+    else:
+        # If there are no non-zero labels, return 0s
+        return labels.astype(float)
 
 
 def compute_ndcg(df, query_key_col, label_col, pred_col="ranking_score", new_col="new_NDCG"):
@@ -149,10 +139,6 @@ def get_grouped_stats(
         computed from the old and new ranks and aux labels generated
         by the model
     """
-    # adding "top_graded_relevance" to be the artificial click such that the record with the highest graded
-    # relevance is considered to be clicked and will be used in MRR computation
-    artificial_click_col = "top_graded_relevance"
-    df = add_top_graded_relevance_record_column(df, query_key_col, new_ranking_score, label_col, artificial_click_col)
     if np.array([Metric.NDCG in metric for metric in power_analysis_metrics]).any():
         df = compute_ndcg(df, query_key_col, label_col, pred_col=new_ranking_score, new_col=RankingConstants.NEW_NDCG)
 
@@ -162,16 +148,26 @@ def get_grouped_stats(
             # we cannot compute old NDCG
             df[RankingConstants.OLD_NDCG] = 0.0
 
-    df_clicked = df[df[artificial_click_col] == 1.0]
-    df = df[df[query_key_col].isin(df_clicked[query_key_col])]
+    # Find the records with the highest relevance grade from the label column and generate a proxy click
+    df[RankingConstants.PROXY_CLICK] = df.groupby(query_key_col, group_keys=False)[label_col].apply(generate_proxy_click)
+
+    # Filter to only clicked records in a query to compute click based metrics
+    df_clicked = df[df[RankingConstants.PROXY_CLICK] == 1.0]
+    # Resolve ties by selecting the min rank from old and new ranks each
+    # FIXME: The ranking_score is not used beyond this point in the code,
+    #        but if it has to be, we need to do a max() for it instead of min()
+    df_clicked = df_clicked.groupby(query_key_col).min().reset_index()
 
     # Compute metrics on aux labels
     df_aux_metrics = pd.DataFrame()
     if aux_label:
+        # Filter to only queries with at least 1 click label
+        df = df[df[query_key_col].isin(df_clicked[query_key_col])]
+
         df_aux_metrics = df.groupby(query_key_col).apply(
             lambda grp: compute_aux_metrics_on_query_group(
                 query_group=grp,
-                label_col=artificial_click_col,
+                label_col=RankingConstants.PROXY_CLICK,
                 old_rank_col=old_rank_col,
                 new_rank_col=new_rank_col,
                 aux_label=aux_label,

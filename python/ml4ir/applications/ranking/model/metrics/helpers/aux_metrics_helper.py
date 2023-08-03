@@ -267,7 +267,7 @@ def compute_aux_metrics_on_query_group(query_group: pd.DataFrame,
             compute_aux_metrics(
                 aux_label_values=query_group[aux_label],
                 ranks=query_group[old_rank_col],
-                click_rank=query_group[query_group[label_col] == 1][old_rank_col].values[0]
+                click_rank=query_group[query_group[label_col] == 1][old_rank_col].min()
                 if (query_group[label_col] == 1).sum() != 0
                 else float("inf"),
                 prefix="old_",
@@ -277,7 +277,7 @@ def compute_aux_metrics_on_query_group(query_group: pd.DataFrame,
             compute_aux_metrics(
                 aux_label_values=query_group[aux_label],
                 ranks=query_group[new_rank_col],
-                click_rank=query_group[query_group[label_col] == 1][new_rank_col].values[0]
+                click_rank=query_group[query_group[label_col] == 1][new_rank_col].min()
                 if (query_group[label_col] == 1).sum() != 0
                 else float("inf"),
                 prefix="new_",
