@@ -43,7 +43,6 @@ class SequenceCategoricalIndicatorWithVocabularyFile(BaseFeatureLayerOp):
                                                       self.default_value)
         self.vocabulary_size = len(self.vocabulary_keys)
         self.num_oov_buckets = self.feature_layer_args.get(self.NUM_OOV_BUCKETS, 1)
-        self.embedding_size = self.feature_layer_args[self.EMBEDDING_SIZE]
 
         self.string_lookup = tf.keras.layers.StringLookup(vocabulary=self.vocabulary_keys,
                                                           num_oov_indices=self.num_oov_buckets,
