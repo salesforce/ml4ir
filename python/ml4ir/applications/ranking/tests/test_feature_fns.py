@@ -76,5 +76,5 @@ class FeatureLayerTest(RelevanceTestBase):
 
         # Check if the one hot vectors match what we expect
         # NOTE - Out of vocabulary tokens are mapped to 0 index
-        expected_one_hot = np.eye(6)[[1, 2, 1, 3, 0, 0]]
+        expected_one_hot = np.eye(5 + 1)[[1, 2, 1, 3, 0, 0]]
         self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
