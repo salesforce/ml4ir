@@ -10,6 +10,9 @@ from ml4ir.base.features.feature_fns.tf_native import TFNativeOpLayer
 from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProcessor
 
 
+from ml4ir.applications.ranking.features.feature_fns.categorical import SequenceCategoricalVector
+
+
 class FeatureLayerMap:
     """Class defining mapping from keys to feature layer functions"""
 
@@ -27,7 +30,9 @@ class FeatureLayerMap:
             CategoricalEmbeddingWithVocabularyFileAndDropout.LAYER_NAME: CategoricalEmbeddingWithVocabularyFileAndDropout,
             CategoricalIndicatorWithVocabularyFile.LAYER_NAME: CategoricalIndicatorWithVocabularyFile,
             TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer,
-            StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor
+            StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor,
+            # Ranking based feature transforms
+            SequenceCategoricalVector.LAYER_NAME: SequenceCategoricalVector
         }
 
     def add_fn(self, key, fn):
