@@ -9,8 +9,8 @@ from ml4ir.base.features.feature_fns.sequence import Global1dPooling
 from ml4ir.base.features.feature_fns.tf_native import TFNativeOpLayer
 from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProcessor
 
-
 from ml4ir.applications.ranking.features.feature_fns.categorical import SequenceCategoricalVector
+from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
 
 
 class FeatureLayerMap:
@@ -32,7 +32,8 @@ class FeatureLayerMap:
             TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer,
             StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor,
             # Ranking based feature transforms
-            SequenceCategoricalVector.LAYER_NAME: SequenceCategoricalVector
+            SequenceCategoricalVector.LAYER_NAME: SequenceCategoricalVector,
+            TheoreticalMinMaxNormalization.LAYER_NAME: TheoreticalMinMaxNormalization
         }
 
     def add_fn(self, key, fn):
