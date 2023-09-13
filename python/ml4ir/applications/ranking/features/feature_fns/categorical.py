@@ -60,15 +60,16 @@ class SequenceCategoricalVector(BaseFeatureLayerOp):
         self.string_lookup = tf.keras.layers.StringLookup(vocabulary=self.vocabulary_keys,
                                                           num_oov_indices=self.num_oov_buckets)
 
+        self.embedding_size = None
+        self.embeddings_initializer = None
+        self.embedding = None
         if self.output_mode == self.EMBEDDING_OUTPUT_MODE:
             self.embedding_size = self.feature_layer_args[self.EMBEDDING_SIZE]
             self.embeddings_initializer = self.feature_layer_args.get(self.EMBEDDINGS_INITIALIZER, "uniform")
             self.embedding = tf.keras.layers.Embedding(input_dim=self.vocabulary_size + self.num_oov_buckets,
                                                        output_dim=self.embedding_size,
                                                        embeddings_initializer=self.embeddings_initializer)
-        elif self.output_mode == self.ONE_HOT_OUTPUT_MODE:
-            self.embedding_size = self.embedding = None
-        else:
+        if self.output_mode not in [self.EMBEDDING_OUTPUT_MODE, self.ONE_HOT_OUTPUT_MODE]:
             raise NotImplementedError(f"The only available output_mode currently for this layer are -> "
                                       f"{[self.EMBEDDING_OUTPUT_MODE, self.ONE_HOT_OUTPUT_MODE]}")
 
