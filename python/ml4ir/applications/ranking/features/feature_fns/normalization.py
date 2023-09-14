@@ -69,4 +69,4 @@ class TheoreticalMinMaxNormalization(BaseFeatureLayerOp):
             tf.math.subtract(inputs, self.theoretical_min),
             tf.math.subtract(query_max, self.theoretical_min))
 
-        return normed_inputs
+        return tf.expand_dims(normed_inputs, axis=-1)
