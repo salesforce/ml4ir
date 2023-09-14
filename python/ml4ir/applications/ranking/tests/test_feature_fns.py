@@ -105,7 +105,7 @@ class FeatureLayerTest(RelevanceTestBase):
             feature_info, self.file_io
         )(input_feature).numpy()
 
-        expected_normed_feature = np.array([[0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0.2, 0.4, 0.6, 0.8, 1. ]])
+        expected_normed_feature = np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.]])
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
 
@@ -121,6 +121,6 @@ class FeatureLayerTest(RelevanceTestBase):
             feature_info, self.file_io
         )(input_feature).numpy()
 
-        expected_normed_feature = np.array([[0. , 0. , 0. , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ]])
+        expected_normed_feature = np.array([[0., 0., 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ]])
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
