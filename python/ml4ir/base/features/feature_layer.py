@@ -11,6 +11,7 @@ from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProc
 
 from ml4ir.applications.ranking.features.feature_fns.categorical import SequenceCategoricalVector
 from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
+from ml4ir.applications.ranking.features.feature_fns.string import QueryLength
 
 
 class FeatureLayerMap:
@@ -33,7 +34,8 @@ class FeatureLayerMap:
             StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor,
             # Ranking based feature transforms
             SequenceCategoricalVector.LAYER_NAME: SequenceCategoricalVector,
-            TheoreticalMinMaxNormalization.LAYER_NAME: TheoreticalMinMaxNormalization
+            TheoreticalMinMaxNormalization.LAYER_NAME: TheoreticalMinMaxNormalization,
+            QueryLength.LAYER_NAME: QueryLength
         }
 
     def add_fn(self, key, fn):

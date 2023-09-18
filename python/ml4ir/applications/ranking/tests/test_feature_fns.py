@@ -4,6 +4,7 @@ import copy
 
 from ml4ir.applications.ranking.features.feature_fns import categorical
 from ml4ir.applications.ranking.features.feature_fns import normalization
+from ml4ir.applications.ranking.features.feature_fns import string as string_transforms
 from ml4ir.base.tests.test_base import RelevanceTestBase
 
 
@@ -124,3 +125,36 @@ class FeatureLayerTest(RelevanceTestBase):
         expected_normed_feature = np.array([[0., 0., 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]])[:, :, np.newaxis]
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
+
+    def test_query_length(self):
+        """
+        Test QueryLength feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+
+        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"])[:, np.newaxis]
+
+        actual_query_len = string_transforms.QueryLength(
+            feature_info, self.file_io
+        )(input_feature).numpy()
+
+        expected_query_len = np.array([2, 3, 1])[:, np.newaxis, np.newaxis]
+
+        self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
+
+    def test_query_length_without_tokenization(self):
+        """
+        Test QueryLength feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["tokenize"] = False
+
+        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"])[:, np.newaxis]
+
+        actual_query_len = string_transforms.QueryLength(
+            feature_info, self.file_io
+        )(input_feature).numpy()
+
+        expected_query_len = np.array([7, 11, 3])[:, np.newaxis, np.newaxis]
+
+        self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
