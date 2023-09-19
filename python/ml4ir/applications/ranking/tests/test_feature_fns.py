@@ -105,7 +105,7 @@ class FeatureLayerTest(RelevanceTestBase):
             feature_info, self.file_io
         )(input_feature).numpy()
 
-        expected_normed_feature = np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.]])[:, :, np.newaxis]
+        expected_normed_feature = np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.]]).reshape(1, -1, 1)
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
 
