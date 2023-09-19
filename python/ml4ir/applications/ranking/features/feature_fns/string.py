@@ -8,7 +8,7 @@ class QueryLength(BaseFeatureLayerOp):
     """
     Compute the length of the query string context feature
     """
-    LAYER_NAME = "query_len"
+    LAYER_NAME = "query_length"
 
     TOKENIZE = "tokenize"
     SEPARATOR = "sep"
@@ -33,6 +33,7 @@ class QueryLength(BaseFeatureLayerOp):
             sep : string
                 String char used to split the query, to count number of tokens
                 Defaults to space " "
+        TODO: In the future, we might want to support custom tokenizers to split the string.
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 

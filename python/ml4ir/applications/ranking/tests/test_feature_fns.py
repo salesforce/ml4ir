@@ -132,13 +132,13 @@ class FeatureLayerTest(RelevanceTestBase):
         """
         feature_info = copy.deepcopy(FEATURE_INFO)
 
-        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"])[:, np.newaxis]
+        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"]).reshape(-1, 1)
 
         actual_query_len = string_transforms.QueryLength(
             feature_info, self.file_io
         )(input_feature).numpy()
 
-        expected_query_len = np.array([2, 3, 1])[:, np.newaxis, np.newaxis]
+        expected_query_len = np.array([2, 3, 1]).reshape(-1, 1, 1)
 
         self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
 
@@ -149,12 +149,12 @@ class FeatureLayerTest(RelevanceTestBase):
         feature_info = copy.deepcopy(FEATURE_INFO)
         feature_info["feature_layer_info"]["args"]["tokenize"] = False
 
-        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"])[:, np.newaxis]
+        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"]).reshape(-1, 1)
 
         actual_query_len = string_transforms.QueryLength(
             feature_info, self.file_io
         )(input_feature).numpy()
 
-        expected_query_len = np.array([7, 11, 3])[:, np.newaxis, np.newaxis]
+        expected_query_len = np.array([7, 11, 3]).reshape(-1, 1, 1)
 
         self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
