@@ -74,7 +74,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
     """
     LAYER_NAME = "query_type_vector"
 
-    REMOVE_SPACES = "remove_spaces"
     REMOVE_QUOTES = "remove_quotes"
     OUTPUT_MODE = "output_mode"
     EMBEDDING_SIZE = "embedding_size"
@@ -112,9 +111,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
         Notes
         -----
         Args under feature_layer_info:
-            remove_spaces: boolean
-                Whether to remove spaces from the string tensors
-                Defaults to true
             remove_quotes : string
                 Whether to remove quotes from the string tensors
                 Defaults to true
@@ -127,7 +123,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
-        self.remove_spaces = self.feature_layer_args.get(self.REMOVE_SPACES, True)
         self.remove_quotes = self.feature_layer_args.get(self.REMOVE_QUOTES, True)
 
         feature_info["feature_layer_info"]["args"]["vocabulary"] = self.VOCABULARY
@@ -150,8 +145,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
             Resulting tensor after the forward pass through the feature transform layer
         """
         # Replace quotes and white spaces
-        if self.remove_spaces:
-            inputs = tf.strings.regex_replace(inputs, """[\s]""", "")
         if self.remove_quotes:
             inputs = tf.strings.regex_replace(inputs, """["']""", "")
 

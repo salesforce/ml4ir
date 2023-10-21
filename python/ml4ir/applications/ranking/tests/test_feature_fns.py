@@ -158,3 +158,49 @@ class FeatureLayerTest(RelevanceTestBase):
         expected_query_len = np.array([7, 11, 3]).reshape(-1, 1, 1)
 
         self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
+
+    def test_query_type_vector(self):
+        """
+        Test QueryTypeVector feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["output_mode"] = "one_hot"
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["", "abc", "123", "!!!", "abc123", "abc@xyz.com", "123.456", "abc2@xyz.com", "\"abc\"", "abc xyz"]
+        )
+
+        actual_one_hot = string_transforms.QueryTypeVector(
+            feature_info, self.file_io
+        )(string_tensor).numpy()
+
+        # Check if the one hot vectors match what we expect
+        # NOTE - Out of vocabulary tokens are mapped to 0 index
+        one_hot = np.eye(8)
+        expected_one_hot = np.stack([one_hot[i] for i in [0, 1, 2, 3, 4, 5, 6, 7, 1, 1]])
+        self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
+
+    def test_query_type_vector_without_remove_quotes(self):
+        """
+        Test QueryTypeVector feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["output_mode"] = "one_hot"
+        feature_info["feature_layer_info"]["args"]["remove_spaces"] = False
+        feature_info["feature_layer_info"]["args"]["remove_quotes"] = False
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["", "abc", "123", "!!!", "abc123", "abc@xyz.com", "123.456", "abc2@xyz.com", "\"abc\"", "'abc'"]
+        )
+
+        actual_one_hot = string_transforms.QueryTypeVector(
+            feature_info, self.file_io
+        )(string_tensor).numpy()
+
+        # Check if the one hot vectors match what we expect
+        # NOTE - Out of vocabulary tokens are mapped to 0 index
+        one_hot = np.eye(8)
+        expected_one_hot = np.stack([one_hot[i] for i in [0, 1, 2, 3, 4, 5, 6, 7, 5, 5]])
+        self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
