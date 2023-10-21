@@ -119,7 +119,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
                 currently supports either embedding or one_hot
             embedding_size : int
                 dimension size of categorical embedding
-        TODO: In the future, we might want to support custom tokenizers to split the string.
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
