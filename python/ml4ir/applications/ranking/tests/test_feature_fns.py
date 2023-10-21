@@ -12,7 +12,7 @@ FEATURE_INFO = {
     "name": "test_feature",
     "feature_layer_info": {
         "args": {
-            "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
+            "vocabulary": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
             "num_oov_buckets": 1
         },
     },
@@ -22,7 +22,7 @@ FEATURE_INFO = {
 
 class FeatureLayerTest(RelevanceTestBase):
 
-    def test_sequence_categorical_vector_embedding(self):
+    def test_categorical_vector_embedding(self):
         """
         Asserts the conversion of a categorical string tensor into a categorical embedding
         Works by converting the string into indices using a vocabulary file and then
@@ -41,7 +41,7 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        actual_embedding = categorical.SequenceCategoricalVector(
+        actual_embedding = categorical.CategoricalVector(
             feature_info, self.file_io
         )(string_tensor).numpy()
 
@@ -59,7 +59,7 @@ class FeatureLayerTest(RelevanceTestBase):
                                        oov_embedding])
         self.assertTrue(np.isclose(actual_embedding, expected_embedding).all())
 
-    def test_sequence_categorical_vector_one_hot(self):
+    def test_categorical_vector_one_hot(self):
         """
         Asserts the conversion of a categorical string tensor into a one-hot representation
         Works by converting the string into indices using a vocabulary file and then
@@ -75,7 +75,7 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        actual_one_hot = categorical.SequenceCategoricalVector(
+        actual_one_hot = categorical.CategoricalVector(
             feature_info, self.file_io
         )(string_tensor).numpy()
 
