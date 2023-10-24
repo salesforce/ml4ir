@@ -12,7 +12,7 @@ class CategoricalVector(BaseFeatureLayerOp):
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then embedding or one-hot vectorizing the index.
     """
-    LAYER_NAME = "sequence_categorical_vector"
+    LAYER_NAME = "categorical_vector"
 
     VOCABULARY = "vocabulary"
     NUM_OOV_BUCKETS = "num_oov_buckets"
