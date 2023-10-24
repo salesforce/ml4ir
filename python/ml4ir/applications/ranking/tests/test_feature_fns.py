@@ -12,7 +12,7 @@ FEATURE_INFO = {
     "name": "test_feature",
     "feature_layer_info": {
         "args": {
-            "vocabulary_file": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
+            "vocabulary": "ml4ir/applications/ranking/tests/data/configs/domain_name_vocab_no_id.csv",
             "num_oov_buckets": 1
         },
     },
@@ -22,7 +22,7 @@ FEATURE_INFO = {
 
 class FeatureLayerTest(RelevanceTestBase):
 
-    def test_sequence_categorical_vector_embedding(self):
+    def test_categorical_vector_embedding(self):
         """
         Asserts the conversion of a categorical string tensor into a categorical embedding
         Works by converting the string into indices using a vocabulary file and then
@@ -41,7 +41,7 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        actual_embedding = categorical.SequenceCategoricalVector(
+        actual_embedding = categorical.CategoricalVector(
             feature_info, self.file_io
         )(string_tensor).numpy()
 
@@ -59,7 +59,7 @@ class FeatureLayerTest(RelevanceTestBase):
                                        oov_embedding])
         self.assertTrue(np.isclose(actual_embedding, expected_embedding).all())
 
-    def test_sequence_categorical_vector_one_hot(self):
+    def test_categorical_vector_one_hot(self):
         """
         Asserts the conversion of a categorical string tensor into a one-hot representation
         Works by converting the string into indices using a vocabulary file and then
@@ -75,7 +75,7 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
-        actual_one_hot = categorical.SequenceCategoricalVector(
+        actual_one_hot = categorical.CategoricalVector(
             feature_info, self.file_io
         )(string_tensor).numpy()
 
@@ -158,3 +158,49 @@ class FeatureLayerTest(RelevanceTestBase):
         expected_query_len = np.array([7, 11, 3]).reshape(-1, 1, 1)
 
         self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
+
+    def test_query_type_vector(self):
+        """
+        Test QueryTypeVector feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["output_mode"] = "one_hot"
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["", "abc", "123", "!!!", "abc123", "abc@xyz.com", "123.456", "abc2@xyz.com", "\"abc\"", "abc xyz"]
+        )
+
+        actual_one_hot = string_transforms.QueryTypeVector(
+            feature_info, self.file_io
+        )(string_tensor).numpy()
+
+        # Check if the one hot vectors match what we expect
+        # NOTE - Out of vocabulary tokens are mapped to 0 index
+        one_hot = np.eye(8)
+        expected_one_hot = np.stack([one_hot[i] for i in [0, 1, 2, 3, 4, 5, 6, 7, 1, 1]])
+        self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
+
+    def test_query_type_vector_without_remove_quotes(self):
+        """
+        Test QueryTypeVector feature transformation
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["output_mode"] = "one_hot"
+        feature_info["feature_layer_info"]["args"]["remove_spaces"] = False
+        feature_info["feature_layer_info"]["args"]["remove_quotes"] = False
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["", "abc", "123", "!!!", "abc123", "abc@xyz.com", "123.456", "abc2@xyz.com", "\"abc\"", "'abc'"]
+        )
+
+        actual_one_hot = string_transforms.QueryTypeVector(
+            feature_info, self.file_io
+        )(string_tensor).numpy()
+
+        # Check if the one hot vectors match what we expect
+        # NOTE - Out of vocabulary tokens are mapped to 0 index
+        one_hot = np.eye(8)
+        expected_one_hot = np.stack([one_hot[i] for i in [0, 1, 2, 3, 4, 5, 6, 7, 5, 5]])
+        self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())

@@ -2,18 +2,19 @@ import tensorflow as tf
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.features.feature_fns.utils import get_vocabulary_info
+from ml4ir.base.config.keys import VocabularyInfoArgsKey
 from ml4ir.base.io.file_io import FileIO
 
 
-class SequenceCategoricalVector(BaseFeatureLayerOp):
+class CategoricalVector(BaseFeatureLayerOp):
     """
     Converts a sequence string tensor into a categorical one-hot or embedding representation.
     Works by using a vocabulary file to convert the string tensor into categorical indices
     and then embedding or one-hot vectorizing the index.
     """
-    LAYER_NAME = "sequence_categorical_vector"
+    LAYER_NAME = "categorical_vector"
 
-    VOCABULARY_FILE = "vocabulary_file"
+    VOCABULARY = "vocabulary"
     NUM_OOV_BUCKETS = "num_oov_buckets"
     OUTPUT_MODE = "output_mode"
     EMBEDDING_OUTPUT_MODE = "embedding"
@@ -36,9 +37,10 @@ class SequenceCategoricalVector(BaseFeatureLayerOp):
         Notes
         -----
         Args under feature_layer_info:
-            vocabulary_file : string
-                path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
-                            uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+            vocabulary : string or list of strings
+                Either path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
+                uses the "key" named column as vocabulary of the 1st column if no "key" column present.
+                Or list of strings to be used as the vocabulary.
             num_oov_buckets : int
                 number of out of vocabulary buckets/slots to be used to
                              encode strings into categorical indices
@@ -47,12 +49,22 @@ class SequenceCategoricalVector(BaseFeatureLayerOp):
                 currently supports either embedding or one_hot
             embedding_size : int
                 dimension size of categorical embedding
+            embedding_initializer: string
+                the tensorflow initializer to use for the embedding matrix
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
-        self.vocabulary_keys, _ = get_vocabulary_info(self.feature_layer_args,
-                                                      self.file_io,
-                                                      self.default_value)
+        self.vocabulary = self.feature_layer_args.get(self.VOCABULARY)
+        if isinstance(self.vocabulary, str):
+            self.feature_layer_args["vocabulary_file"] = self.vocabulary
+            self.vocabulary_keys, _ = get_vocabulary_info({VocabularyInfoArgsKey.VOCABULARY_FILE: self.vocabulary},
+                                                          self.file_io,
+                                                          self.default_value)
+        elif isinstance(self.vocabulary, list):
+            self.vocabulary_keys = self.vocabulary
+        else:
+            raise NotImplementedError("Unsupported value for argument vocabulary")
+
         self.vocabulary_size = len(self.vocabulary_keys)
         self.num_oov_buckets = self.feature_layer_args.get(self.NUM_OOV_BUCKETS, 1)
         self.output_mode = self.feature_layer_args.get(self.OUTPUT_MODE, self.EMBEDDING_OUTPUT_MODE)

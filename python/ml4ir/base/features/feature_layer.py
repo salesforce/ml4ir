@@ -9,9 +9,9 @@ from ml4ir.base.features.feature_fns.sequence import Global1dPooling
 from ml4ir.base.features.feature_fns.tf_native import TFNativeOpLayer
 from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProcessor
 
-from ml4ir.applications.ranking.features.feature_fns.categorical import SequenceCategoricalVector
+from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
 from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
-from ml4ir.applications.ranking.features.feature_fns.string import QueryLength
+from ml4ir.applications.ranking.features.feature_fns.string import QueryLength, QueryTypeVector
 
 
 class FeatureLayerMap:
@@ -33,9 +33,10 @@ class FeatureLayerMap:
             TFNativeOpLayer.LAYER_NAME: TFNativeOpLayer,
             StringMultiLabelProcessor.LAYER_NAME: StringMultiLabelProcessor,
             # Ranking based feature transforms
-            SequenceCategoricalVector.LAYER_NAME: SequenceCategoricalVector,
+            CategoricalVector.LAYER_NAME: CategoricalVector,
             TheoreticalMinMaxNormalization.LAYER_NAME: TheoreticalMinMaxNormalization,
-            QueryLength.LAYER_NAME: QueryLength
+            QueryLength.LAYER_NAME: QueryLength,
+            QueryTypeVector.LAYER_NAME: QueryTypeVector
         }
 
     def add_fn(self, key, fn):
