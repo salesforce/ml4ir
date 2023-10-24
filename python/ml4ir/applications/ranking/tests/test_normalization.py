@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from scipy.stats import zscore
 
-from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization
+from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization, TheoreticalMinMaxNormalization
 
 
 class TestQueryNormalization(unittest.TestCase):
@@ -43,3 +43,31 @@ class TestQueryNormalization(unittest.TestCase):
 
         # Test the values of the masked records
         self.assertTrue(actual_output[np.where(mask == 0.)].sum() == 0.)
+
+
+class TestTheoreticalMinMaxNormalization(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmm_norm = TheoreticalMinMaxNormalization(theoretical_min=0.5)
+
+    def test_tmm_norm_with_2d_feature(self):
+        """Test query normalization with zscore when some records are masked"""
+        input_feature = np.array([[-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]])
+
+        actual_normed_feature = self.tmm_norm(input_feature).numpy()
+
+        expected_normed_feature = np.array([[0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.]])
+
+        self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
+        self.assertTrue(input_feature.shape == actual_normed_feature.shape)
+
+    def test_tmm_norm_with_3d_feature(self):
+        """Test query normalization with zscore when some records are masked"""
+        # Create a 3d feature with last dimension 3
+        input_feature = np.repeat(np.array([-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])[np.newaxis, :, np.newaxis], 3, axis=2)
+
+        actual_normed_feature = self.tmm_norm(input_feature).numpy()
+
+        expected_normed_feature = np.repeat(np.array([0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.])[np.newaxis, :, np.newaxis], 3, axis=2)
+
+        self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
+        self.assertTrue(input_feature.shape == actual_normed_feature.shape)

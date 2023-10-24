@@ -64,3 +64,62 @@ class QueryNormalization(layers.Layer):
         zscore = tf.math.divide_no_nan(tf.math.subtract(inputs, mean), std)
 
         return tf.cast(zscore, tf.float32)
+
+
+class TheoreticalMinMaxNormalization(layers.Layer):
+    """
+    Min Max Normalization of individual query features,
+    where the theoretical min is used instead of the minimum.
+
+    Reference -> An Analysis of Fusion Functions for Hybrid Retrieval
+                 https://arxiv.org/abs/2210.11934
+    """
+
+    def __init__(self,
+                 name="tmm_norm",
+                 theoretical_min: float = 0.0,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        name: str
+            Layer name
+        theoretical_min : float
+            Theoretical minimum to use for the query's record features
+            Default value of 0. is used if not specified.
+        kwargs:
+            Additional key-value args that will be used for configuring the layer
+        """
+        self.theoretical_min = theoretical_min
+        super().__init__(name=name, **kwargs)
+
+    def call(self, inputs, training=None):
+        """
+        Defines the forward pass for the layer on the inputs tensor
+
+        Parameters
+        ----------
+        inputs: tensor
+            Input tensor on which the feature transforms are applied
+        training: boolean
+            Boolean flag indicating if the layer is being used in training mode or not
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer
+        """
+        # Replace values lower than theoretical minimum with theoretical minimum
+        inputs = tf.clip_by_value(inputs,
+                                  clip_value_min=self.theoretical_min,
+                                  clip_value_max=tf.reduce_max(inputs))
+
+        # Compute max values for each query
+        query_max = tf.expand_dims(tf.reduce_max(inputs, axis=1), axis=1)
+
+        # Min max normalization
+        normed_inputs = tf.math.divide_no_nan(
+            tf.math.subtract(inputs, self.theoretical_min),
+            tf.math.subtract(query_max, self.theoretical_min))
+
+        return normed_inputs

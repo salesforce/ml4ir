@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
+from ml4ir.applications.ranking.model.layers.normalization import TheoreticalMinMaxNormalization as TheoreticalMinMaxNormalizationLayer
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -38,7 +39,7 @@ class TheoreticalMinMaxNormalization(BaseFeatureLayerOp):
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
         self.theoretical_min = self.feature_layer_args.get(self.THEORETICAL_MIN, 0.)
-
+        self.tmm_norm_op = TheoreticalMinMaxNormalizationLayer(theoretical_min=self.theoretical_min)
 
     def call(self, inputs, training=None):
         """
@@ -56,17 +57,6 @@ class TheoreticalMinMaxNormalization(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        # Replace values lower than theoretical minimum with theoretical minimum
-        inputs = tf.clip_by_value(inputs,
-                                  clip_value_min=self.theoretical_min,
-                                  clip_value_max=tf.reduce_max(inputs))
-
-        # Compute max values for each query
-        query_max = tf.expand_dims(tf.reduce_max(inputs, axis=-1), axis=-1)
-
-        # Min max normalization
-        normed_inputs = tf.math.divide_no_nan(
-            tf.math.subtract(inputs, self.theoretical_min),
-            tf.math.subtract(query_max, self.theoretical_min))
+        normed_inputs = self.tmm_norm_op(inputs, training)
 
         return tf.expand_dims(normed_inputs, axis=-1)
