@@ -93,6 +93,41 @@ class FeatureLayerTest(RelevanceTestBase):
                                      oov_one_hot])
         self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
 
+    def test_categorical_vector_one_hot_oov_zero(self):
+        """
+        Asserts the conversion of a categorical string tensor into a one-hot representation
+        Works by converting the string into indices using a vocabulary file and then
+        converting the indices into one-hot vectors
+
+        The one-hot vector dimensions, buckets, etc are controlled by the feature_info
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["output_mode"] = "one_hot"
+        feature_info["feature_layer_info"]["args"]["num_oov_buckets"] = 0
+
+        # Define an input string tensor
+        string_tensor = tf.constant(
+            ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
+        )
+
+        actual_one_hot = categorical.CategoricalVector(
+            feature_info, self.file_io
+        )(string_tensor).numpy()
+
+        # Check if the one hot vectors match what we expect
+        # NOTE - Out of vocabulary tokens are mapped to 0 index
+        domain_0_one_hot = np.array([1., 0., 0., 0., 0.])
+        domain_1_one_hot = np.array([0., 1., 0., 0., 0.])
+        domain_2_one_hot = np.array([0., 0., 1., 0., 0.])
+        oov_one_hot = np.array([0., 0., 0., 0., 0.])
+        expected_one_hot = np.stack([domain_0_one_hot,
+                                     domain_1_one_hot,
+                                     domain_0_one_hot,
+                                     domain_2_one_hot,
+                                     oov_one_hot,
+                                     oov_one_hot])
+        self.assertTrue(np.isclose(actual_one_hot, expected_one_hot).all())
+
     def test_theoretical_min_max_norm(self):
         """
         Test TheoreticalMinMaxNormalization feature transform

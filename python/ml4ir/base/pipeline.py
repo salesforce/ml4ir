@@ -205,6 +205,7 @@ class RelevancePipeline(object):
         np.random.seed(self.args.random_state)
         tf.random.set_seed(self.args.random_state)
         random.seed(self.args.random_state)
+        tf.keras.utils.set_random_seed(self.args.random_state)
 
     def get_relevance_dataset(self, preprocessing_keys_to_fns={}) -> RelevanceDataset:
         """
