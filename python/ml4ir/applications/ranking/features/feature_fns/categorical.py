@@ -41,9 +41,8 @@ class CategoricalVector(BaseFeatureLayerOp):
                 uses the "key" named column as vocabulary of the 1st column if no "key" column present.
                 Or list of strings to be used as the vocabulary.
             num_oov_buckets : int
-                number of out of vocabulary buckets/slots to be used to
-                             encode strings into categorical indices
-                If num_oov_buckets is 0 for one-hot output_mode, then we represent the OOV's one-hot representation
+                number of out of vocabulary buckets/slots to be used to encode strings into categorical indices
+                If num_oov_buckets is 0 for one-hot output_mode, then we represent the OOV's one-hot vector
                 with all zeroes or a zero-hot
             output_mode : str
                 the type of vector representation to compute
