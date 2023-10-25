@@ -112,6 +112,8 @@ class CategoricalVector(BaseFeatureLayerOp):
             if self.num_oov_buckets == 0:
                 # Remove OOV one-hot representation if num_oov_buckets is 0
                 vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + 1)
+                # NOTE: This works because tensorflow string lookup assigns OOV buckets first before vocabulary.
+                #       Hence when using OOV=1, we have the 0th index to be the OOV bucket.
                 vector = tf.slice(vector,
                                   begin=[0] * (vector.ndim - 1) + [1],
                                   size=[-1] * vector.ndim)
