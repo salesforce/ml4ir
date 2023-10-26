@@ -22,7 +22,6 @@ class CategoricalVector(BaseFeatureLayerOp):
     EMBEDDING_SIZE = "embedding_size"
     EMBEDDINGS_INITIALIZER = "embeddings_initializer"
 
-
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
         Initialize layer to define a categorical embedding using a vocabulary file
@@ -42,8 +41,9 @@ class CategoricalVector(BaseFeatureLayerOp):
                 uses the "key" named column as vocabulary of the 1st column if no "key" column present.
                 Or list of strings to be used as the vocabulary.
             num_oov_buckets : int
-                number of out of vocabulary buckets/slots to be used to
-                             encode strings into categorical indices
+                number of out of vocabulary buckets/slots to be used to encode strings into categorical indices
+                If num_oov_buckets is 0 for one-hot output_mode, then we represent the OOV's one-hot vector
+                with all zeroes or a zero-hot
             output_mode : str
                 the type of vector representation to compute
                 currently supports either embedding or one_hot
@@ -70,7 +70,7 @@ class CategoricalVector(BaseFeatureLayerOp):
         self.output_mode = self.feature_layer_args.get(self.OUTPUT_MODE, self.EMBEDDING_OUTPUT_MODE)
 
         self.string_lookup = tf.keras.layers.StringLookup(vocabulary=self.vocabulary_keys,
-                                                          num_oov_indices=self.num_oov_buckets)
+                                                          num_oov_indices=max(self.num_oov_buckets, 1))
 
         self.embedding_size = None
         self.embeddings_initializer = None
@@ -84,7 +84,6 @@ class CategoricalVector(BaseFeatureLayerOp):
         if self.output_mode not in [self.EMBEDDING_OUTPUT_MODE, self.ONE_HOT_OUTPUT_MODE]:
             raise NotImplementedError(f"The only available output_mode currently for this layer are -> "
                                       f"{[self.EMBEDDING_OUTPUT_MODE, self.ONE_HOT_OUTPUT_MODE]}")
-
 
     def call(self, inputs, training=None):
         """
@@ -108,6 +107,14 @@ class CategoricalVector(BaseFeatureLayerOp):
         if self.output_mode == self.EMBEDDING_OUTPUT_MODE:
             vector = self.embedding(categorical_indices, training=training)
         elif self.output_mode == self.ONE_HOT_OUTPUT_MODE:
-            vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + self.num_oov_buckets)
+            vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + max(self.num_oov_buckets, 1))
 
+            if self.num_oov_buckets == 0:
+                # Remove OOV one-hot representation if num_oov_buckets is 0
+                vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + 1)
+                # NOTE: This works because tensorflow string lookup assigns OOV buckets first before vocabulary.
+                #       Hence when using OOV=1, we have the 0th index to be the OOV bucket.
+                vector = tf.slice(vector,
+                                  begin=[0] * (vector.ndim - 1) + [1],
+                                  size=[-1] * vector.ndim)
         return vector
