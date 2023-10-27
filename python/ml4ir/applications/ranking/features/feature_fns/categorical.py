@@ -115,6 +115,6 @@ class CategoricalVector(BaseFeatureLayerOp):
                 # NOTE: This works because tensorflow string lookup assigns OOV buckets first before vocabulary.
                 #       Hence when using OOV=1, we have the 0th index to be the OOV bucket.
                 vector = tf.slice(vector,
-                                  begin=[0] * (vector.ndim - 1) + [1],
-                                  size=[-1] * vector.ndim)
+                                  begin=[0] * (vector.shape.rank - 1) + [1],
+                                  size=[-1] * vector.shape.rank)
         return vector
