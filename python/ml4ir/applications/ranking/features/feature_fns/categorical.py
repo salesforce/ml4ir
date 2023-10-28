@@ -107,11 +107,10 @@ class CategoricalVector(BaseFeatureLayerOp):
         if self.output_mode == self.EMBEDDING_OUTPUT_MODE:
             vector = self.embedding(categorical_indices, training=training)
         elif self.output_mode == self.ONE_HOT_OUTPUT_MODE:
+            # Remove OOV one-hot representation if num_oov_buckets is 0
             vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + max(self.num_oov_buckets, 1))
 
             if self.num_oov_buckets == 0:
-                # Remove OOV one-hot representation if num_oov_buckets is 0
-                vector = tf.one_hot(categorical_indices, depth=self.vocabulary_size + 1)
                 # NOTE: This works because tensorflow string lookup assigns OOV buckets first before vocabulary.
                 #       Hence when using OOV=1, we have the 0th index to be the OOV bucket.
                 vector = tf.slice(vector,
