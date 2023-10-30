@@ -115,11 +115,6 @@ features:
       fn: query_length
       args:
         tokenize: true
-    preprocessing_info:
-      - fn: preprocess_text
-        args:
-          remove_punctuation: true
-          to_lower: true
     serving_info:
       name: q
       required: true
