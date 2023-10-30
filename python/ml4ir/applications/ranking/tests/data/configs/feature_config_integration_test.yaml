@@ -105,6 +105,27 @@ features:
       default_value: 0.0
     tfrecord_type: sequence
   - name: query_text
+    node_name: query_length
+    trainable: true
+    dtype: string
+    log_at_inference: true
+    feature_layer_info:
+      type: numeric
+      shape: null
+      fn: query_length
+      args:
+        tokenize: true
+    preprocessing_info:
+      - fn: preprocess_text
+        args:
+          remove_punctuation: true
+          to_lower: true
+    serving_info:
+      name: q
+      required: true
+      default_value: ""
+    tfrecord_type: context
+  - name: query_text
     node_name: query_text
     trainable: true
     dtype: string
