@@ -11,7 +11,7 @@ from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProc
 
 from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
 from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
-from ml4ir.applications.ranking.features.feature_fns.normalization import ReciprocalRank
+from ml4ir.applications.ranking.features.feature_fns.rank_transform import ReciprocalRank
 from ml4ir.applications.ranking.features.feature_fns.string import QueryLength, QueryTypeVector
 
 
