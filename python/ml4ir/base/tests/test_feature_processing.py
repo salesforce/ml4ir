@@ -33,6 +33,12 @@ class RankingModelTest(RankingTestBase):
         )
         assert processed_text.replace("\x00", "") == "abcabc123"
 
+    def test_text_preprocessing_remove_quotes(selfs):
+        """
+
+        :return:
+        """
+
     def test_text_preprocesing_with_replace_by_whitespace(self):
         """
         Asserts the preprocessing of a string tensor with custom punctuation character and whitespace replacement character

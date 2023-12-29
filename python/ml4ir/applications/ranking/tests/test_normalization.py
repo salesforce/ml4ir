@@ -3,7 +3,8 @@ import unittest
 import numpy as np
 from scipy.stats import zscore
 
-from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization, TheoreticalMinMaxNormalization
+from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization, TheoreticalMinMaxNormalization, \
+    ReciprocalRank
 
 
 class TestQueryNormalization(unittest.TestCase):
@@ -63,11 +64,62 @@ class TestTheoreticalMinMaxNormalization(unittest.TestCase):
     def test_tmm_norm_with_3d_feature(self):
         """Test query normalization with zscore when some records are masked"""
         # Create a 3d feature with last dimension 3
-        input_feature = np.repeat(np.array([-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])[np.newaxis, :, np.newaxis], 3, axis=2)
+        input_feature = np.repeat(
+            np.array([-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])[np.newaxis, :, np.newaxis], 3,
+            axis=2)
 
         actual_normed_feature = self.tmm_norm(input_feature).numpy()
 
-        expected_normed_feature = np.repeat(np.array([0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.])[np.newaxis, :, np.newaxis], 3, axis=2)
+        expected_normed_feature = np.repeat(
+            np.array([0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.])[np.newaxis, :, np.newaxis], 3, axis=2)
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
         self.assertTrue(input_feature.shape == actual_normed_feature.shape)
+
+
+class TestReciprocalRank(unittest.TestCase):
+
+    def test_reciprocal_rank_default(self):
+        reciprocal_rank_op = ReciprocalRank()
+        input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
+
+        actual_reciprocal_ranks = reciprocal_rank_op(input_feature).numpy()
+
+        expected_reciprocal_ranks = np.array([[0., 1. / 2, 1. / 1, 1. / 5, 1. / 4, 1. / 3]])
+        self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
+
+    def test_reciprocal_rank_2d_vs_3d(self):
+        reciprocal_rank_op = ReciprocalRank()
+        input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
+
+        reciprocal_ranks_2d = reciprocal_rank_op(input_feature).numpy()
+        reciprocal_ranks_3d = reciprocal_rank_op(input_feature[:, :, np.newaxis]).numpy()
+
+        self.assertTrue(np.isclose(np.squeeze(reciprocal_ranks_2d), np.squeeze(reciprocal_ranks_3d)).all())
+
+    def test_reciprocal_rank_k(self):
+        reciprocal_rank_op = ReciprocalRank(k=60)
+        input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
+
+        actual_reciprocal_ranks = reciprocal_rank_op(input_feature).numpy()
+
+        expected_reciprocal_ranks = np.array([[0., 1. / (60. + 2), 1. / (60. + 1), 1. / (60. + 5), 1. / (60. + 4), 1. / (60. + 3)]])
+        self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
+
+    def test_reciprocal_rank_k_trainable(self):
+        reciprocal_rank_op = ReciprocalRank()
+        self.assertEquals(len(reciprocal_rank_op.trainable_variables), 0)
+        self.assertEquals(len(reciprocal_rank_op.non_trainable_variables), 1)
+
+        reciprocal_rank_op = ReciprocalRank(k_trainable=True)
+        self.assertEquals(len(reciprocal_rank_op.trainable_variables), 1)
+        self.assertEquals(len(reciprocal_rank_op.non_trainable_variables), 0)
+
+    def test_reciprocal_rank_ignore_zero_score(self):
+        reciprocal_rank_op = ReciprocalRank(ignore_zero_score=False)
+        input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
+
+        actual_reciprocal_ranks = reciprocal_rank_op(input_feature).numpy()
+
+        expected_reciprocal_ranks = np.array([[1. / 6, 1. / 2, 1. / 1, 1. / 5, 1. / 4, 1. / 3]])
+        self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())

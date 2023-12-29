@@ -11,6 +11,7 @@ from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProc
 
 from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
 from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
+from ml4ir.applications.ranking.features.feature_fns.normalization import ReciprocalRank
 from ml4ir.applications.ranking.features.feature_fns.string import QueryLength, QueryTypeVector
 
 
@@ -35,6 +36,7 @@ class FeatureLayerMap:
             # Ranking based feature transforms
             CategoricalVector.LAYER_NAME: CategoricalVector,
             TheoreticalMinMaxNormalization.LAYER_NAME: TheoreticalMinMaxNormalization,
+            ReciprocalRank.LAYER_NAME: ReciprocalRank,
             QueryLength.LAYER_NAME: QueryLength,
             QueryTypeVector.LAYER_NAME: QueryTypeVector
         }
