@@ -33,11 +33,14 @@ class RankingModelTest(RankingTestBase):
         )
         assert processed_text.replace("\x00", "") == "abcabc123"
 
-    def test_text_preprocessing_remove_quotes(selfs):
-        """
-
-        :return:
-        """
+    def test_text_preprocessing_remove_quotes(self):
+        input_text = """'"ABCabc123!@#"'"""
+        processed_text = (
+            preprocessing.preprocess_text(input_text, remove_quotes=True)
+                .numpy()
+                .decode("utf-8")
+        )
+        assert "ABCabc123!@#" == processed_text
 
     def test_text_preprocesing_with_replace_by_whitespace(self):
         """
