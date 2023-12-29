@@ -125,7 +125,7 @@ class TheoreticalMinMaxNormalization(layers.Layer):
         return normed_inputs
 
 
-class ReciprocalRank(layers.Layer):
+class ReciprocalRankLayer(layers.Layer):
     """
     Converts a tensor of scores into reciprocal ranks.
     Can optionally add a constant or variable k to the rank
@@ -150,6 +150,7 @@ class ReciprocalRank(layers.Layer):
             If k should be a learnable variable; will be initialized with value of k
         ignore_zero_score: bool
             Use zero reciprocal rank for score value of 0.0
+            When using the layer with negative scores, make sure to set this arg to False
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """

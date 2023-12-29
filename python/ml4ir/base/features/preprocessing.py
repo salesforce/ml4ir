@@ -127,8 +127,9 @@ def preprocess_text(
     Examples
     --------
     Input:
-        >>> feature_tensor = "ABCabc123,,,"
+        >>> feature_tensor = "\"'ABCabc123,,,'\""
         >>> remove_punctuation = True
+        >>> remove_quotes = True
         >>> to_lower = True
     Output:
         >>> "abcabc123"
