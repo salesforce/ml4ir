@@ -94,6 +94,7 @@ class PreprocessingMap:
 @tf.function
 def preprocess_text(
     feature_tensor,
+    remove_quotes=False,
     remove_punctuation=False,
     to_lower=False,
     punctuation=string.punctuation,
@@ -106,6 +107,8 @@ def preprocess_text(
     Parameters
     feature_tensor : Tensor object
         input feature tensor of type tf.string
+    remove_quotes : bool
+        Remove quote characters from the string tensors
     remove_punctuation : bool
         Whether to remove punctuation characters from strings
     to_lower : bool
@@ -124,12 +127,15 @@ def preprocess_text(
     Examples
     --------
     Input:
-        >>> feature_tensor = "ABCabc123,,,"
+        >>> feature_tensor = "\"'ABCabc123,,,'\""
         >>> remove_punctuation = True
+        >>> remove_quotes = True
         >>> to_lower = True
     Output:
         >>> "abcabc123"
     """
+    if remove_quotes:
+        feature_tensor = tf.strings.regex_replace(feature_tensor, """["']""", "")
     if remove_punctuation:
         replacement = ""
         if replace_with_whitespace:
