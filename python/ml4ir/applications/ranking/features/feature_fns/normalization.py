@@ -1,7 +1,8 @@
 import tensorflow as tf
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
-from ml4ir.applications.ranking.model.layers.normalization import TheoreticalMinMaxNormalization as TheoreticalMinMaxNormalizationLayer
+from ml4ir.applications.ranking.model.layers.normalization import \
+    TheoreticalMinMaxNormalization as TheoreticalMinMaxNormalizationLayer
 from ml4ir.base.io.file_io import FileIO
 
 
@@ -16,7 +17,6 @@ class TheoreticalMinMaxNormalization(BaseFeatureLayerOp):
     LAYER_NAME = "theoretical_min_max_norm"
 
     THEORETICAL_MIN = "theoretical_min"
-
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """

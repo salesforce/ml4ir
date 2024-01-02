@@ -63,11 +63,14 @@ class TestTheoreticalMinMaxNormalization(unittest.TestCase):
     def test_tmm_norm_with_3d_feature(self):
         """Test query normalization with zscore when some records are masked"""
         # Create a 3d feature with last dimension 3
-        input_feature = np.repeat(np.array([-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])[np.newaxis, :, np.newaxis], 3, axis=2)
+        input_feature = np.repeat(
+            np.array([-0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])[np.newaxis, :, np.newaxis], 3,
+            axis=2)
 
         actual_normed_feature = self.tmm_norm(input_feature).numpy()
 
-        expected_normed_feature = np.repeat(np.array([0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.])[np.newaxis, :, np.newaxis], 3, axis=2)
+        expected_normed_feature = np.repeat(
+            np.array([0., 0., 0., 0., 0., 0., 0., 0., 0.2, 0.4, 0.6, 0.8, 1.])[np.newaxis, :, np.newaxis], 3, axis=2)
 
         self.assertTrue(np.isclose(actual_normed_feature, expected_normed_feature).all())
         self.assertTrue(input_feature.shape == actual_normed_feature.shape)
