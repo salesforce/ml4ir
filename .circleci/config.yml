@@ -5,7 +5,7 @@ jobs:
   build_test_jvm_integration:
     docker:
       - image: lastmansleeping/ml4ir:0.2
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -41,7 +41,7 @@ jobs:
   build_test_python_base:
     docker:
       - image: cimg/python:3.9.7
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -75,7 +75,7 @@ jobs:
   build_test_python_classification:
     docker:
       - image: cimg/python:3.9.7
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -109,7 +109,7 @@ jobs:
   build_test_python_ranking:
     docker:
       - image: cimg/python:3.9.7
-    resource_class: xlarge
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
