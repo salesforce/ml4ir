@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from ml4ir.applications.ranking.model.layers.rank_transform import RobustScalerLayer
+from ml4ir.base.model.layers.robust_scaler import RobustScalerLayer
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.io.file_io import FileIO
 
