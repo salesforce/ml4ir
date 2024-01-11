@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from ml4ir.applications.ranking.model.layers.robustScaler import RobustScalerLayer
+from ml4ir.base.model.layers.robust_scaler import RobustScalerLayer
 
 
 class TestRobustScalerLayer(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestRobustScalerLayer(unittest.TestCase):
         percentile_25 = np.percentile(input_feature, 25)
         percentile_75 = np.percentile(input_feature, 75)
 
-        robust_scaler_op = RobustScalerLayer(q25=percentile_25, q75=percentile_75)
+        robust_scaler_op = RobustScalerLayer(p25=percentile_25, p75=percentile_75)
 
         actual_reciprocal_ranks = robust_scaler_op(input_feature).numpy()
         expected_reciprocal_ranks = (input_feature - percentile_25) / (percentile_75 - percentile_25)
@@ -26,7 +26,7 @@ class TestRobustScalerLayer(unittest.TestCase):
         percentile_25 = np.percentile(input_feature, 25)
         percentile_75 = np.percentile(input_feature, 75)
 
-        robust_scaler_op = RobustScalerLayer(q25=percentile_25, q75=percentile_75)
+        robust_scaler_op = RobustScalerLayer(p25=percentile_25, p75=percentile_75)
 
         actual_reciprocal_ranks = robust_scaler_op(input_feature).numpy()
         expected_reciprocal_ranks = (input_feature - percentile_25) / (percentile_75 - percentile_25)
@@ -39,7 +39,7 @@ class TestRobustScalerLayer(unittest.TestCase):
         percentile_25 = np.percentile(input_feature, 25)
         percentile_75 = np.percentile(input_feature, 75)
 
-        robust_scaler_op = RobustScalerLayer(q25=percentile_25, q75=percentile_75)
+        robust_scaler_op = RobustScalerLayer(p25=percentile_25, p75=percentile_75)
 
         actual_reciprocal_ranks = robust_scaler_op(input_feature).numpy()
         expected_reciprocal_ranks = input_feature
