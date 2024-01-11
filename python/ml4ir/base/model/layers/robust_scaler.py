@@ -28,8 +28,8 @@ class RobustScalerLayer(layers.Layer):
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
-        self.p25 = p25
-        self.p75 = p75
+        self.p25 = tf.constant(p25, dtype=tf.float32)
+        self.p75 = tf.constant(p75, dtype=tf.float32)
         super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
@@ -48,4 +48,4 @@ class RobustScalerLayer(layers.Layer):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        return tf.math.divide_no_nan(tf.subtract(inputs, self.p25), (self.p75-self.p25))
+        return tf.math.divide_no_nan(tf.subtract(inputs, self.p25), tf.subtract(self.p75, self.p25))
