@@ -4,7 +4,7 @@ from transformers import TFAutoModel, TFBertTokenizer, AutoTokenizer
 from sentence_transformers import SentenceTransformer
 
 
-class SentenceTransformerWithTokenizer(layers.Layer):
+class SentenceTransformerWithTokenizerLayer(layers.Layer):
     """
     Converts a string tensor into embeddings using sentence transformers
     by first tokenizing the string tensor and then passing through the transformer model
@@ -33,7 +33,7 @@ class SentenceTransformerWithTokenizer(layers.Layer):
             Whether to normalize the final sentence embeddings
             Some sentence transformer models use normalization
         finetune_model: bool
-            Finetuned the pretrained embedding model
+            Finetune the pretrained embedding model
         run_sanity_check: bool
             Flag to indicate whether the model should be sanity checked with the Torch model
         kwargs:
