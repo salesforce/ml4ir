@@ -17,8 +17,7 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
     MODEL_NAME_OR_PATH = "model_name_or_path"
     LOAD_MODEL_FROM_PT = "load_model_from_pt"
     NORMALIZE_EMBEDDINGS = "normalize_embeddings"
-    FINETUNE_MODEL = "finetune_model"
-    RUN_SANITY_CHECK = "run_sanity_check"
+    TRAINABLE = "trainable"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -43,8 +42,6 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
                 Some sentence transformer models use normalization
             finetune_model: bool
                 Finetune the pretrained embedding model
-            run_sanity_check: bool
-                Flag to indicate whether the model should be sanity checked with the Torch model
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
@@ -52,8 +49,7 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
             model_name_or_path=self.feature_layer_args.get(self.MODEL_NAME_OR_PATH, "intfloat/e5-base"),
             load_model_from_pt=self.feature_layer_args.get(self.LOAD_MODEL_FROM_PT, True),
             normalize_embeddings=self.feature_layer_args.get(self.NORMALIZE_EMBEDDINGS, False),
-            finetune_model=self.feature_layer_args.get(self.FINETUNE_MODEL, False),
-            run_sanity_check=self.run_sanity_check.get(self.RUN_SANITY_CHECK, False)
+            trainable=self.feature_layer_args.get(self.TRAINABLE, False)
         )
 
     def call(self, inputs, training=None):

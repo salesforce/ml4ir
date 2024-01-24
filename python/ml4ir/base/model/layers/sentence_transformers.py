@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers
-from transformers import TFAutoModel, TFBertTokenizer, AutoTokenizer
-from sentence_transformers import SentenceTransformer
+from transformers import TFAutoModel, TFBertTokenizer
 
 
 class SentenceTransformerWithTokenizerLayer(layers.Layer):
@@ -17,8 +16,7 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
                  model_name_or_path: str = "intfloat/e5-base",
                  load_model_from_pt: bool = True,
                  normalize_embeddings: bool = False,
-                 finetune_model: bool = False,
-                 run_sanity_check: bool = False,
+                 trainable: bool = False,
                  **kwargs):
         """
         Parameters
@@ -32,28 +30,23 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
         normalize_embeddings: bool
             Whether to normalize the final sentence embeddings
             Some sentence transformer models use normalization
-        finetune_model: bool
+        trainable: bool
             Finetune the pretrained embedding model
-        run_sanity_check: bool
-            Flag to indicate whether the model should be sanity checked with the Torch model
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
+        super().__init__(name=name, **kwargs)
+
         self.model_name_or_path = model_name_or_path
         self.load_model_from_pt = load_model_from_pt
         self.normalize_embeddings = normalize_embeddings
-        self.finetune_model = finetune_model
-        self.run_sanity_check = run_sanity_check
+        self.trainable = trainable
 
         self.tokenizer = TFBertTokenizer.from_pretrained(self.model_name_or_path, **kwargs)
         self.sentence_transformer = TFAutoModel.from_pretrained(self.model_name_or_path,
                                                                 from_pt=self.load_model_from_pt,
-                                                                trainable=self.finetune_model,
+                                                                trainable=self.trainable,
                                                                 **kwargs)
-
-        # TODO: Add automated sanity check with the PyTorch model
-
-        super().__init__(name=name, **kwargs)
 
     @classmethod
     def mean_pooling(cls, model_output, attention_mask):
