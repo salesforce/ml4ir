@@ -98,7 +98,7 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
         model_output = self.sentence_transformer(tokens, training=training)
 
         # Mean pooling to get embeddings
-        embeddings = self.mean_pooling(model_output, inputs["attention_mask"])
+        embeddings = self.mean_pooling(model_output, tokens["attention_mask"])
 
         # Normalize if configured
         if self.normalize_embeddings:
