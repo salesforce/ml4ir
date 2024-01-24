@@ -72,9 +72,4 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        if self.tokenize:
-            query_len = tf.strings.split(inputs, sep=self.sep).row_lengths(axis=-1).to_tensor()
-        else:
-            query_len = tf.strings.length(inputs)
-
-        return query_len
+        return self.sentence_transformer_with_tokenizer_op(inputs, training=training)
