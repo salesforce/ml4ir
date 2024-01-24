@@ -14,7 +14,7 @@ class TestSentenceTransformerWithTokenizerLayer(unittest.TestCase):
 
         self.assertEqual(embeddings.shape, (2, 768))
         self.assertTrue(np.allclose(embeddings[0, :5], [-0.25825006, 0.26407936, 0.11777245, -0.38787124, 0.8678482]))
-        self.assertTrue(np.allclose(embeddings[1, :5], [-0.04476589, 0.54374915, -0.01126207, -0.20229892, 0.8411089 ]))
+        self.assertTrue(np.allclose(embeddings[1, :5], [-0.04476589, 0.54374915, -0.01126207, -0.20229892, 0.8411089]))
 
     def test_normalize_embeddings(self):
         model = SentenceTransformerWithTokenizerLayer(normalize_embeddings=True)

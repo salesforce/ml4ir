@@ -86,6 +86,8 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
         """
         # Tokenize string tensors
         tokens = self.tokenizer(inputs)
+        # NOTE: TFDistilBertModel does not expect the token_type_ids key
+        tokens.pop("token_type_ids", None)
 
         # Forward pass through sentence-transformers model
         model_output = self.sentence_transformer(tokens, training=training)
