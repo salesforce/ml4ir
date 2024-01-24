@@ -18,7 +18,7 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
                  load_model_from_pt: bool = True,
                  normalize_embeddings: bool = False,
                  finetune_model: bool = False,
-                 run_sanity_check: bool = True,
+                 run_sanity_check: bool = False,
                  **kwargs):
         """
         Parameters
@@ -51,7 +51,7 @@ class SentenceTransformerWithTokenizerLayer(layers.Layer):
                                                                 trainable=self.finetune_model,
                                                                 **kwargs)
 
-        # TODO: Add a sanity check with the PyTorch model
+        # TODO: Add automated sanity check with the PyTorch model
 
         super().__init__(name=name, **kwargs)
 
