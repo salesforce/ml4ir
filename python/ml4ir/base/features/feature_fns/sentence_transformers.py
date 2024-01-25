@@ -15,8 +15,6 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
     LAYER_NAME = "sentence_transformer_with_tokenizer"
 
     MODEL_NAME_OR_PATH = "model_name_or_path"
-    LOAD_MODEL_FROM_PT = "load_model_from_pt"
-    NORMALIZE_EMBEDDINGS = "normalize_embeddings"
     TRAINABLE = "trainable"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
