@@ -11,9 +11,12 @@ class RobustScaler(BaseFeatureLayerOp):
     for scaling. This process centers the data around the median and scales it based on the spread of the middle
     50% of the data, making it robust to outliers.
 
-    Final formulation of robust scaler = X - Q25 / (Q75 - Q25)
+    Final formulation of robust scaler = X - p25 / (p75 - p25)
     """
     LAYER_NAME = "robust_scaler"
+
+    P25 = "p25"
+    P75 = "p75"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -37,8 +40,8 @@ class RobustScaler(BaseFeatureLayerOp):
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
         self.robust_scaler_op = RobustScalerLayer(
-            q25=self.feature_layer_args.get(self.q25, 0.),
-            q75=self.feature_layer_args.get(self.q75, 0.))
+            q25=self.feature_layer_args.get(self.P25, 0.),
+            q75=self.feature_layer_args.get(self.P75, 0.))
 
     def call(self, inputs, training=None):
         """

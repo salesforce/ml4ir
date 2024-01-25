@@ -14,7 +14,7 @@ class ReciprocalRankLayer(layers.Layer):
                  name="reciprocal_rank",
                  k: float = 0.0,
                  k_trainable: bool = False,
-                 ignore_zero_score=True,
+                 ignore_zero_score: bool = True,
                  **kwargs):
         """
         Parameters
@@ -36,7 +36,7 @@ class ReciprocalRankLayer(layers.Layer):
             initial_value=float(k),
             trainable=self.k_trainable
         )
-        self.zero_score = ignore_zero_score
+        self.ignore_zero_score = ignore_zero_score
         super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
@@ -73,7 +73,7 @@ class ReciprocalRankLayer(layers.Layer):
 
         # Reciprocal of the ranks and update the ranks for 0.0 scores to 0.0
         reciprocal_ranks = tf.math.divide_no_nan(1.0, ranks)
-        if self.zero_score:
+        if self.ignore_zero_score:
             reciprocal_ranks = tf.where(
                 inputs == tf.constant(0.0),
                 tf.constant(0.0),
