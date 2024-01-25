@@ -35,11 +35,6 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
         Args under feature_layer_info:
             model_name_or_path: str
                 Name or path to the sentence transformer embedding model
-            load_model_from_pt: bool
-                Whether to load the model from pytorch or tensorflow
-            normalize_embeddings: bool
-                Whether to normalize the final sentence embeddings
-                Some sentence transformer models use normalization
             finetune_model: bool
                 Finetune the pretrained embedding model
         """
@@ -47,8 +42,6 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
 
         self.sentence_transformer_with_tokenizer_op = SentenceTransformerWithTokenizerLayer(
             model_name_or_path=self.feature_layer_args.get(self.MODEL_NAME_OR_PATH, "intfloat/e5-base"),
-            load_model_from_pt=self.feature_layer_args.get(self.LOAD_MODEL_FROM_PT, True),
-            normalize_embeddings=self.feature_layer_args.get(self.NORMALIZE_EMBEDDINGS, False),
             trainable=self.feature_layer_args.get(self.TRAINABLE, False)
         )
 
