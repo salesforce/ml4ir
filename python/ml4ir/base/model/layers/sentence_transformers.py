@@ -6,10 +6,10 @@ import torch
 from sentence_transformers.models import Dense as SentenceTransformersDense
 from tensorflow.keras.layers import Layer, Dense
 from transformers import TFAutoModel, TFBertTokenizer
+from sentence_transformers import SentenceTransformer
 
 # NOTE: We set device CPU for the torch backend so that the sentence-transformers model does not use GPU resources
 torch.device("cpu")
-SENTENCE_TRANSFORMERS = "sentence_transformers"
 
 
 class SentenceTransformerLayerKey:
@@ -29,7 +29,7 @@ class SentenceTransformerWithTokenizerLayer(Layer):
     """
 
     def __init__(self,
-                 name="transformer_model",
+                 name="sentence_transformer",
                  model_name_or_path: str = "intfloat/e5-base",
                  trainable: bool = False,
                  **kwargs):
@@ -49,12 +49,16 @@ class SentenceTransformerWithTokenizerLayer(Layer):
 
         self.model_name_or_path = Path(model_name_or_path)
         if not Path(model_name_or_path).exists():  # The user provided a model name
-            self.model_name_or_path = Path(
-                torch.hub._get_torch_home()) / SENTENCE_TRANSFORMERS / model_name_or_path.replace('/', '_')
+            # If the sentence_transformer model files are not present, we initialize it to trigger a download
+            st_model = SentenceTransformer(model_name_or_path)
 
+            self.model_name_or_path = Path(
+                torch.hub._get_torch_home()) / "sentence_transformers" / model_name_or_path.replace("/", "_")
             if not self.model_name_or_path.exists():
                 raise FileNotFoundError(
-                    f"{model_name_or_path} does not exist. Verify the `model_name_or_path` argument's value.")
+                    f"{self.model_name_or_path} does not exist. Verify the `model_name_or_path` argument")
+
+            del st_model
 
         # Load the modules.json config to add custom model layers
         self.modules = json.load(open(self.model_name_or_path / "modules.json"))
@@ -97,6 +101,7 @@ class SentenceTransformerWithTokenizerLayer(Layer):
                                        st_dense.state_dict()["linear.bias"]),
                                    activation=st_dense.get_config_dict()["activation_function"].split(".")[-1].lower(),
                                    trainable=self.trainable)
+                del st_dense
 
     @classmethod
     def mean_pooling(cls, token_embeddings, attention_mask):
