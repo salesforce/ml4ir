@@ -7,7 +7,7 @@ from ml4ir.base.model.layers.robust_scaler import RobustScalerLayer
 
 class TestRobustScalerLayer(unittest.TestCase):
 
-    def test_reciprocal_rank_default(self):
+    def test_robust_scaler_default(self):
         input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
 
         percentile_25 = np.percentile(input_feature, 25)
@@ -20,7 +20,7 @@ class TestRobustScalerLayer(unittest.TestCase):
 
         self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
 
-    def test_reciprocal_rank_negative_scores(self):
+    def test_robust_scaler_negative_scores(self):
         input_feature = np.array([[0.0, 0.8, 0.9, -0.5, -0.4, -0.3]])
 
         percentile_25 = np.percentile(input_feature, 25)
@@ -33,7 +33,7 @@ class TestRobustScalerLayer(unittest.TestCase):
 
         self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
 
-    def test_reciprocal_rank_zeros(self):
+    def test_robust_scaler_zeros(self):
         input_feature = np.array([[0.0, 0.0, 0.0, 0.0]])
 
         percentile_25 = np.percentile(input_feature, 25)
