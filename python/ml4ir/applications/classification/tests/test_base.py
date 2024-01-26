@@ -88,6 +88,7 @@ class ClassificationTestBase(unittest.TestCase):
 
         cls.classification_pipeline: ClassificationPipeline = ClassificationPipeline(args=args)
         cls.relevance_dataset: RelevanceDataset = cls.classification_pipeline.get_relevance_dataset()
+        assert cls.relevance_dataset.data_compression == args.data_compression
         cls.classification_model: RelevanceModel = cls.classification_pipeline.get_relevance_model()
 
         cls.train_metrics = cls.classification_model.fit(dataset=cls.relevance_dataset,
