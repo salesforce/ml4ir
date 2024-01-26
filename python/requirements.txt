@@ -7,7 +7,7 @@ PyYAML==5.4.1
 urllib3<2.0  # Issue -> https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
 
 # SentenceTransformers dependencies
-transformers==4.25.1
+transformers==4.36.0
 huggingface-hub==0.19.1
 tensorflow-text==2.9.0
 torch==1.11.0
