@@ -59,4 +59,10 @@ class SentenceTransformerWithTokenizer(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        return self.sentence_transformer_with_tokenizer_op(inputs, training=training)
+        # Squeeze query dimension as BERTTokenizer only functions on rank 1 tensors
+        inputs = tf.squeeze(inputs, axis=-1)
+
+        embedding = self.sentence_transformer_with_tokenizer_op(inputs, training=training)
+
+        # Unsqueeze query dimension
+        return tf.expand_dims(embedding, axis=-2)
