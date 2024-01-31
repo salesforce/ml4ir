@@ -60,7 +60,9 @@ class LocalIO(FileIO):
         index_col : int, optional
             column to be used as index
         na_filter: bool
-            whether to convert empty string or the string with na_values (null, nan, ...) to NaN
+            whether to convert empty string or the string with na_values (null, nan, ...) to NaN.
+            Setting the default value to `False` helps the strings having these values not to be
+            converted to NaN and avoids unwanted NaN values in dataframe.
 
         Returns
         -------
@@ -124,7 +126,9 @@ class LocalIO(FileIO):
         index_col : int, optional
             column to be used as index
         na_filter: bool
-            whether to convert empty string or the string with na_values (null, nan, ...) to NaN
+            whether to convert empty string or the string with na_values (null, nan, ...) to NaN.
+            Setting the default value to `False` helps the strings having these values not to be
+            converted to NaN and avoids unwanted NaN values in dataframe.
 
         Returns
         -------
