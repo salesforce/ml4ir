@@ -89,6 +89,7 @@ class LocalIO(FileIO):
                 error_bad_lines=False,
                 warn_bad_lines=True,
                 engine="c",
+                na_filter=False
             )
 
         except Exception as e:
