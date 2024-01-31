@@ -45,7 +45,8 @@ class LocalIO(FileIO):
         os.makedirs(dir_path)
 
     def read_df(
-            self, infile: str, sep: str = ",", index_col: int = None, **kwargs
+            self, infile: str, sep: str = ",", index_col: int = None, na_filter: bool = False,
+            **kwargs
     ) -> Optional[pd.DataFrame]:
         """
         Load a pandas dataframe from a file
@@ -58,6 +59,8 @@ class LocalIO(FileIO):
             separator to use for loading file
         index_col : int, optional
             column to be used as index
+        na_filter: bool
+            whether to convert empty string or the string with na_values (null, nan, ...) to NaN
 
         Returns
         -------
@@ -89,7 +92,7 @@ class LocalIO(FileIO):
                 error_bad_lines=False,
                 warn_bad_lines=True,
                 engine="c",
-                na_filter=False
+                na_filter=na_filter
             )
 
         except Exception as e:
@@ -107,7 +110,8 @@ class LocalIO(FileIO):
         fp.close()
         return df
 
-    def read_df_list(self, infiles, sep=",", index_col=None, **kwargs) -> pd.DataFrame:
+    def read_df_list(self, infiles, sep=",", index_col=None, na_filter: bool = False,
+                     **kwargs) -> pd.DataFrame:
         """
         Load a pandas dataframe from a list of files
 
@@ -119,6 +123,8 @@ class LocalIO(FileIO):
             separator to use for loading file
         index_col : int, optional
             column to be used as index
+        na_filter: bool
+            whether to convert empty string or the string with na_values (null, nan, ...) to NaN
 
         Returns
         -------
@@ -127,7 +133,8 @@ class LocalIO(FileIO):
         """
         self.log("Reading {} files from [{}, ..".format(len(infiles), infiles[0]))
         return pd.concat(
-            [self.read_df(infile, sep=sep, index_col=index_col, **kwargs) for infile in infiles]
+            [self.read_df(infile, sep=sep, index_col=index_col, na_filter=na_filter, **kwargs)
+             for infile in infiles]
         )
 
     def write_df(self, df, outfile: str = None, sep: str = ",", index: bool = True) -> str:
