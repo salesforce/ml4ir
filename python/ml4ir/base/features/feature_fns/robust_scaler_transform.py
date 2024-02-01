@@ -40,8 +40,8 @@ class RobustScaler(BaseFeatureLayerOp):
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
         self.robust_scaler_op = RobustScalerLayer(
-            q25=self.feature_layer_args.get(self.P25, 0.),
-            q75=self.feature_layer_args.get(self.P75, 0.))
+            p25=self.feature_layer_args.get(self.P25, 0.),
+            p75=self.feature_layer_args.get(self.P75, 0.))
 
     def call(self, inputs, training=None):
         """
