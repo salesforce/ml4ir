@@ -1,5 +1,5 @@
 # ml4ir dependencies
-tensorflow==2.9.3
+tensorflow==2.11.0
 numpy==1.24.2
 pandas==1.5.3
 scipy==1.10.0
@@ -9,7 +9,7 @@ urllib3<2.0  # Issue -> https://stackoverflow.com/questions/76187256/importerror
 # SentenceTransformers dependencies
 transformers==4.25.1
 huggingface-hub==0.19.1
-tensorflow-text==2.9.0
+tensorflow-text==2.11.0
 torch==1.11.0
 sentence-transformers==2.2.2
 
