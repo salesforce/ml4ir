@@ -112,17 +112,13 @@ features:
     feature_layer_info:
       type: numeric
       shape: null
-      fn: bytes_sequence_to_encoding_bilstm
+      fn: sentence_transformer_with_tokenizer
       args:
-        encoding_type: bilstm
-        encoding_size: 128
-        embedding_size: 128
-        max_length: 20
+        model_name_or_path: intfloat/e5-base
     preprocessing_info:
       - fn: preprocess_text
         args:
-          remove_punctuation: true
-          to_lower: true
+          remove_quotes: true
     serving_info:
       name: q
       required: true
