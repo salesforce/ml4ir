@@ -131,7 +131,7 @@ class TensorFlowInferenceIT extends TestData {
     def modelName = System.getProperty("runName") + "_ranking"
     val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
-    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
+    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config_integration_test.yaml"
 
     evaluateRankingInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
   }
