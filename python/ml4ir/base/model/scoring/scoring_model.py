@@ -345,6 +345,8 @@ class RelevanceScorer(keras.Model):
 
         with tf.GradientTape() as tape:
             y_pred = self(X, training=True)[self.output_name]
+            for _ in range(25): # MC trials during training.
+                y_pred += self(X, training=True)[self.output_name]
             loss_value = self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
