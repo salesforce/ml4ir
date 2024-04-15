@@ -86,18 +86,51 @@ def get_predict_fn(
     @tf.function
     def _predict_score(features, label):
         """Predict scores and compute additional output from input features using the input model"""
+        # inference with Monte Carlo
+        all_scores = []
         if is_compiled:
             scores = infer(features)[output_name]
+            for _ in range(25):
+                s = infer(features, training=True)[output_name]
+                all_scores.append(s)
+                scores += s
         else:
             scores = infer(**features)[output_name]
+            for _ in range(25):
+                s = infer(**features, training=True)[output_name]
+                all_scores.append(s)
+                scores += s
+       
+        # Convert the list of predictions to a TensorFlow tensor
+        all_scores = tf.stack(all_scores)
+        
 
+        # Compute the mean and variance across iterations
+        mean_prediction = tf.reduce_mean(all_scores, axis=0)
+        variance_prediction = tf.math.reduce_variance(all_scores, axis=0)
+        # Identify the record with the highest score for each prediction
+        max_indices = tf.argmax(all_scores, axis=-1)
+
+        # Create a tensor marked with 1 corresponding to the record with the highest score
+        ensemble_tensor = tf.reduce_sum(tf.one_hot(max_indices, depth=tf.shape(mean_prediction)[-1]), axis=0)
+        ensemble_tensor = tf.where(tf.equal(ensemble_tensor, 0), mean_prediction, ensemble_tensor)
+        
+        no_mask_scores = scores
+        
         # Set scores of padded records to 0
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
             scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
+            mean_prediction = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), mean_prediction)
+            variance_prediction = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), variance_prediction)
+            ensemble_tensor = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), ensemble_tensor)
 
             mask = _flatten_records(features["mask"])
 
         predictions_dict = dict()
+        predictions_dict["MC_mean"] = mean_prediction
+        predictions_dict["MC_variance"] = variance_prediction
+        predictions_dict["MC_ensemble"] = ensemble_tensor
+        
         for feature_name in features_to_log:
             if feature_name == feature_config.get_label(key="node_name"):
                 # Apply label_processor if configured
