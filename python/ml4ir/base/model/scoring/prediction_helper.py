@@ -88,18 +88,21 @@ def get_predict_fn(
         """Predict scores and compute additional output from input features using the input model"""
         # inference with Monte Carlo
         all_scores = []
+        MC_trials = 9
         if is_compiled:
             scores = infer(features)[output_name]
-            for _ in range(25):
+            for _ in range(MC_trials):
                 s = infer(features, training=True)[output_name]
                 all_scores.append(s)
                 scores += s
+            scores /= (MC_trials+1)
         else:
             scores = infer(**features)[output_name]
-            for _ in range(25):
+            for _ in range(MC_trials):
                 s = infer(**features, training=True)[output_name]
                 all_scores.append(s)
                 scores += s
+            scores /= (MC_trials+1)
        
         # Convert the list of predictions to a TensorFlow tensor
         all_scores = tf.stack(all_scores)
@@ -130,6 +133,10 @@ def get_predict_fn(
         predictions_dict["MC_mean"] = mean_prediction
         predictions_dict["MC_variance"] = variance_prediction
         predictions_dict["MC_ensemble"] = ensemble_tensor
+        
+        scores = ensemble_tensor
+        
+        print(predictions_dict)
         
         for feature_name in features_to_log:
             if feature_name == feature_config.get_label(key="node_name"):
