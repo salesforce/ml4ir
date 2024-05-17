@@ -46,5 +46,10 @@ def get_loss(loss_key: str,
         return listwise_losses.AuxiliarySoftmaxCrossEntropy(loss_key=loss_key,
                                                             scoring_type=scoring_type,
                                                             output_name=output_name)
+                                                                  output_name=output_name)
+    elif loss_key == LossKey.KL_DIVERGENCE:
+        return listwise_losses.KL_Divergence(loss_key=loss_key,
+                                                            scoring_type=scoring_type,
+                                                            output_name=output_name)
     else:
         raise NotImplementedError
