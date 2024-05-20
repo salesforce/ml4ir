@@ -10,8 +10,8 @@ from ml4ir.base.config.keys import LearningRateScheduleKey
 from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
-#from ml4ir.base.model.calibration.temperature_scaling import temperature_scale, \
-#    TemperatureScalingLayer
+from ml4ir.base.model.calibration.temperature_scaling import temperature_scale, \
+    TemperatureScalingLayer
 from ml4ir.base.model.callbacks.debugging import DebuggingCallback
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
