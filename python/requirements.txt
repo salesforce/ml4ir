@@ -15,4 +15,3 @@ sentence-transformers==2.2.2
 
 # calibration
 tensorflow-probability==0.15.0
-
