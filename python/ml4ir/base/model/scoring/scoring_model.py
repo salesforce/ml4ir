@@ -43,6 +43,7 @@ class RelevanceScorer(keras.Model):
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
+            monte_carlo_inference_trials: int = 0,
             **kwargs
     ):
         """
@@ -76,6 +77,8 @@ class RelevanceScorer(keras.Model):
             Logging handler
         logs_dir : str, optional
             Path to the logging directory
+        monte_carlo_inference_trials: int, optinal
+            The number of monte carlo inference trials
 
         Notes
         -----
@@ -105,6 +108,7 @@ class RelevanceScorer(keras.Model):
         self.logs_dir = logs_dir
         self.architecture_op = self.get_architecture_op()
         self.plot_abstract_model()
+        self.monte_carlo_inference_trials = monte_carlo_inference_trials
 
     @classmethod
     def from_model_config_file(
@@ -345,10 +349,9 @@ class RelevanceScorer(keras.Model):
 
         with tf.GradientTape() as tape:
             y_pred = self(X, training=True)[self.output_name]
-            MC_trials = 1
-            for _ in range(MC_trials): # MC trials during training.
+            for _ in range(self.monte_carlo_inference_trials):  # MC trials during training.
                 y_pred += self(X, training=True)[self.output_name]
-            y_pred /= (MC_trials+1)
+            y_pred /= (self.monte_carlo_inference_trials+1)
             loss_value = self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
@@ -384,11 +387,10 @@ class RelevanceScorer(keras.Model):
         if self.interaction_model.label_transform_op:
             y = self.interaction_model.label_transform_op(y, training=False)
 
-        y_pred = self(X, training=True)[self.output_name]
-        MC_trials = 9
-        for _ in range(MC_trials): # MC trials during test.
+        y_pred = self(X, training=False)[self.output_name]
+        for _ in range(self.monte_carlo_inference_trials):  # MC trials during test.
             y_pred += self(X, training=True)[self.output_name]
-        y_pred /= (MC_trials+1)
+        y_pred /= (self.monte_carlo_inference_trials+1)
 
         # Update loss metric
         self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)

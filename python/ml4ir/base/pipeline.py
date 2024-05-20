@@ -407,7 +407,8 @@ class RelevancePipeline(object):
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
-            logs_dir=self.logs_dir_local
+            logs_dir=self.logs_dir_local,
+            monte_carlo_inference_trials=self.args.monte_carlo_inference_trials
         )
 
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)

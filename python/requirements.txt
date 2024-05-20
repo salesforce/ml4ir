@@ -1,9 +1,9 @@
 # ml4ir dependencies
-tensorflow==2.9.3
+#tensorflow==2.9.3
 numpy==1.24.2
 pandas==1.5.3
 scipy==1.10.0
-PyYAML==5.4.1
+#PyYAML==5.4.1
 urllib3<2.0  # Issue -> https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
 
 # SentenceTransformers dependencies

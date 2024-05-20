@@ -19,6 +19,7 @@ def get_predict_fn(
     features_to_return: List = [],
     additional_features: Dict = {},
     max_sequence_size: int = 0,
+    monte_carlo_inference_trials: int = 0
 ):
     """
     Define a prediction function to convert input features into scores.
@@ -51,6 +52,8 @@ def get_predict_fn(
     max_sequence_size : int, optional
         Maximum size of the sequence in a TFRecord SequenceExample protobuf
         object
+    monte_carlo_inference_trials: int, optional
+        The number of monte carlo trails at inference time.
 
     Returns
     -------
@@ -87,57 +90,24 @@ def get_predict_fn(
     def _predict_score(features, label):
         """Predict scores and compute additional output from input features using the input model"""
         # inference with Monte Carlo
-        all_scores = []
-        MC_trials = 9
         if is_compiled:
+            # inference with no dropout
             scores = infer(features)[output_name]
-            for _ in range(MC_trials):
+            # running monte carlo iterations
+            for _ in range(monte_carlo_inference_trials):
                 s = infer(features, training=True)[output_name]
-                all_scores.append(s)
                 scores += s
-            scores /= (MC_trials+1)
+            scores /= (monte_carlo_inference_trials+1)
         else:
+            # inference with no dropout
             scores = infer(**features)[output_name]
-            for _ in range(MC_trials):
+            # running monte carlo iterations
+            for _ in range(monte_carlo_inference_trials):
                 s = infer(**features, training=True)[output_name]
-                all_scores.append(s)
                 scores += s
-            scores /= (MC_trials+1)
-       
-        # Convert the list of predictions to a TensorFlow tensor
-        all_scores = tf.stack(all_scores)
-        
-
-        # Compute the mean and variance across iterations
-        mean_prediction = tf.reduce_mean(all_scores, axis=0)
-        variance_prediction = tf.math.reduce_variance(all_scores, axis=0)
-        # Identify the record with the highest score for each prediction
-        max_indices = tf.argmax(all_scores, axis=-1)
-
-        # Create a tensor marked with 1 corresponding to the record with the highest score
-        ensemble_tensor = tf.reduce_sum(tf.one_hot(max_indices, depth=tf.shape(mean_prediction)[-1]), axis=0)
-        ensemble_tensor = tf.where(tf.equal(ensemble_tensor, 0), mean_prediction, ensemble_tensor)
-        
-        no_mask_scores = scores
-        
-        # Set scores of padded records to 0
-        if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
-            scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
-            mean_prediction = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), mean_prediction)
-            variance_prediction = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), variance_prediction)
-            ensemble_tensor = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), ensemble_tensor)
-
-            mask = _flatten_records(features["mask"])
+            scores /= (monte_carlo_inference_trials+1)
 
         predictions_dict = dict()
-        predictions_dict["MC_mean"] = mean_prediction
-        predictions_dict["MC_variance"] = variance_prediction
-        predictions_dict["MC_ensemble"] = ensemble_tensor
-        
-        scores = ensemble_tensor
-        
-        print(predictions_dict)
-        
         for feature_name in features_to_log:
             if feature_name == feature_config.get_label(key="node_name"):
                 # Apply label_processor if configured

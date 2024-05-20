@@ -167,6 +167,7 @@ class RankingModel(RelevanceModel):
                 features_to_return=evaluation_features,
                 additional_features=additional_features,
                 max_sequence_size=self.max_sequence_size,
+                monte_carlo_inference_trials=self.monte_carlo_inference_trials
             )
 
             batch_count = 0
