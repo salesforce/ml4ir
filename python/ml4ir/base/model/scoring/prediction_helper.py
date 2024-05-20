@@ -107,6 +107,12 @@ def get_predict_fn(
                 scores += s
             scores /= (monte_carlo_inference_trials+1)
 
+        # Set scores of padded records to 0
+        if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
+            scores = tf.where(tf.equal(features["mask"], 0), tf.constant(-np.inf), scores)
+
+            mask = _flatten_records(features["mask"])
+
         predictions_dict = dict()
         for feature_name in features_to_log:
             if feature_name == feature_config.get_label(key="node_name"):
