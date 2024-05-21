@@ -28,6 +28,7 @@ from ml4ir.base.data.kfold_relevance_dataset import KfoldRelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
+from ml4ir.base.model.scoring.Monte_Carlo_Scorer import MonteCarloScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.config.keys import DataFormatKey
@@ -396,20 +397,36 @@ class RelevancePipeline(object):
             aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
-        scorer: RelevanceScorer = RelevanceScorer(
-            feature_config=self.feature_config,
-            model_config=self.model_config,
-            interaction_model=interaction_model,
-            loss=loss,
-            aux_loss=aux_loss,
-            aux_loss_weight=self.args.aux_loss_weight,
-            aux_metrics=aux_metrics,
-            output_name=self.args.output_name,
-            logger=self.logger,
-            file_io=self.file_io,
-            logs_dir=self.logs_dir_local,
-            monte_carlo_inference_trials=self.args.monte_carlo_inference_trials
-        )
+        if self.args.monte_carlo_inference_trials > 0:
+            scorer: RelevanceScorer = MonteCarloScorer(
+                feature_config=self.feature_config,
+                model_config=self.model_config,
+                interaction_model=interaction_model,
+                loss=loss,
+                aux_loss=aux_loss,
+                aux_loss_weight=self.args.aux_loss_weight,
+                aux_metrics=aux_metrics,
+                output_name=self.args.output_name,
+                logger=self.logger,
+                file_io=self.file_io,
+                logs_dir=self.logs_dir_local,
+                monte_carlo_inference_trials=self.args.monte_carlo_inference_trials
+            )
+        else:
+
+            scorer: RelevanceScorer = RelevanceScorer(
+                feature_config=self.feature_config,
+                model_config=self.model_config,
+                interaction_model=interaction_model,
+                loss=loss,
+                aux_loss=aux_loss,
+                aux_loss_weight=self.args.aux_loss_weight,
+                aux_metrics=aux_metrics,
+                output_name=self.args.output_name,
+                logger=self.logger,
+                file_io=self.file_io,
+                logs_dir=self.logs_dir_local
+            )
 
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
