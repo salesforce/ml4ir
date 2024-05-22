@@ -102,7 +102,6 @@ class MonteCarloScorer(RelevanceScorer):
 
         self.monte_carlo_inference_trials = monte_carlo_inference_trials
 
-
     def __update_loss(self, inputs, y_true, y_pred):
         """
         Compute loss value
@@ -197,6 +196,13 @@ class MonteCarloScorer(RelevanceScorer):
         scores : dict of tensor object
             Tensor object of the score computed by the model
         """
+        scores = self.make_pred(inputs, training=False)
+        for _ in range(self.monte_carlo_inference_trials):  # MC trials during training.
+            scores += self.make_pred(inputs, training=True)
+        scores /= (self.monte_carlo_inference_trials + 1)
+        return {self.output_name: scores}
+
+    def make_pred(self, inputs: Dict[str, tf.Tensor], training=None):
         # Apply feature layer and transform inputs
         features = self.interaction_model(inputs, training=training)
 
@@ -206,7 +212,7 @@ class MonteCarloScorer(RelevanceScorer):
         # Apply final activation layer
         scores = self.loss_op.final_activation_op(features, training=training)
 
-        return {self.output_name: scores}
+        return scores
 
     def train_step(self, data):
         """
@@ -232,9 +238,6 @@ class MonteCarloScorer(RelevanceScorer):
 
         with tf.GradientTape() as tape:
             y_pred = self(X, training=True)[self.output_name]
-            for _ in range(self.monte_carlo_inference_trials):  # MC trials during training.
-                y_pred += self(X, training=True)[self.output_name]
-            y_pred /= (self.monte_carlo_inference_trials + 1)
             loss_value = self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
 
         # Compute gradients
@@ -271,9 +274,6 @@ class MonteCarloScorer(RelevanceScorer):
             y = self.interaction_model.label_transform_op(y, training=False)
 
         y_pred = self(X, training=False)[self.output_name]
-        for _ in range(self.monte_carlo_inference_trials):  # MC trials during test.
-            y_pred += self(X, training=True)[self.output_name]
-        y_pred /= (self.monte_carlo_inference_trials + 1)
 
         # Update loss metric
         self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
