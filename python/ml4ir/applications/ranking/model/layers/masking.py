@@ -185,13 +185,10 @@ class QueryFeatureMask(layers.Layer):
         """
         batch_size, sequence_len, feature_dim = inputs.shape
         if self.mask_at_inference or training:
-            # Create a mask for each query
-            query_mask = tf.random.uniform([batch_size, 1, 1]) < self.mask_rate
-            query_mask = tf.tile(query_mask, [1, sequence_len, feature_dim])
-
-            # Apply the mask to the inputs
-            masked_inputs = tf.where(query_mask, tf.zeros_like(inputs), inputs)
-            return masked_inputs
+            mask = tf.cast(tf.random.uniform([batch_size, feature_dim]) > self.mask_rate, dtype=tf.float32)
+            mask = tf.expand_dims(mask, axis=1)
+            mask = tf.tile(mask, [1, sequence_len, 1])
+            return inputs * mask
         else:
             return inputs
 
