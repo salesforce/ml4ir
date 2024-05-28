@@ -19,6 +19,7 @@ def get_predict_fn(
     features_to_return: List = [],
     additional_features: Dict = {},
     max_sequence_size: int = 0,
+    monte_carlo_inference_trials: int = 0
 ):
     """
     Define a prediction function to convert input features into scores.
@@ -51,6 +52,8 @@ def get_predict_fn(
     max_sequence_size : int, optional
         Maximum size of the sequence in a TFRecord SequenceExample protobuf
         object
+    monte_carlo_inference_trials: int, optional
+        The number of monte carlo trails at inference time.
 
     Returns
     -------
@@ -86,10 +89,23 @@ def get_predict_fn(
     @tf.function
     def _predict_score(features, label):
         """Predict scores and compute additional output from input features using the input model"""
+        # inference with Monte Carlo
         if is_compiled:
+            # inference with no dropout
             scores = infer(features)[output_name]
+            # running monte carlo iterations
+            for _ in range(monte_carlo_inference_trials):
+                s = infer(features, training=True)[output_name]
+                scores += s
+            scores /= (monte_carlo_inference_trials+1)
         else:
+            # inference with no dropout
             scores = infer(**features)[output_name]
+            # running monte carlo iterations
+            for _ in range(monte_carlo_inference_trials):
+                s = infer(**features, training=True)[output_name]
+                scores += s
+            scores /= (monte_carlo_inference_trials+1)
 
         # Set scores of padded records to 0
         if tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE:
