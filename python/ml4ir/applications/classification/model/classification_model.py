@@ -25,6 +25,7 @@ class ClassificationModel(RelevanceModel):
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
             compute_intermediate_stats: bool = True,
+            monte_carlo_inference_trials: int = 0
     ):
         """
         Evaluate the Classification Model
