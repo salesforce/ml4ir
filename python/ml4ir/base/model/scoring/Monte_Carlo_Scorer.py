@@ -1,4 +1,3 @@
-
 import logging
 from logging import Logger
 import traceback
@@ -87,18 +86,18 @@ class MonteCarloScorer(RelevanceScorer):
         logs_dir : Used to point model architectures to local logging directory,
             primarily for saving visualizations.
         """
-        super().__init__(model_config,
-                            feature_config,
-                            interaction_model,
-                            loss,
-                            file_io,
-                            aux_loss,
-                            aux_loss_weight,
-                            aux_metrics,
-                            output_name,
-                            logger,
-                            logs_dir,
-                            **kwargs)
+        super().__init__(feature_config=feature_config,
+                         model_config=model_config,
+                         interaction_model=interaction_model,
+                         loss=loss,
+                         aux_loss=aux_loss,
+                         aux_loss_weight=aux_loss_weight,
+                         aux_metrics=aux_metrics,
+                         output_name=output_name,
+                         logger=logger,
+                         file_io=file_io,
+                         logs_dir=logs_dir,
+                         **kwargs)
 
         self.monte_carlo_inference_trials = monte_carlo_inference_trials
 
