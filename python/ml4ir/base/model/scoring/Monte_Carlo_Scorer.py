@@ -19,8 +19,8 @@ from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 
 class MonteCarloScorer(RelevanceScorer):
     """
-    Base Scorer class that defines the neural network layers that convert
-    the input features into scores
+    Monte Carlo class that defines the neural network layers that convert
+    the input features into scores by using monte carlo trials in inference.
 
     Defines the feature transformation layer(InteractionModel), dense
     neural network layers combined with activation layers and the loss function
@@ -102,86 +102,6 @@ class MonteCarloScorer(RelevanceScorer):
 
         self.monte_carlo_inference_trials = monte_carlo_inference_trials
 
-    def __update_loss(self, inputs, y_true, y_pred):
-        """
-        Compute loss value
-
-        Parameters
-        ----------
-        inputs: dict of tensors
-            Dictionary of input feature tensors
-        y_true: tensor
-            True labels
-        y_pred: tensor
-            Predicted scores
-
-        Returns
-        -------
-        tensor
-            scalar loss value tensor
-        """
-        if isinstance(self.loss, str):
-            loss_value = self.compiled_loss(y_true=y_true, y_pred=y_pred)
-        elif isinstance(self.loss, RelevanceLossBase):
-            loss_value = self.loss_op(inputs=inputs, y_true=y_true, y_pred=y_pred)
-        elif isinstance(self.loss, keras.losses.Loss):
-            loss_value = self.compiled_loss(y_true=y_true, y_pred=y_pred)
-        else:
-            raise KeyError("Unknown Loss encountered in RelevanceScorer")
-
-        # If auxiliary loss is present, add it to compute final loss
-        if self.aux_loss_weight > 0:
-            aux_loss_value = self.aux_loss_op(inputs=inputs,
-                                              y_true=inputs[self.aux_label],
-                                              y_pred=y_pred)
-
-            self.primary_loss_metric.update_state(loss_value)
-            self.aux_loss_metric.update_state(aux_loss_value)
-
-            loss_value = tf.math.multiply((1. - self.aux_loss_weight), loss_value) + \
-                         tf.math.multiply(self.aux_loss_weight, aux_loss_value)
-
-        # Update loss metric
-        self.loss_metric.update_state(loss_value)
-
-        return loss_value
-
-    def __update_metrics(self, inputs, y_true, y_pred):
-        """
-        Compute metric value
-
-        Parameters
-        ----------
-        inputs: dict of tensors
-            Dictionary of input feature tensors
-        y_true: tensor
-            True labels
-        y_pred: tensor
-            Predicted scores
-
-        Notes
-        -----
-        - Currently only support pre-compiled Keras metrics
-        """
-        # Compute metrics on primary label
-        try:
-            mask = inputs[self.feature_config.get_mask("node_name")]
-        except KeyError:
-            mask = None
-        except AttributeError:
-            mask = None
-        self.compiled_metrics.update_state(tf.cast(y_true, tf.float32), y_pred, mask)
-
-        # Compute metrics on auxiliary label
-        if self.aux_label:
-            y_aux = inputs[self.aux_label]
-            y_true_ranks = inputs[self.feature_config.get_rank("node_name")]
-            for metric in self.aux_metrics:
-                # TODO: The function definition could be made more generic
-                #       to accommodate more metrics in the future,
-                #       but this is sufficient for now
-                metric.update_state(y_true, y_pred, y_aux, y_true_ranks, mask)
-
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
         Compute score from input features
@@ -197,9 +117,9 @@ class MonteCarloScorer(RelevanceScorer):
             Tensor object of the score computed by the model
         """
         scores = self.make_pred(inputs, training=False)
-        for _ in range(self.monte_carlo_inference_trials):  # MC trials during training.
+        for _ in range(self.monte_carlo_inference_trials):
             scores += self.make_pred(inputs, training=True)
-        scores /= (self.monte_carlo_inference_trials + 1)
+        scores = tf.divide(scores, tf.constant(self.monte_carlo_inference_trials + 1, dtype=tf.float32))
         return {self.output_name: scores}
 
     def make_pred(self, inputs: Dict[str, tf.Tensor], training=None):
@@ -213,73 +133,3 @@ class MonteCarloScorer(RelevanceScorer):
         scores = self.loss_op.final_activation_op(features, training=training)
 
         return scores
-
-    def train_step(self, data):
-        """
-        Defines the operations performed within a single training step.
-        Called implicitly by tensorflow-keras when using model.fit()
-
-        Parameters
-        ----------
-        data: tuple of tensor objects
-            Tuple of features and corresponding labels to be used to learn the
-            model weights
-
-        Returns
-        -------
-        dict
-            Dictionary of metrics and loss computed for this training step
-        """
-        X, y = data
-
-        # Process labels if necessary
-        if self.interaction_model.label_transform_op:
-            y = self.interaction_model.label_transform_op(y, training=True)
-
-        with tf.GradientTape() as tape:
-            y_pred = self(X, training=True)[self.output_name]
-            loss_value = self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
-
-        # Compute gradients
-        gradients = tape.gradient(loss_value, self.trainable_variables)
-
-        # Update weights
-        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
-
-        # Update metrics
-        self.__update_metrics(inputs=X, y_true=y, y_pred=y_pred)
-
-        # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for metric in self.metrics}
-
-    def test_step(self, data):
-        """
-        Defines the operations performed within a single prediction or evaluation step.
-        Called implicitly by tensorflow-keras when using model.predict() or model.evaluate()
-
-        Parameters
-        ----------
-        data: tuple of tensor objects
-            Tuple of features and corresponding labels to be used to evaluate the model
-
-        Returns
-        -------
-        dict
-            Dictionary of metrics and loss computed for this evaluation step
-        """
-        X, y = data
-
-        # Process labels if necessary
-        if self.interaction_model.label_transform_op:
-            y = self.interaction_model.label_transform_op(y, training=False)
-
-        y_pred = self(X, training=False)[self.output_name]
-
-        # Update loss metric
-        self.__update_loss(inputs=X, y_true=y, y_pred=y_pred)
-
-        # Update metrics
-        self.__update_metrics(inputs=X, y_true=y, y_pred=y_pred)
-
-        # Return a dict mapping metric names to current value
-        return {metric.name: metric.result() for metric in self.metrics}

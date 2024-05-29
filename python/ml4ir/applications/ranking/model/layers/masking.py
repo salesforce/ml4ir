@@ -188,7 +188,7 @@ class QueryFeatureMask(layers.Layer):
             mask = tf.cast(tf.random.uniform([batch_size, feature_dim]) > self.mask_rate, dtype=tf.float32)
             mask = tf.expand_dims(mask, axis=1)
             mask = tf.tile(mask, [1, sequence_len, 1])
-            return inputs * mask
+            return tf.multiply(inputs, mask)
         else:
             return inputs
 
