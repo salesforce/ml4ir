@@ -397,7 +397,8 @@ class RelevancePipeline(object):
             aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
-        if self.args.monte_carlo_inference_trials > 0:
+        if ("monte_carlo_inference_trials" in self.model_config and
+                self.model_config["monte_carlo_inference_trials"].get("value", 0)):
             scorer: RelevanceScorer = MonteCarloScorer(
                 feature_config=self.feature_config,
                 model_config=self.model_config,
@@ -409,11 +410,9 @@ class RelevancePipeline(object):
                 output_name=self.args.output_name,
                 logger=self.logger,
                 file_io=self.file_io,
-                logs_dir=self.logs_dir_local,
-                monte_carlo_inference_trials=self.args.monte_carlo_inference_trials
+                logs_dir=self.logs_dir_local
             )
         else:
-
             scorer: RelevanceScorer = RelevanceScorer(
                 feature_config=self.feature_config,
                 model_config=self.model_config,

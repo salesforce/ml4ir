@@ -45,7 +45,6 @@ class MonteCarloScorer(RelevanceScorer):
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
-            monte_carlo_inference_trials: int = 0,
             **kwargs
     ):
         """
@@ -79,8 +78,6 @@ class MonteCarloScorer(RelevanceScorer):
             Logging handler
         logs_dir : str, optional
             Path to the logging directory
-        monte_carlo_inference_trials: int, optinal
-            The number of monte carlo inference trials
 
         Notes
         -----
@@ -99,8 +96,7 @@ class MonteCarloScorer(RelevanceScorer):
                          file_io=file_io,
                          logs_dir=logs_dir,
                          **kwargs)
-
-        self.monte_carlo_inference_trials = monte_carlo_inference_trials
+        self.monte_carlo_inference_trials = self.model_config["monte_carlo_inference_trials"]["value"]
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """

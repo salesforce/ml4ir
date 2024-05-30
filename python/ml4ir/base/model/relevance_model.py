@@ -581,8 +581,7 @@ class RelevanceModel:
             group_metrics_min_queries: int = 50,
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True,
-            monte_carlo_inference_trials: int = 0
+            compute_intermediate_stats: bool = True
     ):
         """
         Evaluate the RelevanceModel
@@ -606,9 +605,6 @@ class RelevanceModel:
             Value representing how often(in batches) to log status
         compute_intermediate_stats : bool
             Determines if group metrics and other intermediate stats on the test set should be computed
-        monte_carlo_inference_trials: int
-            The number of trails to run at inference to perform monte carlo estimation when dropout is used.
-
 
         Returns
         -------

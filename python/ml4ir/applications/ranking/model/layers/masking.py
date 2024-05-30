@@ -183,7 +183,7 @@ class QueryFeatureMask(layers.Layer):
             Feature tensor where mask_rate of records' features have been masked out (or set to 0.)
             Shape: [batch_size, sequence_len, feature_dim]
         """
-        batch_size, sequence_len, feature_dim = inputs.shape
+        batch_size, sequence_len, feature_dim = tf.shape(inputs)[0], tf.shape(inputs)[1], tf.shape(inputs)[2]
         if self.mask_at_inference or training:
             mask = tf.cast(tf.random.uniform([batch_size, feature_dim]) > self.mask_rate, dtype=tf.float32)
             mask = tf.expand_dims(mask, axis=1)

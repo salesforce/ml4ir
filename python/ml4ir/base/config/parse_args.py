@@ -402,16 +402,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--monte_carlo_inference_trials",
-            type=int,
-            default=0,
-            help="""Adding stochastisity at inference time. Monte Carlo trials is the number of times inference will be run while using dropout during inference.
-            The final output scores will be the aggregate sum of scores produced for each monte carlo trial (run).
-            This argument should be used only if there is a non zero dropout probability"""
-
-        )
-
-        self.add_argument(
             "--include_testset_in_kfold",
             type=ast.literal_eval,
             default=False,
