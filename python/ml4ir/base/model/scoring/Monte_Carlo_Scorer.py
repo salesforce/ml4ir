@@ -1,4 +1,3 @@
-
 import logging
 from logging import Logger
 import traceback
@@ -15,12 +14,15 @@ from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
+from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
 class MonteCarloScorer(RelevanceScorer):
     """
     Monte Carlo class that defines the neural network layers that convert
     the input features into scores by using monte carlo trials in inference.
+    The actual masking of features is done by a masking layer called:
+    `RecordFeatureMask` or `QueryFeatureMask`
 
     Defines the feature transformation layer(InteractionModel), dense
     neural network layers combined with activation layers and the loss function
@@ -96,7 +98,8 @@ class MonteCarloScorer(RelevanceScorer):
                          file_io=file_io,
                          logs_dir=logs_dir,
                          **kwargs)
-        self.monte_carlo_inference_trials = self.model_config["monte_carlo_inference_trials"]["value"]
+        self.monte_carlo_inference_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS][MonteCarloInferenceKey.NUM_TRIALS]
+        self.monte_carlo_inference_trials_tf = tf.constant(self.monte_carlo_inference_trials + 1, dtype=tf.float32)
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
@@ -112,20 +115,9 @@ class MonteCarloScorer(RelevanceScorer):
         scores : dict of tensor object
             Tensor object of the score computed by the model
         """
-        scores = self.make_pred(inputs, training=False)
+        # TODO replace loop with vector operations for performance
+        scores = super().call(inputs, training=False)[self.output_name]
         for _ in range(self.monte_carlo_inference_trials):
-            scores += self.make_pred(inputs, training=True)
-        scores = tf.divide(scores, tf.constant(self.monte_carlo_inference_trials + 1, dtype=tf.float32))
+            scores += super().call(inputs, training=True)[self.output_name]
+        scores = tf.divide(scores, self.monte_carlo_inference_trials_tf)
         return {self.output_name: scores}
-
-    def make_pred(self, inputs: Dict[str, tf.Tensor], training=None):
-        # Apply feature layer and transform inputs
-        features = self.interaction_model(inputs, training=training)
-
-        # Apply architecture op on train_features
-        features[FeatureTypeKey.LOGITS] = self.architecture_op(features, training=training)
-
-        # Apply final activation layer
-        scores = self.loss_op.final_activation_op(features, training=training)
-
-        return scores

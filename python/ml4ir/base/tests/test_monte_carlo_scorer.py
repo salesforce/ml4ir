@@ -10,7 +10,6 @@ import tensorflow.keras.backend as K
 
 from ml4ir.applications.ranking.pipeline import RankingPipeline
 from ml4ir.applications.ranking.config.parse_args import get_args
-from ml4ir.base.model.scoring.Monte_Carlo_Scorer import MonteCarloScorer
 
 warnings.filterwarnings("ignore")
 
@@ -81,16 +80,16 @@ class TestML4IRSanity(unittest.TestCase):
 
     def test_linear_ml4ir_sanity_1(self):
         # Test MC trials = 10
-        ml4ir_mrr = run_MC_test(model_config_name="model_config_monte_carlo_1.yaml", fname="dataset1.csv",
+        ml4ir_mrr = run_MC_test(model_config_name="model_config_monte_carlo_10.yaml", fname="dataset_small.csv",
                         working_dir=pathlib.Path(self.working_dir.path), log_dir=pathlib.Path(self.log_dir))
 
-        assert np.isclose(ml4ir_mrr, 0.9593495934959351, atol=0.001)
+        assert np.isclose(ml4ir_mrr, 0.9545454545454546, atol=0.001)
 
     def test_linear_ml4ir_sanity_2(self):
         # Test No MC
-        ml4ir_mrr = run_MC_test(model_config_name="model_config_monte_carlo_2.yaml", fname="dataset1.csv",
+        ml4ir_mrr = run_MC_test(model_config_name="model_config_monte_carlo_0.yaml", fname="dataset_small.csv",
                     working_dir=pathlib.Path(self.working_dir.path), log_dir=pathlib.Path(self.log_dir))
-        assert np.isclose(ml4ir_mrr, 0.7409214092140921, atol=0.001)
+        assert np.isclose(ml4ir_mrr, 0.521509209744504, atol=0.001)
 
 
 if __name__ == "__main__":

@@ -28,7 +28,7 @@ from ml4ir.base.data.kfold_relevance_dataset import KfoldRelevanceDataset
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
-from ml4ir.base.model.scoring.Monte_Carlo_Scorer import MonteCarloScorer
+from ml4ir.base.model.scoring.monte_carlo_scorer import MonteCarloScorer
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.optimizers.optimizer import get_optimizer
 from ml4ir.base.config.keys import DataFormatKey
@@ -36,6 +36,7 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
+from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
 class RelevancePipeline(object):
@@ -397,8 +398,8 @@ class RelevancePipeline(object):
             aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
-        if ("monte_carlo_inference_trials" in self.model_config and
-                self.model_config["monte_carlo_inference_trials"].get("value", 0)):
+        if (MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS in self.model_config and
+                self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS].get(MonteCarloInferenceKey.NUM_TRIALS, 0)):
             scorer: RelevanceScorer = MonteCarloScorer(
                 feature_config=self.feature_config,
                 model_config=self.model_config,

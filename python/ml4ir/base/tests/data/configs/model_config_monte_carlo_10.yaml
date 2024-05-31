@@ -31,4 +31,4 @@ lr_schedule:
   key: constant
   learning_rate: 0.01
 monte_carlo_inference_trials:
-  value: 0
+  num_trials: 10
