@@ -1,0 +1,34 @@
+architecture_key: auto-dag-network
+layers:
+  - type: keras.layers.merging.concatenate.Concatenate
+    name: features
+    aslist: true
+    args:
+      axis: -1
+    inputs:
+      - f0
+      - f1
+
+  - type: ml4ir.applications.ranking.model.layers.masking.QueryFeatureMask
+    name: features_mask
+    args:
+      mask_rate: 0.5
+      mask_at_inference: true
+    inputs:
+      - features
+
+  - type: keras.layers.core.dense.Dense
+    name: final_dense
+    args:
+      units: 1
+      activation: null
+    inputs:
+      - features_mask
+
+optimizer:
+  key: adam
+lr_schedule:
+  key: constant
+  learning_rate: 0.01
+monte_carlo_inference_trials:
+  value: 0
