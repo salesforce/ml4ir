@@ -4,7 +4,7 @@ from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
 def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, aux_loss_weight,
-               aux_metrics, output_name, logger, file_io, logs_dir_local):
+               aux_metrics, output_name, logger, file_io, logs_dir):
     """
     Parameters:
 
@@ -26,7 +26,7 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
             the logger.
         file_io: object
             the file I/O.
-        logs_dir_local: str
+        logs_dir: str
             the local logs directory.
 
     Returns:
@@ -47,7 +47,7 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
             output_name=output_name,
             logger=logger,
             file_io=file_io,
-            logs_dir=logs_dir_local
+            logs_dir=logs_dir
         )
     else:
         scorer = RelevanceScorer(
@@ -61,7 +61,7 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
             output_name=output_name,
             logger=logger,
             file_io=file_io,
-            logs_dir=logs_dir_local
+            logs_dir=logs_dir
         )
 
     return scorer
