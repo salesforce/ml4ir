@@ -3,7 +3,8 @@ from ml4ir.base.model.scoring.monte_carlo_scorer import MonteCarloScorer
 from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
-def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, aux_metrics, output_name, logger, file_io, logs_dir_local):
+def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, aux_loss_weight,
+               aux_metrics, output_name, logger, file_io, logs_dir_local):
     """
     Parameters:
 
