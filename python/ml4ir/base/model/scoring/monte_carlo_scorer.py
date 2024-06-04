@@ -99,6 +99,8 @@ class MonteCarloScorer(RelevanceScorer):
                          logs_dir=logs_dir,
                          **kwargs)
         self.monte_carlo_inference_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS][MonteCarloInferenceKey.NUM_TRIALS]
+
+        # Adding 1 here to account of the extra inference run with training=False.
         self.monte_carlo_inference_trials_tf = tf.constant(self.monte_carlo_inference_trials + 1, dtype=tf.float32)
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
