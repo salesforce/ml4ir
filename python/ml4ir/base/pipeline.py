@@ -35,6 +35,7 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
+from ml4ir.base.model.scoring.scorer_factory import get_scorer
 
 
 class RelevancePipeline(object):
@@ -396,7 +397,7 @@ class RelevancePipeline(object):
             aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
-        scorer: RelevanceScorer = RelevanceScorer(
+        scorer: RelevanceScorer = get_scorer(
             feature_config=self.feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
@@ -407,8 +408,7 @@ class RelevancePipeline(object):
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
-            logs_dir=self.logs_dir_local
-        )
+            logs_dir=self.logs_dir_local)
 
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
@@ -591,7 +591,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
-                    compute_intermediate_stats=self.args.compute_intermediate_stats,
+                    compute_intermediate_stats=self.args.compute_intermediate_stats
                 )
 
             if self.args.execution_mode in {

@@ -166,7 +166,7 @@ class RankingModel(RelevanceModel):
                 output_name=self.output_name,
                 features_to_return=evaluation_features,
                 additional_features=additional_features,
-                max_sequence_size=self.max_sequence_size,
+                max_sequence_size=self.max_sequence_size
             )
 
             batch_count = 0
