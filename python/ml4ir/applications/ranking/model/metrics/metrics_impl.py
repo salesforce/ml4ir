@@ -3,7 +3,70 @@ from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
 
 
-class MeanRankMetric(metrics.Mean):
+class ClickRankProcessor:
+    """
+    Class with click rank processing utilities
+    """
+    def _get_click_ranks(self, y_true, y_pred, mask):
+        """
+        Gets the ranks of the clicked result for each query
+
+        Parameters
+        ----------
+        y_true : Tensor object
+            The ground truth values. Shape : [batch_size, max_sequence_size]
+        y_pred : Tensor object
+            The predicted values. Shape : [batch_size, max_sequence_size]
+        mask : Tensor object
+            Tensor object that contains 0/1 flag to identify which
+            results were padded and thus should be excluded from metric computation
+
+        Returns
+        -------
+            Ranks of the clicked results for each query
+            Ties are broken with minimum ranks
+        """
+        # Convert predicted ranking scores into ranks for each record per query
+        y_pred_ranks = tf.cast(
+            tf.add(
+                tf.argsort(
+                    tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
+                ),
+                tf.constant(1),
+            ),
+            tf.float32
+        )
+
+        # Fetch highest relevance grade from the y_true labels
+        y_true_clicks = tf.cast(
+            tf.equal(y_true, tf.math.reduce_max(y_true, axis=-1)[:, tf.newaxis]), tf.float32)
+
+        # Compute rank of clicked record from predictions
+        # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
+        click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
+
+        return click_ranks
+
+    def _process_click_ranks(self, click_ranks):
+        raise NotImplementedError
+
+
+
+class SegmentMean(metrics.Mean):
+    def __init__(self, name="unsorted_segment_mean", num_segments=3, **kwargs):
+        super().__init__(name=name, **kwargs)
+        self.num_segments = tf.constant(num_segments)
+        self.total_sum = self.add_weight(name="total_sum", shape=(num_segments,), initializer="zeros")
+        self.total_count = self.add_weight(name="total_count", shape=(num_segments,), initializer="zeros")
+    def update_state(self, values, segments, sample_weight=None):
+        segment_sum = tf.math.unsorted_segment_sum(values, segments, num_segments=self.num_segments)
+        segment_count = tf.math.unsorted_segment_sum(tf.ones_like(values), segments, num_segments=self.num_segments)
+        self.total_sum.assign_add(segment_sum)
+        self.total_count.assign_add(segment_count)
+    def result(self):
+        return tf.math.divide_no_nan(self.total_sum, self.total_count)
+
+class MeanRankMetric(metrics.Mean, ClickRankProcessor):
     """
     Mean metric for the ranks of a query
     """
@@ -19,6 +82,9 @@ class MeanRankMetric(metrics.Mean):
             The ground truth values. Shape : [batch_size, max_sequence_size]
         y_pred : Tensor object
             The predicted values. Shape : [batch_size, max_sequence_size]
+        mask : Tensor object
+            Tensor object that contains 0/1 flag to identify which
+            results were padded and thus should be excluded from metric computation
         sample_weight : Tensor object
             Optional weighting of each example. Defaults to 1. Can be
             a `Tensor` whose rank is either 0, or the same rank as `y_true`,
@@ -32,31 +98,54 @@ class MeanRankMetric(metrics.Mean):
         -----
         `y_true` and `y_pred` should have the same shape.
         """
-        # Convert predicted ranking scores into ranks for each record per query
-        y_pred_ranks = tf.cast(
-            tf.add(
-                tf.argsort(
-                    tf.argsort(y_pred, axis=-1, direction="DESCENDING", stable=True), stable=True
-                ),
-                tf.constant(1),
-            ),
-            tf.float32
-        )
-
-        # Fetch highest relevance grade from the y_true labels
-        y_true_clicks = tf.cast(tf.equal(y_true, tf.math.reduce_max(y_true, axis=-1)[:, tf.newaxis]), tf.float32)
-
-        # Compute rank of clicked record from predictions
-        # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
-        click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
+        click_ranks = self._get_click_ranks(y_true, y_pred, mask)
 
         # Post processing on click ranks before mean
         query_scores = self._process_click_ranks(click_ranks)
 
         return super().update_state(query_scores, sample_weight=sample_weight)
 
-    def _process_click_ranks(self, click_ranks):
-        raise NotImplementedError
+
+class SegmentMeanRankMetric(SegmentMean, ClickRankProcessor):
+    """
+    Mean metric for the ranks of a query
+    """
+
+    def update_state(self, y_true, y_pred, segments, mask=None, sample_weight=None):
+        """
+        Accumulates metric statistics by computing the mean of the
+        metric function
+
+        Parameters
+        ----------
+        y_true : Tensor object
+            The ground truth values. Shape : [batch_size, max_sequence_size]
+        y_pred : Tensor object
+            The predicted values. Shape : [batch_size, max_sequence_size]
+        segments : Tensor object
+            The segment identifiers for each query. Shape : [batch_size]
+        mask : Tensor object
+            Tensor object that contains 0/1 flag to identify which
+            results were padded and thus should be excluded from metric computation
+        sample_weight : Tensor object
+            Optional weighting of each example. Defaults to 1. Can be
+            a `Tensor` whose rank is either 0, or the same rank as `y_true`,
+            and must be broadcastable to `y_true`.
+
+        Returns
+        -------
+            Updated state of the metric
+
+        Notes
+        -----
+        `y_true` and `y_pred` should have the same shape.
+        """
+        click_ranks = self._get_click_ranks(y_true, y_pred, mask)
+
+        # Post processing on click ranks before mean
+        query_scores = self._process_click_ranks(click_ranks)
+
+        return super().update_state(query_scores, segments, sample_weight=sample_weight)
 
 
 class MRR(MeanRankMetric):
@@ -72,6 +161,7 @@ class MRR(MeanRankMetric):
     >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     >>> then the MRR is 0.75
     """
+
     def _process_click_ranks(self, click_ranks):
         """
         Return reciprocal click ranks for MRR
@@ -102,6 +192,7 @@ class ACR(MeanRankMetric):
     >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0]]
     >>> then the ACR is 1.50
     """
+
     def _process_click_ranks(self, click_ranks):
         """
         Return click ranks for ACR
@@ -125,6 +216,7 @@ class NDCG(metrics.Mean):
 
     Inherits from tf.keras.metrics.Mean.
     """
+
     def update_state(self, y_true, y_pred, mask=None, sample_weight=None):
         """
         Update the metric state with new inputs.
@@ -145,8 +237,9 @@ class NDCG(metrics.Mean):
             y_pred_masked = y_pred * mask_float
 
         # Sort the predicted scores in descending order
-        sorted_indices = tf.argsort(y_pred_masked, axis=-1, direction='DESCENDING')
-        sorted_labels = tf.gather(y_true_masked, sorted_indices, axis=-1, batch_dims=len(y_true_masked.shape) - 1)
+        sorted_indices = tf.argsort(y_pred_masked, axis=-1, direction="DESCENDING")
+        sorted_labels = tf.gather(y_true_masked, sorted_indices, axis=-1,
+                                  batch_dims=len(y_true_masked.shape) - 1)
 
         # Compute the Discounted Cumulative Gain (DCG)
         positions = tf.range(1, tf.shape(y_true_masked)[-1] + 1, dtype=tf.float32)
@@ -154,7 +247,7 @@ class NDCG(metrics.Mean):
         dcg = tf.reduce_sum(sorted_labels / discounts, axis=-1)
 
         # Sort the true relevance scores in descending order
-        true_sorted_indices = tf.argsort(y_true_masked, axis=-1, direction='DESCENDING')
+        true_sorted_indices = tf.argsort(y_true_masked, axis=-1, direction="DESCENDING")
         true_sorted_labels = tf.gather(y_true_masked, true_sorted_indices, axis=-1,
                                        batch_dims=len(y_true_masked.shape) - 1)
 
