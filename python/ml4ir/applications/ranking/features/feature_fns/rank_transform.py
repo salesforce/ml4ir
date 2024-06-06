@@ -17,6 +17,7 @@ class ReciprocalRank(BaseFeatureLayerOp):
     K = "k"
     K_TRAINABLE = "k_trainable"
     IGNORE_ZERO_SCORE = "ignore_zero_score"
+    SCALE_TO_ONE = "scale_to_one"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -44,7 +45,8 @@ class ReciprocalRank(BaseFeatureLayerOp):
         self.reciprocal_rank_op = ReciprocalRankLayer(
             k=self.feature_layer_args.get(self.K, 0.),
             k_trainable=self.feature_layer_args.get(self.K_TRAINABLE, False),
-            ignore_zero_score=self.feature_layer_args.get(self.IGNORE_ZERO_SCORE, True))
+            ignore_zero_score=self.feature_layer_args.get(self.IGNORE_ZERO_SCORE, True),
+            scale_to_one=self.feature_layer_args.get(self.SCALE_TO_ONE, False))
 
     def call(self, inputs, training=None):
         """
