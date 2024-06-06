@@ -133,6 +133,11 @@ class CalibrationKey(Key):
     ARGS = "args"
 
 
+class MonteCarloInferenceKey(Key):
+    MONTE_CARLO_INFERENCE_TRIALS = "monte_carlo_inference_trials"
+    NUM_TRIALS = "num_trials"
+
+
 class PipelineType(Key):
     RANKING_PIPELINE = "RankingPipeline"
     CLASSIFICATION_PIPELINE = "ClassificationPipeline"

@@ -581,7 +581,7 @@ class RelevanceModel:
             group_metrics_min_queries: int = 50,
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True,
+            compute_intermediate_stats: bool = True
     ):
         """
         Evaluate the RelevanceModel
