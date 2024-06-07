@@ -341,8 +341,7 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
+    def get_metrics(self, metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
 
