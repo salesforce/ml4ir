@@ -154,7 +154,9 @@ class MacroMeanRankMetric(SegmentMeanRankMetric):
             Shape -> (num_segments,)
         """
         segment_means = super().result()
-        return tf.math.reduce_mean(segment_means)
+
+        # Compute Macro Average by exclude OOV segment ID=0
+        return tf.math.reduce_mean(segment_means[1:])
 
 
 class MRR(MeanRankMetric):
