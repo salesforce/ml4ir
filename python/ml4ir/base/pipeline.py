@@ -405,6 +405,7 @@ class RelevancePipeline(object):
             aux_loss=aux_loss,
             aux_loss_weight=self.args.aux_loss_weight,
             aux_metrics=aux_metrics,
+            eval_config=self.eval_config,
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,

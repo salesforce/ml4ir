@@ -112,6 +112,7 @@ class RelevanceScorer(keras.Model):
 
         # If an evaluation config is provided and it contains segments,
         # create a segment mapping op
+        self.segment_feature = self.get_segment_feature()
         self.segment_mapping_op = self.get_segment_lookup_op()
 
         self.plot_abstract_model()
@@ -222,10 +223,9 @@ class RelevanceScorer(keras.Model):
 
     def get_segment_feature(self):
         """Get the segment lookup op to map segment names to IDs"""
-        segment_info = self.eval_config.get(EvalConfigConstants.SEGMENT_INFO)
-        if segment_info:
-            return segment_info[EvalConfigConstants.SEGMENT_FEATURE]
-        return None
+        return self.eval_config.get(EvalConfigConstants.SEGMENT_INFO, {}).get(
+            EvalConfigConstants.SEGMENT_FEATURE
+        )
 
     def get_segment_lookup_op(self):
         """Get the segment lookup op to map segment names to IDs"""
@@ -233,6 +233,7 @@ class RelevanceScorer(keras.Model):
         if segment_info:
             segments = segment_info[EvalConfigConstants.SEGMENTS]
             segment_lookup_op = None
+            # TODO
             return None
         return None
 

@@ -1,36 +1,70 @@
+from logging import Logger
+from typing import Dict, Optional, Union, List
+
+from tensorflow import keras
+from tensorflow.keras.metrics import Metric
+
+from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.io.file_io import FileIO
+from ml4ir.base.model.losses.loss_base import RelevanceLossBase
+from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.model.scoring.monte_carlo_scorer import MonteCarloScorer
 from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
-def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, aux_loss_weight,
-               aux_metrics, output_name, logger, file_io, logs_dir):
+def get_scorer(model_config: dict,
+               feature_config: FeatureConfig,
+               interaction_model: InteractionModel,
+               loss: RelevanceLossBase,
+               file_io: FileIO,
+               aux_loss: Optional[RelevanceLossBase] = None,
+               aux_loss_weight: float = 0.0,
+               aux_metrics: Optional[List[Union[Metric, str]]] = None,
+               eval_config: Dict = {},
+               output_name: str = "score",
+               logger: Optional[Logger] = None,
+               logs_dir: Optional[str] = "",
+               **kwargs
+               ):
     """
-    Parameters:
+    Factory method for creating a RelevanceScorer object
 
-        model_config: dict
-            the model configuration.
-        feature_config: dict
-            the feature configuration.
-        interaction_model: object
-            the interaction model.
-        loss: object
-            the loss function.
-        aux_loss: object
-            the auxiliary loss function.
-        aux_metrics: list
-            the auxiliary metrics.
-        output_name: str
-            The name of the output node
-        logger: object
-            the logger.
-        file_io: object
-            the file I/O.
-        logs_dir: str
-            the local logs directory.
+    Parameters
+    ----------
+    model_config : dict
+        Dictionary defining the model layer configuration
+    feature_config : `FeatureConfig` object
+        FeatureConfig object defining the features and their configurations
+    interaction_model : `InteractionModel` object
+        InteractionModel that defines the feature transformation layers
+        on the input model features
+    loss : `RelevanceLossBase` object
+        Relevance loss object that defines the final activation layer
+        and the loss function for the model
+    file_io : `FileIO` object
+        FileIO object that handles read and write
+    aux_loss : `RelevanceLossBase` object
+        Auxiliary loss to be used in conjunction with the primary loss
+    aux_loss_weight: float
+        Floating point number in [0, 1] to indicate the proportion of the auxiliary loss
+        in the total final loss value computed using a linear combination
+        total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
+    aux_metrics: List of keras.metrics.Metric
+        Keras metric list to be computed on the aux label
+    eval_config: Dict
+        Dictionary specifying the evaluation specifications
+    output_name : str, optional
+        Name of the output that captures the score computed by the model
+    logger : Logger, optional
+        Logging handler
+    logs_dir : str, optional
+        Path to the logging directory
 
-    Returns:
-        scorer: object, a scorer based on the provided configurations and parameters.
+    Notes
+    -----
+    logs_dir : Used to point model architectures to local logging directory,
+        primarily for saving visualizations.
     """
 
     if (MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS in model_config and
@@ -44,6 +78,7 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
             aux_loss=aux_loss,
             aux_loss_weight=aux_loss_weight,
             aux_metrics=aux_metrics,
+            eval_config=eval_config,
             output_name=output_name,
             logger=logger,
             file_io=file_io,
@@ -58,6 +93,7 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
             aux_loss=aux_loss,
             aux_loss_weight=aux_loss_weight,
             aux_metrics=aux_metrics,
+            eval_config=eval_config,
             output_name=output_name,
             logger=logger,
             file_io=file_io,
