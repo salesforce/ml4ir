@@ -44,6 +44,7 @@ class MonteCarloScorer(RelevanceScorer):
             aux_loss: Optional[RelevanceLossBase] = None,
             aux_loss_weight: float = 0.0,
             aux_metrics: Optional[List[Union[Metric, str]]] = None,
+            eval_config: Dict = {},
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
@@ -74,6 +75,8 @@ class MonteCarloScorer(RelevanceScorer):
             total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         aux_metrics: List of keras.metrics.Metric
             Keras metric list to be computed on the aux label
+        eval_config: Dict
+            Dictionary specifying the evaluation specifications
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger : Logger, optional
@@ -93,6 +96,7 @@ class MonteCarloScorer(RelevanceScorer):
                          aux_loss=aux_loss,
                          aux_loss_weight=aux_loss_weight,
                          aux_metrics=aux_metrics,
+                         eval_config=eval_config,
                          output_name=output_name,
                          logger=logger,
                          file_io=file_io,

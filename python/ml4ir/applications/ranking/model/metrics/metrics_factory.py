@@ -1,7 +1,7 @@
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.ranking.config.keys import MetricKey
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, NDCG
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, SegmentMRR, MacroMRR, ACR, NDCG
 from ml4ir.applications.ranking.model.metrics.aux_metrics_impl import RankMatchFailure
 
 
@@ -21,6 +21,10 @@ def get_metric(metric_key: str) -> Metric:
     """
     if metric_key == MetricKey.MRR:
         return MRR(name="MRR")
+    if metric_key == MetricKey.SEGMENT_MRR:
+        return SegmentMRR(name="SegmentMRR")
+    if metric_key == MetricKey.MRR:
+        return MacroMRR(name="MacroMRR")
     elif metric_key == MetricKey.ACR:
         return ACR(name="ACR")
     elif metric_key == MetricKey.RANK_MATCH_FAILURE:

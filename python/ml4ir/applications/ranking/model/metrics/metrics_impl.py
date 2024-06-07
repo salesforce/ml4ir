@@ -9,7 +9,9 @@ class ClickRankProcessor:
     """
     Class with click rank processing utilities
     """
-    def _get_click_ranks(self, y_true, y_pred, mask):
+
+    @staticmethod
+    def get_click_ranks(y_true, y_pred, mask):
         """
         Gets the ranks of the clicked result for each query
 
@@ -47,10 +49,12 @@ class ClickRankProcessor:
         # Break ties in case of multiple target click labels using the min rank from y_pred_ranks
         click_ranks = tf.reduce_min(tf.divide(y_pred_ranks, y_true_clicks), axis=-1)
 
-        return click_ranks
+        return tf.cast(click_ranks, tf.float32)
 
-    def _process_click_ranks(self, click_ranks):
+    @staticmethod
+    def process_click_ranks(click_ranks):
         raise NotImplementedError
+
 
 class MeanRankMetric(metrics.Mean, ClickRankProcessor):
     """
@@ -84,10 +88,10 @@ class MeanRankMetric(metrics.Mean, ClickRankProcessor):
         -----
         `y_true` and `y_pred` should have the same shape.
         """
-        click_ranks = self._get_click_ranks(y_true, y_pred, mask)
+        click_ranks = self.get_click_ranks(y_true, y_pred, mask)
 
         # Post processing on click ranks before mean
-        query_scores = self._process_click_ranks(click_ranks)
+        query_scores = self.process_click_ranks(click_ranks)
 
         return super().update_state(query_scores, sample_weight=sample_weight)
 
@@ -126,12 +130,31 @@ class SegmentMeanRankMetric(SegmentMean, ClickRankProcessor):
         -----
         `y_true` and `y_pred` should have the same shape.
         """
-        click_ranks = self._get_click_ranks(y_true, y_pred, mask)
+        click_ranks = self.get_click_ranks(y_true, y_pred, mask)
 
         # Post processing on click ranks before mean
-        query_scores = self._process_click_ranks(click_ranks)
+        query_scores = self.process_click_ranks(click_ranks)
 
         return super().update_state(query_scores, segments, sample_weight=sample_weight)
+
+
+class MacroMeanRankMetric(SegmentMeanRankMetric):
+    """
+    Mean metric for the ranks of a query
+    """
+
+    def result(self):
+        """
+        Compute the metric value for the current state variables
+
+        Returns
+        -------
+        tf.Tensor
+            Tensor object with the mean for each segment
+            Shape -> (num_segments,)
+        """
+        segment_means = super().result()
+        return tf.math.reduce_mean(segment_means)
 
 
 class MRR(MeanRankMetric):
@@ -148,7 +171,8 @@ class MRR(MeanRankMetric):
     >>> then the MRR is 0.75
     """
 
-    def _process_click_ranks(self, click_ranks):
+    @staticmethod
+    def process_click_ranks(click_ranks):
         """
         Return reciprocal click ranks for MRR
 
@@ -162,7 +186,72 @@ class MRR(MeanRankMetric):
         Tensor object
             Reciprocal ranks tensor
         """
-        return math_ops.reciprocal(tf.cast(click_ranks, tf.float32))
+        return math_ops.reciprocal(click_ranks)
+
+
+class SegmentMRR(SegmentMeanRankMetric):
+    """
+    Custom metric class to compute the Mean Reciprocal Rank at the segment level.
+
+    Calculates the mean of the reciprocal ranks of the
+    clicked records from a list of queries.
+
+    Examples
+    --------
+    >>> `y_true` is [[0, 0, 1], [0, 1, 0], [0, 1, 0]]
+    >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0], [0.05, 0.95, 0]]
+    >>> `segments` is [0, 0, 1]
+    >>> then the SegmentMRR is [0.75, 1.]
+    """
+
+    @staticmethod
+    def process_click_ranks(click_ranks):
+        """
+        Return reciprocal click ranks for MRR
+
+        Parameters
+        ----------
+        click_ranks: Tensor object
+            Tensor object containing the ranks of the clicked records for each query
+
+        Returns
+        -------
+        Tensor object
+            Reciprocal ranks tensor
+        """
+        return math_ops.reciprocal(click_ranks)
+
+
+class MacroMRR(MacroMeanRankMetric):
+    """
+    Custom metric class to compute the Mean Reciprocal Rank macro averaged at the segment level.
+
+    Calculates the mean of the reciprocal ranks of the
+    clicked records from a list of queries.
+
+    Examples
+    --------
+    >>> `y_true` is [[0, 0, 1], [0, 1, 0], [0, 1, 0]]
+    >>> `y_pred` is [[0.1, 0.9, 0.8], [0.05, 0.95, 0], [0.05, 0.95, 0]]
+    >>> `segments` is [0, 0, 1]
+    >>> then the SegmentMRR is 0.875
+    """
+
+    def process_click_ranks(self, click_ranks):
+        """
+        Return reciprocal click ranks for MRR
+
+        Parameters
+        ----------
+        click_ranks: Tensor object
+            Tensor object containing the ranks of the clicked records for each query
+
+        Returns
+        -------
+        Tensor object
+            Reciprocal ranks tensor
+        """
+        return math_ops.reciprocal(click_ranks)
 
 
 class ACR(MeanRankMetric):
@@ -179,7 +268,7 @@ class ACR(MeanRankMetric):
     >>> then the ACR is 1.50
     """
 
-    def _process_click_ranks(self, click_ranks):
+    def process_click_ranks(self, click_ranks):
         """
         Return click ranks for ACR
 
@@ -193,7 +282,7 @@ class ACR(MeanRankMetric):
         Tensor object
             Ranks tensor cast to float
         """
-        return tf.cast(click_ranks, tf.float32)
+        return click_ranks
 
 
 class NDCG(metrics.Mean):

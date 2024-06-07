@@ -10,10 +10,14 @@ class EvalConfigConstants:
     VARIANCE_LIST = "variance_list"
     POWER = "power"
     PVALUE = "pvalue"
+    TTEST_PVALUE_THRESHOLD = 0.1
     METRICS = "metrics"
+    SEGMENT_INFO = "segment_info"
+    SEGMENT_FEATURE = "feature"
+    SEGMENTS = "segments"
 
 
-def prepare_eval_config_for_ranking(eval_config, group_key):
+def get_power_analysis_config(eval_config, group_key):
     """
     Reads the evaluation config yaml file and convert it into an eval config dict
 
@@ -30,9 +34,9 @@ def prepare_eval_config_for_ranking(eval_config, group_key):
         evaluation config yaml converted into a dict
     """
     eval_dict = {}
-    eval_dict[EvalConfigConstants.MODE] = eval_config.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE)
 
-    if len(eval_config) != 0:
+    if len(eval_config) != 0 and eval_config.get(EvalConfigConstants.POWER_ANALYSIS):
+        # FIXME: this is an if-else mess, should be refactored
         if EvalConfigConstants.GROUP_BY in eval_config[EvalConfigConstants.POWER_ANALYSIS] and \
                 eval_config[EvalConfigConstants.POWER_ANALYSIS][EvalConfigConstants.GROUP_BY]:
             eval_dict[EvalConfigConstants.GROUP_BY] = eval_config[EvalConfigConstants.POWER_ANALYSIS][EvalConfigConstants.GROUP_BY].split(',')

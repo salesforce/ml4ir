@@ -8,6 +8,7 @@ from tensorflow import keras
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.base.config.keys import FeatureTypeKey
+from ml4ir.base.config.eval_config import EvalConfigConstants
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.architectures import architecture_factory
@@ -40,6 +41,7 @@ class RelevanceScorer(keras.Model):
             aux_loss: Optional[RelevanceLossBase] = None,
             aux_loss_weight: float = 0.0,
             aux_metrics: Optional[List[Union[Metric, str]]] = None,
+            eval_config: Dict = {},
             output_name: str = "score",
             logger: Optional[Logger] = None,
             logs_dir: Optional[str] = "",
@@ -70,6 +72,8 @@ class RelevanceScorer(keras.Model):
             total loss = (1 - aux_loss_weight) * loss + aux_loss_weight * aux_loss
         aux_metrics: List of keras.metrics.Metric
             Keras metric list to be computed on the aux label
+        eval_config: Dict
+            Dictionary specifying the evaluation specifications
         output_name : str, optional
             Name of the output that captures the score computed by the model
         logger : Logger, optional
@@ -88,6 +92,7 @@ class RelevanceScorer(keras.Model):
 
         self.model_config = model_config
         self.feature_config = feature_config
+        self.eval_config = eval_config
         self.interaction_model = interaction_model
 
         self.loss_op = loss
@@ -104,6 +109,11 @@ class RelevanceScorer(keras.Model):
         self.output_name = output_name
         self.logs_dir = logs_dir
         self.architecture_op = self.get_architecture_op()
+
+        # If an evaluation config is provided and it contains segments,
+        # create a segment mapping op
+        self.segment_mapping_op = self.get_segment_lookup_op()
+
         self.plot_abstract_model()
 
     @classmethod
@@ -209,6 +219,23 @@ class RelevanceScorer(keras.Model):
             feature_config=self.feature_config,
             file_io=self.file_io,
         )
+
+    def get_segment_feature(self):
+        """Get the segment lookup op to map segment names to IDs"""
+        segment_info = self.eval_config.get(EvalConfigConstants.SEGMENT_INFO)
+        if segment_info:
+            return segment_info[EvalConfigConstants.SEGMENT_FEATURE]
+        return None
+
+    def get_segment_lookup_op(self):
+        """Get the segment lookup op to map segment names to IDs"""
+        segment_info = self.eval_config.get(EvalConfigConstants.SEGMENT_INFO)
+        if segment_info:
+            segments = segment_info[EvalConfigConstants.SEGMENTS]
+            segment_lookup_op = None
+            return None
+        return None
+
 
     def compile(self, **kwargs):
         """Compile the keras model and defining a loss metrics to track any custom loss"""
