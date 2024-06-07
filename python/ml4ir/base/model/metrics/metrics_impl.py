@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras import metrics
 
+from typing import List
+
 
 class SegmentMean(metrics.Metric):
     """
@@ -9,7 +11,7 @@ class SegmentMean(metrics.Metric):
     Can be used to compute macro, micro averages by overriding result()
     """
 
-    def __init__(self, num_segments: int, name: str = "segment_mean", **kwargs):
+    def __init__(self, segments: List[str] = [], name: str = "segment_mean", **kwargs):
         """
         Instantiate a SegmentMean object
 
@@ -23,10 +25,15 @@ class SegmentMean(metrics.Metric):
             Additional keyword arguments to be passed to the metric constructor
         """
         super().__init__(name=name, **kwargs)
-        self.num_segments = tf.constant(num_segments)
-        self.total_sum = self.add_weight(name="total_sum", shape=(num_segments,),
+        if not segments:
+            raise ValueError(f"Invalid argument passed for segments -> {segments}")
+        self.segments = segments
+        self.num_segments = tf.constant(len(segments))
+        self.segment_lookup = tf.keras.layers.StringLookup(vocabulary=segments,
+                                                           num_oov_indices=1)
+        self.total_sum = self.add_weight(name="total_sum", shape=(self.num_segments,),
                                          initializer="zeros")
-        self.total_count = self.add_weight(name="total_count", shape=(num_segments,),
+        self.total_count = self.add_weight(name="total_count", shape=(self.num_segments,),
                                            initializer="zeros")
 
     def reset_state(self):
@@ -45,8 +52,9 @@ class SegmentMean(metrics.Metric):
         sample_weight: tf.Tensor
             Optional weighting of each example
         """
-        segment_sum = tf.math.unsorted_segment_sum(values, segments, num_segments=self.num_segments)
-        segment_count = tf.math.unsorted_segment_sum(tf.ones_like(values), segments,
+        segment_ids = self.segment_lookup(segments)
+        segment_sum = tf.math.unsorted_segment_sum(values, segment_ids, num_segments=self.num_segments)
+        segment_count = tf.math.unsorted_segment_sum(tf.ones_like(values), segment_ids,
                                                      num_segments=self.num_segments)
         self.total_sum.assign_add(segment_sum)
         self.total_count.assign_add(segment_count)

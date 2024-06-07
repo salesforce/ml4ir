@@ -1,7 +1,7 @@
 mode: basic
-segment_info:  # Populate this field to track tf native group metrics for segments
-  feature: domain_id  # Name of feature to use to identify segments
-  segments:  # List of segments to track metrics on
+segments:  # Populate this field to track tf native group metrics for segments
+  # List of segments to track metrics on
+  segments:
     - domain_0
     - domain_1
     - domain_2
