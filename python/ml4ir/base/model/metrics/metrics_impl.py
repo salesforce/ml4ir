@@ -71,4 +71,5 @@ class SegmentMean(metrics.Metric):
             Tensor object with the mean for each segment
             Shape -> (num_segments,)
         """
-        return tf.math.divide_no_nan(self.total_sum, self.total_count)
+        # Compute means for each segment and exclude OOV segment ID=0
+        return tf.math.divide_no_nan(self.total_sum, self.total_count)[1:]

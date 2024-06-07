@@ -224,8 +224,8 @@ class MacroMRR(SegmentMRR):
         """
         segment_means = super().result()
 
-        # Compute Macro Average by exclude OOV segment ID=0
-        return tf.math.reduce_mean(segment_means[1:])
+        # Compute Macro Average of the segment means
+        return tf.math.reduce_mean(segment_means)
 
 
 class ACR(MeanRankMetric):

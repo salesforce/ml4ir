@@ -146,7 +146,6 @@ class RankingPipeline(RelevancePipeline):
             Total number of folds
         run_id : int
             current fold number
-            current fold number
         num_folds: int
             Total number of folds
         pvalue_threshold: float
