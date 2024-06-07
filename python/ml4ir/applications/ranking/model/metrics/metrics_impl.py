@@ -2,6 +2,8 @@ import tensorflow as tf
 from tensorflow.keras import metrics
 from tensorflow.python.ops import math_ops
 
+from ml4ir.base.model.metrics.metrics_impl import SegmentMean
+
 
 class ClickRankProcessor:
     """
@@ -49,22 +51,6 @@ class ClickRankProcessor:
 
     def _process_click_ranks(self, click_ranks):
         raise NotImplementedError
-
-
-
-class SegmentMean(metrics.Mean):
-    def __init__(self, name="unsorted_segment_mean", num_segments=3, **kwargs):
-        super().__init__(name=name, **kwargs)
-        self.num_segments = tf.constant(num_segments)
-        self.total_sum = self.add_weight(name="total_sum", shape=(num_segments,), initializer="zeros")
-        self.total_count = self.add_weight(name="total_count", shape=(num_segments,), initializer="zeros")
-    def update_state(self, values, segments, sample_weight=None):
-        segment_sum = tf.math.unsorted_segment_sum(values, segments, num_segments=self.num_segments)
-        segment_count = tf.math.unsorted_segment_sum(tf.ones_like(values), segments, num_segments=self.num_segments)
-        self.total_sum.assign_add(segment_sum)
-        self.total_count.assign_add(segment_count)
-    def result(self):
-        return tf.math.divide_no_nan(self.total_sum, self.total_count)
 
 class MeanRankMetric(metrics.Mean, ClickRankProcessor):
     """
