@@ -39,6 +39,9 @@ from ml4ir.base.config.keys import CalibrationKey
 from ml4ir.base.model.scoring.scorer_factory import get_scorer
 
 
+pd.set_option('display.max_colwidth', None)
+
+
 class RelevancePipeline(object):
     """Base class that defines a pipeline to train, evaluate and save
     a RelevanceModel using ml4ir"""
