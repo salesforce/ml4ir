@@ -315,7 +315,7 @@ class RelevanceScorer(keras.Model):
             mask = None
         y_true = tf.cast(y_true, tf.float32)
 
-        # TODO: Pass segments info here
+        # Compute metrics on primary label
         segments = inputs.get(self.group_metric_feature)
         for compiled_metric in self.compiled_metrics._metrics:
             if isinstance(compiled_metric, SegmentMean):
@@ -406,7 +406,7 @@ class RelevanceScorer(keras.Model):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        metrics = [self.loss_metric] + super().metrics
+        metrics = [self.loss_metric] + self.compiled_metrics._metrics
 
         if self.aux_loss_weight > 0:
             # Add aux loss values

@@ -135,7 +135,7 @@ class SegmentMeanRankMetric(SegmentMean, ClickRankProcessor):
         # Post processing on click ranks before mean
         query_scores = self.process_click_ranks(click_ranks)
 
-        return super().update_state(query_scores, segments, sample_weight=sample_weight)
+        return super().update_state(query_scores, segments=segments, sample_weight=sample_weight)
 
 
 class MacroMeanRankMetric(SegmentMeanRankMetric):

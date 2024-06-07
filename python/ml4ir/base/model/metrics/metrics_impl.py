@@ -28,7 +28,8 @@ class SegmentMean(metrics.Metric):
         if not segments:
             raise ValueError(f"Invalid argument passed for segments -> {segments}")
         self.segments = segments
-        self.num_segments = tf.constant(len(segments))
+        # NOTE: number of segments is vocabulary + 1 for OOV bucket
+        self.num_segments = tf.constant(len(segments) + 1)
         self.segment_lookup = tf.keras.layers.StringLookup(vocabulary=segments,
                                                            num_oov_indices=1)
         self.total_sum = self.add_weight(name="total_sum", shape=(self.num_segments,),
@@ -52,6 +53,7 @@ class SegmentMean(metrics.Metric):
         sample_weight: tf.Tensor
             Optional weighting of each example
         """
+        segments = tf.squeeze(segments, axis=-1)
         segment_ids = self.segment_lookup(segments)
         segment_sum = tf.math.unsorted_segment_sum(values, segment_ids, num_segments=self.num_segments)
         segment_count = tf.math.unsorted_segment_sum(tf.ones_like(values), segment_ids,

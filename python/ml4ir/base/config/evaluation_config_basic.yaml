@@ -1,9 +1,8 @@
 mode: basic
 segments:  # Populate this field to track tf native group metrics for segments
   # List of segments to track metrics on
-  segments:
-    - domain_0
-    - domain_1
-    - domain_2
-    - domain_3
-    - domain_4
+  - domain_0
+  - domain_1
+  - domain_2
+  - domain_3
+  - domain_4

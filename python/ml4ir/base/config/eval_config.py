@@ -12,8 +12,6 @@ class EvalConfigConstants:
     PVALUE = "pvalue"
     TTEST_PVALUE_THRESHOLD = 0.1
     METRICS = "metrics"
-    SEGMENT_INFO = "segment_info"
-    SEGMENT_FEATURE = "feature"
     SEGMENTS = "segments"
 
 
