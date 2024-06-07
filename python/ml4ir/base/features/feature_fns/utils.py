@@ -308,7 +308,6 @@ class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
                 )
             self.num_oov_buckets = None
             self.vocabulary_size = len(set(vocabulary_keys)) + 1  # one more for default value
-            # TODO: Create a separate VocabLookupWithDropout layer
         else:
             default_value = None
             self.num_oov_buckets = self.num_oov_buckets if self.num_oov_buckets else 1
