@@ -91,7 +91,8 @@ class RelevanceScorer(keras.Model):
         self.feature_config = feature_config
         # Get the group metric feature to be used for segment metrics
         # NOTE: If there are multiple, then only the first is used
-        self.group_metric_feature = feature_config.get_group_metrics_keys("node_name")[0]
+        group_metric_features = feature_config.get_group_metrics_keys("node_name")
+        self.group_metric_feature = group_metric_features[0] if group_metric_features else None
         self.interaction_model = interaction_model
 
         self.loss_op = loss
@@ -114,13 +115,13 @@ class RelevanceScorer(keras.Model):
     def from_model_config_file(
             cls,
             model_config_file: str,
+            feature_config: FeatureConfig,
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
             aux_loss: Optional[RelevanceLossBase] = None,
             aux_loss_weight: float = 0.0,
             output_name: str = "score",
-            feature_config: Optional[FeatureConfig] = None,
             logger: Optional[Logger] = None,
             **kwargs
     ):
