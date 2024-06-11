@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.ranking.config.keys import MetricKey
@@ -39,5 +40,8 @@ def get_metric(metric_key: str, segments: Optional[List[str]]) -> Metric:
         return RankMatchFailure(name="AuxRankMF")
     elif metric_key == MetricKey.NDCG:
         return NDCG(name="NDCG")
+    elif metric_key == MetricKey.CATEGORICAL_ACCURACY:
+        return tf.keras.metrics.CategoricalAccuracy(name=metric_key)
     else:
-        return metric_key
+        # For out-of-the-box keras metric classes
+        return tf.keras.metrics.get(metric_key)

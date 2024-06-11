@@ -7,6 +7,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.metrics import Metric
 
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MeanRankMetric
 from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
@@ -320,9 +321,11 @@ class RelevanceScorer(keras.Model):
         segments = inputs.get(self.group_metric_feature)
         for compiled_metric in self.compiled_metrics._metrics:
             if isinstance(compiled_metric, SegmentMean):
-                compiled_metric.update_state(y_true, y_pred, segments, mask)
+                compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
+            elif isinstance(compiled_metric, MeanRankMetric):
+                compiled_metric.update_state(y_true, y_pred, mask=mask)
             else:
-                compiled_metric.update_state(y_true, y_pred, mask)
+                compiled_metric.update_state(y_true, y_pred)
 
         # Compute metrics on auxiliary label
         if self.aux_label:

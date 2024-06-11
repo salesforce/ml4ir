@@ -40,6 +40,7 @@ class SegmentMean(metrics.Metric):
     def reset_state(self):
         """Reset the state of the metric to initial configuration"""
         tf.keras.backend.batch_set_value([(v, tf.zeros((self.num_segments,))) for v in self.variables])
+
     def update_state(self, values, segments, sample_weight=None):
         """
         Accumulates metric statistics from input to update state variables of the metric
