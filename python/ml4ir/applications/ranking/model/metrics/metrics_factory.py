@@ -8,7 +8,7 @@ from ml4ir.applications.ranking.model.metrics.aux_metrics_impl import RankMatchF
 from typing import Optional, List
 
 
-def get_metric(metric_key: str, segments: Optional[List[str]]) -> Metric:
+def get_metric(metric_key: str, segments: Optional[List[str]] = None) -> Metric:
     """
     Factory method to get Metric class
 
