@@ -173,6 +173,7 @@ class SegmentMRR(SegmentMean, ClickRankProcessor):
         `y_true` and `y_pred` should have the same shape.
         """
         click_ranks = self.get_click_ranks(y_true, y_pred, mask)
+        segments = tf.squeeze(segments, axis=-1)
 
         # Post processing on click ranks before mean
         query_scores = self.process_click_ranks(click_ranks)
