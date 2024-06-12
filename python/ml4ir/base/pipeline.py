@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from tensorflow.keras.metrics import Metric
 
+from ml4ir.base.config.eval_config import EvalConfigConstants
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -36,6 +37,9 @@ from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
 from ml4ir.base.model.scoring.scorer_factory import get_scorer
+
+
+pd.set_option('display.max_colwidth', None)
 
 
 class RelevancePipeline(object):
@@ -165,6 +169,7 @@ class RelevancePipeline(object):
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
         self.eval_config = eval_config_dict
+        self.eval_segments = self.eval_config.get(EvalConfigConstants.SEGMENTS)
 
         # Define a FeatureConfig object from loaded YAML
         self.feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -339,8 +344,7 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
+    def get_metrics(self, metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
 
