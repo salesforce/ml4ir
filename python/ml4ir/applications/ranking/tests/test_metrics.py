@@ -9,7 +9,8 @@ from ml4ir.base.data.relevance_dataset import RelevanceDataset
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.applications.ranking.tests.test_base import RankingTestBase
-from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, NDCG
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MRR, ACR, NDCG, SegmentMRR, \
+    MacroMRR
 from ml4ir.applications.ranking.model.metrics.helpers import metrics_helper
 from ml4ir.applications.ranking.config.parse_args import get_args
 from ml4ir.applications.ranking.pipeline import RankingPipeline
@@ -204,6 +205,54 @@ class RankingMetricsTest(unittest.TestCase):
         """Test MRR computation for graded relevance_with_ties"""
         self.assertEquals(MRR()([[1, 0, 0], [1, 2, 2]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),
                           0.75)
+
+    def test_segment_mrr(self):
+        """Test SegmentMRR computation for single clicks"""
+        actual_metric_val = SegmentMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [0, 0, 1], [1, 0, 0], [0, 0, 1]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["d"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, [0.75, 0.33333, 0.]).all())
+
+    def test_segment_mrr_graded_relevance(self):
+        """Test SegmentMRR computation for graded relevance"""
+        actual_metric_val = SegmentMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [1, 2, 2], [5, 1, 0], [3, 2, 10]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["d"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, [0.75, 0.33333, 0.]).all())
+
+    def test_segment_mrr_graded_relevance_with_ties(self):
+        """Test SegmentMRR computation for graded relevance with ties"""
+        actual_metric_val = SegmentMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [1, 2, 3], [5, 1, 0], [3, 2, 10]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["d"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, [0.75, 0.33333, 0.]).all())
+
+    def test_macro_mrr(self):
+        """Test MacroMRR computation for single clicks"""
+        actual_metric_val = MacroMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [0, 0, 1], [1, 0, 0], [0, 0, 1]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["b"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, 0.36111))
+
+    def test_macro_mrr_graded_relevance(self):
+        """Test MacroMRR computation for graded relevance"""
+        actual_metric_val = MacroMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [1, 2, 3], [5, 1, 0], [3, 2, 10]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["b"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, 0.36111))
+
+    def test_macro_mrr_graded_relevance(self):
+        """Test MacroMRR computation for graded relevance with ties"""
+        actual_metric_val = MacroMRR(segments=["a", "b", "c"])(
+            y_true=[[1, 0, 0], [1, 2, 2], [5, 1, 0], [3, 2, 10]],
+            y_pred=[[0.3, 0.6, 0.1], [0.1, 0.2, 0.3], [0.1, 0.2, 0.3], [0.3, 0.6, 0.1]],
+            segments=[["a"], ["a"], ["b"], ["b"]]).numpy()
+        self.assertTrue(np.isclose(actual_metric_val, 0.36111))
 
     def test_acr(self):
         self.assertEquals(ACR()([[1, 0, 0], [0, 0, 1]], [[0.3, 0.6, 0.1], [0.2, 0.2, 0.3]]).numpy(),

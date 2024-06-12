@@ -26,6 +26,8 @@ class MetricKey(Key):
     """Model metric keys that can be used with a ranking model"""
 
     MRR = "MRR"
+    SEGMENT_MRR = "SegmentMRR"
+    MACRO_MRR = "MacroMRR"
     ACR = "ACR"
     NDCG = "NDCG"
     PRECISION = "Precision"

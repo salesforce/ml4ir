@@ -7,12 +7,14 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.metrics import Metric
 
+from ml4ir.applications.ranking.model.metrics.metrics_impl import MeanRankMetric
 from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
+from ml4ir.base.model.metrics.metrics_impl import SegmentMean
 
 
 class RelevanceScorer(keras.Model):
@@ -88,6 +90,10 @@ class RelevanceScorer(keras.Model):
 
         self.model_config = model_config
         self.feature_config = feature_config
+        # Get the group metric feature to be used for segment metrics
+        # NOTE: If there are multiple, then only the first is used
+        group_metric_features = feature_config.get_group_metrics_keys("node_name")
+        self.group_metric_feature = group_metric_features[0] if group_metric_features else None
         self.interaction_model = interaction_model
 
         self.loss_op = loss
@@ -110,13 +116,13 @@ class RelevanceScorer(keras.Model):
     def from_model_config_file(
             cls,
             model_config_file: str,
+            feature_config: FeatureConfig,
             interaction_model: InteractionModel,
             loss: RelevanceLossBase,
             file_io: FileIO,
             aux_loss: Optional[RelevanceLossBase] = None,
             aux_loss_weight: float = 0.0,
             output_name: str = "score",
-            feature_config: Optional[FeatureConfig] = None,
             logger: Optional[Logger] = None,
             **kwargs
     ):
@@ -309,7 +315,17 @@ class RelevanceScorer(keras.Model):
             mask = None
         except AttributeError:
             mask = None
-        self.compiled_metrics.update_state(tf.cast(y_true, tf.float32), y_pred, mask)
+        y_true = tf.cast(y_true, tf.float32)
+
+        # Compute metrics on primary label
+        segments = inputs.get(self.group_metric_feature)
+        for compiled_metric in self.compiled_metrics._metrics:
+            if isinstance(compiled_metric, SegmentMean):
+                compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
+            elif isinstance(compiled_metric, MeanRankMetric):
+                compiled_metric.update_state(y_true, y_pred, mask=mask)
+            else:
+                compiled_metric.update_state(y_true, y_pred)
 
         # Compute metrics on auxiliary label
         if self.aux_label:
@@ -394,7 +410,7 @@ class RelevanceScorer(keras.Model):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        metrics = [self.loss_metric] + super().metrics
+        metrics = [self.loss_metric] + self.compiled_metrics._metrics
 
         if self.aux_loss_weight > 0:
             # Add aux loss values

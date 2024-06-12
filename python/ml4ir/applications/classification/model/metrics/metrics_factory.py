@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras.metrics import Metric
 
 from ml4ir.applications.classification.config.keys import MetricKey
@@ -20,5 +21,8 @@ def get_metric(metric_key: str) -> Metric:
     """
     if metric_key == MetricKey.TOP_5_CATEGORICAL_ACCURACY:
         return Top5CategoricalAccuracy(name="top_5_categorical_accuracy")
+    elif metric_key == MetricKey.CATEGORICAL_ACCURACY:
+        return tf.keras.metrics.CategoricalAccuracy(name=metric_key)
     else:
-        return metric_key
+        # For out-of-the-box keras metric classes
+        return tf.keras.metrics.get(metric_key)

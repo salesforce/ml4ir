@@ -183,6 +183,7 @@ class TestLrSchedules(unittest.TestCase):
         # Define scorer
         scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
+            feature_config=feature_config,
             interaction_model=interaction_model,
             loss=loss,
             logger=Logger,
@@ -266,6 +267,7 @@ class TestLrSchedules(unittest.TestCase):
         # Define scorer
         scorer: RelevanceScorer = RelevanceScorer.from_model_config_file(
             model_config_file=self.model_config_file,
+            feature_config=feature_config,
             interaction_model=interaction_model,
             loss=loss,
             logger=Logger,
