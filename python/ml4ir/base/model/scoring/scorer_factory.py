@@ -34,8 +34,9 @@ def get_scorer(model_config, feature_config, interaction_model, loss, aux_loss, 
     """
 
     if (MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS in model_config and
-            model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS].get(MonteCarloInferenceKey.NUM_TRIALS,
-                                                                                  0)):
+            (model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS].get(MonteCarloInferenceKey.NUM_TEST_TRIALS, 0) or
+            model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS].get(MonteCarloInferenceKey.NUM_TRAINING_TRIALS, 0))):
+
         scorer = MonteCarloScorer(
             feature_config=feature_config,
             model_config=model_config,
