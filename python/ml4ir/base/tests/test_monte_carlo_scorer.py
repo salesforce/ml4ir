@@ -28,7 +28,7 @@ class TestMonteCarloScorer(unittest.TestCase):
         inputs = {"f0": tf.constant([0.5], dtype=tf.float32)}
 
         # Call the method
-        result = self.scorer.call(self.scorer, inputs)
+        result = self.scorer.call(self.scorer, inputs, training=False)
 
         # Check that the call method has looped the correct number of times.
         # It checks the number of "addition" operation used in aggregating the MC trials.
@@ -40,17 +40,17 @@ class TestMonteCarloScorer(unittest.TestCase):
         inputs = {"f0": tf.constant([0.5], dtype=tf.float32)}
 
         # Call the method
-        result = self.scorer.call(self.scorer, inputs)
+        result = self.scorer.call(self.scorer, inputs, training=False)
 
         # Check that the call method has looped the correct number of times.
         # It checks the number of "addition" operation used in aggregating the MC trials.
         self.assertEqual(str(result["score"].name).count("iadd"), self.scorer.monte_carlo_test_trials)
 
-    def test_10_calls_for_training(self):
+    def test_5_calls_for_training(self):
         inputs = {"f0": tf.constant([0.5], dtype=tf.float32)}
 
         # Call the method
-        result = self.scorer.call(self.scorer, inputs)
+        result = self.scorer.call(self.scorer, inputs, training=True)
 
         # Check that the call method has looped the correct number of times.
         # It checks the number of "addition" operation used in aggregating the MC trials.
@@ -62,7 +62,7 @@ class TestMonteCarloScorer(unittest.TestCase):
         inputs = {"f0": tf.constant([0.5], dtype=tf.float32)}
 
         # Call the method
-        result = self.scorer.call(self.scorer, inputs)
+        result = self.scorer.call(self.scorer, inputs, training=True)
 
         # Check that the call method has looped the correct number of times.
         # It checks the number of "addition" operation used in aggregating the MC trials.
