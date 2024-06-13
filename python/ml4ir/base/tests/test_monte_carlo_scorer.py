@@ -12,7 +12,7 @@ class TestMonteCarloScorer(unittest.TestCase):
         model_config = {'architecture_key': 'linear',
                         'layers': [{'type': 'dense', 'name': 'linear_layer', 'units': 1, 'activation': None}],
                         'optimizer': {'key': 'adam'}, 'lr_schedule': {'key': 'constant', 'learning_rate': 0.01},
-                        'monte_carlo_inference_trials': {'num_test_trials': 10, "num_training_trials": 5}}
+                        'monte_carlo_trials': {'num_test_trials': 10, "num_training_trials": 5}}
 
         self.scorer = MonteCarloScorer(
             model_config=model_config,

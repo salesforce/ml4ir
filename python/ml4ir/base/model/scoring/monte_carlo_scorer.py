@@ -99,8 +99,8 @@ class MonteCarloScorer(RelevanceScorer):
                          logs_dir=logs_dir,
                          **kwargs)
 
-        self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS][MonteCarloInferenceKey.NUM_TEST_TRIALS]
-        self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS][MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+        self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TEST_TRIALS]
+        self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
 
         # Adding 1 here to account of the extra inference run with training=False.
         self.monte_carlo_test_trials_tf = tf.constant(self.monte_carlo_test_trials + 1, dtype=tf.float32)

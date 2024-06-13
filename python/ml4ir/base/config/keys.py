@@ -134,7 +134,7 @@ class CalibrationKey(Key):
 
 
 class MonteCarloInferenceKey(Key):
-    MONTE_CARLO_INFERENCE_TRIALS = "monte_carlo_inference_trials"
+    MONTE_CARLO_TRIALS = "monte_carlo_trials"
     NUM_TEST_TRIALS = "num_test_trials"
     NUM_TRAINING_TRIALS = "num_training_trials"
 
