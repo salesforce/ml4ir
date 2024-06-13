@@ -85,8 +85,7 @@ class RankingPipeline(RelevancePipeline):
         else:
             return None
 
-    @staticmethod
-    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
+    def get_metrics(self, metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
 
@@ -100,7 +99,7 @@ class RankingPipeline(RelevancePipeline):
         list of keras Metric objects
         """
         return [
-            metrics_factory.get_metric(metric_key=metric_key) for metric_key in metrics_keys
+            metrics_factory.get_metric(metric_key=metric_key, segments=self.eval_segments) for metric_key in metrics_keys
         ]
 
     def validate_args(self):

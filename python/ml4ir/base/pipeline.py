@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 from tensorflow.keras.metrics import Metric
 
+from ml4ir.base.config.eval_config import EvalConfigConstants
 from ml4ir.base.config.parse_args import get_args
 from ml4ir.base.config.dynamic_args import override_with_dynamic_args
 from ml4ir.base.features.feature_config import FeatureConfig
@@ -35,6 +36,10 @@ from ml4ir.base.config.keys import ExecutionModeKey
 from ml4ir.base.config.keys import DefaultDirectoryKey
 from ml4ir.base.config.keys import FileHandlerKey
 from ml4ir.base.config.keys import CalibrationKey
+from ml4ir.base.model.scoring.scorer_factory import get_scorer
+
+
+pd.set_option('display.max_colwidth', None)
 
 
 class RelevancePipeline(object):
@@ -164,6 +169,7 @@ class RelevancePipeline(object):
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
         self.eval_config = eval_config_dict
+        self.eval_segments = self.eval_config.get(EvalConfigConstants.SEGMENTS)
 
         # Define a FeatureConfig object from loaded YAML
         self.feature_config: FeatureConfig = FeatureConfig.get_instance(
@@ -338,8 +344,7 @@ class RelevancePipeline(object):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def get_metrics(metrics_keys: List[str]) -> List[Union[Metric, str]]:
+    def get_metrics(self, metrics_keys: List[str]) -> List[Union[Metric, str]]:
         """
         Get the list of keras metrics to be used with the RelevanceModel
 
@@ -396,7 +401,7 @@ class RelevancePipeline(object):
             aux_metrics = self.get_metrics(self.aux_metrics_keys)
 
         # Define scorer
-        scorer: RelevanceScorer = RelevanceScorer(
+        scorer: RelevanceScorer = get_scorer(
             feature_config=self.feature_config,
             model_config=self.model_config,
             interaction_model=interaction_model,
@@ -407,8 +412,7 @@ class RelevancePipeline(object):
             output_name=self.args.output_name,
             logger=self.logger,
             file_io=self.file_io,
-            logs_dir=self.logs_dir_local
-        )
+            logs_dir=self.logs_dir_local)
 
         optimizer: Optimizer = get_optimizer(model_config=self.model_config)
 
@@ -591,7 +595,7 @@ class RelevancePipeline(object):
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
                     logs_dir=self.logs_dir_local,
-                    compute_intermediate_stats=self.args.compute_intermediate_stats,
+                    compute_intermediate_stats=self.args.compute_intermediate_stats
                 )
 
             if self.args.execution_mode in {

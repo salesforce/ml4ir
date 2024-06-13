@@ -17,7 +17,7 @@ from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.stats.t_test import perform_click_rank_dist_paired_t_test, compute_stats_from_stream, \
     t_test_log_results, run_ttest, power_ttest, compute_groupwise_running_variance_for_metrics, run_power_analysis, \
     StreamVariance, compute_batched_stats, update_running_stats_for_t_test
-from ml4ir.base.config.eval_config import EvalConfigConstants, prepare_eval_config_for_ranking
+from ml4ir.base.config.eval_config import EvalConfigConstants, get_power_analysis_config
 
 pd.set_option("display.max_rows", 500)
 pd.set_option("display.max_columns", 500)
@@ -118,12 +118,12 @@ class RankingModel(RelevanceModel):
         Override this method to implement your own evaluation metrics.
         """
         group_keys = list(set(self.feature_config.get_group_metrics_keys("node_name")))
-        eval_dict = prepare_eval_config_for_ranking(self.eval_config, group_keys)
+        eval_dict = get_power_analysis_config(self.eval_config, group_keys)
         group_keys = eval_dict[EvalConfigConstants.GROUP_BY]
 
         # If basic mode is specified, only compute the keras Model metrics
         # By default, use the extended mode and compute metrics as defined in this function
-        if eval_dict.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE) == EvalConfigConstants.BASIC_MODE:
+        if self.eval_config.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE) == EvalConfigConstants.BASIC_MODE:
             metrics_dict = self.model.evaluate(test_dataset, return_dict=True)
             metrics_dict = {f"test_{key}": val for key, val in metrics_dict.items()}
             self.logger.info("Overall Metrics: \n{}".format(pd.Series(metrics_dict)))
@@ -166,7 +166,7 @@ class RankingModel(RelevanceModel):
                 output_name=self.output_name,
                 features_to_return=evaluation_features,
                 additional_features=additional_features,
-                max_sequence_size=self.max_sequence_size,
+                max_sequence_size=self.max_sequence_size
             )
 
             batch_count = 0

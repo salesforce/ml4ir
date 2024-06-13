@@ -121,7 +121,6 @@ features:
     trainable: true
     dtype: int64
     log_at_inference: true
-    is_group_metric_key: true
     feature_layer_info:
       type: numeric
       shape: null

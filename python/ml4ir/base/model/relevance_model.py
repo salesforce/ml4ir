@@ -581,7 +581,7 @@ class RelevanceModel:
             group_metrics_min_queries: int = 50,
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True,
+            compute_intermediate_stats: bool = True
     ):
         """
         Evaluate the RelevanceModel
@@ -868,12 +868,13 @@ class RelevanceModel:
                 )
                 callbacks_list.append(early_stopping_callback)
 
+        # FIXME: Tensorboard does not work with list or string metrics such as SegmentMean
         # TensorBoard
-        if logs_dir:
-            tensorboard_callback = callbacks.TensorBoard(
-                log_dir=logs_dir, histogram_freq=1, update_freq=5
-            )
-            callbacks_list.append(tensorboard_callback)
+        # if logs_dir:
+        #     tensorboard_callback = callbacks.TensorBoard(
+        #         log_dir=logs_dir, histogram_freq=1, update_freq=5
+        #     )
+        #     callbacks_list.append(tensorboard_callback)
 
         # Debugging/Logging
         callbacks_list.append(DebuggingCallback(self.logger, logging_frequency))
