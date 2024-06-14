@@ -60,3 +60,16 @@ class TestReciprocalRank(unittest.TestCase):
 
         expected_reciprocal_ranks = np.array([[1. / 3, 1. / 2, 1. / 1, 1. / 6, 1. / 5, 1. / 4]])
         self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
+
+    def test_reciprocal_rank_scale_to_one(self):
+        input_feature = np.array([[0.0, 0.8, 0.9, 0.5, 0.6, 0.7]])
+
+        reciprocal_rank_op = ReciprocalRankLayer(scale_to_one=True)
+        actual_reciprocal_ranks = reciprocal_rank_op(input_feature).numpy()
+        expected_reciprocal_ranks = np.array([[0., 1. / 2, 1. / 1, 1. / 5, 1. / 4, 1. / 3]])
+        self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
+
+        reciprocal_rank_op = ReciprocalRankLayer(k=60, scale_to_one=True)
+        actual_reciprocal_ranks = reciprocal_rank_op(input_feature).numpy()
+        expected_reciprocal_ranks = np.array([[0., (60 + 1.) / (60. + 2), (60 + 1.) / (60. + 1), (60 + 1.) / (60. + 5), (60 + 1.) / (60. + 4), (60 + 1.) / (60. + 3)]])
+        self.assertTrue(np.isclose(actual_reciprocal_ranks, expected_reciprocal_ranks).all())
