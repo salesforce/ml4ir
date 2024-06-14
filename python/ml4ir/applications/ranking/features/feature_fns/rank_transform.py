@@ -39,6 +39,9 @@ class ReciprocalRank(BaseFeatureLayerOp):
                 If k should be a learnable variable; will be initialized with value of k
             ignore_zero_score: bool
                 Use zero reciprocal rank for score value of 0.0
+            scale_to_one: bool
+                If true, the values are scaled to (0, 1]
+                by multiplying the reciprocal ranks by k + 1
         """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
