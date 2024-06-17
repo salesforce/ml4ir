@@ -259,7 +259,7 @@ class Reciprocal(layers.Layer):
         # Reciprocal of the scores
         reciprocals = tf.math.divide_no_nan(1.0, scores)
 
-        # Scale the reciprocal ranks from (0, 1]
+        # Scale the reciprocals from (0, 1]
         if self.scale_to_one:
             reciprocals = tf.math.multiply_no_nan(reciprocals, (self.k + 1.))
 
