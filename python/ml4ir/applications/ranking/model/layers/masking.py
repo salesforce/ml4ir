@@ -118,8 +118,8 @@ class QueryFeatureMask(layers.Layer):
                 [1., 1., 1., 1.],
                 [1., 1., 1., 1.],
                 [1., 1., 1., 1.]]])
-    record_feature_mask = RecordFeatureMask(0.5)
-    record_feature_mask(x)
+    query_feature_mask = QueryFeatureMask(0.5)
+    query_feature_mask(x)
         array([[[1., 1., 0., 1.],
                 [1., 1., 0., 1.],
                 [1., 1., 0., 1.],
@@ -159,8 +159,6 @@ class QueryFeatureMask(layers.Layer):
         self.mask_rate = mask_rate
         self.mask_at_inference = mask_at_inference
         self.requires_mask = requires_mask
-
-        super(QueryFeatureMask, self).__init__(**kwargs)
 
     def call(self, inputs, mask=None, training=None):
         """

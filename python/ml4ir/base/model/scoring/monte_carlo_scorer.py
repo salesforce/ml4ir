@@ -98,10 +98,13 @@ class MonteCarloScorer(RelevanceScorer):
                          file_io=file_io,
                          logs_dir=logs_dir,
                          **kwargs)
-        self.monte_carlo_inference_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_INFERENCE_TRIALS][MonteCarloInferenceKey.NUM_TRIALS]
+
+        self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TEST_TRIALS]
+        self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
 
         # Adding 1 here to account of the extra inference run with training=False.
-        self.monte_carlo_inference_trials_tf = tf.constant(self.monte_carlo_inference_trials + 1, dtype=tf.float32)
+        self.monte_carlo_test_trials_tf = tf.constant(self.monte_carlo_test_trials + 1, dtype=tf.float32)
+        self.monte_carlo_training_trials_tf = tf.constant(self.monte_carlo_training_trials + 1, dtype=tf.float32)
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
@@ -118,8 +121,15 @@ class MonteCarloScorer(RelevanceScorer):
             Tensor object of the score computed by the model
         """
         # TODO replace loop with vector operations for performance
+        if training:
+            monte_carlo_trials = self.monte_carlo_training_trials
+            monte_carlo_trials_tf = self.monte_carlo_training_trials_tf
+        else:
+            monte_carlo_trials = self.monte_carlo_test_trials
+            monte_carlo_trials_tf = self.monte_carlo_test_trials_tf
+
         scores = super().call(inputs, training=False)[self.output_name]
-        for _ in range(self.monte_carlo_inference_trials):
+        for _ in range(monte_carlo_trials):
             scores += super().call(inputs, training=True)[self.output_name]
-        scores = tf.divide(scores, self.monte_carlo_inference_trials_tf)
+        scores = tf.divide(scores,monte_carlo_trials_tf)
         return {self.output_name: scores}
