@@ -52,6 +52,7 @@ class QueryNormalization(layers.Layer):
         inputs = tf.cast(inputs, tf.float64)
         mask = tf.expand_dims(tf.cast(mask, tf.float64), axis=-1)
 
+        # Set masked values to 0
         inputs = tf.multiply(inputs, mask)
 
         count = tf.math.reduce_sum(mask, axis=1)
@@ -62,6 +63,9 @@ class QueryNormalization(layers.Layer):
         std = tf.expand_dims(tf.math.sqrt(var), axis=1)
 
         normed_inputs = self.normalize(inputs, mean, std)
+
+        # Set masked values to 0
+        normed_inputs = tf.multiply(normed_inputs, mask)
 
         return tf.cast(normed_inputs, tf.float32)
 
@@ -87,7 +91,7 @@ class QueryNormalization(layers.Layer):
         return tf.math.divide_no_nan(tf.math.subtract(inputs, mean), std)
 
 
-class EstimatedMinMaxNormalization(layers.Layer):
+class EstimatedMinMaxNormalization(QueryNormalization):
     """
     Min Max Normalization of individual query features,
     where the min and max for a query are estimated as 3 standard deviations from the mean.
@@ -110,7 +114,7 @@ class EstimatedMinMaxNormalization(layers.Layer):
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
-        super().__init__(name=name, **kwargs)
+        super().__init__(name=name, requires_mask=requires_mask, **kwargs)
         self.requires_mask = requires_mask
         assert self.requires_mask, "requires_mask needs to be set to True"
 
