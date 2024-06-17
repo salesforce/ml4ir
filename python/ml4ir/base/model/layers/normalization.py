@@ -35,7 +35,8 @@ class Reciprocal(layers.Layer):
         self.k_trainable = k_trainable
         self.k = tf.Variable(
             initial_value=float(k),
-            trainable=self.k_trainable
+            trainable=self.k_trainable,
+            name="reciprocal_k"
         )
         self.scale_to_one = scale_to_one
         super().__init__(name=name, **kwargs)
@@ -98,7 +99,8 @@ class ArcTanNormalization(layers.Layer):
         self.k_trainable = k_trainable
         self.k = tf.Variable(
             initial_value=float(k),
-            trainable=self.k_trainable
+            trainable=self.k_trainable,
+            name="arctan_k"
         )
         self.scale_constant = tf.constant(2. / np.pi)
         super().__init__(name=name, **kwargs)
