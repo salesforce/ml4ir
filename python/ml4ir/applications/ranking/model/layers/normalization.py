@@ -52,6 +52,7 @@ class QueryNormalization(layers.Layer):
         inputs = tf.cast(inputs, tf.float64)
         mask = tf.expand_dims(tf.cast(mask, tf.float64), axis=-1)
 
+        # Set masked values to 0
         inputs = tf.multiply(inputs, mask)
 
         count = tf.math.reduce_sum(mask, axis=1)
@@ -61,9 +62,87 @@ class QueryNormalization(layers.Layer):
         var = tf.math.divide(tf.math.reduce_sum(tf.math.pow(tf.math.subtract(inputs, mean), 2), axis=1), count)
         std = tf.expand_dims(tf.math.sqrt(var), axis=1)
 
-        zscore = tf.math.divide_no_nan(tf.math.subtract(inputs, mean), std)
+        normed_inputs = self.normalize(inputs, mean, std)
 
-        return tf.cast(zscore, tf.float32)
+        # Set masked values to 0
+        normed_inputs = tf.multiply(normed_inputs, mask)
+
+        return tf.cast(normed_inputs, tf.float32)
+
+    @staticmethod
+    def normalize(inputs, mean, std):
+        """
+        Normalize the inputs using the mean and standard deviation
+
+        Parameters
+        ----------
+        inputs: Tensor
+            Input query tensor to be normalized
+        mean: Tensor
+            Tensor of query means
+        std: Tensor
+            Tensor of query standard deviations
+
+        Returns
+        -------
+        Tensor
+            Normalized input tensor
+        """
+        return tf.math.divide_no_nan(tf.math.subtract(inputs, mean), std)
+
+
+class EstimatedMinMaxNormalization(QueryNormalization):
+    """
+    Min Max Normalization of individual query features,
+    where the min and max for a query are estimated as 3 standard deviations from the mean.
+
+    Reference -> https://medium.com/plain-simple-software/distribution-based-score-fusion-dbsf-a-new-approach-to-vector-search-ranking-f87c37488b18
+    """
+
+    def __init__(self,
+                 name="emm_norm",
+                 requires_mask: bool = False,
+                 **kwargs):
+        """
+        Parameters
+        ----------
+        name: str
+            Layer name
+        requires_mask: bool
+            Indicates if the layer requires a mask to be passed to it during forward pass
+            NOTE: This needs to be True to use the layer
+        kwargs:
+            Additional key-value args that will be used for configuring the layer
+        """
+        super().__init__(name=name, requires_mask=requires_mask, **kwargs)
+        self.requires_mask = requires_mask
+        assert self.requires_mask, "requires_mask needs to be set to True"
+
+    @staticmethod
+    def normalize(inputs, mean, std):
+        """
+        Normalize the inputs using the mean and standard deviation
+
+        Parameters
+        ----------
+        inputs: Tensor
+            Input query tensor to be normalized
+        mean: Tensor
+            Tensor of query means
+        std: Tensor
+            Tensor of query standard deviations
+
+        Returns
+        -------
+        Tensor
+            Normalized input tensor
+        """
+        # Min Max scale by [mean - 3 * std, mean + 3 * std]
+        estimated_min = mean - (3 * std)
+        estimated_max = mean + (3 * std)
+
+        return tf.math.divide_no_nan(tf.math.subtract(inputs, estimated_min),
+                                     (estimated_max - estimated_min))
 
 
 class TheoreticalMinMaxNormalization(layers.Layer):
