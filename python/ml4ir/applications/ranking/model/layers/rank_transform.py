@@ -15,6 +15,7 @@ class ReciprocalRankLayer(layers.Layer):
                  k: float = 0.0,
                  k_trainable: bool = False,
                  ignore_zero_score: bool = True,
+                 scale_range_to_one: bool = False,
                  **kwargs):
         """
         Parameters
@@ -28,6 +29,9 @@ class ReciprocalRankLayer(layers.Layer):
         ignore_zero_score: bool
             Use zero reciprocal rank for score value of 0.0
             When using the layer with negative scores, make sure to set this arg to False
+        scale_range_to_one: bool
+            If true, the values are scaled to (0, 1]
+            by multiplying the reciprocal ranks by k + 1
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
@@ -37,6 +41,7 @@ class ReciprocalRankLayer(layers.Layer):
             trainable=self.k_trainable
         )
         self.ignore_zero_score = ignore_zero_score
+        self.scale_range_to_one = scale_range_to_one
         super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
@@ -78,5 +83,10 @@ class ReciprocalRankLayer(layers.Layer):
                 inputs == tf.constant(0.0),
                 tf.constant(0.0),
                 reciprocal_ranks)
+
+        # Scale the reciprocal rank range from (0, 1]
+        # NOTE: Highest rank of 1 will be set to max scaled reciprocal rank of 1.
+        if self.scale_range_to_one:
+            reciprocal_ranks = tf.math.multiply_no_nan(reciprocal_ranks, self.k + 1.)
 
         return reciprocal_ranks
