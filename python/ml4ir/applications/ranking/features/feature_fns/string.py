@@ -1,10 +1,17 @@
 import string
 import re
 import tensorflow as tf
+#import tensorflow_text as tf_text
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
+
+
+import numpy as np
 
 
 class QueryLength(BaseFeatureLayerOp):
@@ -158,3 +165,175 @@ class QueryTypeVector(BaseFeatureLayerOp):
         query_type_vector = self.categorical_vector_op(query_type, training=training)
 
         return query_type_vector
+
+
+import tensorflow as tf
+import numpy as np
+from nltk.corpus import stopwords
+import string
+
+
+class QueryEmbeddingVector(BaseFeatureLayerOp):
+    """
+    A feature layer operation to define a query embedding vectorizer using pre-trained word embeddings.
+
+    Attributes
+    ----------
+    LAYER_NAME : str
+        Name of the layer, set to "query_embedding_vector".
+    feature_info : dict
+        Configuration parameters for the specific feature from the FeatureConfig.
+    file_io : FileIO
+        FileIO handler object for reading and writing.
+    embedding_size : int
+        Dimension size of categorical embedding.
+    glove_path : str
+        Path to the pre-trained GloVe embeddings file.
+    max_entries : int
+        Maximum number of entries to load from the GloVe embeddings file.
+    stop_words : set
+        Set of English stopwords.
+    word_vectors : dict
+        Dictionary to store word embeddings.
+    embedding_dim : int
+        Dimension of the embeddings.
+    """
+
+    LAYER_NAME = "query_embedding_vector"
+
+    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
+        """
+        Initialize layer to define a query embedding vectorizer using pre-trained word embeddings.
+
+        Parameters
+        ----------
+        feature_info : dict
+            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig.
+        file_io : FileIO
+            FileIO handler object for reading and writing.
+
+        Notes
+        -----
+        Args under feature_layer_info:
+            remove_quotes : string
+                Whether to remove quotes from the string tensors. Defaults to true.
+            output_mode : str
+                The type of vector representation to compute. Currently supports either embedding or one_hot.
+            embedding_size : int
+                Dimension size of categorical embedding.
+            glove_path : str
+                Path to the pre-trained GloVe embeddings file.
+        """
+        super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
+        self.feature_info = feature_info
+        self.file_io = file_io
+        self.embedding_size = feature_info["feature_layer_info"]["args"]["embedding_size"]
+        self.glove_path = feature_info["feature_layer_info"]["args"]["glove_path"]
+        self.max_entries = feature_info["feature_layer_info"]["args"]["max_entries"]
+        self.stop_words = set(stopwords.words('english'))
+
+        self.word_vectors = {}
+
+        # Load GloVe embeddings with a limit on the number of entries
+        with open(self.glove_path, 'r', encoding='utf-8') as f:
+            for idx, line in enumerate(f):
+                if self.max_entries is not None and idx >= self.max_entries:
+                    break
+                values = line.split()
+                word = values[0]
+                word = tf.constant(word, dtype=tf.string)
+                vector = np.array(values[1:], dtype='float32')
+                self.word_vectors[str(word)] = vector
+
+        # Determine the dimension of the embeddings
+        self.embedding_dim = len(vector)
+
+    def preprocess_text(self, text):
+        """
+        Preprocess the input text by converting to lowercase, removing punctuation, tokenizing,
+        and filtering out stopwords.
+
+        Parameters
+        ----------
+        text : tf.Tensor
+            Input text tensor.
+
+        Returns
+        -------
+        tf.RaggedTensor
+            Preprocessed and tokenized text.
+        """
+        # Convert to lowercase
+        text = tf.strings.lower(text)
+
+        # Remove punctuation
+        text = tf.strings.regex_replace(text, f"[{string.punctuation}]", " ")
+
+        # Tokenize the text
+        tokens = tf.strings.split(text)
+
+        # Filter out stopwords
+        def filter_stopwords(tokens):
+            return tf.ragged.boolean_mask(tokens,
+                                          ~tf.reduce_any(tf.strings.regex_full_match(tokens, '|'.join(self.stop_words)),
+                                                         axis=-1))
+
+        tokens = filter_stopwords(tokens)
+        return tokens
+
+    def word_lookup(self, word):
+        """
+        Look up the word embedding for a given word.
+
+        Parameters
+        ----------
+        word : str
+            The word to look up.
+
+        Returns
+        -------
+        np.ndarray
+            The embedding vector for the word, or a zero vector if the word is not found.
+        """
+        return self.word_vectors.get(str(word), np.zeros((self.embedding_dim), dtype=np.float32))
+
+    def build_embeddings(self, query):
+        """
+        Build the embedding for a given query by summing the embeddings of its words.
+
+        Parameters
+        ----------
+        query : tf.Tensor
+            Tensor containing the words of the query.
+
+        Returns
+        -------
+        tf.Tensor
+            Tensor of shape (embedding_dim,) containing the summed word embeddings.
+        """
+        word_embeddings = tf.map_fn(lambda word: self.word_lookup(word), query, dtype=tf.float32)
+        query_embedding = tf.reduce_sum(word_embeddings, axis=0)
+        return query_embedding
+
+    def call(self, queries, training=None):
+        """
+        Defines the forward pass for the layer on the input queries tensor.
+
+        Parameters
+        ----------
+        queries : tf.Tensor
+            Input tensor containing the queries.
+        training : bool, optional
+            Boolean flag indicating if the layer is being used in training mode or not.
+
+        Returns
+        -------
+        tf.Tensor
+            Resulting tensor after the forward pass through the feature transform layer.
+        """
+        inputs = self.preprocess_text(queries)
+        query_embeddings = tf.map_fn(lambda query: self.build_embeddings(query[0]), inputs.to_tensor(),
+                                     dtype=tf.float32)
+        query_embeddings = tf.expand_dims(query_embeddings, axis=1)
+        return query_embeddings
+
