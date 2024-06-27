@@ -1,17 +1,12 @@
 import string
 import re
 import tensorflow as tf
-#import tensorflow_text as tf_text
-import nltk
-nltk.download('stopwords')
+import numpy as np
 from nltk.corpus import stopwords
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.io.file_io import FileIO
 from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
-
-
-import numpy as np
 
 
 class QueryLength(BaseFeatureLayerOp):
@@ -22,6 +17,8 @@ class QueryLength(BaseFeatureLayerOp):
 
     TOKENIZE = "tokenize"
     SEPARATOR = "sep"
+
+    MAX_LENGTH = "max_length"  # define max length for one hot encoding.
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """
@@ -49,6 +46,9 @@ class QueryLength(BaseFeatureLayerOp):
 
         self.tokenize = self.feature_layer_args.get(self.TOKENIZE, True)
         self.sep = self.feature_layer_args.get(self.SEPARATOR, " ")
+        self.one_hot = self.feature_layer_args.get(self.SEPARATOR, True)
+
+        self.max_length = self.feature_layer_args.get(self.MAX_LENGTH, 10)
 
     def call(self, inputs, training=None):
         """
@@ -71,8 +71,15 @@ class QueryLength(BaseFeatureLayerOp):
         else:
             query_len = tf.strings.length(inputs)
 
-        query_len = tf.expand_dims(tf.cast(query_len, tf.float32), axis=-1)
-        return query_len
+        if self.one_hot:
+            # Clip the query lengths to the max_length
+            query_len = tf.clip_by_value(query_len, 0, self.max_length)
+            # Convert to one-hot encoding
+            query_len_one_hot = tf.one_hot(query_len, depth=self.max_length + 1)
+            return query_len_one_hot
+        else:
+            query_len = tf.expand_dims(tf.cast(query_len, tf.float32), axis=-1)
+            return query_len
 
 
 class QueryTypeVector(BaseFeatureLayerOp):
@@ -165,12 +172,6 @@ class QueryTypeVector(BaseFeatureLayerOp):
         query_type_vector = self.categorical_vector_op(query_type, training=training)
 
         return query_type_vector
-
-
-import tensorflow as tf
-import numpy as np
-from nltk.corpus import stopwords
-import string
 
 
 class QueryEmbeddingVector(BaseFeatureLayerOp):
@@ -311,9 +312,12 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
         tf.Tensor
             Tensor of shape (embedding_dim,) containing the summed word embeddings.
         """
-        word_embeddings = tf.map_fn(lambda word: self.word_lookup(word), query, dtype=tf.float32)
-        query_embedding = tf.reduce_sum(word_embeddings, axis=0)
-        return query_embedding
+        if query.shape[0] == 1:
+            word_embeddings = tf.map_fn(lambda word: self.word_lookup(word), query[0], dtype=tf.float32)
+            query_embedding = tf.reduce_sum(word_embeddings, axis=0)
+            return query_embedding
+        else:
+            return np.zeros((self.embedding_dim), dtype=np.float32)
 
     def call(self, queries, training=None):
         """
@@ -332,7 +336,7 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
             Resulting tensor after the forward pass through the feature transform layer.
         """
         inputs = self.preprocess_text(queries)
-        query_embeddings = tf.map_fn(lambda query: self.build_embeddings(query[0]), inputs.to_tensor(),
+        query_embeddings = tf.map_fn(lambda query: self.build_embeddings(query), inputs.to_tensor(),
                                      dtype=tf.float32)
         query_embeddings = tf.expand_dims(query_embeddings, axis=1)
         return query_embeddings
