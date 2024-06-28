@@ -69,7 +69,7 @@ def get_scorer(model_config: dict,
     if (MonteCarloInferenceKey.MONTE_CARLO_TRIALS in model_config and
             (model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.NUM_TEST_TRIALS, 0) or
             model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.NUM_TRAINING_TRIALS, 0))):
-              
+        logger.info("Using Monte Carlo scorer.")
         scorer = MonteCarloScorer(
             feature_config=feature_config,
             model_config=model_config,
@@ -84,6 +84,7 @@ def get_scorer(model_config: dict,
             logs_dir=logs_dir
         )
     else:
+        logger.info("Using default scorer.")
         scorer = RelevanceScorer(
             feature_config=feature_config,
             model_config=model_config,

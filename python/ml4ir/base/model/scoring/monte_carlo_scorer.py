@@ -131,5 +131,5 @@ class MonteCarloScorer(RelevanceScorer):
         scores = super().call(inputs, training=False)[self.output_name]
         for _ in range(monte_carlo_trials):
             scores += super().call(inputs, training=True)[self.output_name]
-        scores = tf.divide(scores,monte_carlo_trials_tf)
+        scores = tf.divide(scores, monte_carlo_trials_tf)
         return {self.output_name: scores}
