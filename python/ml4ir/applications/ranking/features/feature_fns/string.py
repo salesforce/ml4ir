@@ -17,7 +17,7 @@ class QueryLength(BaseFeatureLayerOp):
 
     TOKENIZE = "tokenize"
     SEPARATOR = "sep"
-
+    ONE_HOT_VECTOR = "one_hot_vector"
     MAX_LENGTH = "max_length"  # define max length for one hot encoding.
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
@@ -46,8 +46,7 @@ class QueryLength(BaseFeatureLayerOp):
 
         self.tokenize = self.feature_layer_args.get(self.TOKENIZE, True)
         self.sep = self.feature_layer_args.get(self.SEPARATOR, " ")
-        self.one_hot = self.feature_layer_args.get(self.SEPARATOR, True)
-
+        self.one_hot = self.feature_layer_args.get(self.ONE_HOT_VECTOR, False)
         self.max_length = self.feature_layer_args.get(self.MAX_LENGTH, 10)
 
     def call(self, inputs, training=None):
@@ -231,7 +230,7 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
         self.embedding_size = feature_info["feature_layer_info"]["args"]["embedding_size"]
         self.glove_path = feature_info["feature_layer_info"]["args"]["glove_path"]
         self.max_entries = feature_info["feature_layer_info"]["args"]["max_entries"]
-        self.stop_words = set(stopwords.words('english'))
+        self.stop_words = {"you're", 'itself', 'but', 'against', 'until', 'where', 'as', 'from', 'own', 'again', 's', "wasn't", 'about', 'out', 'his', 'an', 'those', 've', 'should', 'doing', 'ourselves', 'or', 'down', 'such', "she's", 't', 're', 'me', 'what', 'to', 'didn', "wouldn't", 'hers', 'been', 'which', 'further', 'there', "shouldn't", 'them', "couldn't", 'is', 'wouldn', 'he', 'over', "hasn't", 'their', 'after', 'during', 'few', 'up', 'ma', 'yourselves', 'i', 'themselves', "won't", 'having', "you'll", 'these', 'were', 'most', "isn't", 'how', 'ours', 'y', 'and', 'if', 'not', 'between', 'its', "that'll", 'then', 'that', 'above', 'hadn', 'can', 'each', 'aren', 'whom', 'don', 'we', 'won', 'who', 'be', 'here', 'in', 'our', 'any', 'your', 'shan', 'all', 'd', 'same', 'you', 'nor', 'theirs', 'am', 'isn', 'below', 'o', 'couldn', 'into', "hadn't", 'shouldn', 'very', 'haven', 'it', 'wasn', 'other', 'they', 'are', 'both', 'no', 'through', 'at', 'now', 'himself', 'was', 'off', 'herself', 'doesn', 'mightn', "weren't", "you've", 'too', "mustn't", 'when', 'only', 'on', 'him', 'by', 'hasn', 'once', "haven't", 'yourself', 'have', "you'd", 'a', "doesn't", 'll', 'so', "should've", 'does', 'had', 'my', 'yours', 'she', 'than', 'some', 'why', 'with', 'the', 'will', 'needn', 'did', 'mustn', "needn't", 'more', 'her', 'before', 'for', 'has', 'because', 'of', 'do', "didn't", 'myself', "mightn't", 'just', 'weren', "aren't", 'this', 'ain', "don't", 'while', 'under', 'm', 'being', "it's", "shan't"}
 
         self.word_vectors = {}
 
@@ -280,6 +279,13 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
                                                          axis=-1))
 
         tokens = filter_stopwords(tokens)
+
+        # Filter out stopwords
+        # def filter_stopwords(token):
+        #     return tf.logical_not(tf.reduce_any(tf.equal(token, list(self.stop_words))))
+        #
+        # mask = tf.map_fn(filter_stopwords, tokens, fn_output_signature=tf.bool)
+        # tokens = tf.ragged.boolean_mask(tokens, mask)
         return tokens
 
     def word_lookup(self, word):
