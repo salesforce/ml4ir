@@ -24,7 +24,7 @@ class QueryMinImputation(layers.Layer):
             Additional key-value args that will be used for configuring the layer
         """
         self.inf = tf.constant(np.inf)
-        self.missing_value = tf.constant(missing_value)
+        self.missing_value = tf.constant(missing_value, tf.float32)
         super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
@@ -55,6 +55,6 @@ class QueryMinImputation(layers.Layer):
         mins = tf.where(tf.math.is_inf(mins), 0., mins)
 
         # Set each feature to min
-        imputed_inputs = tf.where(tf.equal(inputs, self.missing_value), mins[:, :, tf.newaxis], inputs)
+        imputed_inputs = tf.where(tf.equal(inputs, self.missing_value), mins[:, tf.newaxis, :], inputs)
 
         return imputed_inputs
