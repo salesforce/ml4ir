@@ -3,9 +3,8 @@ import numpy as np
 import unittest
 from unittest.mock import MagicMock
 from ml4ir.applications.ranking.features.feature_fns import string as string_transforms
-from ml4ir.base.tests.test_base import RelevanceTestBase
 
-class TestQueryEmbeddingVectorUsingGlove(RelevanceTestBase):
+class TestQueryEmbeddingVectorUsingGlove(unittest.TestCase):
     def setUp(self):
         self.feature_info = {
             "name": "default_feature",
