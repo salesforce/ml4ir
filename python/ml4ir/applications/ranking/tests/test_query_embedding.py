@@ -20,7 +20,7 @@ class TestQueryEmbeddingVectorUsingGlove(unittest.TestCase):
         glove_content = "word1 0.1 0.2 0.3\nword2 0.4 0.5 0.6\nword 0.9 0.9 0.9"
         self.open_mock = unittest.mock.mock_open(read_data=glove_content)
         with unittest.mock.patch('builtins.open', self.open_mock):
-            self.query_embedding_vector = string_transforms.QueryEmbeddingVector(self.feature_info, self.file_io)
+            self.query_embedding_vector = string_transforms.GloveQueryEmbeddingVector(self.feature_info, self.file_io)
 
     def test_glove_file_loading(self):
         word1 = tf.constant("word1", dtype=tf.string)

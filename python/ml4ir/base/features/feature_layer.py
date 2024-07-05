@@ -14,7 +14,7 @@ from ml4ir.base.features.feature_fns.sentence_transformers import SentenceTransf
 from ml4ir.applications.ranking.features.feature_fns.categorical import CategoricalVector
 from ml4ir.applications.ranking.features.feature_fns.normalization import TheoreticalMinMaxNormalization
 from ml4ir.applications.ranking.features.feature_fns.rank_transform import ReciprocalRank
-from ml4ir.applications.ranking.features.feature_fns.string import QueryLength, QueryTypeVector, QueryEmbeddingVector
+from ml4ir.applications.ranking.features.feature_fns.string import QueryLength, QueryTypeVector, GloveQueryEmbeddingVector
 
 
 class FeatureLayerMap:
@@ -43,7 +43,7 @@ class FeatureLayerMap:
             ReciprocalRank.LAYER_NAME: ReciprocalRank,
             QueryLength.LAYER_NAME: QueryLength,
             QueryTypeVector.LAYER_NAME: QueryTypeVector,
-            QueryEmbeddingVector.LAYER_NAME: QueryEmbeddingVector
+            GloveQueryEmbeddingVector.LAYER_NAME: GloveQueryEmbeddingVector
         }
 
     def add_fn(self, key, fn):

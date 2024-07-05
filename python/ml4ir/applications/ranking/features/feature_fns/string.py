@@ -172,7 +172,7 @@ class QueryTypeVector(BaseFeatureLayerOp):
         return query_type_vector
 
 
-class QueryEmbeddingVector(BaseFeatureLayerOp):
+class GloveQueryEmbeddingVector(BaseFeatureLayerOp):
     """
     A feature layer operation to define a query embedding vectorizer using pre-trained word embeddings.
 
@@ -198,7 +198,7 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
         Dimension of the embeddings.
     """
 
-    LAYER_NAME = "query_embedding_vector"
+    LAYER_NAME = "glove_query_embedding_vector"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
         """

@@ -177,6 +177,24 @@ class FeatureLayerTest(RelevanceTestBase):
 
         self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
 
+    def test_query_length_one_hot(self):
+        """
+        Test QueryLength feature transformation into one hot vector
+        """
+        feature_info = copy.deepcopy(FEATURE_INFO)
+        feature_info["feature_layer_info"]["args"]["one_hot_vector"] = True
+        feature_info["feature_layer_info"]["args"]["max_length"] = 2
+
+        input_feature = np.array(["aaa bbb", "aaa bbb ccc", "aaa"]).reshape(-1, 1)
+
+        actual_query_len = string_transforms.QueryLength(
+            feature_info, self.file_io
+        )(input_feature).numpy()
+
+        expected_query_len = np.array([[[0,0,1],[0,0,1],[0,1,0]]], dtype=np.float32).reshape(3, 1, 3)
+
+        self.assertTrue(np.isclose(actual_query_len, expected_query_len).all())
+
     def test_query_length_without_tokenization(self):
         """
         Test QueryLength feature transformation
