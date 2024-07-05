@@ -1,8 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import copy
-import unittest
-from unittest.mock import MagicMock
 
 from ml4ir.applications.ranking.features.feature_fns import categorical
 from ml4ir.applications.ranking.features.feature_fns import normalization
