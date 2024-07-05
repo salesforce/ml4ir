@@ -2,7 +2,6 @@ import string
 import re
 import tensorflow as tf
 import numpy as np
-from nltk.corpus import stopwords
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
 from ml4ir.base.io.file_io import FileIO
