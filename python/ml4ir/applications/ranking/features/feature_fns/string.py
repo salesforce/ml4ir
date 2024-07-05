@@ -279,13 +279,6 @@ class QueryEmbeddingVector(BaseFeatureLayerOp):
                                                          axis=-1))
 
         tokens = filter_stopwords(tokens)
-
-        # Filter out stopwords
-        # def filter_stopwords(token):
-        #     return tf.logical_not(tf.reduce_any(tf.equal(token, list(self.stop_words))))
-        #
-        # mask = tf.map_fn(filter_stopwords, tokens, fn_output_signature=tf.bool)
-        # tokens = tf.ragged.boolean_mask(tokens, mask)
         return tokens
 
     def word_lookup(self, word):
