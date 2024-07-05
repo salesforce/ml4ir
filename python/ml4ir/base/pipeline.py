@@ -168,6 +168,8 @@ class RelevancePipeline(object):
                 base_dict=model_config_dict,
                 dynamic_args=args.model_config_custom)
         self.model_config = model_config_dict
+        self.logger.debug("Model Config: \n{}".format(
+            json.dumps(self.model_config, indent=4)))
         self.eval_config = eval_config_dict
         self.eval_segments = self.eval_config.get(EvalConfigConstants.SEGMENTS)
 
