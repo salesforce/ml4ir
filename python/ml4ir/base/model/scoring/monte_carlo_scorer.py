@@ -115,6 +115,21 @@ class MonteCarloScorer(RelevanceScorer):
             self.monte_carlo_fixed_trials_count = tf.constant(len(self.fixed_mask), dtype=tf.float32)
 
     def mask_inputs(self, inputs, mask_count):
+        """
+        Apply predefined masks to input features in a vectorized manner.
+
+        Parameters
+        ----------
+        inputs : dict of tf.Tensor
+            Dictionary containing input feature tensors. Each key represents the feature name, and each value is a tensor of shape [batch_size, feature_length].
+        mask_count : int
+            Number of different masks to be applied. This corresponds to the number of Monte Carlo trials.
+
+        Returns
+        -------
+        masked_inputs_list : list of dict of tf.Tensor
+            A list where each element is a dictionary of masked input feature tensors. Each dictionary has the same keys as the input dictionary, and the values are tensors of the same shape, but with masks applied.
+        """
         # Apply masks in a vectorized manner
         masked_inputs_list = []
         for i in range(mask_count):
@@ -130,6 +145,23 @@ class MonteCarloScorer(RelevanceScorer):
         return masked_inputs_list
 
     def score_with_fixed_mask(self, inputs, masked_inputs_list, training):
+        """
+        Compute scores for input features with fixed masks applied.
+
+        Parameters
+        ----------
+        inputs : dict of tf.Tensor
+            Dictionary containing input feature tensors. Each key represents the feature name, and each value is a tensor of shape [batch_size, feature_length].
+        masked_inputs_list : list of dict of tf.Tensor
+            A list where each element is a dictionary of masked input feature tensors. Each dictionary has the same keys as the input dictionary, and the values are tensors of the same shape, but with masks applied.
+        training : bool
+            Indicator of whether the model is in training mode. This parameter is passed to the super().call method.
+
+        Returns
+        -------
+        all_scores : tf.Tensor
+            Tensor containing the computed scores for all masked inputs. The shape of the tensor depends on the specific model's output.
+        """
         # Stack the masked inputs to create a batch of different masked inputs
         stacked_inputs = {key: tf.stack([masked_inputs[key] for masked_inputs in masked_inputs_list])
                           for key in inputs.keys()}
@@ -146,6 +178,23 @@ class MonteCarloScorer(RelevanceScorer):
         return all_scores
 
     def reshape_and_normalize(self, all_scores, mask_count, batch_size):
+        """
+        Reshape the scores tensor to separate mask and batch dimensions, then normalize the scores.
+
+        Parameters
+        ----------
+        all_scores : tf.Tensor
+            Tensor containing scores computed for all masked inputs. The shape is expected to be [mask_count * batch_size, ...].
+        mask_count : int
+            The number of different masks applied. This corresponds to the number of Monte Carlo trials.
+        batch_size : int
+            The size of the batch of inputs.
+
+        Returns
+        -------
+        tf.Tensor
+            The reshaped and normalized scores tensor. The shape of the tensor will be [batch_size, ...].
+        """
         all_scores_shape = tf.shape(all_scores)
         all_scores = tf.reshape(all_scores, tf.concat([[mask_count, batch_size], all_scores_shape[1:]], axis=0))
 
@@ -155,6 +204,21 @@ class MonteCarloScorer(RelevanceScorer):
         return all_scores
 
     def deterministic_call(self, inputs: Dict[str, tf.Tensor], training=None):
+        """
+        Compute scores for input features using a deterministic approach with fixed masks.
+
+        Parameters
+        ----------
+        inputs : dict of tf.Tensor
+            Dictionary containing input feature tensors. Each key represents the feature name, and each value is a tensor of shape [batch_size, feature_length].
+        training : bool, optional
+            Indicator of whether the model is in training mode. This parameter is passed to the scoring method to control behavior specific to training or inference. Default is None.
+
+        Returns
+        -------
+        dict of tf.Tensor
+            A dictionary containing the computed scores. The key is `self.output_name`, and the value is a tensor with the shape [batch_size, ...].
+        """
         batch_size = tf.shape(list(inputs.values())[0])[0]
         mask_count = len(self.fixed_mask)
 
@@ -167,6 +231,26 @@ class MonteCarloScorer(RelevanceScorer):
         return {self.output_name: all_scores}
 
     def stochastic_call(self, inputs: Dict[str, tf.Tensor], monte_carlo_trials, monte_carlo_trials_tf, training=None):
+        """
+        Compute scores using a stochastic approach with Monte Carlo trials.
+
+        Parameters
+        ----------
+        inputs : dict of tf.Tensor
+            Dictionary containing input feature tensors. Each key represents the feature name, and each value is a tensor of shape [batch_size, feature_length].
+        monte_carlo_trials : int
+            The number of Monte Carlo trials to perform. This determines how many times the model will be run to average the results.
+        monte_carlo_trials_tf : tf.Tensor
+            Tensor containing the number of Monte Carlo trials as a scalar. This is used for normalizing the scores after aggregation.
+        training : bool, optional
+            Indicator of whether the model is in training mode. This parameter is passed to the model's call method to control behavior specific to training or inference. Default is None.
+
+        Returns
+        -------
+        dict of tf.Tensor
+            A dictionary containing the averaged scores. The key is `self.output_name`, and the value is a tensor with the shape [batch_size, ...].
+        """
+
         scores = super().call(inputs, training=False)[self.output_name]
         for _ in range(monte_carlo_trials):
             scores += super().call(inputs, training=True)[self.output_name]
