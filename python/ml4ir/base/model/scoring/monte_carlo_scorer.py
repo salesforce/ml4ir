@@ -4,6 +4,7 @@ import traceback
 from typing import Dict, Optional, Union, List
 
 import tensorflow as tf
+import itertools
 from tensorflow import keras
 from tensorflow.keras.metrics import Metric
 
@@ -22,16 +23,7 @@ class MonteCarloScorer(RelevanceScorer):
     Monte Carlo class that defines the neural network layers that convert
     the input features into scores by using monte carlo trials in inference.
     The actual masking of features is done by a masking layer called:
-    `RecordFeatureMask` or `QueryFeatureMask`
-
-    Defines the feature transformation layer(InteractionModel), dense
-    neural network layers combined with activation layers and the loss function
-
-    Notes
-    -----
-    - This is a Keras model subclass and is built recursively using keras Layer instances
-    - This is an abstract class. In order to use a Scorer, one must define
-      and override the `architecture_op` and the `final_activation_op` functions
+    `RecordFeatureMask` or `QueryFeatureMask` or by using fixed masks
     """
 
     def __init__(
@@ -99,12 +91,87 @@ class MonteCarloScorer(RelevanceScorer):
                          logs_dir=logs_dir,
                          **kwargs)
 
-        self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TEST_TRIALS]
-        self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+        self.use_fixed_mask_in_training = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
+            MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING, False))
+        if not self.use_fixed_mask_in_training:
+            self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+            # Adding 1 here to account of the extra inference run with training=False.
+            self.monte_carlo_training_trials_tf = tf.constant(self.monte_carlo_training_trials + 1, dtype=tf.float32)
 
-        # Adding 1 here to account of the extra inference run with training=False.
-        self.monte_carlo_test_trials_tf = tf.constant(self.monte_carlo_test_trials + 1, dtype=tf.float32)
-        self.monte_carlo_training_trials_tf = tf.constant(self.monte_carlo_training_trials + 1, dtype=tf.float32)
+        self.use_fixed_mask_in_testing = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
+            MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING, False))
+        if not self.use_fixed_mask_in_testing:
+            self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TEST_TRIALS]
+            # Adding 1 here to account of the extra inference run with training=False.
+            self.monte_carlo_test_trials_tf = tf.constant(self.monte_carlo_test_trials + 1, dtype=tf.float32)
+
+        self.features_with_fixed_masks = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.FEATURES_WITH_FIXED_MASKS, [])
+        if self.features_with_fixed_masks:
+            self.features_with_fixed_masks = [f.strip() for f in self.features_with_fixed_masks.split()]
+            self.fixed_feature_count = len(self.features_with_fixed_masks)
+            self.fixed_mask = list(itertools.product([0, 1], repeat=self.fixed_feature_count))
+            self.monte_carlo_fixed_trials_count = tf.constant(len(self.fixed_mask), dtype=tf.float32)
+
+    def mask_inputs(self, inputs, mask_count):
+        # Apply masks in a vectorized manner
+        masked_inputs_list = []
+        for i in range(mask_count):
+            masked_inputs = {}
+            for key, value in inputs.items():
+                masked_value = value
+                for j in range(self.fixed_feature_count):
+                    if key == self.features_with_fixed_masks[j]:
+                        mask = tf.constant(self.fixed_mask[i][j], dtype=tf.float32)
+                        masked_value = tf.multiply(masked_value, mask)
+                masked_inputs[key] = masked_value
+            masked_inputs_list.append(masked_inputs)
+        return masked_inputs_list
+
+    def score_with_fixed_mask(self, inputs, masked_inputs_list, training):
+        # Stack the masked inputs to create a batch of different masked inputs
+        stacked_inputs = {key: tf.stack([masked_inputs[key] for masked_inputs in masked_inputs_list])
+                          for key in inputs.keys()}
+
+        # Flatten the batch dimension with the mask dimension
+        flattened_inputs = {}
+        for key, value in stacked_inputs.items():
+            value_shape = tf.shape(value)
+            flattened_shape = tf.concat([[value_shape[0] * value_shape[1]], value_shape[2:]], axis=0)
+            flattened_inputs[key] = tf.reshape(value, flattened_shape)
+
+        # Compute scores for all masked inputs in one go
+        all_scores = super().call(flattened_inputs, training=False)[self.output_name]
+        return all_scores
+
+    def reshape_and_normalize(self, all_scores, mask_count, batch_size):
+        all_scores_shape = tf.shape(all_scores)
+        all_scores = tf.reshape(all_scores, tf.concat([[mask_count, batch_size], all_scores_shape[1:]], axis=0))
+
+        # Aggregate the scores across the mask dimension
+        all_scores = tf.reduce_sum(all_scores, axis=0)
+        all_scores = tf.divide(all_scores, self.monte_carlo_fixed_trials_count)
+        return all_scores
+
+    def deterministic_call(self, inputs: Dict[str, tf.Tensor], training=None):
+        batch_size = tf.shape(list(inputs.values())[0])[0]
+        mask_count = len(self.fixed_mask)
+
+        # Apply fixed masks
+        masked_inputs_list = self.mask_inputs(inputs, mask_count)
+        # score with the fixed mask
+        all_scores = self.score_with_fixed_mask(inputs, masked_inputs_list, training)
+        # Reshape all_scores to separate the mask dimension and the original batch dimension
+        all_scores = self.reshape_and_normalize(all_scores, mask_count, batch_size)
+        return {self.output_name: all_scores}
+
+    def stochastic_call(self, inputs: Dict[str, tf.Tensor], monte_carlo_trials, monte_carlo_trials_tf, training=None):
+        scores = super().call(inputs, training=False)[self.output_name]
+        for _ in range(monte_carlo_trials):
+            scores += super().call(inputs, training=True)[self.output_name]
+        scores = tf.divide(scores, monte_carlo_trials_tf)
+        return {self.output_name: scores}
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
@@ -120,16 +187,17 @@ class MonteCarloScorer(RelevanceScorer):
         scores : dict of tensor object
             Tensor object of the score computed by the model
         """
-        # TODO replace loop with vector operations for performance
         if training:
-            monte_carlo_trials = self.monte_carlo_training_trials
-            monte_carlo_trials_tf = self.monte_carlo_training_trials_tf
+            if self.use_fixed_mask_in_training:
+                return self.deterministic_call(inputs, training=training)
+            else:
+                return self.stochastic_call(inputs, self.monte_carlo_training_trials,
+                                        self.monte_carlo_training_trials_tf, training=training)
         else:
-            monte_carlo_trials = self.monte_carlo_test_trials
-            monte_carlo_trials_tf = self.monte_carlo_test_trials_tf
+            if self.use_fixed_mask_in_testing:
+                return self.deterministic_call(inputs, training=training)
+            else:
+                return self.stochastic_call(inputs, self.monte_carlo_test_trials, self.monte_carlo_test_trials_tf,
+                                        training=training)
 
-        scores = super().call(inputs, training=False)[self.output_name]
-        for _ in range(monte_carlo_trials):
-            scores += super().call(inputs, training=True)[self.output_name]
-        scores = tf.divide(scores, monte_carlo_trials_tf)
-        return {self.output_name: scores}
+
