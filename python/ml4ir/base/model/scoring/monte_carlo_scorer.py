@@ -5,7 +5,6 @@ from typing import Dict, Optional, Union, List
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.metrics import Metric
-import math
 
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
