@@ -137,7 +137,6 @@ class MonteCarloInferenceKey(Key):
     MONTE_CARLO_TRIALS = "monte_carlo_trials"
     NUM_TEST_TRIALS = "num_test_trials"
     NUM_TRAINING_TRIALS = "num_training_trials"
-    FEATURES_WITH_FIXED_MASKS = "features_with_fixed_masks"
     USE_FIXED_MASK_IN_TRAINING = "use_fixed_mask_in_training"
     USE_FIXED_MASK_IN_TESTING = "use_fixed_mask_in_testing"
 
