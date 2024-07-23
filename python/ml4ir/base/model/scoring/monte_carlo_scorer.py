@@ -90,9 +90,15 @@ class MonteCarloScorer(RelevanceScorer):
 
         self.use_fixed_mask_in_training = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
             MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING, False))
+        if not self.use_fixed_mask_in_training:
+            self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
 
         self.use_fixed_mask_in_testing = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
             MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING, False))
+        if not self.use_fixed_mask_in_testing:
+            self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TEST_TRIALS]
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
