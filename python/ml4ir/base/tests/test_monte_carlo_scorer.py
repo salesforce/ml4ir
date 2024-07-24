@@ -82,7 +82,6 @@ class TestMonteCarloScorer(unittest.TestCase):
         mask = QueryFeatureMask(name="query_feature_mask",
                                  mask_rate=0,
                                  mask_at_inference=True,
-                                 use_fixed_masks=True,
                                  requires_mask=True)
         batch_size = 4
         sequence_len = 5
