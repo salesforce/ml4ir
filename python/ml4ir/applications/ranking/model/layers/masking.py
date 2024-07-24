@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers
 import itertools
+from ml4ir.base.config.keys import MonteCarloInferenceKey
 
 
 class RecordFeatureMask(layers.Layer):
@@ -134,13 +135,12 @@ class QueryFeatureMask(layers.Layer):
                 [0., 1., 1., 1.]]])
     """
 
-    fixed_mask_count = 1
+    masking_dict = {"fixed_mask_count": 1}
 
     def __init__(self,
                  name="query_feature_mask",
                  mask_rate: float = 0.2,
                  mask_at_inference: bool = False,
-                 use_fixed_masks: bool = False,
                  requires_mask: bool = False,
                  **kwargs):
         """
@@ -163,9 +163,31 @@ class QueryFeatureMask(layers.Layer):
         self.mask_rate = mask_rate
         self.mask_at_inference = mask_at_inference
         self.requires_mask = requires_mask
-        self.use_fixed_masks = use_fixed_masks
         self.fixed_masks = None
         self.current_mask_index = -1
+
+    def apply_stochastic_mask(self, inputs, training):
+        batch_size, sequence_len, feature_dim = tf.shape(inputs)[0], tf.shape(inputs)[1], tf.shape(inputs)[2]
+        if self.mask_at_inference or training:
+            mask = tf.cast(tf.math.greater(tf.random.uniform([batch_size, feature_dim]), self.mask_rate),
+                           dtype=tf.float32)
+            mask = tf.expand_dims(mask, axis=1)
+            mask = tf.tile(mask, [1, sequence_len, 1])
+            return tf.multiply(inputs, mask)
+        else:
+            return inputs
+
+    def apply_fixed_mask(self, inputs):
+        batch_size, sequence_len, feature_dim = tf.shape(inputs)[0], tf.shape(inputs)[1], tf.shape(inputs)[2]
+        if self.fixed_masks is None:
+            self.fixed_masks = list(itertools.product([0, 1], repeat=feature_dim))
+            QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT] = len(self.fixed_masks)
+
+        current_mask = tf.expand_dims(tf.expand_dims(self.fixed_masks[self.current_mask_index], 0), 0)
+        current_mask = tf.tile(current_mask, [batch_size, sequence_len, 1])
+        self.current_mask_index += 1
+        self.current_mask_index %= QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT]
+        return tf.multiply(inputs, tf.cast(current_mask, tf.float32))
 
     def call(self, inputs, mask=None, training=None):
         """
@@ -188,25 +210,13 @@ class QueryFeatureMask(layers.Layer):
             Feature tensor where mask_rate of records' features have been masked out (or set to 0.)
             Shape: [batch_size, sequence_len, feature_dim]
         """
-        batch_size, sequence_len, feature_dim = tf.shape(inputs)[0], tf.shape(inputs)[1], tf.shape(inputs)[2]
-        if self.use_fixed_masks:
-            if self.fixed_masks is None:
-                self.fixed_masks = list(itertools.product([0, 1], repeat=feature_dim))
-                QueryFeatureMask.fixed_mask_count = len(self.fixed_masks)
-
-            current_mask = tf.expand_dims(tf.expand_dims(self.fixed_masks[self.current_mask_index], 0), 0)
-            current_mask = tf.tile(current_mask, [batch_size, sequence_len, 1])
-            self.current_mask_index += 1
-            self.current_mask_index %= QueryFeatureMask.fixed_mask_count
-            return tf.multiply(inputs, tf.cast(current_mask, tf.float32))
-
-        else:
-            if self.mask_at_inference or training:
-                mask = tf.cast(tf.math.greater(tf.random.uniform([batch_size, feature_dim]), self.mask_rate), dtype=tf.float32)
-                mask = tf.expand_dims(mask, axis=1)
-                mask = tf.tile(mask, [1, sequence_len, 1])
-                return tf.multiply(inputs, mask)
+        if training:
+            if QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING]:
+                return self.apply_fixed_mask(inputs)
             else:
-                return inputs
-
-
+                return self.apply_stochastic_mask(inputs, training)
+        else:
+            if QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING]:
+                return self.apply_fixed_mask(inputs)
+            else:
+                return self.apply_stochastic_mask(inputs, training)
