@@ -90,15 +90,19 @@ class MonteCarloScorer(RelevanceScorer):
 
         self.use_fixed_mask_in_training = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
             MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING, False))
+        QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING] = self.use_fixed_mask_in_training
         if not self.use_fixed_mask_in_training:
             self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
                 MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+            QueryFeatureMask.masking_dict[MonteCarloInferenceKey.NUM_TRAINING_TRIALS] = self.monte_carlo_training_trials
 
         self.use_fixed_mask_in_testing = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
             MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING, False))
+        QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING] = self.use_fixed_mask_in_testing
         if not self.use_fixed_mask_in_testing:
             self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
                 MonteCarloInferenceKey.NUM_TEST_TRIALS]
+            QueryFeatureMask.masking_dict[MonteCarloInferenceKey.NUM_TEST_TRIALS] = self.monte_carlo_test_trials
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
@@ -118,15 +122,15 @@ class MonteCarloScorer(RelevanceScorer):
             if not self.use_fixed_mask_in_training:
                 monte_carlo_trials = self.monte_carlo_training_trials
             else:
-                monte_carlo_trials = QueryFeatureMask.fixed_mask_count - 1
+                monte_carlo_trials = QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT] - 1
         else:
             if not self.use_fixed_mask_in_testing:
                 monte_carlo_trials = self.monte_carlo_test_trials
             else:
-                monte_carlo_trials = QueryFeatureMask.fixed_mask_count - 1
+                monte_carlo_trials = QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT] - 1
 
-        scores = super().call(inputs, training=False)[self.output_name]
+        scores = super().call(inputs, training=training)[self.output_name]
         for _ in range(monte_carlo_trials):
-            scores += super().call(inputs, training=True)[self.output_name]
+            scores += super().call(inputs, training=training)[self.output_name]
         scores = tf.divide(scores, tf.constant(monte_carlo_trials + 1, dtype=tf.float32))
         return {self.output_name: scores}
