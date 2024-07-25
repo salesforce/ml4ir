@@ -135,7 +135,9 @@ class QueryFeatureMask(layers.Layer):
                 [0., 1., 1., 1.]]])
     """
 
-    masking_dict = {"fixed_mask_count": 1}
+    masking_config = {MonteCarloInferenceKey.FIXED_MASK_COUNT: 1,
+                    MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING: False,
+                    MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING: False}
 
     def __init__(self,
                  name="query_feature_mask",
@@ -177,16 +179,16 @@ class QueryFeatureMask(layers.Layer):
         else:
             return inputs
 
-    def apply_fixed_mask(self, inputs):
+    def apply_fixed_mask(self, inputs, training):
         batch_size, sequence_len, feature_dim = tf.shape(inputs)[0], tf.shape(inputs)[1], tf.shape(inputs)[2]
         if self.fixed_masks is None:
             self.fixed_masks = list(itertools.product([0, 1], repeat=feature_dim))
-            QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT] = len(self.fixed_masks)
+            QueryFeatureMask.masking_config[MonteCarloInferenceKey.FIXED_MASK_COUNT] = len(self.fixed_masks)
 
         current_mask = tf.expand_dims(tf.expand_dims(self.fixed_masks[self.current_mask_index], 0), 0)
         current_mask = tf.tile(current_mask, [batch_size, sequence_len, 1])
         self.current_mask_index += 1
-        self.current_mask_index %= QueryFeatureMask.masking_dict[MonteCarloInferenceKey.FIXED_MASK_COUNT]
+        self.current_mask_index %= QueryFeatureMask.masking_config[MonteCarloInferenceKey.FIXED_MASK_COUNT]
         return tf.multiply(inputs, tf.cast(current_mask, tf.float32))
 
     def call(self, inputs, mask=None, training=None):
@@ -211,12 +213,12 @@ class QueryFeatureMask(layers.Layer):
             Shape: [batch_size, sequence_len, feature_dim]
         """
         if training:
-            if QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING]:
-                return self.apply_fixed_mask(inputs)
+            if QueryFeatureMask.masking_config[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING]:
+                return self.apply_fixed_mask(inputs, training)
             else:
                 return self.apply_stochastic_mask(inputs, training)
         else:
-            if QueryFeatureMask.masking_dict[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING]:
-                return self.apply_fixed_mask(inputs)
+            if QueryFeatureMask.masking_config[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING]:
+                return self.apply_fixed_mask(inputs, training)
             else:
                 return self.apply_stochastic_mask(inputs, training)

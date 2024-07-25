@@ -139,6 +139,7 @@ class MonteCarloInferenceKey(Key):
     NUM_TRAINING_TRIALS = "num_training_trials"
     USE_FIXED_MASK_IN_TRAINING = "use_fixed_mask_in_training"
     USE_FIXED_MASK_IN_TESTING = "use_fixed_mask_in_testing"
+    FIXED_MASK_COUNT = "fixed_mask_count"
 
 
 class PipelineType(Key):
