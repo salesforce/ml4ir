@@ -134,9 +134,17 @@ class CalibrationKey(Key):
 
 
 class MonteCarloInferenceKey(Key):
+    # marking the config of monte carlo scorer
     MONTE_CARLO_TRIALS = "monte_carlo_trials"
+
+    # configuring the number of stochastic monte carlo trials for training and testing
     NUM_TEST_TRIALS = "num_test_trials"
     NUM_TRAINING_TRIALS = "num_training_trials"
+
+    # configuring if to use deterministic fixed mask for training and testing
+    USE_FIXED_MASK_IN_TRAINING = "use_fixed_mask_in_training"
+    USE_FIXED_MASK_IN_TESTING = "use_fixed_mask_in_testing"
+    FIXED_MASK_COUNT = "fixed_mask_count"
 
 
 class PipelineType(Key):

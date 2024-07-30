@@ -68,7 +68,10 @@ def get_scorer(model_config: dict,
 
     if (MonteCarloInferenceKey.MONTE_CARLO_TRIALS in model_config and
             (model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.NUM_TEST_TRIALS, 0) or
-            model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.NUM_TRAINING_TRIALS, 0))):
+             model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.NUM_TRAINING_TRIALS, 0) or
+             model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING, False) or
+             model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING, False))):
+
         logger.info("Using Monte Carlo scorer.")
         scorer = MonteCarloScorer(
             feature_config=feature_config,

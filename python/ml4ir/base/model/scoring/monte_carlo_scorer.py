@@ -1,20 +1,18 @@
 import logging
 from logging import Logger
-import traceback
 from typing import Dict, Optional, Union, List
 
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.metrics import Metric
 
-from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
 from ml4ir.base.config.keys import MonteCarloInferenceKey
+from ml4ir.applications.ranking.model.layers.masking import QueryFeatureMask
 
 
 class MonteCarloScorer(RelevanceScorer):
@@ -22,16 +20,7 @@ class MonteCarloScorer(RelevanceScorer):
     Monte Carlo class that defines the neural network layers that convert
     the input features into scores by using monte carlo trials in inference.
     The actual masking of features is done by a masking layer called:
-    `RecordFeatureMask` or `QueryFeatureMask`
-
-    Defines the feature transformation layer(InteractionModel), dense
-    neural network layers combined with activation layers and the loss function
-
-    Notes
-    -----
-    - This is a Keras model subclass and is built recursively using keras Layer instances
-    - This is an abstract class. In order to use a Scorer, one must define
-      and override the `architecture_op` and the `final_activation_op` functions
+    `RecordFeatureMask` or `QueryFeatureMask` or by using fixed masks
     """
 
     def __init__(
@@ -99,12 +88,21 @@ class MonteCarloScorer(RelevanceScorer):
                          logs_dir=logs_dir,
                          **kwargs)
 
-        self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TEST_TRIALS]
-        self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+        self.use_fixed_mask_in_training = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
+            MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING, False))
+        QueryFeatureMask.masking_config[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TRAINING] = self.use_fixed_mask_in_training
+        if not self.use_fixed_mask_in_training:
+            self.monte_carlo_training_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TRAINING_TRIALS]
+            QueryFeatureMask.masking_config[MonteCarloInferenceKey.NUM_TRAINING_TRIALS] = self.monte_carlo_training_trials
 
-        # Adding 1 here to account of the extra inference run with training=False.
-        self.monte_carlo_test_trials_tf = tf.constant(self.monte_carlo_test_trials + 1, dtype=tf.float32)
-        self.monte_carlo_training_trials_tf = tf.constant(self.monte_carlo_training_trials + 1, dtype=tf.float32)
+        self.use_fixed_mask_in_testing = bool(self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS].get(
+            MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING, False))
+        QueryFeatureMask.masking_config[MonteCarloInferenceKey.USE_FIXED_MASK_IN_TESTING] = self.use_fixed_mask_in_testing
+        if not self.use_fixed_mask_in_testing:
+            self.monte_carlo_test_trials = self.model_config[MonteCarloInferenceKey.MONTE_CARLO_TRIALS][
+                MonteCarloInferenceKey.NUM_TEST_TRIALS]
+            QueryFeatureMask.masking_config[MonteCarloInferenceKey.NUM_TEST_TRIALS] = self.monte_carlo_test_trials
 
     def call(self, inputs: Dict[str, tf.Tensor], training=None):
         """
@@ -120,16 +118,19 @@ class MonteCarloScorer(RelevanceScorer):
         scores : dict of tensor object
             Tensor object of the score computed by the model
         """
-        # TODO replace loop with vector operations for performance
         if training:
-            monte_carlo_trials = self.monte_carlo_training_trials
-            monte_carlo_trials_tf = self.monte_carlo_training_trials_tf
+            if not self.use_fixed_mask_in_training:
+                monte_carlo_trials = self.monte_carlo_training_trials
+            else:
+                monte_carlo_trials = QueryFeatureMask.masking_config[MonteCarloInferenceKey.FIXED_MASK_COUNT] - 1
         else:
-            monte_carlo_trials = self.monte_carlo_test_trials
-            monte_carlo_trials_tf = self.monte_carlo_test_trials_tf
+            if not self.use_fixed_mask_in_testing:
+                monte_carlo_trials = self.monte_carlo_test_trials
+            else:
+                monte_carlo_trials = QueryFeatureMask.masking_config[MonteCarloInferenceKey.FIXED_MASK_COUNT] - 1
 
-        scores = super().call(inputs, training=False)[self.output_name]
+        scores = super().call(inputs, training=training)[self.output_name]
         for _ in range(monte_carlo_trials):
-            scores += super().call(inputs, training=True)[self.output_name]
-        scores = tf.divide(scores, monte_carlo_trials_tf)
+            scores += super().call(inputs, training=training)[self.output_name]
+        scores = tf.divide(scores, tf.constant(monte_carlo_trials + 1, dtype=tf.float32))
         return {self.output_name: scores}

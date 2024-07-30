@@ -83,4 +83,54 @@ class TestQueryFeatureMask(unittest.TestCase):
         condition = tf.reduce_all(tf.logical_or(tf.equal(total_sum_per_batch, 5), tf.equal(total_sum_per_batch, 0)))
         self.assertTrue(condition.numpy(), True)
 
+    def test_create_fixed_masks(self):
+        mask = QueryFeatureMask(name="query_feature_mask",
+                                mask_rate=0,
+                                mask_at_inference=True,
+                                requires_mask=True)
+        feature_dim = 2
+        expected_result = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        result = mask.create_fixed_masks(feature_dim)
+        self.assertEqual(result, expected_result)
+
+        feature_dim = 3
+        expected_result = [
+            (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1),
+            (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)
+        ]
+        result = mask.create_fixed_masks(feature_dim)
+        self.assertEqual(result, expected_result)
+
+    def test_apply_fixed_mask(self):
+        mask = QueryFeatureMask(name="query_feature_mask",
+                                mask_rate=0,
+                                mask_at_inference=True,
+                                requires_mask=True)
+
+        inputs = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=tf.float32)
+        mask.create_fixed_masks = lambda x: [(1, 0), (0, 1)]
+
+        # Run first time, expecting first mask (1, 0)
+        result = mask.apply_fixed_mask(inputs, training=True)
+        expected_result = tf.constant([[[0., 2.], [0., 4.]], [[0., 6.], [0., 8.]]], dtype=tf.float32)
+        tf.debugging.assert_near(result, expected_result)
+
+        # Run second time, expecting second mask (0, 1)
+        result = mask.apply_fixed_mask(inputs, training=True)
+        expected_result = tf.constant([[[1., 0.], [3., 0.]], [[5., 0.], [7., 0.]]], dtype=tf.float32)
+        tf.debugging.assert_near(result, expected_result)
+
+    def test_apply_stochastic_mask_training(self):
+        mask = QueryFeatureMask(name="query_feature_mask",
+                                mask_rate=0,
+                                mask_at_inference=True,
+                                requires_mask=True)
+        inputs = tf.constant([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=tf.float32)
+        mask.mask_rate = 0.9
+        result1 = mask.apply_stochastic_mask(inputs, training=True)
+        tf.debugging.assert_none_equal(result1, inputs)
+
+        mask.mask_rate = 0
+        result2 = mask.apply_stochastic_mask(inputs, training=True)
+        tf.debugging.assert_equal(result2, inputs)
 
