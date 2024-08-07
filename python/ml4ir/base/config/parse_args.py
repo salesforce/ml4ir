@@ -186,13 +186,6 @@ class RelevanceArgParser(ArgumentParser):
         )
 
         self.add_argument(
-            "--compute_intermediate_stats",
-            type=ast.literal_eval,
-            default=True,
-            help="Whether to compute intermediate stats on test set (mrr, acr, etc) (slow)",
-        )
-
-        self.add_argument(
             "--execution_mode",
             type=str,
             choices=ExecutionModeKey.get_all_keys(),

@@ -25,8 +25,7 @@ class ClassificationModel(RelevanceModel):
             additional_features: dict = {},
             group_metrics_min_queries: int = 50,
             logs_dir: Optional[str] = None,
-            logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True
+            logging_frequency: int = 25
     ):
         """
         Evaluate the Classification Model
@@ -53,8 +52,6 @@ class ClassificationModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
-        compute_intermediate_stats : bool
-            Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------
