@@ -83,6 +83,7 @@ class ClassificationModel(RelevanceModel):
             self.logger.info("Overall Metrics: \n{}".format(pd.Series(metrics_dict)))
             return None, None, metrics_dict
         else:
+            metrics_dict = dict()
             self.logger.info("Computing grouped metrics.")
             self.logger.warning("Warning: currently, group-wise metric computation "
                                 "collects the test data and predictions "
