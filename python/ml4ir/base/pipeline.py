@@ -596,8 +596,7 @@ class RelevancePipeline(object):
                     inference_signature=self.args.inference_signature,
                     logging_frequency=self.args.logging_frequency,
                     group_metrics_min_queries=self.args.group_metrics_min_queries,
-                    logs_dir=self.logs_dir_local,
-                    compute_intermediate_stats=self.args.compute_intermediate_stats
+                    logs_dir=self.logs_dir_local
                 )
 
             if self.args.execution_mode in {

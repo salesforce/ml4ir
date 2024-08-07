@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import data
+
+from ml4ir.base.config.eval_config import EvalConfigConstants
 from ml4ir.base.model.relevance_model import RelevanceModel
 from ml4ir.base.model.relevance_model import RelevanceModelConstants
 
@@ -23,8 +25,7 @@ class ClassificationModel(RelevanceModel):
             additional_features: dict = {},
             group_metrics_min_queries: int = 50,
             logs_dir: Optional[str] = None,
-            logging_frequency: int = 25,
-            compute_intermediate_stats: bool = True
+            logging_frequency: int = 25
     ):
         """
         Evaluate the Classification Model
@@ -51,8 +52,6 @@ class ClassificationModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
-        compute_intermediate_stats : bool
-            Determines if group metrics and other intermediate stats on the test set should be computed
 
         Returns
         -------
@@ -72,9 +71,17 @@ class ClassificationModel(RelevanceModel):
         if not self.is_compiled:
             return NotImplementedError
         group_metrics_keys = self.feature_config.get_group_metrics_keys()
-        metrics_dict = self.model.evaluate(test_dataset)
-        metrics_dict = dict(zip(self.model.metrics_names, metrics_dict))
-        if compute_intermediate_stats:
+
+        # Compute the tensorflow native metrics
+        metrics_dict = self.model.evaluate(test_dataset, return_dict=True)
+
+        # If basic mode is specified, only compute the keras Model metrics
+        # By default, use the extended mode and compute metrics as defined in this function
+        if self.eval_config.get(EvalConfigConstants.MODE, EvalConfigConstants.EXTENDED_MODE) == EvalConfigConstants.BASIC_MODE:
+            metrics_dict = {f"test_{key}": val for key, val in metrics_dict.items()}
+            self.logger.info("Overall Metrics: \n{}".format(pd.Series(metrics_dict)))
+            return None, None, metrics_dict
+        else:
             self.logger.info("Computing grouped metrics.")
             self.logger.warning("Warning: currently, group-wise metric computation "
                                 "collects the test data and predictions "
