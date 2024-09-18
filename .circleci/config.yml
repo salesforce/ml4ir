@@ -4,17 +4,12 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: lastmansleeping/ml4ir:0.2
+      - image: python:3.10-slim
     resource_class: large
     steps:
       - checkout
       - restore_cache:
           key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
-      - run:
-          name: Update GLIBC
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
@@ -44,17 +39,12 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: cimg/python:3.10
+      - image: python:3.10-slim
     resource_class: large
     steps:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update GLIBC
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
@@ -82,17 +72,12 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: cimg/python:3.10
+      - image: python:3.10-slim
     resource_class: large
     steps:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update GLIBC
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
@@ -120,17 +105,12 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: cimg/python:3.10
+      - image: python:3.10-slim
     resource_class: large
     steps:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update GLIBC
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
@@ -158,17 +138,12 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: cimg/python:3.10
+      - image: python:3.10-slim
     resource_class: medium
     steps:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update GLIBC
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
