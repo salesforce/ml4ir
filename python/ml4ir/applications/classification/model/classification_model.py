@@ -1,5 +1,6 @@
 import ast
 import os
+import re
 import sys
 from typing import Optional
 
@@ -175,7 +176,7 @@ class ClassificationModel(RelevanceModel):
             return np.array([])
             
 
-    def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
+    def _calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
         """
         Given a metric and a dataframe with `predictions`, it iterates the dataframe in
         using `batch_size` and updates the metric. Once the dataframe is fully iterated,
@@ -207,10 +208,10 @@ class ClassificationModel(RelevanceModel):
 
         # Convert string arrays to numerical arrays if necessary
         if isinstance(predictions[label_name].iloc[0], str):
-            predictions[label_name] = predictions[label_name].apply(lambda x: convert_string_to_array(x))
+            predictions[label_name] = predictions[label_name].apply(lambda x: self._convert_string_to_array(x))
         
         if isinstance(predictions[output_name].iloc[0], str):
-            predictions[output_name] = predictions[output_name].apply(lambda x: convert_string_to_array(x))
+            predictions[output_name] = predictions[output_name].apply(lambda x: self._convert_string_to_array(x))
 
         
         metric.reset_states()
