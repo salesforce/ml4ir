@@ -106,7 +106,7 @@ class ClassificationModel(RelevanceModel):
             '''
             batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
             # Letting metrics in the outer loop to avoid tracing
-            for prediction in self.predict(test_dataset, inference_signature=inference_signature,
+            for predictions in self.predict(test_dataset, inference_signature=inference_signature,
                                        additional_features=additional_features,
                                        logs_dir=logs_dir,
                                        logging_frequency=logging_frequency):
