@@ -165,7 +165,7 @@ class ClassificationModel(RelevanceModel):
         for pos in range(0, len(dataframe), size):
             yield dataframe.iloc[pos:pos + size]
 
-    def _convert_string_to_array(s):
+    def _convert_string_to_array(self, s):
         try:
             # Add commas between numbers to make it a valid Python list
             s_fixed = re.sub(r"\s+", ",", s.strip())
