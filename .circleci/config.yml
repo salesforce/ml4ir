@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: python:3.10-slim
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -13,10 +13,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python3.10 -m venv venv  # Ensure Python 3.10 is used
+            export PATH=/home/circleci/.pyenv/shims:$PATH
+            python3 -m venv venv
             . venv/bin/activate
-            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
-            python3.10 -m pip install -r python/requirements.txt
+            pip install --upgrade pip
+            pip install -r python/requirements.txt
       - run:
           name: Build
           command: |
@@ -39,7 +40,7 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: python:3.10-slim
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -48,10 +49,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python3.10 -m venv venv  # Ensure Python 3.10 is used
+            python3 -m venv venv
             . venv/bin/activate
-            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
-            python3.10 -m pip install -r python/requirements.txt
+            cd python
+            pip install --upgrade pip
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -72,7 +74,7 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: python:3.10-slim
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -81,10 +83,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python3.10 -m venv venv  # Ensure Python 3.10 is used
+            python3 -m venv venv
             . venv/bin/activate
-            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
-            python3.10 -m pip install -r python/requirements.txt
+            cd python
+            pip install --upgrade pip
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -105,7 +108,7 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: python:3.10-slim
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -114,10 +117,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python3.10 -m venv venv  # Ensure Python 3.10 is used
+            python3 -m venv venv
             . venv/bin/activate
-            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
-            python3.10 -m pip install -r python/requirements.txt
+            cd python
+            pip install --upgrade pip
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -138,7 +142,7 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: python:3.10-slim
+      - image: cimg/python:3.10
     resource_class: medium
     steps:
       - checkout
@@ -147,10 +151,11 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python3.10 -m venv venv  # Ensure Python 3.10 is used
+            python3 -m venv venv
             . venv/bin/activate
-            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
-            python3.10 -m pip install -r python/requirements.txt
+            cd python
+            pip install --upgrade pip
+            pip install -r requirements.txt -r dev-requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
