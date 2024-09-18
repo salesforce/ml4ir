@@ -165,7 +165,7 @@ class ClassificationModel(RelevanceModel):
         for pos in range(0, len(dataframe), size):
             yield dataframe.iloc[pos:pos + size]
 
-    def convert_string_to_array(s):
+    def _convert_string_to_array(s):
         try:
             # Add commas between numbers to make it a valid Python list
             s_fixed = re.sub(r"\s+", ",", s.strip())
@@ -176,7 +176,7 @@ class ClassificationModel(RelevanceModel):
             return np.array([])
             
 
-    def _calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
+    def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
         """
         Given a metric and a dataframe with `predictions`, it iterates the dataframe in
         using `batch_size` and updates the metric. Once the dataframe is fully iterated,
