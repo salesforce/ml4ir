@@ -51,13 +51,10 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            pyenv install 3.10.0
-            pyenv global 3.10.0
-            export PATH=/home/circleci/.pyenv/shims:$PATH
-            python3 -m venv venv
+            python3.10 -m venv venv  # Ensure Python 3.10 is used
             . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r python/requirements.txt
+            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
+            python3.10 -m pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -87,13 +84,10 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            pyenv install 3.10.0
-            pyenv global 3.10.0
-            export PATH=/home/circleci/.pyenv/shims:$PATH
-            python3 -m venv venv
+            python3.10 -m venv venv  # Ensure Python 3.10 is used
             . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r python/requirements.txt
+            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
+            python3.10 -m pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -123,13 +117,10 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            pyenv install 3.10.0
-            pyenv global 3.10.0
-            export PATH=/home/circleci/.pyenv/shims:$PATH
-            python3 -m venv venv
+            python3.10 -m venv venv  # Ensure Python 3.10 is used
             . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r python/requirements.txt
+            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
+            python3.10 -m pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -159,13 +150,10 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            pyenv install 3.10.0
-            pyenv global 3.10.0
-            export PATH=/home/circleci/.pyenv/shims:$PATH
-            python3 -m venv venv
+            python3.10 -m venv venv  # Ensure Python 3.10 is used
             . venv/bin/activate
-            pip install --upgrade pip
-            pip install -r python/requirements.txt
+            python3.10 -m pip install --upgrade pip  # Upgrade pip for Python 3.10
+            python3.10 -m pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
