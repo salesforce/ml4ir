@@ -196,6 +196,8 @@ class ClassificationModel(RelevanceModel):
         for chunk in self.get_chunks_from_df(predictions, batch_size):
             y_true = tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32)
             y_pred = tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32)
+
+            print(f"y_true shape: {y_true.shape}, y_pred shape: {y_pred.shape}")
         
             # Ensure y_pred is 2D
             if len(y_pred.shape) == 1:
