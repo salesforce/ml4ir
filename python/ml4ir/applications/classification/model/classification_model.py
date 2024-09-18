@@ -1,6 +1,4 @@
-import ast
 import os
-import re
 import sys
 from typing import Optional
 
@@ -89,11 +87,6 @@ class ClassificationModel(RelevanceModel):
                                 "collects the test data and predictions "
                                 "in memory in order to perform the groupBy operations. "
                                 "With large test datasets, it can lead in OOM issues.")
-            predictions = self.predict(test_dataset,
-                                       inference_signature=inference_signature,
-                                       additional_features=additional_features,
-                                       logs_dir=logs_dir,
-                                       logging_frequency=logging_frequency)
             global_metrics = []  # group_name, metric, value
             grouped_metrics = []
             # instead of calculating measure with a single update_state (can result in a call with
@@ -113,22 +106,26 @@ class ClassificationModel(RelevanceModel):
             '''
             batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
             # Letting metrics in the outer loop to avoid tracing
-            for metric in self.model.metrics:
-                global_metrics.append(
-                    self.calculate_metric_on_batch(metric, predictions, batch_size))
-                self.logger.info(f"Global metric {metric.name} completed."
-                                 f" Score: {global_metrics[-1]['value']}")
-
-                for group_ in group_metrics_keys:  # Calculate metrics for group metrics
-                    for name, group in predictions.groupby(group_['name']):
-                        self.logger.info(f"Per feature metric {metric.name}."
-                                         f" Feature: {group_['name']}, value: {name}")
-                        if group.shape[0] >= group_metrics_min_queries:
-                            grouped_metrics.append(self.calculate_metric_on_batch(metric,
-                                                                                  group,
-                                                                                  batch_size,
-                                                                                  group_['name'],
-                                                                                  name))
+            for prediction in self.predict(test_dataset, inference_signature=inference_signature,
+                                       additional_features=additional_features,
+                                       logs_dir=logs_dir,
+                                       logging_frequency=logging_frequency):
+                for metric in self.model.metrics:
+                    global_metrics.append(
+                        self.calculate_metric_on_batch(metric, predictions, batch_size))
+                    self.logger.info(f"Global metric {metric.name} completed."
+                                     f" Score: {global_metrics[-1]['value']}")
+    
+                    for group_ in group_metrics_keys:  # Calculate metrics for group metrics
+                        for name, group in predictions.groupby(group_['name']):
+                            self.logger.info(f"Per feature metric {metric.name}."
+                                             f" Feature: {group_['name']}, value: {name}")
+                            if group.shape[0] >= group_metrics_min_queries:
+                                grouped_metrics.append(self.calculate_metric_on_batch(metric,
+                                                                                      group,
+                                                                                      batch_size,
+                                                                                      group_['name'],
+                                                                                      name))
             global_metrics = pd.DataFrame(global_metrics)
             grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
             if logs_dir:
@@ -165,17 +162,6 @@ class ClassificationModel(RelevanceModel):
         for pos in range(0, len(dataframe), size):
             yield dataframe.iloc[pos:pos + size]
 
-    def _convert_string_to_array(self, s):
-        try:
-            # Add commas between numbers to make it a valid Python list
-            s_fixed = re.sub(r"\s+", ",", s.strip())
-            return np.array(ast.literal_eval(s_fixed))
-        except (ValueError, SyntaxError) as e:
-            # Handle potential errors during conversion
-            print(f"Error converting string to array: {s}")
-            return np.array([])
-            
-
     def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
         """
         Given a metric and a dataframe with `predictions`, it iterates the dataframe in
@@ -205,14 +191,6 @@ class ClassificationModel(RelevanceModel):
         """
         label_name = self.feature_config.get_label()['name']
         output_name = self.output_name
-
-        # Convert string arrays to numerical arrays if necessary
-        if isinstance(predictions[label_name].iloc[0], str):
-            predictions[label_name] = predictions[label_name].apply(lambda x: self._convert_string_to_array(x))
-        
-        if isinstance(predictions[output_name].iloc[0], str):
-            predictions[output_name] = predictions[output_name].apply(lambda x: self._convert_string_to_array(x))
-
         
         metric.reset_states()
         for chunk in self.get_chunks_from_df(predictions, batch_size):
@@ -265,6 +243,7 @@ class ClassificationModel(RelevanceModel):
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
             self.file_io.rm_file(outfile)
+            
         for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
             if batch_idx % logging_frequency == 0: print(f"Processing predictions : Batch {batch_idx}")
             predictions_batch = self.model.predict(batch)
@@ -284,8 +263,7 @@ class ClassificationModel(RelevanceModel):
                     if isinstance(batch_df[col].values[0], bytes):
                         batch_df[col] = batch_df[col].str.decode('utf8')
                 batch_df.to_csv(outfile, mode="a", header=batch_idx==0, index=False)
-        self.logger.info(f"Model predictions written to: {outfile}")
-        return pd.read_csv(outfile)
+            yield batch_df
 
     def _create_prediction_dataframe(self, logging_frequency, test_dataset):
         """
