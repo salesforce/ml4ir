@@ -164,6 +164,17 @@ class ClassificationModel(RelevanceModel):
         for pos in range(0, len(dataframe), size):
             yield dataframe.iloc[pos:pos + size]
 
+    def convert_string_to_array(s):
+        try:
+            # Add commas between numbers to make it a valid Python list
+            s_fixed = re.sub(r"\s+", ",", s.strip())
+            return np.array(ast.literal_eval(s_fixed))
+        except (ValueError, SyntaxError) as e:
+            # Handle potential errors during conversion
+            print(f"Error converting string to array: {s}")
+            return np.array([])
+            
+
     def calculate_metric_on_batch(self, metric, predictions, batch_size, group_name=None, group_key=None):
         """
         Given a metric and a dataframe with `predictions`, it iterates the dataframe in
@@ -194,11 +205,13 @@ class ClassificationModel(RelevanceModel):
         label_name = self.feature_config.get_label()['name']
         output_name = self.output_name
 
+        # Convert string arrays to numerical arrays if necessary
         if isinstance(predictions[label_name].iloc[0], str):
-            predictions[label_name] = predictions[label_name].apply(lambda x: np.array(ast.literal_eval(x)))
-    
+            predictions[label_name] = predictions[label_name].apply(lambda x: convert_string_to_array(x))
+        
         if isinstance(predictions[output_name].iloc[0], str):
-            predictions[output_name] = predictions[output_name].apply(lambda x: np.array(ast.literal_eval(x)))
+            predictions[output_name] = predictions[output_name].apply(lambda x: convert_string_to_array(x))
+
         
         metric.reset_states()
         for chunk in self.get_chunks_from_df(predictions, batch_size):
