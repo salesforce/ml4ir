@@ -192,6 +192,13 @@ class ClassificationModel(RelevanceModel):
         """
         label_name = self.feature_config.get_label()['name']
         output_name = self.output_name
+
+        if isinstance(predictions[label_name].iloc[0], str):
+            predictions[label_name] = predictions[label_name].apply(lambda x: np.array(ast.literal_eval(x)))
+    
+        if isinstance(predictions[output_name].iloc[0], str):
+            predictions[output_name] = predictions[output_name].apply(lambda x: np.array(ast.literal_eval(x)))
+        
         metric.reset_states()
         for chunk in self.get_chunks_from_df(predictions, batch_size):
             metric.update_state(tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32),
@@ -244,7 +251,7 @@ class ClassificationModel(RelevanceModel):
             # Delete file if it exists
             self.file_io.rm_file(outfile)
         for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
-            print(f"Processing predictions : Batch {batch_idx}")
+            if batch_idx % logging_frequency == 0: print(f"Processing predictions : Batch {batch_idx}")
             predictions_batch = self.model.predict(batch)
             batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
             batch_df[self.output_name] = [x for x in np.squeeze(predictions_batch[self.output_name])]
