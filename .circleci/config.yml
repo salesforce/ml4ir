@@ -11,6 +11,11 @@ jobs:
       - restore_cache:
           key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
       - run:
+          name: Update GLIBC
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libc6
+      - run:
           name: Install Python deps in a venv
           command: |
             python3.10 -m venv venv  # Ensure Python 3.10 is used
@@ -46,6 +51,11 @@ jobs:
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
+          name: Update GLIBC
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libc6
+      - run:
           name: Install Python deps in a venv
           command: |
             python3.10 -m venv venv  # Ensure Python 3.10 is used
@@ -78,6 +88,11 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
+      - run:
+          name: Update GLIBC
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
@@ -112,6 +127,11 @@ jobs:
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
+          name: Update GLIBC
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libc6
+      - run:
           name: Install Python deps in a venv
           command: |
             python3.10 -m venv venv  # Ensure Python 3.10 is used
@@ -144,6 +164,11 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
+      - run:
+          name: Update GLIBC
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libc6
       - run:
           name: Install Python deps in a venv
           command: |
