@@ -194,8 +194,12 @@ class ClassificationModel(RelevanceModel):
         output_name = self.output_name
         metric.reset_states()
         for chunk in self.get_chunks_from_df(predictions, batch_size):
-            metric.update_state(tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32),
-                                tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32))
+            y_true = tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32)
+            y_pred = tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32)
+
+            print(f"y_true shape: {y_true.shape}, y_pred shape: {y_pred.shape}")
+            metric.update_state(y_true, y_pred, temp)
+        
         if group_name:
             return {"group_name": group_name,
                     "group_key": group_key,
