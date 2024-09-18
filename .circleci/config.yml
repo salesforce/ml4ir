@@ -13,6 +13,8 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            pyenv install 3.10.0
+            pyenv global 3.10.0
             export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
@@ -49,11 +51,13 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            pyenv install 3.10.0
+            pyenv global 3.10.0
+            export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
-            cd python
             pip install --upgrade pip
-            pip install -r requirements.txt -r dev-requirements.txt
+            pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -83,11 +87,13 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            pyenv install 3.10.0
+            pyenv global 3.10.0
+            export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
-            cd python
             pip install --upgrade pip
-            pip install -r requirements.txt -r dev-requirements.txt
+            pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -117,11 +123,13 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            pyenv install 3.10.0
+            pyenv global 3.10.0
+            export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
-            cd python
             pip install --upgrade pip
-            pip install -r requirements.txt -r dev-requirements.txt
+            pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -151,11 +159,13 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
+            pyenv install 3.10.0
+            pyenv global 3.10.0
+            export PATH=/home/circleci/.pyenv/shims:$PATH
             python3 -m venv venv
             . venv/bin/activate
-            cd python
             pip install --upgrade pip
-            pip install -r requirements.txt -r dev-requirements.txt
+            pip install -r python/requirements.txt
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
