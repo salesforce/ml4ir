@@ -87,6 +87,11 @@ class ClassificationModel(RelevanceModel):
                                 "collects the test data and predictions "
                                 "in memory in order to perform the groupBy operations. "
                                 "With large test datasets, it can lead in OOM issues.")
+            predictions = pd.concat(self.predict(test_dataset, 
+                                        inference_signature=inference_signature,
+                                        additional_features=additional_features,
+                                        logs_dir=logs_dir,
+                                        logging_frequency=logging_frequency), ignore_index=True)
             global_metrics = []  # group_name, metric, value
             grouped_metrics = []
             # instead of calculating measure with a single update_state (can result in a call with
@@ -106,20 +111,12 @@ class ClassificationModel(RelevanceModel):
             '''
             batch_size = test_dataset._input_dataset._batch_size.numpy()  # Hacky way to get batch_size
             # Letting metrics in the outer loop to avoid tracing
-            predictions = pd.concat(self.predict(test_dataset, 
-                                        inference_signature=inference_signature,
-                                        additional_features=additional_features,
-                                        logs_dir=logs_dir,
-                                        logging_frequency=logging_frequency), ignore_index=True)
-
-            # Calculate global metrics
             for metric in self.model.metrics:
                 global_metrics.append(
                     self.calculate_metric_on_batch(metric, predictions, batch_size))
                 self.logger.info(f"Global metric {metric.name} completed."
                                  f" Score: {global_metrics[-1]['value']}")
             
-                # Calculate group-wise metrics
                 for group_ in group_metrics_keys:  # Calculate metrics for group metrics
                     for name, group in predictions.groupby(group_['name']):
                         self.logger.info(f"Per feature metric {metric.name}."
@@ -195,16 +192,10 @@ class ClassificationModel(RelevanceModel):
         """
         label_name = self.feature_config.get_label()['name']
         output_name = self.output_name
-        
         metric.reset_states()
-        
-        y_true = tf.constant(predictions[label_name].values.tolist(), dtype=tf.float32)
-        y_pred = tf.constant(predictions[output_name].values.tolist(), dtype=tf.float32)
-
-        print(f"y_true shape: {y_true.shape}, y_pred shape: {y_pred.shape}")
-        
-        metric.update_state(y_true, y_pred)
-
+        for chunk in self.get_chunks_from_df(predictions, batch_size):
+            metric.update_state(tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32),
+                                tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32))
         if group_name:
             return {"group_name": group_name,
                     "group_key": group_key,
