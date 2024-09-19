@@ -116,11 +116,15 @@ class ClassificationModel(RelevanceModel):
                     self.calculate_metric_on_batch(metric, predictions, batch_size))
                 self.logger.info(f"Global metric {metric.name} completed."
                                  f" Score: {global_metrics[-1]['value']}")
+                print(f"Global metric {metric.name} completed."
+                                     f" Score: {global_metrics[-1]['value']}")
 
                 for group_ in group_metrics_keys:  # Calculate metrics for group metrics
                     for name, group in predictions.groupby(group_['name']):
                         self.logger.info(f"Per feature metric {metric.name}."
                                          f" Feature: {group_['name']}, value: {name}")
+                        print(f"Per feature metric {metric.name}."
+                                             f" Feature: {group_['name']}, value: {name}")
                         if group.shape[0] >= group_metrics_min_queries:
                             grouped_metrics.append(self.calculate_metric_on_batch(metric,
                                                                                   group,
