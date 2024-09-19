@@ -110,8 +110,7 @@ class ClassificationModel(RelevanceModel):
                                         inference_signature=inference_signature,
                                         additional_features=additional_features,
                                         logs_dir=logs_dir,
-                                        logging_frequency=logging_frequency,
-                                        batch_size = batch_size):
+                                        logging_frequency=logging_frequency):
                 for metric in self.model.metrics:
                     global_metrics.append(
                         self.calculate_metric_on_batch(metric, predictions, batch_size))
