@@ -59,10 +59,10 @@ jobs:
             cd python
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
 
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
@@ -99,10 +99,10 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
 
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -138,10 +138,10 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
 
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -177,10 +177,10 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
 
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
