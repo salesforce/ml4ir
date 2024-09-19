@@ -245,8 +245,6 @@ class ClassificationModel(RelevanceModel):
             self.file_io.rm_file(outfile)
             
         for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
-            if batch_idx % logging_frequency == 0: print(f"Processing predictions : Batch {batch_idx}")
-            print("test label", len(label))
             predictions_batch = self.model.predict(batch)
             batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
             batch_df[self.output_name] = [x for x in np.squeeze(predictions_batch[self.output_name])]
@@ -264,6 +262,8 @@ class ClassificationModel(RelevanceModel):
                     if isinstance(batch_df[col].values[0], bytes):
                         batch_df[col] = batch_df[col].str.decode('utf8')
                 batch_df.to_csv(outfile, mode="a", header=batch_idx==0, index=False)
+            if batch_idx % logging_frequency == 0: 
+                print(f"Finished predicting scores for {batch_idx} batches")
             yield batch_df
 
     def _create_prediction_dataframe(self, logging_frequency, test_dataset):
