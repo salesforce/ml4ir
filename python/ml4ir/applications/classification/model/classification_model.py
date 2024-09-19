@@ -222,6 +222,7 @@ class ClassificationModel(RelevanceModel):
             additional_features: dict = {},
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
+            batch_size: int = 32
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -241,6 +242,8 @@ class ClassificationModel(RelevanceModel):
             Path to directory to save logs
         logging_frequency : int
             Value representing how often(in batches) to log status
+        batch_size: int
+            Batch size of predictions
 
         Returns
         -------
@@ -253,7 +256,7 @@ class ClassificationModel(RelevanceModel):
             # Delete file if it exists
             self.file_io.rm_file(outfile)
             
-        for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
+        for batch_idx, (batch, label) in enumerate(test_dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)):
             if batch_idx % logging_frequency == 0: print(f"Processing predictions : Batch {batch_idx}")
             predictions_batch = self.model.predict(batch)
             batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
