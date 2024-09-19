@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
 
 
