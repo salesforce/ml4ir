@@ -60,7 +60,7 @@ class ClassificationServingTest(ClassificationTestBase):
         parsed_dataset_batch = parsed_relevance_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = classification_model.predict(parsed_dataset_batch)[
+        model_predictions = pd.concat(classification_model.predict(parsed_dataset_batch), ignore_index=True)[
             self.args.output_name
         ].values
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
