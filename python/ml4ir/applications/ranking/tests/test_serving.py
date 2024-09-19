@@ -88,7 +88,7 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = pd.concat(model.predict(parsed_dataset_batch), ignore_indexes=True)[self.args.output_name].values
+        model_predictions = pd.concat(model.predict(parsed_dataset_batch), ignore_index=True)[self.args.output_name].values
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             self.args.output_name
         ]
