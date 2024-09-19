@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: cimg/python:3.10
+      - image: lastmansleeping/ml4ir:0.2
     resource_class: large
     steps:
       - checkout
