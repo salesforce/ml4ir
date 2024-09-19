@@ -11,6 +11,11 @@ jobs:
       - restore_cache:
           key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
       - run:
+          name: Install Maven
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y maven
+      - run:
           name: Install Python deps in a venv
           command: |
             export PATH=/home/circleci/.pyenv/shims:$PATH
