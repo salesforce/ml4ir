@@ -202,7 +202,7 @@ class ClassificationModel(RelevanceModel):
             y_pred = tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32)
 
             print(f"y_true shape: {y_true.shape}, y_pred shape: {y_pred.shape}")
-            metric.update_state(y_true, y_pred, temp)
+            metric.update_state(y_true, y_pred)
         
         if group_name:
             return {"group_name": group_name,
