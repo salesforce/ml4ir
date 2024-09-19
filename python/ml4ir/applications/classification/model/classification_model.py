@@ -247,12 +247,12 @@ class ClassificationModel(RelevanceModel):
         for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
             predictions_batch = self.model.predict(batch)
             batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
-            batch_df[self.output_name] = [x for x in np.squeeze(predictions_batch[self.output_name])]
-            tf.keras.backend.clear_session()
 
-            # Below, avoid doing predictions.tolist() as it explodes the memory
+            # Below, avoid doing predictions_batch.tolist() as it explodes the memory
             # tolist() will create a list of lists, which consumes more memory
             # than a list on numpy arrays
+            batch_df[self.output_name] = [x for x in np.squeeze(predictions_batch[self.output_name])]
+            tf.keras.backend.clear_session()
             if logs_dir:
                 np.set_printoptions(formatter={'all':lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
                                    linewidth=sys.maxsize,
@@ -262,9 +262,13 @@ class ClassificationModel(RelevanceModel):
                     if isinstance(batch_df[col].values[0], bytes):
                         batch_df[col] = batch_df[col].str.decode('utf8')
                 batch_df.to_csv(outfile, mode="a", header=batch_idx==0, index=False)
+                
             if batch_idx % logging_frequency == 0: 
-                print(f"Finished predicting scores for {batch_idx} batches")
+                self.logger.info((f"Finished predicting scores for {batch_idx} batches")
             yield batch_df
+                
+        if logs_dir: self.logger.info(f"Model predictions written to: {outfile}")
+            
 
     def _create_prediction_dataframe(self, logging_frequency, test_dataset):
         """
