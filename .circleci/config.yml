@@ -19,7 +19,7 @@ jobs:
           name: Install Python deps in a venv
           command: |
             export PATH=/home/circleci/.pyenv/shims:$PATH
-            python -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             pip install --upgrade pip
             pip install -r python/requirements.txt
@@ -54,7 +54,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
@@ -93,7 +93,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
@@ -132,7 +132,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
@@ -171,7 +171,7 @@ jobs:
       - run:
           name: Install Python deps in a venv
           command: |
-            python -m venv venv
+            python3 -m venv venv
             . venv/bin/activate
             cd python
             pip install --upgrade pip
