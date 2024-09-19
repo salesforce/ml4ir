@@ -111,26 +111,27 @@ class ClassificationModel(RelevanceModel):
                                         additional_features=additional_features,
                                         logs_dir=logs_dir,
                                         logging_frequency=logging_frequency):
-                print("prediction size", len(predictions))
-                for metric in self.model.metrics:
-                    global_metrics.append(
-                        self.calculate_metric_on_batch(metric, predictions, batch_size))
-                    #self.logger.info(f"Global metric {metric.name} completed."
-                    #                 f" Score: {global_metrics[-1]['value']}")
-                    print(f"Global metric {metric.name} completed."
-                                     f" Score: {global_metrics[-1]['value']}")
-    
-                    for group_ in group_metrics_keys:  # Calculate metrics for group metrics
-                        print("group name", group_['name'])
-                        for name, group in predictions.groupby(group_['name']):
-                            print(f"Per feature metric {metric.name}."
-                                             f" Feature: {group_['name']}, value: {name}")
-                            if group.shape[0] >= group_metrics_min_queries:
-                                grouped_metrics.append(self.calculate_metric_on_batch(metric,
-                                                                                      group,
-                                                                                      batch_size,
-                                                                                      group_['name'],
-                                                                                      name))
+                all_predictions.append(predictions)  # Accumulate batches
+            full_predictions_df = pd.concat(all_predictions)
+
+            # Calculate global metrics
+            for metric in self.model.metrics:
+                global_metrics.append(
+                    self.calculate_metric_on_batch(metric, full_predictions_df, batch_size))
+                self.logger.info(f"Global metric {metric.name} completed."
+                                 f" Score: {global_metrics[-1]['value']}")
+            
+            # Calculate group-wise metrics
+            for group_ in group_metrics_keys:  # Calculate metrics for group metrics
+                for name, group in full_predictions_df.groupby(group_['name']):
+                    self.logger.info(f"Per feature metric {metric.name}."
+                                     f" Feature: {group_['name']}, value: {name}")
+                    if group.shape[0] >= group_metrics_min_queries:
+                        grouped_metrics.append(self.calculate_metric_on_batch(metric,
+                                                                              group,
+                                                                              batch_size,
+                                                                              group_['name'],
+                                                                              name))
             global_metrics = pd.DataFrame(global_metrics)
             grouped_metrics = pd.DataFrame(grouped_metrics).sort_values(by='size')
             if logs_dir:
@@ -203,10 +204,6 @@ class ClassificationModel(RelevanceModel):
         y_pred = tf.constant(predictions[output_name].values.tolist(), dtype=tf.float32)
 
         print(f"y_true shape: {y_true.shape}, y_pred shape: {y_pred.shape}")
-    
-        # Ensure y_pred is 2D
-        if len(y_pred.shape) == 1:
-            y_pred = tf.expand_dims(y_pred, axis=-1)
         
         metric.update_state(y_true, y_pred)
 
