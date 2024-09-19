@@ -264,7 +264,7 @@ class ClassificationModel(RelevanceModel):
                 batch_df.to_csv(outfile, mode="a", header=batch_idx==0, index=False)
                 
             if batch_idx % logging_frequency == 0: 
-                self.logger.info((f"Finished predicting scores for {batch_idx} batches")
+                self.logger.info(f"Finished predicting scores for {batch_idx} batches")
             yield batch_df
                 
         if logs_dir: self.logger.info(f"Model predictions written to: {outfile}")
