@@ -47,6 +47,10 @@ jobs:
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
+      - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
@@ -80,6 +84,10 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - run:
           name: Install Python deps in a venv
           command: |
@@ -115,6 +123,10 @@ jobs:
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
+      - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
@@ -148,6 +160,10 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - run:
           name: Install Python deps in a venv
           command: |
