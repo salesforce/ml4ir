@@ -65,7 +65,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            pip install --upgrade pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python tests
           command: |
@@ -106,7 +106,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            pip install --upgrade pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python tests
           command: |
@@ -146,7 +146,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            pip install --upgrade pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python tests
           command: |
@@ -187,7 +187,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd python
-            pip install --upgrade pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: reports
