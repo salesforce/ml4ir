@@ -46,10 +46,7 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+
       - run:
           name: Install Python deps in a venv
           command: |
@@ -62,6 +59,11 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - run:
           name: Run Python tests
           command: |
@@ -84,10 +86,7 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+
       - run:
           name: Install Python deps in a venv
           command: |
@@ -100,6 +99,10 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - run:
           name: Run Python tests
           command: |
@@ -123,10 +126,6 @@ jobs:
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
       - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
-      - run:
           name: Install Python deps in a venv
           command: |
             python3 -m venv venv
@@ -138,6 +137,10 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - run:
           name: Run Python tests
           command: |
@@ -160,10 +163,7 @@ jobs:
       - checkout
       - restore_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
-      - run:
-          name: Update pytest
-          command: |
-            pip install --upgrade pytest pytest-cov pluggy
+
       - run:
           name: Install Python deps in a venv
           command: |
@@ -176,6 +176,10 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+      - run:
+          name: Update pytest
+          command: |
+            pip install --upgrade pytest pytest-cov pluggy
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: reports
