@@ -63,7 +63,7 @@ jobs:
       - run:
           name: Update pytest
           command: |
-            pip install --upgrade pytest pytest-cov pluggy
+            pip install --upgrade pytest pytest-cov pluggy coverage
       - run:
           name: Run Python tests
           command: |
@@ -102,7 +102,7 @@ jobs:
       - run:
           name: Update pytest
           command: |
-            pip install --upgrade pytest pytest-cov pluggy
+            pip install --upgrade pytest pytest-cov pluggy coverage
       - run:
           name: Run Python tests
           command: |
@@ -140,7 +140,7 @@ jobs:
       - run:
           name: Update pytest
           command: |
-            pip install --upgrade pytest pytest-cov pluggy
+            pip install --upgrade pytest pytest-cov pluggy coverage
       - run:
           name: Run Python tests
           command: |
@@ -179,7 +179,7 @@ jobs:
       - run:
           name: Update pytest
           command: |
-            pip install --upgrade pytest pytest-cov pluggy
+            pip install --upgrade pytest pytest-cov pluggy coverage
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: reports
