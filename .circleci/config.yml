@@ -40,7 +40,7 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -82,7 +82,7 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -123,7 +123,7 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -163,7 +163,7 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.10
     resource_class: medium
     steps:
       - checkout
