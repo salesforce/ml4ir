@@ -40,7 +40,7 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -58,6 +58,12 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+      - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python tests
           command: |
@@ -74,7 +80,7 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -92,6 +98,12 @@ jobs:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
             - "venv"
+      - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python tests
           command: |
@@ -108,7 +120,7 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.10
     resource_class: large
     steps:
       - checkout
@@ -127,6 +139,12 @@ jobs:
           paths:
             - "venv"
       - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+      - run:
           name: Run Python tests
           command: |
             . venv/bin/activate
@@ -142,7 +160,7 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.10
     resource_class: medium
     steps:
       - checkout
@@ -163,6 +181,12 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: reports
+      - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python Coverage
           command: |
