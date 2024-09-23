@@ -9,7 +9,7 @@ pandas==2.2.2
 scipy==1.14.1
 #PyYAML==5.4.1
 PyYAML==6.0.2
-#urllib3<2.0  # Issue -> https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
+urllib3<2.0  # Issue -> https://stackoverflow.com/questions/76187256/importerror-urllib3-v2-0-only-supports-openssl-1-1-1-currently-the-ssl-modu
 
 # SentenceTransformers dependencies
 #transformers==4.25.1
