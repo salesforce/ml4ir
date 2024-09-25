@@ -87,6 +87,8 @@ class ClassificationModel(RelevanceModel):
                                 "collects the test data and predictions "
                                 "in memory in order to perform the groupBy operations. "
                                 "With large test datasets, it can lead in OOM issues.")
+            
+            # Concatenating all batches returned by predict method into one dataframe to compute metrics
             predictions = pd.concat(self.predict(test_dataset, 
                                         inference_signature=inference_signature,
                                         additional_features=additional_features,
@@ -212,7 +214,7 @@ class ClassificationModel(RelevanceModel):
             inference_signature: str = "serving_default",
             additional_features: dict = {},
             logs_dir: Optional[str] = None,
-            logging_frequency: int = 25
+            logging_frequency: int = 25,
     ):
         """
         Predict the scores on the test dataset using the trained model
@@ -243,7 +245,11 @@ class ClassificationModel(RelevanceModel):
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
             self.file_io.rm_file(outfile)
-            
+
+        # iterate through all the batches of test_dataset
+        # compute predictions and create a prediction dataframe
+        # if logging is enabled, then append dataframe in outfile
+        # yield result and then operate on next batch
         for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
             predictions_batch = self.model.predict(batch)
             batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
@@ -266,7 +272,8 @@ class ClassificationModel(RelevanceModel):
             if batch_idx % logging_frequency == 0: 
                 self.logger.info(f"Finished predicting scores for {batch_idx} batches")
             yield batch_df
-                
+
+        # All batches are finished, if predictions are written to outfile then log it.
         if logs_dir: self.logger.info(f"Model predictions written to: {outfile}")
             
 
