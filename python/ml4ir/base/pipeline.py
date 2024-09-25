@@ -609,6 +609,8 @@ class RelevancePipeline(object):
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
                 # Predict relevance scores
+                # deque will exhaust/drain all batches returned by predict function
+                # this way predict function will run on whole test_dataset
                 deque(relevance_model.predict(
                     test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
