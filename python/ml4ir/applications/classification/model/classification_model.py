@@ -89,6 +89,7 @@ class ClassificationModel(RelevanceModel):
                                 "With large test datasets, it can lead in OOM issues.")
             
             # Concatenating all batches returned by predict method into one dataframe to compute metrics
+            # TODO: find a way to calculate metrics without the need of operating on all predictions at once as this can lead to OOM error
             predictions = pd.concat(self.predict(test_dataset, 
                                         inference_signature=inference_signature,
                                         additional_features=additional_features,
