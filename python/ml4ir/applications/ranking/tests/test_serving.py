@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import models as kmodels
 
@@ -87,7 +88,7 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = model.predict(parsed_dataset_batch)[self.args.output_name].values
+        model_predictions = pd.concat(model.predict(parsed_dataset_batch), ignore_index=True)[self.args.output_name].values
         default_signature_predictions = default_signature(**parsed_sequence_examples)[
             self.args.output_name
         ]

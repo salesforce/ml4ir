@@ -558,20 +558,13 @@ class RelevanceModel:
                     # If writing first time, write headers to CSV file
                     predictions_df.to_csv(outfile, mode="w", header=True, index=False)
 
-            else:
-                predictions_df_list.append(predictions_df)
-
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info("Finished predicting scores for {} batches".format(batch_count))
-
-        predictions_df = None
+            yield predictions_df
+            
         if logs_dir:
             self.logger.info("Model predictions written to -> {}".format(outfile))
-        else:
-            predictions_df = pd.concat(predictions_df_list)
-
-        return predictions_df
 
     def evaluate(
             self,

@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import pandas as pd
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
 
 
@@ -35,7 +36,7 @@ class ClassificationModelTest(ClassificationTestBase):
 
         # Assert we predict for all the items
         expected_size_predictions = 200  # the same with data in test
-        self.assertTrue(self.predictions.shape[0] == expected_size_predictions)
+        self.assertTrue(pd.concat(self.predictions, ignore_index=True).shape[0] == expected_size_predictions)
 
     def test_group_metrics_df(self):
         """

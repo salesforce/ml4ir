@@ -87,11 +87,14 @@ class ClassificationModel(RelevanceModel):
                                 "collects the test data and predictions "
                                 "in memory in order to perform the groupBy operations. "
                                 "With large test datasets, it can lead in OOM issues.")
-            predictions = self.predict(test_dataset,
-                                       inference_signature=inference_signature,
-                                       additional_features=additional_features,
-                                       logs_dir=logs_dir,
-                                       logging_frequency=logging_frequency)
+            
+            # Concatenating all batches returned by predict method into one dataframe to compute metrics
+            # TODO: find a way to calculate metrics without the need of operating on all predictions at once as this can lead to OOM error
+            predictions = pd.concat(self.predict(test_dataset, 
+                                        inference_signature=inference_signature,
+                                        additional_features=additional_features,
+                                        logs_dir=logs_dir,
+                                        logging_frequency=logging_frequency), ignore_index=True)
             global_metrics = []  # group_name, metric, value
             grouped_metrics = []
             # instead of calculating measure with a single update_state (can result in a call with
@@ -116,7 +119,7 @@ class ClassificationModel(RelevanceModel):
                     self.calculate_metric_on_batch(metric, predictions, batch_size))
                 self.logger.info(f"Global metric {metric.name} completed."
                                  f" Score: {global_metrics[-1]['value']}")
-
+            
                 for group_ in group_metrics_keys:  # Calculate metrics for group metrics
                     for name, group in predictions.groupby(group_['name']):
                         self.logger.info(f"Per feature metric {metric.name}."
@@ -243,24 +246,37 @@ class ClassificationModel(RelevanceModel):
             outfile = os.path.join(logs_dir, RelevanceModelConstants.MODEL_PREDICTIONS_CSV_FILE)
             # Delete file if it exists
             self.file_io.rm_file(outfile)
-        predictions_df = self._create_prediction_dataframe(logging_frequency,
-                                                           test_dataset)
-        predictions_ = np.squeeze(self.model.predict(test_dataset)[self.output_name])
-        # Below, avoid doing predictions.tolist() as it explodes the memory
-        # tolist() will create a list of lists, which consumes more memory
-        # than a list on numpy arrays
-        predictions_df[self.output_name] = [x for x in predictions_]
-        if logs_dir:
-            np.set_printoptions(formatter={'all':lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
-                                linewidth=sys.maxsize,
-                                threshold=sys.maxsize,  # write the full vector in the csv not a truncated version
-                                legacy="1.13")  # enables 1.13 legacy printing mode
-            for col in predictions_df.columns:
-                if isinstance(predictions_df[col].values[0], bytes):
-                    predictions_df[col] = predictions_df[col].str.decode('utf8')
-            predictions_df.to_csv(outfile, mode="w", header=True, index=False)
-            self.logger.info(f"Model predictions written to: {outfile}")
-        return predictions_df
+
+        # iterate through all the batches of test_dataset
+        # compute predictions and create a prediction dataframe
+        # if logging is enabled, then append dataframe in outfile
+        # yield result and then operate on next batch
+        for batch_idx, (batch, label) in enumerate(test_dataset.prefetch(tf.data.experimental.AUTOTUNE)):
+            predictions_batch = self.model.predict(batch)
+            batch_df = self._create_prediction_dataframe(logging_frequency, (batch,label))
+
+            # Below, avoid doing predictions_batch.tolist() as it explodes the memory
+            # tolist() will create a list of lists, which consumes more memory
+            # than a list on numpy arrays
+            batch_df[self.output_name] = [x for x in np.squeeze(predictions_batch[self.output_name])]
+            tf.keras.backend.clear_session()
+            if logs_dir:
+                np.set_printoptions(formatter={'all':lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+                                   linewidth=sys.maxsize,
+                                   threshold=sys.maxsize,  # write the full vector in the csv not a truncated version
+                                   legacy="1.13")  # enables 1.13 legacy printing mode
+                for col in batch_df.columns:
+                    if isinstance(batch_df[col].values[0], bytes):
+                        batch_df[col] = batch_df[col].str.decode('utf8')
+                batch_df.to_csv(outfile, mode="a", header=batch_idx==0, index=False)
+                
+            if batch_idx % logging_frequency == 0: 
+                self.logger.info(f"Finished predicting scores for {batch_idx} batches")
+            yield batch_df
+
+        # All batches are finished, if predictions are written to outfile then log it.
+        if logs_dir: self.logger.info(f"Model predictions written to: {outfile}")
+            
 
     def _create_prediction_dataframe(self, logging_frequency, test_dataset):
         """
@@ -273,21 +289,13 @@ class ClassificationModel(RelevanceModel):
         features_to_log = [f.get("node_name", f["name"]) for f in
                            self.feature_config.get_features_to_log()] + [label_name]
         features_to_log = set(features_to_log)
-        for batch_count, (x, y) in enumerate(test_dataset.take(-1)):  # returns (x, y) tuples
-            if batch_count:
-                for key in x.keys():
-                    if key in features_to_log:  # only log if necessary
-                        # Here I am appending, np.vstack or other numpy tricks will be slow
-                        # as they create new arrays (a np.array require contiguous memory)
-                        predictions[key].append(np.squeeze(x[key].numpy()))
-                predictions[label_name].append(np.squeeze(y.numpy()))
-            else:  # we initialize the {key: list()} in the 1st batch
-                for key in x.keys():
-                    if key in features_to_log:
-                        predictions[key] = [np.squeeze(x[key].numpy())]
-                predictions[label_name] = [np.squeeze(y.numpy())]
-            if batch_count % logging_frequency == 0:
-                self.logger.info(f"Finished evaluating {batch_count} batches")
+        features, labels = test_dataset
+        for key in features.keys():
+            if key in features_to_log:  # only log if necessary
+               # Here I am appending, np.vstack or other numpy tricks will be slow
+               # as they create new arrays (a np.array require contiguous memory)
+               predictions[key] = [np.squeeze(features[key].numpy())]
+        predictions[label_name] = [np.squeeze(labels.numpy())]
         # This is a memory bottleneck; we bring everything in memory
         for key, val in predictions.items():
             # we want to create np.arrays that contain the full data here.
@@ -297,4 +305,5 @@ class ClassificationModel(RelevanceModel):
                 val)
         predictions_df = pd.DataFrame({key: val if len(val.shape) == 1 else [inner for inner in val]
                                        for key, val in predictions.items()})
+
         return predictions_df
