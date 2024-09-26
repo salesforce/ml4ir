@@ -29,7 +29,7 @@ class RelevanceModelConstants:
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
     METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
-    CHECKPOINT_FNAME = "checkpoint.tf"
+    CHECKPOINT_FNAME = "checkpoint.keras"
     DEFAULT_EVAL_CONFIG_YAML = "ml4ir/base/config/default_evaluation_config.yaml"
 
 

@@ -410,7 +410,7 @@ class RelevanceScorer(keras.Model):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        metrics = [self.loss_metric] + self.compiled_metrics._metrics
+        metrics = self._metrics
 
         if self.aux_loss_weight > 0:
             # Add aux loss values

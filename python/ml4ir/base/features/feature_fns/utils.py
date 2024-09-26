@@ -139,6 +139,7 @@ class VocabLookup(layers.Layer):
                 num_oov_buckets=self.num_oov_buckets,
                 name="{}_lookup_table".format(self.feature_name),
             )
+
         elif self.default_value is not None:
             self.lookup_table = lookup.StaticHashTable(
                 initializer=table_init,
@@ -337,6 +338,7 @@ class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
+
         categorical_indices = self.lookup_table(inputs, training=training)
 
         return categorical_indices
