@@ -10,6 +10,11 @@ jobs:
       - checkout
       - restore_cache:
           key: maven-python-deps-{{ checksum "jvm/pom.xml" }}-{{ checksum "python/requirements.txt" }}
+      # - run:
+      #     name: Install Maven
+      #     command: |
+      #       sudo apt-get update
+      #       sudo apt-get install -y maven
       - run:
           name: Install Python deps in a venv
           command: |
@@ -40,7 +45,7 @@ jobs:
 
   build_test_python_base:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -54,6 +59,11 @@ jobs:
             cd python
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
+
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -74,7 +84,7 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -88,6 +98,11 @@ jobs:
             cd python
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
+
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -108,7 +123,7 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -122,6 +137,11 @@ jobs:
             cd python
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
+
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
@@ -142,7 +162,7 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: medium
     steps:
       - checkout
@@ -156,6 +176,11 @@ jobs:
             cd python
             pip install --upgrade pip
             pip install -r requirements.txt -r dev-requirements.txt
+
+      # - run:
+      #     name: Update pytest
+      #     command: |
+      #       pip install --upgrade pytest pytest-cov pluggy
       - save_cache:
           key: python-deps-{{ checksum "python/requirements.txt" }}-{{ checksum "python/dev-requirements.txt" }}
           paths:
