@@ -39,10 +39,10 @@ class LrCallback(keras.callbacks.Callback):
         self.lr_reduce_on_plateau_list = []
 
     def on_train_batch_begin(self, batch, logs=None):
-        self.lr_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
+        self.lr_list.append(self.model.optimizer.learning_rate.numpy())
 
     def on_epoch_begin(self, epoch, logs=None):
-        self.lr_reduce_on_plateau_list.append(self.model.optimizer._decayed_lr(tf.float32).numpy())
+        self.lr_reduce_on_plateau_list.append(self.model.optimizer.learning_rate.numpy())
 
     def get_lr_list(self):
         return self.lr_list

@@ -704,9 +704,11 @@ class RelevanceModel:
         serializable tensor graph operations
         """
         model_file = os.path.join(models_dir, sub_dir)
+        if not os.path.exists(model_file):
+            os.makedirs(model_file)
 
         # Save model with default signature
-        self.model.save(filepath=os.path.join(model_file, "default"))
+        self.model.save(filepath=os.path.join(model_file, "default.keras"))
 
         """
         Save model with custom signatures
@@ -714,8 +716,10 @@ class RelevanceModel:
         Currently supported
         - signature to read TFRecord SequenceExample inputs
         """
-        self.model.save(
-            filepath=os.path.join(model_file, "tfrecord"),
+
+        tf.saved_model.save(
+            self.model,
+            os.path.join(model_file, "tfrecord.keras"),
             signatures=define_serving_signatures(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
@@ -725,7 +729,7 @@ class RelevanceModel:
                 required_fields_only=required_fields_only,
                 pad_sequence=pad_sequence,
                 max_sequence_size=self.max_sequence_size,
-            ),
+            )
         )
 
         # Save individual layer weights

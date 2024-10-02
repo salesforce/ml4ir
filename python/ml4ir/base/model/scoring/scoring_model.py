@@ -319,7 +319,7 @@ class RelevanceScorer(keras.Model):
 
         # Compute metrics on primary label
         segments = inputs.get(self.group_metric_feature)
-        for compiled_metric in self.compiled_metrics._metrics:
+        for compiled_metric in self._metrics:
             if isinstance(compiled_metric, SegmentMean):
                 compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
             elif isinstance(compiled_metric, MeanRankMetric):
