@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: mohazahran/ml4ir:0.3
+      - image: mohazahran/ml4ir:0.4
     resource_class: large
     steps:
       - checkout
