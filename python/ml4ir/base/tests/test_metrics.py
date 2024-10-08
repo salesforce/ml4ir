@@ -33,9 +33,9 @@ class SegmentMeanTest(unittest.TestCase):
         segment_mean = SegmentMean(segments=["a", "b", "c"])
 
         segment_mean.update_state(values=[1., 2., 3.], segments=["b", "a", "c"])
-        with self.subTest("Test that metric is non-zero after computation"):
-            self.assertFalse(np.isclose(segment_mean.result().numpy(), [0, 0, 0]).all())
+        #with self.subTest("Test that metric is non-zero after computation"):
+        self.assertFalse(np.isclose(segment_mean.result().numpy(), [0, 0, 0]).all())
 
         segment_mean.reset_state()
-        with self.subTest("Test that metric is zero after reset"):
-            self.assertTrue(np.isclose(segment_mean.result().numpy(), [0, 0, 0]).all())
+        #with self.subTest("Test that metric is zero after reset"):
+        self.assertTrue(np.isclose(segment_mean.result().numpy(), [0, 0, 0]).all())

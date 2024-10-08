@@ -18,7 +18,7 @@ def get_keras_layer_subclasses() -> Dict[str, Type[tf.keras.layers.Layer]]:
         Get {package_name}.{class_name}
 
         Examples:
-            - keras: keras.layers.merge.Concatenate, keras.layers.core.dense.Dense
+            - keras: keras.layers.merge.Concatenate, keras.src.layers.core.dense.Dense
             - ml4ir: ml4ir.base.features.feature_fns.utils.VocabLookup,
                      ml4ir.applications.ranking.model.losses.listwise_losses.RankOneListNet
         """

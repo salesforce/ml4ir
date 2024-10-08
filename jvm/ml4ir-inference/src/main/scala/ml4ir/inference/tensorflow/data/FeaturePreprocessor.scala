@@ -1,6 +1,6 @@
 package ml4ir.inference.tensorflow.data
 
-import org.tensorflow.proto.framework.DataType
+import org.tensorflow.framework.DataType
 
 /**
  * Wrapper class which uses the ModelFeatures configuration to filter to the allowed features, map from

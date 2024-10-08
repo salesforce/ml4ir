@@ -39,7 +39,7 @@ class TestGetLayerSubclasses(unittest.TestCase):
 
     def test_keras_native_subclass(self):
         """Test that all globally defined classes are accessible"""
-        self.assertIn("keras.layers.core.dense.Dense", self.layer_subclasses)
+        self.assertIn("keras.src.layers.core.dense.Dense", self.layer_subclasses)
         self.assertIn(Dense, self.layer_subclasses.values())
 
 
@@ -158,7 +158,7 @@ class AutoDagNetworkTests(unittest.TestCase):
                   - text_match_score
                   - page_views_score
                 aslist: true
-              - type: keras.layers.merging.concatenate.Concatenate
+              - type: keras.src.layers.merging.concatenate.Concatenate
                 name: features_concat
                 inputs:
                   - global1
@@ -167,14 +167,14 @@ class AutoDagNetworkTests(unittest.TestCase):
                 aslist: true
                 args:
                   axis: -1
-              - type: keras.layers.core.dense.Dense
+              - type: keras.src.layers.core.dense.Dense
                 name: first_dense
                 inputs:
                   - features_concat
                 args:
                   units: 512
                   activation: relu
-              - type: keras.layers.core.dense.Dense
+              - type: keras.src.layers.core.dense.Dense
                 name: final_dense
                 inputs:
                   - first_dense

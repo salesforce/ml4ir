@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import tensorflow as tf
 
 from ml4ir.base.features.feature_fns.label_processor import StringMultiLabelProcessor
 
@@ -22,7 +23,7 @@ class StringMultiLabelProcessorTest(unittest.TestCase):
         })
 
         inputs = [["1-0", "1-1", "0-1"]]
-        outputs = string_multi_label_processor(inputs).numpy()
+        outputs = string_multi_label_processor(tf.constant(inputs)).numpy()
         self.assertTrue(np.equal(outputs, [[10., 11., 1.]]).all())
 
     def test_split_on_separator(self):
@@ -42,7 +43,7 @@ class StringMultiLabelProcessorTest(unittest.TestCase):
         for separator in ["-", ",", "_", ";", "`"]:  # This is a non-exhaustive list of possible separators
             with self.subTest(f"Layer should be able to split on {separator}"):
                 inputs = [separator.join(labels) for labels in [["1", "0"], ["1", "1"], ["0", "1"]]]
-                outputs = string_multi_label_processor(separator)(inputs).numpy()
+                outputs = string_multi_label_processor(separator)(tf.constant(inputs)).numpy()
                 self.assertTrue(np.equal(outputs, [[10., 11., 1.]]).all())
 
     def test_binarize(self):
@@ -59,14 +60,15 @@ class StringMultiLabelProcessorTest(unittest.TestCase):
             }
         })
         inputs = [["1-0", "1-1", "0-1"], ["5-0", "5-8", "0-5"]]
+        inputs=  tf.constant(inputs)
 
-        with self.subTest("Layer should convert input multi labels to 1s and 0s when binarize is set to True"):
-            outputs = string_multi_label_processor(binarize=True)(inputs).numpy()
-            self.assertTrue(np.equal(outputs, [[10., 11., 1.], [10., 11., 1.]]).all())
+        #with self.subTest("Layer should convert input multi labels to 1s and 0s when binarize is set to True"):
+        outputs = string_multi_label_processor(binarize=True)(inputs).numpy()
+        self.assertTrue(np.equal(outputs, [[10., 11., 1.], [10., 11., 1.]]).all())
 
-        with self.subTest("Layer should not convert input multi labels to 1s and 0s when binarize is set to False"):
-            outputs = string_multi_label_processor(binarize=False)(inputs).numpy()
-            self.assertTrue(np.equal(outputs, [[10., 11., 1.], [50., 58., 5.]]).all())
+        #with self.subTest("Layer should not convert input multi labels to 1s and 0s when binarize is set to False"):
+        outputs = string_multi_label_processor(binarize=False)(inputs).numpy()
+        self.assertTrue(np.equal(outputs, [[10., 11., 1.], [50., 58., 5.]]).all())
 
     def test_default_label_weights(self):
         """Test default label weights when no label weights argument is specified"""
@@ -82,7 +84,7 @@ class StringMultiLabelProcessorTest(unittest.TestCase):
         })
 
         inputs = [["1-0", "1-1", "0-1"]]
-        outputs = string_multi_label_processor(inputs).numpy()
+        outputs = string_multi_label_processor(tf.constant(inputs)).numpy()
         self.assertTrue(np.equal(outputs, [[1., 2., 1.]]).all())
 
     def test_test_label_weights(self):
@@ -101,6 +103,7 @@ class StringMultiLabelProcessorTest(unittest.TestCase):
         })
 
         inputs = [["1-0", "1-1", "0-1"]]
+        inputs = tf.constant(inputs)
         outputs = string_multi_label_processor(inputs).numpy()
         self.assertTrue(np.equal(outputs, [[1., 2., 1.]]).all())
 

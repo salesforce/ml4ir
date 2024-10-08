@@ -9,7 +9,7 @@ import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.google.common.base.Charsets._
 import com.google.common.io.Files
-import org.tensorflow.proto.framework.DataType
+import org.tensorflow.framework.DataType
 import org.tensorflow.types.{TFloat32, TInt64, TString}
 import org.tensorflow.types.family.TType
 

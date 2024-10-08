@@ -28,13 +28,15 @@ class Reciprocal(layers.Layer):
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
-        self.k_trainable = k_trainable
-        self.k = tf.Variable(
-            initial_value=float(k),
-            trainable=self.k_trainable,
-            name="reciprocal_k"
-        )
+
         super().__init__(name=name, **kwargs)
+        self.k_trainable = k_trainable
+        self.k = self.add_weight(
+            name="reciprocal_k",
+            shape=(),
+            initializer=tf.constant_initializer(float(k)),
+            trainable=self.k_trainable
+        )
 
     def call(self, inputs, training=None):
         """
@@ -87,6 +89,7 @@ class ArcTanNormalization(layers.Layer):
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
+        super().__init__(name=name, **kwargs)
         self.k_trainable = k_trainable
         self.k = tf.Variable(
             initial_value=float(k),
@@ -94,7 +97,6 @@ class ArcTanNormalization(layers.Layer):
             name="arctan_k"
         )
         self.scale_constant = tf.constant(2. / np.pi)
-        super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
         """

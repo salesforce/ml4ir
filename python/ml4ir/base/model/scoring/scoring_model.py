@@ -319,7 +319,7 @@ class RelevanceScorer(keras.Model):
 
         # Compute metrics on primary label
         segments = inputs.get(self.group_metric_feature)
-        for compiled_metric in self.compiled_metrics._metrics:
+        for compiled_metric in self._metrics:
             if isinstance(compiled_metric, SegmentMean):
                 compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
             elif isinstance(compiled_metric, MeanRankMetric):
@@ -410,7 +410,7 @@ class RelevanceScorer(keras.Model):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        metrics = [self.loss_metric] + self.compiled_metrics._metrics
+        metrics = self._metrics
 
         if self.aux_loss_weight > 0:
             # Add aux loss values

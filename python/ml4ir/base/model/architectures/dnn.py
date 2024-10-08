@@ -98,7 +98,8 @@ class DNN(keras.Model):
                     try:
                         label_feature_info = feature_config.get_label()
                         vocabulary_keys, vocabulary_ids = get_vocabulary_info(
-                            label_feature_info["feature_layer_info"]["args"], self.file_io)
+                            label_feature_info, self.file_io)
+                        #vocab_file_path = feature_info["feature_layer_info"]["args"]["vocabulary_file"]
                         layer_args["units"] = len(vocabulary_keys) + OOV
                     except:
                         raise KeyError("We were not able to find information for the output layer of your DNN. "
