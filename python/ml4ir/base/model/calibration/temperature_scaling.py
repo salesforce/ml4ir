@@ -10,7 +10,7 @@ import time
 import shutil
 
 from logging import Logger
-from collections import Callable
+from collections.abc import Callable
 from typing import Union, Tuple
 
 import tensorflow as tf

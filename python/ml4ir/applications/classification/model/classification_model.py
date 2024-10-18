@@ -195,7 +195,7 @@ class ClassificationModel(RelevanceModel):
         """
         label_name = self.feature_config.get_label()['name']
         output_name = self.output_name
-        metric.reset_states()
+        metric.reset_state()
         for chunk in self.get_chunks_from_df(predictions, batch_size):
             metric.update_state(tf.constant(chunk[label_name].values.tolist(), dtype=tf.float32),
                                 tf.constant(chunk[output_name].values.tolist(), dtype=tf.float32))

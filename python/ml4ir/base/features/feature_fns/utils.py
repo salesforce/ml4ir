@@ -139,6 +139,7 @@ class VocabLookup(layers.Layer):
                 num_oov_buckets=self.num_oov_buckets,
                 name="{}_lookup_table".format(self.feature_name),
             )
+
         elif self.default_value is not None:
             self.lookup_table = lookup.StaticHashTable(
                 initializer=table_init,
@@ -267,37 +268,21 @@ class CategoricalDropout(layers.Layer):
 
 
 class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
-    """
-    Extract the vocabulary (encoding and values) from the stated vocabulary_file inside feature_info.
-    And encode the feature_tensor with the vocabulary.
-    """
     LAYER_NAME = "categorical_indices_from_vocabulary_file"
-
     CATEGORICAL_INDICES = "categorical_indices"
     NUM_OOV_BUCKETS = "num_oov_buckets"
     VOCABULARY_KEYS = "vocabulary_keys"
     DROPOUT_RATE = "dropout_rate"
 
-    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
-        """
-        Initialize the layer to convert string tensor into categorical indices
-
-        Parameters
-        ----------
-        feature_tensor : Tensor object
-            String feature tensor
-        feature_info : dict
-            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-        file_io : FileIO object
-            FileIO handler object for reading and writing
-        """
+    def __init__(self, feature_info: dict, file_io: object, **kwargs):
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
-        self.num_oov_buckets = self.feature_layer_args.get(self.NUM_OOV_BUCKETS)
+        self.num_oov_buckets = self.feature_info.get(self.NUM_OOV_BUCKETS)
 
-        vocabulary_keys, vocabulary_ids = get_vocabulary_info(self.feature_layer_args,
-                                                              self.file_io,
-                                                              self.default_value)
+        # Assuming get_vocabulary_info returns keys and ids from the vocabulary file
+        vocabulary_keys, vocabulary_ids = get_vocabulary_info(
+            self.feature_layer_args, self.file_io, self.default_value
+        )
 
         if self.DROPOUT_RATE in self.feature_layer_args:
             default_value = 0  # Default OOV index when using dropout
@@ -308,35 +293,21 @@ class CategoricalIndicesFromVocabularyFile(BaseFeatureLayerOp):
                 )
             self.num_oov_buckets = None
             self.vocabulary_size = len(set(vocabulary_keys)) + 1  # one more for default value
+            self.lookup_table = tf.lookup.StaticHashTable(
+                initializer=tf.lookup.KeyValueTensorInitializer(vocabulary_keys,
+                                                                tf.constant(vocabulary_ids, dtype=tf.int64)),
+                default_value=default_value)
         else:
             default_value = None
             self.num_oov_buckets = self.num_oov_buckets if self.num_oov_buckets else 1
             self.vocabulary_size = len(set(vocabulary_keys))
+            self.lookup_table = tf.lookup.StaticVocabularyTable(
+                tf.lookup.KeyValueTensorInitializer(vocabulary_keys, tf.constant(vocabulary_ids, dtype=tf.int64)),
+                num_oov_buckets=self.num_oov_buckets)
 
-        self.lookup_table = VocabLookup(
-            vocabulary_keys=vocabulary_keys,
-            vocabulary_ids=vocabulary_ids,
-            num_oov_buckets=self.num_oov_buckets,
-            default_value=default_value,
-            feature_name=self.feature_name,
-        )
+
 
     def call(self, inputs, training=None):
-        """
-        Defines the forward pass for the layer on the inputs tensor
-
-        Parameters
-        ----------
-        inputs: tensor
-            Input tensor on which the feature transforms are applied
-        training: boolean
-            Boolean flag indicating if the layer is being used in training mode or not
-
-        Returns
-        -------
-        tf.Tensor
-            Resulting tensor after the forward pass through the feature transform layer
-        """
-        categorical_indices = self.lookup_table(inputs, training=training)
-
+        categorical_indices = self.lookup_table.lookup(inputs)
         return categorical_indices
+

@@ -91,8 +91,7 @@ class LocalIO(FileIO):
                 skipinitialspace=True,
                 quotechar='"',
                 escapechar=escape_char,
-                error_bad_lines=False,
-                warn_bad_lines=True,
+                on_bad_lines='warn',
                 engine="c",
                 na_filter=na_filter
             )

@@ -29,7 +29,7 @@ class RelevanceModelConstants:
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
     METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
-    CHECKPOINT_FNAME = "checkpoint.tf"
+    CHECKPOINT_FNAME = "checkpoint.keras"
     DEFAULT_EVAL_CONFIG_YAML = "ml4ir/base/config/default_evaluation_config.yaml"
 
 
@@ -697,9 +697,11 @@ class RelevanceModel:
         serializable tensor graph operations
         """
         model_file = os.path.join(models_dir, sub_dir)
+        if not os.path.exists(model_file):
+            os.makedirs(model_file)
 
         # Save model with default signature
-        self.model.save(filepath=os.path.join(model_file, "default"))
+        self.model.save(filepath=os.path.join(model_file, "default.keras"))
 
         """
         Save model with custom signatures
@@ -707,8 +709,107 @@ class RelevanceModel:
         Currently supported
         - signature to read TFRecord SequenceExample inputs
         """
-        self.model.save(
-            filepath=os.path.join(model_file, "tfrecord"),
+
+        # self.model.save(
+        #     filepath=os.path.join(model_file, "tfrecord"),
+        #     signatures=define_serving_signatures(
+        #         model=self.model,
+        #         tfrecord_type=self.tfrecord_type,
+        #         feature_config=self.feature_config,
+        #         preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+        #         postprocessing_fn=postprocessing_fn,
+        #         required_fields_only=required_fields_only,
+        #         pad_sequence=pad_sequence,
+        #         max_sequence_size=self.max_sequence_size,
+        #     ),
+        # )
+
+        # Context features (apply to the entire example)
+        context_features = {
+            # 'query_text': tf.train.Feature(bytes_list=tf.train.BytesList(value=[b'sample query text'])),
+            'query_id': tf.train.Feature(bytes_list=tf.train.BytesList(value=[b'sample_query_id'])),
+            'domain_id': tf.train.Feature(int64_list=tf.train.Int64List(value=[123])),
+            'domain_name': tf.train.Feature(bytes_list=tf.train.BytesList(value=[b'sample_domain'])),
+            #'query_text': tf.train.Feature(bytes_list=tf.train.BytesList(value=[b'sample_domain'])),
+            # Add other context features as needed
+        }
+
+        # Sequence features (vary across the sequence)
+        sequence_features = {
+            'rank': tf.train.FeatureList(feature=[
+                tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
+                tf.train.Feature(int64_list=tf.train.Int64List(value=[2])),
+            ]),
+            'clicked': tf.train.FeatureList(feature=[
+                tf.train.Feature(int64_list=tf.train.Int64List(value=[0])),
+                tf.train.Feature(int64_list=tf.train.Int64List(value=[1])),
+            ]),
+            'text_match_score': tf.train.FeatureList(feature=[
+                tf.train.Feature(float_list=tf.train.FloatList(value=[0.9])),
+                tf.train.Feature(float_list=tf.train.FloatList(value=[0.8])),
+            ]),
+            'page_views_score': tf.train.FeatureList(feature=[
+                tf.train.Feature(float_list=tf.train.FloatList(value=[5.0])),
+                tf.train.Feature(float_list=tf.train.FloatList(value=[10.0])),
+            ]),
+            'quality_score': tf.train.FeatureList(feature=[
+                tf.train.Feature(float_list=tf.train.FloatList(value=[0.7])),
+                tf.train.Feature(float_list=tf.train.FloatList(value=[0.6])),
+            ]),
+            'name_match': tf.train.FeatureList(feature=[
+                tf.train.Feature(float_list=tf.train.FloatList(value=[1.0])),
+                tf.train.Feature(float_list=tf.train.FloatList(value=[0.0])),
+            ])
+        }
+
+        # Create context and feature lists
+        context = tf.train.Features(feature=context_features)
+        feature_lists = tf.train.FeatureLists(feature_list=sequence_features)
+
+        # Create the SequenceExample
+        sequence_example = tf.train.SequenceExample(context=context, feature_lists=feature_lists)
+
+        # Serialize to string
+        serialized_example = sequence_example.SerializeToString()
+
+        sample_protos = tf.constant([serialized_example], dtype=tf.string)
+
+        # Get the concrete function for your serving signature
+
+        # fn = define_serving_signatures(
+        #     model=self.model,
+        #     tfrecord_type=self.tfrecord_type,
+        #     feature_config=self.feature_config,
+        #     preprocessing_keys_to_fns=preprocessing_keys_to_fns,
+        #     postprocessing_fn=postprocessing_fn,
+        #     required_fields_only=required_fields_only,
+        #     pad_sequence=pad_sequence,
+        #     max_sequence_size=self.max_sequence_size,
+        # )
+
+        # concrete_function = fn["serving_tfrecord"].get_concrete_function(sample_protos)
+        # #pred = fn["serving_tfrecord"](sample_protos)
+        # #print(pred)
+        #
+        # #pred = fn["serving_tfrecord"](sample_protos)
+        #
+        # tf.saved_model.save(
+        #     self.model,
+        #     os.path.join(model_file, "tfrecord.keras"),
+        #     signatures={'serving_default': concrete_function},
+        # )
+        # tf.saved_model.save(
+        #     self.model,
+        #     os.path.join(model_file, "tfrecord.keras")
+        # )
+        #self.model._default_save_signature =
+
+        #self.model._default_save_signature = None
+
+
+        tf.saved_model.save(
+            self.model,
+            os.path.join(model_file, "tfrecord"),
             signatures=define_serving_signatures(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
@@ -718,8 +819,13 @@ class RelevanceModel:
                 required_fields_only=required_fields_only,
                 pad_sequence=pad_sequence,
                 max_sequence_size=self.max_sequence_size,
-            ),
+            )
         )
+        #
+        # tf.saved_model.save(
+        #     self.model,
+        #     os.path.join(model_file, "tfrecord.keras")
+        # )
 
         # Save individual layer weights
         self.file_io.make_directory(os.path.join(model_file, "layers"), clear_dir=True)

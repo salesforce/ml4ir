@@ -29,7 +29,7 @@ class SegmentMean(metrics.Metric):
             raise ValueError(f"Invalid argument passed for segments -> {segments}")
         self.segments = segments
         # NOTE: number of segments is vocabulary + 1 for OOV bucket
-        self.num_segments = tf.constant(len(segments) + 1)
+        self.num_segments = len(segments) + 1
         self.segment_lookup = tf.keras.layers.StringLookup(vocabulary=segments,
                                                            num_oov_indices=1)
         self.total_sum = self.add_weight(name="total_sum", shape=(self.num_segments,),

@@ -40,7 +40,7 @@ class FeatureLayerTest(RelevanceTestBase):
         string_tensor = [["abc"], ["xyz"], ["123"]]
         sequence_encoding = sequence_fns.BytesSequenceToEncodingBiLSTM(
             feature_info, self.file_io
-        )(string_tensor)
+        )(tf.constant(string_tensor))
 
         # Assert the right shapes of the resulting encoding based on the feature_info
         assert sequence_encoding.shape[0] == len(string_tensor)
@@ -165,7 +165,7 @@ class FeatureLayerTest(RelevanceTestBase):
 
         categorical_fns.CategoricalEmbeddingToEncodingBiLSTM(
             feature_info, self.file_io
-        )(string_tensor)
+        )(tf.constant(string_tensor))
 
     def test_categorical_embedding_to_encoding_bilstm_oov_mapping_with_dropout(self):
         """
@@ -265,10 +265,10 @@ class FeatureLayerTest(RelevanceTestBase):
 
         categorical_embedding = categorical_fns.CategoricalEmbeddingWithHashBuckets(
             feature_info, self.file_io
-        )(string_tensor)
+        )(tf.constant(string_tensor) )
 
         # Assert the right shapes of the resulting embedding
-        assert categorical_embedding.shape[0] == len(string_tensor)
+        assert categorical_embedding.shape[0] == len(tf.constant(string_tensor))
         assert categorical_embedding.shape[1] == 1
         assert categorical_embedding.shape[2] == num_hash_buckets * embedding_size
 
@@ -301,7 +301,7 @@ class FeatureLayerTest(RelevanceTestBase):
 
         categorical_embedding = categorical_fns.CategoricalEmbeddingWithIndices(
             feature_info, self.file_io
-        )(index_tensor)
+        )(tf.constant(index_tensor))
 
         # Assert the right shapes of the resulting embedding
         assert categorical_embedding.shape[0] == len(index_tensor)

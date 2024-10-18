@@ -112,6 +112,26 @@ class RelevanceScorer(keras.Model):
         self.architecture_op = self.get_architecture_op()
         self.plot_abstract_model()
 
+
+    # TODO
+    #  This is a workaround to supress an exception while saving the model which tries to save
+    #  default signature implicitly while saving the model using tfrecord_serving.
+    def _default_save_signature(self):
+        return None
+
+    def build(self, input_shape):
+        # Build interaction_model if necessary
+        if not self.interaction_model.built:
+            features = self.interaction_model.build(input_shape)
+
+        # Initialize architecture_op and other components that depend on input_shape
+        if not self.interaction_model.built:
+            self.architecture_op = self.get_architecture_op()
+            features[FeatureTypeKey.LOGITS] = self.architecture_op.build(features)
+
+        # Mark the layer as built
+        super(RelevanceScorer, self).build(input_shape)
+
     @classmethod
     def from_model_config_file(
             cls,
@@ -197,7 +217,9 @@ class RelevanceScorer(keras.Model):
             Tensor object of the score computed by the model
         """
         # Apply feature layer and transform inputs
+        #print("inputs:\n", inputs)
         features = self.interaction_model(inputs, training=training)
+        #print("features:\n", features)
 
         # Apply architecture op on train_features
         features[FeatureTypeKey.LOGITS] = self.architecture_op(features, training=training)
@@ -319,13 +341,13 @@ class RelevanceScorer(keras.Model):
 
         # Compute metrics on primary label
         segments = inputs.get(self.group_metric_feature)
-        for compiled_metric in self.compiled_metrics._metrics:
+        for compiled_metric in self._metrics:
             if isinstance(compiled_metric, SegmentMean):
                 compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
             elif isinstance(compiled_metric, MeanRankMetric):
                 compiled_metric.update_state(y_true, y_pred, mask=mask)
-            else:
-                compiled_metric.update_state(y_true, y_pred)
+            #else:
+            #    compiled_metric.update_state(y_true, y_pred)
 
         # Compute metrics on auxiliary label
         if self.aux_label:
@@ -410,7 +432,7 @@ class RelevanceScorer(keras.Model):
     @property
     def metrics(self):
         """Get the metrics for the keras model along with the custom loss metric"""
-        metrics = [self.loss_metric] + self.compiled_metrics._metrics
+        metrics = self._metrics
 
         if self.aux_loss_weight > 0:
             # Add aux loss values

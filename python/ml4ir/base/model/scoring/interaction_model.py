@@ -67,6 +67,9 @@ class InteractionModel(keras.Model):
         self.feature_transform_ops = dict()
         self.label_transform_op = None
 
+    def build(self, input_shape):
+        super(InteractionModel, self).build(input_shape)
+
 
 class UnivariateInteractionModel(InteractionModel):
     """Keras layer that applies in-graph transformations to input feature tensors"""
@@ -107,12 +110,23 @@ class UnivariateInteractionModel(InteractionModel):
         self.feature_transform_ops = dict()
         for feature_info in self.all_features:
             feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
+
             feature_transform_op = self.__define_feature_transform_op(feature_info, file_io, **kwargs)
             if feature_transform_op:
                 self.feature_transform_ops[feature_node_name] = feature_transform_op
             
         # Define a one-to-one feature transform for the label
         self.label_transform_op = self.__define_feature_transform_op(self.feature_config.get_label(), file_io, **kwargs)
+
+
+    # TODO
+    #  This is a workaround to supress an exception while saving the model which tries to save
+    #  default signature implicitly while saving the model using tfrecord_serving.
+    def _default_save_signature(self):
+        return None
+
+    def build(self, input_shape):
+        super(UnivariateInteractionModel, self).build(input_shape)
     
     def __define_feature_transform_op(self,
                                       feature_info: Dict,
@@ -148,8 +162,9 @@ class UnivariateInteractionModel(InteractionModel):
                 )
         else:
             return None
-    
+
     def call(self, inputs, training=None):
+        #print("inputs", inputs)
         """
         Apply the feature transform op to each feature
 
@@ -194,9 +209,12 @@ class UnivariateInteractionModel(InteractionModel):
             feature_tensor = inputs[feature_node_name]
 
             if feature_node_name in self.feature_transform_ops:
+                #print("\nUnivariateInteractionModel call", feature_node_name, feature_tensor)
+                #print(feature_tensor)
                 feature_tensor = self.feature_transform_ops[feature_node_name](
                     feature_tensor, training=training
                 )
+                #print("\nUnivariateInteractionModel call after feat transform", feature_node_name, feature_tensor)
             elif feature_info[TRAINABLE]:
                 # Default feature layer
                 feature_tensor = tf.expand_dims(
@@ -207,8 +225,8 @@ class UnivariateInteractionModel(InteractionModel):
             the values for all examples of the sequence
             """
             if (
-                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
-                and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
+                    self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                    and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
             ):
                 if feature_info[TRAINABLE]:
                     feature_tensor = tf.tile(feature_tensor, train_tile_shape)
@@ -222,10 +240,19 @@ class UnivariateInteractionModel(InteractionModel):
                     train_features[feature_node_name] = tf.cast(feature_tensor, tf.float32)
                 else:
                     train_features[feature_node_name] = feature_tensor
+
+                # print("TRAINABLE", feature_node_name, feature_info[DTYPE], feature_tensor.dtype, train_features[feature_node_name].dtype,
+                #       train_features[feature_node_name].dtype == tf.string)
             else:
+
                 if feature_info[DTYPE] == tf.int64:
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
+
                 metadata_features[feature_node_name] = feature_tensor
+
+                # print("NOT TRAINABLE", feature_node_name, feature_info[DTYPE], feature_tensor.dtype, metadata_features[feature_node_name].dtype,
+                #       metadata_features[feature_node_name].dtype == tf.string)
+
 
         return {
             FeatureTypeKey.TRAIN: train_features,

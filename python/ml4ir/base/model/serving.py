@@ -82,19 +82,34 @@ def define_tfrecord_signature(
         required_fields_only=required_fields_only,
         pad_sequence=pad_sequence,
     )
+    #print("tfrecord_parse_fn", tfrecord_parse_fn)
 
     dtype_map = dict()
+    tf_type_map = dict()
     for feature_info in feature_config.get_all_features(include_label=False):
         feature_node_name = feature_info.get("node_name", feature_info["name"])
         dtype_map[feature_node_name] = feature_config.get_dtype(feature_info)
+        tf_type_map[feature_node_name] = feature_info.get("tfrecord_type")
 
-    # Define a serving signature for tfrecord
+    #Define a serving signature for tfrecord
     @tf.function(input_signature=[TensorSpec(shape=[None], dtype=tf.string)])
     def _serve_tfrecord(protos):
+        tf.print("Input proto to _serve_tfrecord:", protos)
         input_size = tf.shape(protos)[0]
+        # features_dict = {
+        #     feature: TensorArray(
+        #         dtype=dtype_map[feature],
+        #         size=input_size,
+        #         element_shape=[1] if tf_type_map[feature] == 'context' else [None]
+        #     ) for feature in inputs
+        # }
+
         features_dict = {
             feature: TensorArray(dtype=dtype_map[feature], size=input_size) for feature in inputs
         }
+
+
+
 
         # Define loop index
         i = tf.constant(0)
@@ -107,6 +122,11 @@ def define_tfrecord_signature(
         def loop_body(i, protos, features_dict):
             features, labels = tfrecord_parse_fn(protos[i])
             for feature, feature_val in features.items():
+                #features_dict[feature] = features_dict[feature].write(i, feature_val)
+                expected_dtype = dtype_map[feature]
+                #tf.debugging.assert_type(feature_val, expected_dtype, message=f"Feature {feature} has incorrect type")
+                expected_shape = features_dict[feature].element_shape
+                #feature_val = tf.ensure_shape(feature_val, expected_shape)
                 features_dict[feature] = features_dict[feature].write(i, feature_val)
 
             i += 1
@@ -121,16 +141,26 @@ def define_tfrecord_signature(
         # Convert TensorArray to tensor
         features_dict = {k: v.stack() for k, v in features_dict.items()}
 
+        tf.print("features_dict:", features_dict)
+
+        for key, tensor in features_dict.items():
+            tf.print("Feature:", key, "dtype:", tensor.dtype)
+
         # Run the model to get predictions
         predictions = model(inputs=features_dict)
+
+        tf.print("Type of predictions:", type(predictions), predictions)
 
         # Define a post hook
         if postprocessing_fn:
             predictions = postprocessing_fn(predictions, features_dict)
 
+        tf.print("Type of predictions after postproc:", type(predictions), predictions)
+
         return predictions
 
     return _serve_tfrecord
+
 
 
 def define_serving_signatures(
