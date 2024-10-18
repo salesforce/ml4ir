@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow import feature_column
+#from tensorflow import feature_column
 
 import copy
 
@@ -149,6 +149,8 @@ class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
 
         self.num_buckets = self.feature_layer_args[self.NUM_BUCKETS]
         self.default_value = self.feature_layer_args.get(self.DEFAULT_VALUE, 0)
+        if self.default_value is None:
+            self.default_value = 0  # Set a valid default value
         self.embedding_size = self.feature_layer_args[self.EMBEDDING_SIZE]
 
         # Replace the feature columns with an Embedding layer
@@ -166,7 +168,7 @@ class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
             inputs
         )
         embedding = self.embedding_layer(inputs)
-        embedding = tf.expand_dims(embedding, axis=1)
+        #embedding = tf.expand_dims(embedding, axis=1)
         return embedding
 
 
@@ -475,7 +477,6 @@ class CategoricalIndicatorWithVocabularyFile(layers.Layer):
 
 # Utility function to extract vocabulary keys and ids (assuming it reads from a file)
 def get_vocabulary_info(feature_info, file_io):
-    # Example implementation, should be modified to fit your actual file structure
     vocab_file_path = feature_info["feature_layer_info"]["args"]["vocabulary_file"]
     vocab_data = file_io.read_df(vocab_file_path)
 
