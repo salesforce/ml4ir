@@ -466,6 +466,7 @@ class FeatureLayerTest(RelevanceTestBase):
             ["domain_0", "domain_1", "domain_0", "domain_2", "domain_10", "domain_11"]
         )
 
+        #categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
         categorcial_tensor = tf.keras.Input(shape=(1,), dtype=tf.string)
         embedding_tensor = categorical_fns.CategoricalEmbeddingWithVocabularyFileAndDropout(
             feature_info, self.file_io

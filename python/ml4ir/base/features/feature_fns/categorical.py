@@ -168,7 +168,8 @@ class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
             inputs
         )
         embedding = self.embedding_layer(inputs)
-        #embedding = tf.expand_dims(embedding, axis=1)
+        if len(embedding.shape) == 2:
+            embedding = tf.expand_dims(embedding, axis=1)
         return embedding
 
 

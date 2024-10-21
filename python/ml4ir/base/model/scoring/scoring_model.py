@@ -120,6 +120,7 @@ class RelevanceScorer(keras.Model):
         return None
 
     def build(self, input_shape):
+        self.input_shape = input_shape
         # Build interaction_model if necessary
         if not self.interaction_model.built:
             features = self.interaction_model.build(input_shape)

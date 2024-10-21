@@ -9,7 +9,19 @@ from ml4ir.base.io.file_io import FileIO
 
 def define_default_signature(model, feature_config):
     """Default serving signature to take each model feature as input and outputs the scores"""
-    raise NotImplementedError
+    data_types = {}
+    for f in model.input_shape:
+        data_types[f] = feature_config.get_feature(f)["dtype"]
+
+    input_signature = {
+        key: tf.TensorSpec(shape=shape, dtype=data_types[key], name=key)
+        for key, shape in model.input_shape.items()
+    }
+    @tf.function(input_signature=[input_signature])
+    def _serving_default(inputs):
+        # Model inference logic
+        return model(inputs)
+    return _serving_default
 
 
 def define_tfrecord_signature(
@@ -163,6 +175,7 @@ def define_tfrecord_signature(
 
 
 
+
 def define_serving_signatures(
     model,
     tfrecord_type: str,
@@ -221,5 +234,6 @@ def define_serving_signatures(
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
             max_sequence_size=max_sequence_size,
-        )
+        ),
+        ServingSignatureKey.DEFAULT: define_default_signature(model, feature_config)
     }
