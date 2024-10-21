@@ -128,11 +128,15 @@ class RelevanceModel:
             self.model = self.scorer
             self.model.output_names = [self.output_name]
 
+            self.model.my_custom_metrics = metrics
             self.model.compile(
                 optimizer=optimizer,
                 loss=self.scorer.loss_op,
                 metrics=metrics
             )
+            #self.model.metrics.extend(metrics)
+            #self.my_custom_metrics = metrics
+
             # NOTE: We need to do one forward pass to build the network
             self.is_built = False
 
@@ -383,9 +387,9 @@ class RelevanceModel:
                                                                          'mode', 'auto'),
                                                                      verbose=1)
                 else:
-                    if monitor_metric == "":
-                        monitor_metric = "val_loss"
-                        monitor_mode = "min"
+                    # if monitor_metric == "":
+                    #     monitor_metric = "val_loss"
+                    #     monitor_mode = "min"
                     if not monitor_metric.startswith("val_"):
                         monitor_metric = "val_{}".format(monitor_metric)
                     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor=monitor_metric,
@@ -442,10 +446,10 @@ class RelevanceModel:
             where key is metric name and value is floating point metric value.
             This dictionary will be used for experiment tracking for each ml4ir run
         """
-        if monitor_metric == "":
-            monitor_metric = "val_loss"
-            monitor_mode = "min"
-        elif not monitor_metric.startswith("val_"):
+        #if monitor_metric == "":
+        #    monitor_metric = "val_loss"
+        #    monitor_mode = "min"
+        if not monitor_metric.startswith("val_"):
             monitor_metric = "val_{}".format(monitor_metric)
         callbacks_list: list = self._build_callback_hooks(
             models_dir=models_dir,

@@ -11,7 +11,7 @@ def define_default_signature(model, feature_config):
     """Default serving signature to take each model feature as input and outputs the scores"""
     data_types = {}
     for f in model.input_shape:
-        data_types[f] = feature_config.get_feature(f)["dtype"]
+        data_types[f] = feature_config.get_feature_by_node_name(f)["dtype"]
 
     input_signature = {
         key: tf.TensorSpec(shape=shape, dtype=data_types[key], name=key)

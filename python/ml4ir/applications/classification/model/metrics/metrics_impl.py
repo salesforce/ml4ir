@@ -55,6 +55,7 @@ class Top5CategoricalAccuracy(metrics.TopKCategoricalAccuracy):
         Axis 1 of y_true and y_pred must be of size 1, otherwise `tf.squeeze`
         will throw error.
         """
-        return super(Top5CategoricalAccuracy, self).update_state(
-            tf.squeeze(y_true), tf.squeeze(y_pred), sample_weight=sample_weight
-        )
+        # return super(Top5CategoricalAccuracy, self).update_state(
+        #     tf.squeeze(y_true), tf.squeeze(y_pred), sample_weight=sample_weight
+        # )
+        return super(Top5CategoricalAccuracy, self).update_state(y_true, y_pred, sample_weight=sample_weight)

@@ -121,17 +121,17 @@ class RelevanceScorer(keras.Model):
 
     def build(self, input_shape):
         self.input_shape = input_shape
-        # Build interaction_model if necessary
-        if not self.interaction_model.built:
-            features = self.interaction_model.build(input_shape)
-
-        # Initialize architecture_op and other components that depend on input_shape
-        if not self.interaction_model.built:
-            self.architecture_op = self.get_architecture_op()
-            features[FeatureTypeKey.LOGITS] = self.architecture_op.build(features)
-
-        # Mark the layer as built
-        super(RelevanceScorer, self).build(input_shape)
+        # # Build interaction_model if necessary
+        # if not self.interaction_model.built:
+        #     features = self.interaction_model.build(input_shape)
+        #
+        # # Initialize architecture_op and other components that depend on input_shape
+        # if not self.interaction_model.built:
+        #     self.architecture_op = self.get_architecture_op()
+        #     features[FeatureTypeKey.LOGITS] = self.architecture_op.build(features)
+        #
+        # # Mark the layer as built
+        # super(RelevanceScorer, self).build(input_shape)
 
     @classmethod
     def from_model_config_file(
@@ -347,8 +347,8 @@ class RelevanceScorer(keras.Model):
                 compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
             elif isinstance(compiled_metric, MeanRankMetric):
                 compiled_metric.update_state(y_true, y_pred, mask=mask)
-            #else:
-            #    compiled_metric.update_state(y_true, y_pred)
+            else:
+               compiled_metric.update_state(y_true, y_pred)
 
         # Compute metrics on auxiliary label
         if self.aux_label:

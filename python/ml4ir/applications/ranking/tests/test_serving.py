@@ -176,8 +176,12 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Load SavedModel and get the right serving signature
-        tfrecord_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        # tfrecord_model = kmodels.load_model(
+        #     os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        # )
+        tfrecord_model = keras.layers.TFSMLayer(
+            os.path.join(self.output_dir, "final"),
+            call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
         assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
 
