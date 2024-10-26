@@ -146,7 +146,11 @@ class TensorFlowInferenceIT extends TestData {
     val cols = matches.map { field =>
       if (field.startsWith("\"") && field.endsWith("\"")) {
         field.substring(1, field.length - 1).replaceAll("\\\\\"", "\"")
-      } else {
+      }
+      if (field.startsWith("\'") && field.endsWith("\'")) {
+        field.substring(1, field.length - 1).replaceAll("\\\\\'", "\'")
+      }
+      else {
         field
       }
     }
@@ -226,13 +230,10 @@ class TensorFlowInferenceIT extends TestData {
   def testRankingSavedModelBundleWithCSVData(): Unit = {
     val generatedBundleLocation = System.getProperty("bundleLocation")
     def modelName = System.getProperty("runName") + "_ranking"
-    //val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
-    //val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
-    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/serving_tfrecord"
+    val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
+    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
 
-    val bundlePath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/models/end_to_end_test_ranking/final"
-    val predictionPath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/logs/end_to_end_test_ranking/model_predictions.csv"
-    val featureConfigPath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/ml4ir/applications/ranking/tests/data/configs/feature_config_integration_test.yaml"
 
 
     // Debugging statements
@@ -335,15 +336,9 @@ class TensorFlowInferenceIT extends TestData {
   def testClassificationGeneratedModelBundle(): Unit = {
     val generatedBundleLocation = System.getProperty("bundleLocation")
     def modelName = System.getProperty("runName") + "_classification"
-    //val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
     val bundlePath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/models/end_to_end_test_classification/final/serving_tfrecord"
-    //val bundlePath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/models/end_to_end_test_classification/final/default.keras"
-    //val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
-    val predictionPath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/logs/end_to_end_test_classification/model_predictions.csv"
-    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
-    // TODO: We are using another feature_config.yaml that works for this prediction, but ideally, we must used the one that has been
-    // used for traning (commented above).
-    val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
+    val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
+    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
     println("in testClassificationGeneratedModelBundle")
     println(s"generatedBundleLocation=$generatedBundleLocation")
