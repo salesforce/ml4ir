@@ -336,7 +336,7 @@ class TensorFlowInferenceIT extends TestData {
   def testClassificationGeneratedModelBundle(): Unit = {
     val generatedBundleLocation = System.getProperty("bundleLocation")
     def modelName = System.getProperty("runName") + "_classification"
-    val bundlePath = "/Users/mohamed.m/Documents/work/projects/ml4ir_bump_tf_version/python/models/end_to_end_test_classification/final/serving_tfrecord"
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/serving_tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
 
