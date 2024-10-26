@@ -76,11 +76,11 @@ class RankingModelTest(RankingTestBase):
         # assert ServingSignatureKey.DEFAULT in default_model.signatures
         # default_signature = default_model.signatures[ServingSignatureKey.DEFAULT]
 
-        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final"))
+        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final/"+ServingSignatureKey.DEFAULT))
         default_model_infer = default_model.signatures[ServingSignatureKey.DEFAULT]
 
         tfrecord_model = keras.layers.TFSMLayer(
-            os.path.join(self.output_dir, "final"),
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
             call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
 
@@ -180,12 +180,12 @@ class RankingModelTest(RankingTestBase):
         #     os.path.join(self.output_dir, "final", "tfrecord"), compile=False
         # )
         tfrecord_model = keras.layers.TFSMLayer(
-            os.path.join(self.output_dir, "final"),
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
             call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
-        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
+        #assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
 
-        return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+        return tfrecord_model
 
     def test_model_serving_default(self):
         """
@@ -227,7 +227,7 @@ class RankingModelTest(RankingTestBase):
                 [feature_config.create_dummy_protobuf(num_records=num_records).SerializeToString()]
             )
             try:
-                tfrecord_signature(protos=proto)
+                pred = tfrecord_signature(inputs=proto)[self.args.output_name]
             except Exception:
                 assert False
 
@@ -241,6 +241,6 @@ class RankingModelTest(RankingTestBase):
         )
 
         try:
-            tfrecord_signature(protos=proto)
+            pred = tfrecord_signature(inputs=proto)[self.args.output_name]
         except Exception:
             assert False

@@ -314,10 +314,15 @@ def temperature_scale(model: tf.keras.Model,
         eval_relevance_model(scorer, logits_numpys_test, labels_numpys_test, temperature=temper)
 
     # write the full vector in the csv not ...
-    np.set_printoptions(
-        formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
-        linewidth=sys.maxsize,
-        threshold=sys.maxsize)
+    # np.set_printoptions(
+    #     formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+    #     linewidth=sys.maxsize,
+    #     threshold=sys.maxsize)
+
+    # np.set_printoptions(formatter={
+    #     'all': lambda x: str(x.decode('utf-8', errors='replace')) if isinstance(x, bytes) else str(x)
+    # }, linewidth=sys.maxsize, threshold=sys.maxsize)
+
     # avoiding .tolist() that is not memory efficient
     # note: temperature scaling does not change the accuracy as it does not change the maximum. So,
     # the temperature scaling predicted labels must be the same as  original

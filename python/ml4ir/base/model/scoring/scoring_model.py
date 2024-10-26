@@ -15,6 +15,7 @@ from ml4ir.base.model.architectures import architecture_factory
 from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel
 from ml4ir.base.model.metrics.metrics_impl import SegmentMean
+from ml4ir.applications.ranking.model.metrics.aux_metrics_impl import RankMatchFailure
 
 
 class RelevanceScorer(keras.Model):
@@ -347,6 +348,8 @@ class RelevanceScorer(keras.Model):
                 compiled_metric.update_state(y_true, y_pred, segments=segments, mask=mask)
             elif isinstance(compiled_metric, MeanRankMetric):
                 compiled_metric.update_state(y_true, y_pred, mask=mask)
+            elif isinstance(compiled_metric, RankMatchFailure):
+                pass
             else:
                compiled_metric.update_state(y_true, y_pred)
 

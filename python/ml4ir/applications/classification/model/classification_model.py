@@ -255,9 +255,73 @@ class ClassificationModel(RelevanceModel):
             #                     linewidth=sys.maxsize,
             #                     threshold=sys.maxsize,  # write the full vector in the csv not a truncated version
             #                     legacy="1.13")  # enables 1.13 legacy printing mode
+
+
+            # np.set_printoptions(formatter={
+            #     'all': lambda x: str(x.decode('utf-8', errors='ignore')) if isinstance(x, bytes) else str(x)
+            # }, linewidth=sys.maxsize, threshold=sys.maxsize, legacy="1.13")
+
+            # for col in predictions_df.columns:
+            #     if isinstance(predictions_df[col].values[0], bytes):
+            #         predictions_df[col] = predictions_df[col].str.decode('utf8')
+
+            def decode_bytes(obj):
+                """
+                Recursively decode byte strings in various data structures.
+                """
+                if isinstance(obj, bytes):
+                    #print("decode_bytes: bytes", obj)
+                    conv = obj.decode('utf-8', errors='ignore')
+                elif isinstance(obj, np.ndarray):
+                    #print("decode_bytes: np.ndarray", obj)
+                    conv = []
+                    for item in obj:
+                        decoded = decode_bytes(item)
+                        if isinstance(decoded, str):
+                            if len(decoded) > 0:
+                                conv.append(decoded)
+                        else:
+                            conv.append(decoded)
+                    return np.array(conv)
+
+                    #return [decode_bytes(item) for item in obj]
+                elif isinstance(obj, list):
+                    #print("decode_bytes: list", obj)
+                    conv = []
+                    for item in obj:
+                        decoded = decode_bytes(item)
+                        if isinstance(decoded, str):
+                            if len(decoded) > 0:
+                                conv.append(decoded)
+                        else:
+                            conv.append(decoded)
+                    return np.array(conv)
+
+                    #conv =  [decode_bytes(item) for item in obj]
+                elif isinstance(obj, tuple):
+                    #print("decode_bytes: tuple", obj)
+                    conv =  tuple(decode_bytes(item) for item in obj)
+                    return np.array(conv)
+                elif isinstance(obj, dict):
+                    #print("decode_bytes: dict", obj)
+                    conv =  {key: decode_bytes(value) for key, value in obj.items()}
+                elif isinstance(obj, set):
+                    #print("decode_bytes: set", obj)
+                    conv =  {decode_bytes(item) for item in obj}
+                else:
+                    #print("decode_bytes: otherwise", obj)
+                    conv =  obj
+
+                #print("decode_bytes converted", conv)
+                return conv
+
+            np.set_printoptions(linewidth=np.inf)
             for col in predictions_df.columns:
-                if isinstance(predictions_df[col].values[0], bytes):
-                    predictions_df[col] = predictions_df[col].str.decode('utf8')
+                conv = predictions_df[col].apply(decode_bytes)
+                predictions_df[col] = conv
+
+
+            #print(predictions_df.head(5))
             predictions_df.to_csv(outfile, mode="w", header=True, index=False)
             self.logger.info(f"Model predictions written to: {outfile}")
         return predictions_df

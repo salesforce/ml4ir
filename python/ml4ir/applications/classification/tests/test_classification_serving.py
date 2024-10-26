@@ -43,14 +43,14 @@ class ClassificationServingTest(ClassificationTestBase):
             required_fields_only=True,
         )
 
-        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final"))
+        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final/"+ServingSignatureKey.DEFAULT))
         default_model_infer = default_model.signatures[ServingSignatureKey.DEFAULT]
 
         #assert ServingSignatureKey.DEFAULT in default_model.signatures
         #default_signature = default_model.signatures[ServingSignatureKey.DEFAULT]
 
         tfrecord_model = keras.layers.TFSMLayer(
-            os.path.join(self.output_dir, "final"),
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
             call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
         #assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures

@@ -175,6 +175,10 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
                              "when `norm_first` is False is invalid.")
 
     def build(self, input_shape):
+        try:
+            input_shape = tf.TensorShape(input_shape)
+        except:
+            pass
         if isinstance(input_shape, tf.TensorShape):
             input_tensor_shape = input_shape
         elif isinstance(input_shape, (list, tuple)):

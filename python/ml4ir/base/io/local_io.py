@@ -162,8 +162,13 @@ class LocalIO(FileIO):
         """
         self.log("Writing dataframe to : {}".format(outfile))
         # Decode the binary stream in utf-8 to avoid the extra b'...' formating when writing csv predictions
-        #np.set_printoptions(formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+        # np.set_printoptions(formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
         #                    linewidth=sys.maxsize, threshold=sys.maxsize)
+
+        # np.set_printoptions(formatter={
+        #     'all': lambda x: str(x.decode('utf-8', errors='replace')) if isinstance(x, bytes) else str(x)
+        # }, linewidth=sys.maxsize, threshold=sys.maxsize)
+
         output = df.to_csv(
             sep=sep, index=index, quotechar='"', escapechar="\\", quoting=csv.QUOTE_NONNUMERIC
         )

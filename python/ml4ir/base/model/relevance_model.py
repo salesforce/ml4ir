@@ -17,11 +17,13 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
-from ml4ir.base.model.serving import define_serving_signatures
+from ml4ir.base.model.serving import define_serving_signatures, define_default_signature
+from ml4ir.base.config.keys import ServingSignatureKey
 from tensorflow import data
 from tensorflow.keras import callbacks, Model
 from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras.optimizers import Optimizer
+
 
 
 class RelevanceModelConstants:
@@ -552,10 +554,14 @@ class RelevanceModel:
             predictions_df = pd.DataFrame(predictions_dict)
 
             if logs_dir:
-                np.set_printoptions(
-                    formatter={"all": lambda x: str(x.decode("utf-8"))
-                    if isinstance(x, bytes) else str(x)},
-                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+                # np.set_printoptions(
+                #     formatter={"all": lambda x: str(x.decode("utf-8"))
+                #     if isinstance(x, bytes) else str(x)},
+                #     linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+
+                # np.set_printoptions(formatter={
+                #     'all': lambda x: str(x.decode('utf-8', errors='replace')) if isinstance(x, bytes) else str(x)
+                # }, linewidth=sys.maxsize, threshold=sys.maxsize)
 
                 # Decode bytes features to strings
                 for col in predictions_df.columns:
@@ -727,7 +733,7 @@ class RelevanceModel:
         - signature to read TFRecord SequenceExample inputs
         """
 
-        # self.model.save(filepath=os.path.join(model_file, "default.keras"))
+        self.model.save(filepath=os.path.join(model_file, "default.keras"))
         # self.model.save(
         #     os.path.join(model_file, "default.keras"),
         #     save_format='keras_v3'
@@ -820,9 +826,14 @@ class RelevanceModel:
         #     os.path.join(model_file, "default")
         # )
 
+        # tf.saved_model.save(
+        #     self.model,
+        #     os.path.join(model_file)
+        # )
+
         tf.saved_model.save(
             self.model,
-            os.path.join(model_file),
+            os.path.join(model_file, ServingSignatureKey.TFRECORD),
             signatures=define_serving_signatures(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
@@ -834,6 +845,15 @@ class RelevanceModel:
                 max_sequence_size=self.max_sequence_size,
             )
         )
+
+        tf.saved_model.save(
+            self.model,
+            os.path.join(model_file, ServingSignatureKey.DEFAULT),
+                signatures={ServingSignatureKey.DEFAULT:
+                                define_default_signature(self.model, self.feature_config)}
+        )
+
+
         #
         # tf.saved_model.save(
         #     self.model,

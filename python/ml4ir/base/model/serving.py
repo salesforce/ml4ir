@@ -10,13 +10,23 @@ from ml4ir.base.io.file_io import FileIO
 def define_default_signature(model, feature_config):
     """Default serving signature to take each model feature as input and outputs the scores"""
     data_types = {}
+    shapes = {}
     for f in model.input_shape:
+        #if feature_config.get_feature_by_node_name(f)["trainable"]:
         data_types[f] = feature_config.get_feature_by_node_name(f)["dtype"]
+        serving_shape = list(model.input_shape[f])
+        serving_shape[0] = None
+        shapes[f] = serving_shape
 
     input_signature = {
-        key: tf.TensorSpec(shape=shape, dtype=data_types[key], name=key)
+        key: tf.TensorSpec(shape=shapes[key], dtype=data_types[key], name=key)
         for key, shape in model.input_shape.items()
     }
+
+    # input_signature = {
+    #     f: tf.TensorSpec(shape=shapes[f], dtype=data_types[f], name=f)
+    #     for f in data_types
+    # }
     @tf.function(input_signature=[input_signature])
     def _serving_default(inputs):
         # Model inference logic
@@ -120,6 +130,8 @@ def define_tfrecord_signature(
             feature: TensorArray(dtype=dtype_map[feature], size=input_size) for feature in inputs
         }
 
+        print("\nfeatures_dict", features_dict)
+
 
 
 
@@ -153,7 +165,7 @@ def define_tfrecord_signature(
         # Convert TensorArray to tensor
         features_dict = {k: v.stack() for k, v in features_dict.items()}
 
-        tf.print("features_dict:", features_dict)
+        print("\nfeatures_dict after parsin protos loop", features_dict)
 
         for key, tensor in features_dict.items():
             tf.print("Feature:", key, "dtype:", tensor.dtype)
@@ -161,13 +173,13 @@ def define_tfrecord_signature(
         # Run the model to get predictions
         predictions = model(inputs=features_dict)
 
-        tf.print("Type of predictions:", type(predictions), predictions)
+        print("\nType of predictions:", type(predictions), predictions)
 
         # Define a post hook
         if postprocessing_fn:
             predictions = postprocessing_fn(predictions, features_dict)
 
-        tf.print("Type of predictions after postproc:", type(predictions), predictions)
+        print("Type of predictions after postproc:", type(predictions), predictions)
 
         return predictions
 
@@ -234,6 +246,7 @@ def define_serving_signatures(
             required_fields_only=required_fields_only,
             pad_sequence=pad_sequence,
             max_sequence_size=max_sequence_size,
-        ),
-        ServingSignatureKey.DEFAULT: define_default_signature(model, feature_config)
+        )
+        #,
+        #ServingSignatureKey.DEFAULT: define_default_signature(model, feature_config)
     }
