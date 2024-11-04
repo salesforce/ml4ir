@@ -5,6 +5,10 @@ import java.util
 
 import com.google.common.collect.ImmutableMap
 
+import java.util.{HashMap => JHashMap, List => JList, Map => JMap}
+import scala.collection.JavaConverters._
+
+
 case class StringMapSequenceExampleBuilder(
     modelFeatures: ModelFeaturesConfig,
     floatFns: util.Map[String, util.function.Function[java.lang.Float, java.lang.Float]],

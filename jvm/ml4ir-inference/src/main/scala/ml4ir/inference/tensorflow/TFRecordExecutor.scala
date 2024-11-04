@@ -6,6 +6,8 @@ import org.tensorflow.ndarray.buffer.{ByteDataBuffer, DataBuffers}
 import org.tensorflow.types.{TFloat32, TString}
 import org.tensorflow.{SavedModelBundle, Tensor}
 
+import scala.collection.JavaConverters._
+
 /**
  * @see <a href="https://www.tensorflow.org/api_docs/java/reference/org/tensorflow/SavedModelBundle">SavedModelBundle</a>
  * Base class for performing the actual Tensorflow execution {@see TFRecordExecutor#apply}
@@ -22,9 +24,35 @@ import org.tensorflow.{SavedModelBundle, Tensor}
  *                    └── variables.index
  * @param config instantiated struct with the values from the feature_config.yaml relevant for inference
  */
+
+
 class TFRecordExecutor(dirPath: String, config: ModelExecutorConfig) {
+println(s"in TFRecordExecutor $dirPath")
   private val savedModelBundle = SavedModelBundle.load(dirPath, "serve")
+  println("\nsavedModelBundle:\n")
+  savedModelBundle.graph().operations().asScala.foreach(op => println(op.name()))
+
+  //val metaGraphDef = MetaGraphDef.parseFrom(savedModelBundle.metaGraphDef())
+  //val signatureMap = metaGraphDef.getSignatureDefMap
+  //val signatureKey = "serving_tfrecord"
+  //val signatureDef = signatureMap.get(signatureKey)
+
+  //val inputInfo = signatureDef.getInputsMap.asScala
+  //val outputInfo = signatureDef.getOutputsMap.asScala
+
+
+
   private val session = savedModelBundle.session()
+
+  // Initialize variables if an init op exists
+    try {
+      session.runner().addTarget("init_op").run() // Replace "init_op" with actual name
+    } catch {
+      case e: Exception => println("No init_op found or initialization failed.")
+    }
+
+  // Run the initialization operation
+
   /**
    * To serialize the protobuf input into a byte[] as input to the Tensorflow graph
    * @param in Should be either a { @see org.tensorflow.example.Example} or { @see org.tensorflow.SequenceExample},

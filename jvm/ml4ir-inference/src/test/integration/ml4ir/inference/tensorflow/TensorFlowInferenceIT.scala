@@ -5,6 +5,7 @@ import ml4ir.inference.tensorflow.data.{FeatureConfig, ModelFeaturesConfig, Serv
 import org.junit.Test
 import org.junit.Assert._
 import org.tensorflow.example._
+import scala.util.matching.Regex
 
 import scala.io.Source
 
@@ -46,13 +47,34 @@ class TensorFlowInferenceIT extends TestData {
       val lines = Source.fromFile(dataPath).getLines().toList
       val (header, dataLines) = (lines.head, lines.tail)
       val colNames = header.split(",").map( n => servingNameTr.getOrElse(n, n))
+
+      println("\nfeatureConfig")
+      println(s"$featureConfig")
+
+      println("\ncolNames")
+      colNames.foreach(println)
+
       val lineMapper: String => Map[String, String] = (line: String) => colNames.zip(line.split(",")).toMap
       val data: List[Map[String, String]] = dataLines.map(lineMapper)
 
+
+      println("All Features:")
+        featureConfig.features.foreach { f =>
+          println(s"Name: ${f.name}, Serving Name: ${f.servingConfig.servingName}, Type: ${f.tfRecordType}")
+        }
+
       def featureSet(featType: String) =
         featureConfig.features.filter(_.tfRecordType.equalsIgnoreCase(featType)).map(_.servingConfig.servingName).toSet
+
+
       val contextFeatures = featureSet("context")
       val sequenceFeatures = featureSet("sequence")
+
+      println("\nContext Features:")
+        contextFeatures.foreach(println)
+
+       println("\nSequence Features:")
+        sequenceFeatures.foreach(println)
 
       val groupMapper = (group: List[Map[String, String]]) => {
         val context: Map[String, String] = group.head.filterKeys(contextFeatures.contains)
@@ -69,6 +91,30 @@ class TensorFlowInferenceIT extends TestData {
 
   }
 
+    def extractColumnValues_old(line: String): Option[PredictionVector] = {
+    println(s"\nextractColumnValues: $line")
+
+    val cols = line.split(",").map(_.trim)
+
+    cols.foreach(println)
+
+    val sequence = Map("query_text" -> cols(1),
+      "domain_id" -> cols(3),
+      "user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","))
+
+      print(s"\nsequence : $sequence")
+
+    try {
+      val scores = cols(7).substring(1, cols(7).length - 1).split(" ").map(_.trim).map((s: String) => s.toFloat)
+      print(s"\scores : scores")
+
+      Some(PredictionVector(sequence, scores))
+    } catch {
+      case _: NumberFormatException => None
+    }
+  }
+
+
   /**
    * Basic parsing of the Python CSV prediction.
    *
@@ -76,18 +122,73 @@ class TensorFlowInferenceIT extends TestData {
    * @return
    */
   def extractColumnValues(line: String): Option[PredictionVector] = {
-    val cols = line.split(",").map(_.trim)
+    println(s"extractColumnValues: $line")
 
-    val sequence = Map("query_text" -> cols(1),
+    //val cols = line.split(",").map(_.trim)
+
+    //cols.zipWithIndex.foreach { case (col, index) => println(s"Column $index: $col")}
+
+
+    // Regex to match CSV fields, accounting for quoted fields with commas
+    val csvPattern: Regex =
+      """(?x)                   # Enable verbose regex
+        (?:^|,)                 # Start of line or comma delimiter
+        (                       # Start capture group
+          "(?:[^"\\]|\\.)*"     # Quoted field with possible escaped chars
+          |                     # OR
+          [^",]*                # Unquoted field without commas or quotes
+        )                       # End capture group
+      """.r
+
+    val matches = csvPattern.findAllMatchIn(line).map(_.group(1)).toList
+
+    // Remove surrounding quotes and unescape characters
+    val cols = matches.map { field =>
+      if (field.startsWith("\"") && field.endsWith("\"")) {
+        field.substring(1, field.length - 1).replaceAll("\\\\\"", "\"")
+      }
+      if (field.startsWith("\'") && field.endsWith("\'")) {
+        field.substring(1, field.length - 1).replaceAll("\\\\\'", "\'")
+      }
+      else {
+        field
+      }
+    }
+
+    // Now, cols is a List[String] with correctly parsed fields
+    cols.foreach(println)
+
+
+    //val sequence = Map("query_text" -> cols(1),
+     // "domain_id" -> cols(3),
+      //"user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","),
+      //"query_words" ->  cols(2).substring(1, cols(2).length - 1).trim().replace(" ", ","))
+
+      val sequence = Map("query_text" -> cols(1),
       "domain_id" -> cols(3),
       "user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","))
 
-    try {
-      val scores = cols(7).substring(1, cols(7).length - 1).split(" ").map(_.trim).map((s: String) => s.toFloat)
-      Some(PredictionVector(sequence, scores))
-    } catch {
-      case _: NumberFormatException => None
-    }
+      println(s"sequence: $sequence")
+      // Function to safely convert string to Float
+      import scala.util.{Try, Success, Failure}
+        def safeToFloat(s: String): Option[Float] = {
+          Try(s.toFloat) match {
+            case Success(value) => Some(value)
+            case Failure(exception) =>
+              println(s"Failed to convert '$s' to Float: ${exception.getMessage}")
+              None
+          }
+        }
+
+      val scoresArray = cols(7)
+          .substring(1, cols(7).length - 1)
+          .split("\\s+")
+          .map(_.trim)
+          .filter(_.nonEmpty)
+          .flatMap(safeToFloat)
+
+      scoresArray.foreach(println)
+      Some(PredictionVector(sequence, scoresArray))
   }
 
   /**
@@ -129,21 +230,37 @@ class TensorFlowInferenceIT extends TestData {
   def testRankingSavedModelBundleWithCSVData(): Unit = {
     val generatedBundleLocation = System.getProperty("bundleLocation")
     def modelName = System.getProperty("runName") + "_ranking"
-    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/serving_tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
     val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
+
+
+
+    // Debugging statements
+    println(s"Generated Bundle Location: $generatedBundleLocation")
+    println(s"Model Name: $modelName")
+    println(s"Bundle Path: $bundlePath")
+    println(s"Prediction Path: $predictionPath")
+    println(s"Feature Config Path: $featureConfigPath")
 
     evaluateRankingInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
   }
 
   def evaluateRankingInferenceAccuracy(bundlePath: String, predictionPath: String, featureConfigPath: String) = {
+    println(s"Evaluating Ranking Inference Accuracy with:")
+    println(s"Bundle Path: $bundlePath")
+    println(s"Prediction Path: $predictionPath")
+    println(s"Feature Config Path: $featureConfigPath")
     val allScores: Iterable[(StringMapQueryAndPredictions, SequenceExample, Array[Float], Array[Float])] = runQueriesAgainstDocs(
       predictionPath,
       bundlePath,
       featureConfigPath,
       "serving_tfrecord_protos",
-      "StatefulPartitionedCall_1"
+      "StatefulPartitionedCall"
     )
+
+    println("\nallScores")
+    allScores.foreach(println)
 
     allScores.foreach {
       case (query: StringMapQueryAndPredictions, sequenceExample: SequenceExample, scores: Array[Float], predictedScores: Array[Float]) =>
@@ -167,17 +284,50 @@ class TensorFlowInferenceIT extends TestData {
                              featureConfigPath: String,
                              inputTFNode: String,
                              scoresTFNode: String): Iterable[(StringMapQueryAndPredictions, SequenceExample, Array[Float], Array[Float])] = {
+    println(s"Running Queries Against Docs with:")
+    println(s"CSV Data Path: $csvDataPath")
+    println(s"Model Path: $modelPath")
+    println(s"Feature Config Path: $featureConfigPath")
+    println(s"Input TF Node: $inputTFNode")
+    println(s"Scores TF Node: $scoresTFNode")
+
     val featureConfig = ModelFeaturesConfig.load(featureConfigPath)
+    println(s"Loaded Feature Config: $featureConfig")
+
     val sequenceExampleBuilder = StringMapSequenceExampleBuilder.withFeatureProcessors(featureConfig)
     val rankingModelConfig = ModelExecutorConfig(inputTFNode, scoresTFNode)
 
     val rankingModel = new TFRecordExecutor(modelPath, rankingModelConfig)
 
     val queryContextsAndDocs = StringMapCSVLoader.loadDataFromCSV(csvDataPath, featureConfig)
+    //println(s"Loaded Query Contexts and Docs: $queryContextsAndDocs")
+
     assertTrue("attempting to test empty query set!", queryContextsAndDocs.nonEmpty)
     queryContextsAndDocs.map {
       case q @ StringMapQueryAndPredictions(queryContext, docs, predictedScores) =>
+        println(s"\nProcessing Query Context: $queryContext")
+      println(s"\nDocs: $docs")
+
+      // Check for null or empty values before building SequenceExample
+      if (queryContext == null || docs == null) {
+        println("Error: queryContext or docs is null.")
+      }
+        val t1 = queryContext.asJava
+        val t2 = docs.map(_.asJava).asJava
+        println(s"\nqueryContext.asJava: $t1")
+        println(s"\ndocs.map: $t2")
+        docs.foreach { doc =>
+          doc.foreach { case (key, value) =>
+            if (value == null || value.trim.isEmpty) {
+              println(s"Null or empty value detected for key: $key")
+            }
+          }
+        }
+
+
         val sequenceExample = sequenceExampleBuilder.build(queryContext.asJava, docs.map(_.asJava).asJava)
+        println(s"\nBuilt SequenceExample: $sequenceExample")
+
         (q, sequenceExample, rankingModel(sequenceExample), predictedScores)
     }
   }
@@ -186,37 +336,48 @@ class TensorFlowInferenceIT extends TestData {
   def testClassificationGeneratedModelBundle(): Unit = {
     val generatedBundleLocation = System.getProperty("bundleLocation")
     def modelName = System.getProperty("runName") + "_classification"
-    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/tfrecord"
+    val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/serving_tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
-    //val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
-    // TODO: We are using another feature_config.yaml that works for this prediction, but ideally, we must used the one that has been
-    // used for traning (commented above).
-    val featureConfigPath = resourceFor("classification/feature_config_with_same_name.yaml")
+    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/classification/tests/data/configs/feature_config.yaml"
+
+    println("in testClassificationGeneratedModelBundle")
+    println(s"generatedBundleLocation=$generatedBundleLocation")
+    println(s"bundlePath=$bundlePath")
 
     evaluateClassificationInferenceAccuracy(bundlePath, predictionPath, featureConfigPath)
   }
 
   def evaluateClassificationInferenceAccuracy(bundlePath: String, predictionPath: String, featureConfigPath: String) = {
+  println(s"in evaluateClassificationInferenceAccuracy bundlePath=$bundlePath")
     val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_protos",
-        scoresNodeName = "StatefulPartitionedCall_3"
+        scoresNodeName = "StatefulPartitionedCall"
       )
     )
 
     val modelFeatures = ModelFeaturesConfig.load(featureConfigPath)
+    println(s"modelFeatures=$modelFeatures")
 
 
     val protoBuilder = StringMapExampleBuilder.withFeatureProcessors(modelFeatures)
+
+    println(s"readPredictionCSV(predictionPath), $predictionPath")
 
     val vectors: List[PredictionVector] = readPredictionCSV(predictionPath)
 
     assertNotEquals("No predictions found in file!", 0, vectors.length)
 
     vectors.foreach { queryContext: PredictionVector =>
+      println("queryContext", queryContext, queryContext.sequence.asJava)
       val proto: Example = protoBuilder.apply(queryContext.sequence.asJava)
-      val scores: Array[Float] = bundleExecutor(proto)
+      println("proto", proto)
+      //val scores: Array[Float] = bundleExecutor(proto)
+      val scores = bundleExecutor(proto)
+
+      println("scores", scores)
+
       assertArrayEquals("Prediction for " + queryContext.sequence + " failed", queryContext.scores, scores, 1e-6f)
     }
   }
