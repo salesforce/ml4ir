@@ -110,7 +110,7 @@ features:
     dtype: string
     log_at_inference: true
     feature_layer_info:
-      type: numeric
+      type: string
       shape: null
       fn: bytes_sequence_to_encoding_bilstm
       args:
@@ -167,4 +167,4 @@ features:
       required: true
       default_value: ""
     tfrecord_type: context
-  
+

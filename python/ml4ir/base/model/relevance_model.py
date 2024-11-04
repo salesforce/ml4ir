@@ -17,11 +17,13 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
-from ml4ir.base.model.serving import define_serving_signatures
+from ml4ir.base.model.serving import define_serving_signatures, define_default_signature
+from ml4ir.base.config.keys import ServingSignatureKey
 from tensorflow import data
 from tensorflow.keras import callbacks, Model
 from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras.optimizers import Optimizer
+
 
 
 class RelevanceModelConstants:
@@ -29,7 +31,7 @@ class RelevanceModelConstants:
     MODEL_PREDICTIONS_CSV_FILE = "model_predictions.csv"
     METRICS_CSV_FILE = "metrics.csv"
     GROUP_METRICS_CSV_FILE = "group_metrics.csv"
-    CHECKPOINT_FNAME = "checkpoint.tf"
+    CHECKPOINT_FNAME = "checkpoint.keras"
     DEFAULT_EVAL_CONFIG_YAML = "ml4ir/base/config/default_evaluation_config.yaml"
 
 
@@ -128,11 +130,13 @@ class RelevanceModel:
             self.model = self.scorer
             self.model.output_names = [self.output_name]
 
+            self.model.my_custom_metrics = metrics
             self.model.compile(
                 optimizer=optimizer,
                 loss=self.scorer.loss_op,
                 metrics=metrics
             )
+
             # NOTE: We need to do one forward pass to build the network
             self.is_built = False
 
@@ -405,7 +409,7 @@ class RelevanceModel:
             logs_dir: Optional[str] = None,
             logging_frequency: int = 25,
             monitor_metric: str = "",
-            monitor_mode: str = "",
+            monitor_mode: str = "max",
             patience=2,
     ):
         """
@@ -542,10 +546,14 @@ class RelevanceModel:
             predictions_df = pd.DataFrame(predictions_dict)
 
             if logs_dir:
-                np.set_printoptions(
-                    formatter={"all": lambda x: str(x.decode("utf-8"))
-                    if isinstance(x, bytes) else str(x)},
-                    linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+                # np.set_printoptions(
+                #     formatter={"all": lambda x: str(x.decode("utf-8"))
+                #     if isinstance(x, bytes) else str(x)},
+                #     linewidth=sys.maxsize, threshold=sys.maxsize)  # write the full line in the csv not the truncated version.
+
+                # np.set_printoptions(formatter={
+                #     'all': lambda x: str(x.decode('utf-8', errors='replace')) if isinstance(x, bytes) else str(x)
+                # }, linewidth=sys.maxsize, threshold=sys.maxsize)
 
                 # Decode bytes features to strings
                 for col in predictions_df.columns:
@@ -558,13 +566,20 @@ class RelevanceModel:
                     # If writing first time, write headers to CSV file
                     predictions_df.to_csv(outfile, mode="w", header=True, index=False)
 
+            else:
+                predictions_df_list.append(predictions_df)
+
             batch_count += 1
             if batch_count % logging_frequency == 0:
                 self.logger.info("Finished predicting scores for {} batches".format(batch_count))
-            yield predictions_df
-            
+
+        predictions_df = None
         if logs_dir:
             self.logger.info("Model predictions written to -> {}".format(outfile))
+        else:
+            predictions_df = pd.concat(predictions_df_list)
+
+        return predictions_df
 
     def evaluate(
             self,
@@ -697,18 +712,13 @@ class RelevanceModel:
         serializable tensor graph operations
         """
         model_file = os.path.join(models_dir, sub_dir)
+        if not os.path.exists(model_file):
+            os.makedirs(model_file)
 
-        # Save model with default signature
-        self.model.save(filepath=os.path.join(model_file, "default"))
-
-        """
-        Save model with custom signatures
-
-        Currently supported
-        - signature to read TFRecord SequenceExample inputs
-        """
-        self.model.save(
-            filepath=os.path.join(model_file, "tfrecord"),
+        # saving serving_tfrecord
+        tf.saved_model.save(
+            self.model,
+            os.path.join(model_file, ServingSignatureKey.TFRECORD),
             signatures=define_serving_signatures(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
@@ -718,7 +728,15 @@ class RelevanceModel:
                 required_fields_only=required_fields_only,
                 pad_sequence=pad_sequence,
                 max_sequence_size=self.max_sequence_size,
-            ),
+            )
+        )
+
+        # saving default_tfrecord
+        tf.saved_model.save(
+            self.model,
+            os.path.join(model_file, ServingSignatureKey.DEFAULT),
+                signatures={ServingSignatureKey.DEFAULT:
+                                define_default_signature(self.model, self.feature_config)}
         )
 
         # Save individual layer weights
@@ -801,7 +819,7 @@ class RelevanceModel:
             is_training=True,
             logging_frequency=25,
             monitor_metric: str = "",
-            monitor_mode: str = "",
+            monitor_mode: str = "max",
             patience=2,
     ):
         """

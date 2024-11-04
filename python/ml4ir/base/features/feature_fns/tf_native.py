@@ -57,7 +57,7 @@ class TFNativeOpLayer(BaseFeatureLayerOp):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
-        feature_tensor = self.layer(inputs, training)
+        feature_tensor = self.layer(inputs, training=training)
         # Adjusting the shape to the default feature fns for concatenating in the next step
         feature_tensor = tf.expand_dims(feature_tensor, axis=-1,
                                         name="{}_tf_native_op".format(self.feature_name))

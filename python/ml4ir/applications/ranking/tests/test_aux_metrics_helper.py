@@ -25,7 +25,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 2"):
             computed_metrics = compute_aux_metrics(
@@ -40,7 +43,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.69608,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 3"):
             computed_metrics = compute_aux_metrics(
@@ -54,7 +60,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 4"):
             computed_metrics = compute_aux_metrics(
@@ -68,7 +77,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.568,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 5"):
             computed_metrics = compute_aux_metrics(
@@ -82,7 +94,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.525,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 6"):
             computed_metrics = compute_aux_metrics(
@@ -96,7 +111,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.52723,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 7"):
             computed_metrics = compute_aux_metrics(
@@ -110,7 +128,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.674,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 8"):
             computed_metrics = compute_aux_metrics(
@@ -124,7 +145,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.6416,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 9"):
             computed_metrics = compute_aux_metrics(
@@ -138,7 +162,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.66452,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 10"):
             computed_metrics = compute_aux_metrics(
@@ -152,7 +179,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.651047,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 11"):
             computed_metrics = compute_aux_metrics(
@@ -166,7 +196,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.455,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 12"):
             computed_metrics = compute_aux_metrics(
@@ -180,7 +213,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.001,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 13"):
             computed_metrics = compute_aux_metrics(
@@ -194,7 +230,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.3224,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
         with self.subTest("Test Case: 14"):
             computed_metrics = compute_aux_metrics(
@@ -208,7 +247,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                     "AuxIntrinsicFailure": 0.1335,
                     "AuxRankMF": 0.0
                 }),
-                check_less_precise=True)
+                check_exact=False,
+                rtol=1e-03,
+                atol=1e-03
+            )
 
     def test_compute_aux_metrics_invalid_click(self):
         """Testing compute_aux_metrics method with invalid click values"""
@@ -223,7 +265,10 @@ class ComputeAuxMetricsTest(unittest.TestCase):
                 "AuxIntrinsicFailure": 0.133459,
                 "AuxRankMF": 0.0
             }),
-            check_less_precise=True)
+            check_exact=False,
+            rtol=1e-03,
+            atol=1e-03
+        )
 
     def test_compute_rank_match_failure(self):
         """Test computation of RankMatchFailure metric"""

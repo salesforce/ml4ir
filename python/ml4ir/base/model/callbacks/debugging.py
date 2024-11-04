@@ -29,7 +29,7 @@ class DebuggingCallback(callbacks.Callback):
         self.epoch = epoch + 1
         self.logger.info("Starting Epoch : {}".format(self.epoch))
         self.logger.info(logs)
-        self.logger.info('lr={}'.format(str(self.model.optimizer._decayed_lr(float).numpy())))
+        self.logger.info('lr={}'.format(str(self.model.optimizer.learning_rate.numpy())))
 
     def on_train_begin(self, logs):
         self.logger.info("Training Model")

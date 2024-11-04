@@ -175,6 +175,10 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
                              "when `norm_first` is False is invalid.")
 
     def build(self, input_shape):
+        try:
+            input_shape = tf.TensorShape(input_shape)
+        except:
+            pass
         if isinstance(input_shape, tf.TensorShape):
             input_tensor_shape = input_shape
         elif isinstance(input_shape, (list, tuple)):
@@ -234,7 +238,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
                     epsilon=self._norm_epsilon,
                     dtype=tf.float32))
 
-        self._intermediate_dense = tf.keras.layers.experimental.EinsumDense(
+        self._intermediate_dense = tf.keras.layers.EinsumDense(
             einsum_equation,
             output_shape=(None, self._inner_dim),
             bias_axes="d",
@@ -251,7 +255,7 @@ class TransformerEncoderBlock(tf.keras.layers.Layer):
             self._inner_activation, dtype=policy)
         self._inner_dropout_layer = tf.keras.layers.Dropout(
             rate=self._inner_dropout)
-        self._output_dense = tf.keras.layers.experimental.EinsumDense(
+        self._output_dense = tf.keras.layers.EinsumDense(
             einsum_equation,
             output_shape=(None, last_output_shape),
             bias_axes="d",

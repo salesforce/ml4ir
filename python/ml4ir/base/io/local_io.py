@@ -91,8 +91,7 @@ class LocalIO(FileIO):
                 skipinitialspace=True,
                 quotechar='"',
                 escapechar=escape_char,
-                error_bad_lines=False,
-                warn_bad_lines=True,
+                on_bad_lines='warn',
                 engine="c",
                 na_filter=na_filter
             )
@@ -162,9 +161,15 @@ class LocalIO(FileIO):
             dataframe in csv form if outfile is None
         """
         self.log("Writing dataframe to : {}".format(outfile))
+        # removing this to fix failing tests
         # Decode the binary stream in utf-8 to avoid the extra b'...' formating when writing csv predictions
-        np.set_printoptions(formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
-                            linewidth=sys.maxsize, threshold=sys.maxsize)
+        # np.set_printoptions(formatter={'all': lambda x: str(x.decode('utf-8')) if isinstance(x, bytes) else str(x)},
+        #                    linewidth=sys.maxsize, threshold=sys.maxsize)
+
+        # np.set_printoptions(formatter={
+        #     'all': lambda x: str(x.decode('utf-8', errors='replace')) if isinstance(x, bytes) else str(x)
+        # }, linewidth=sys.maxsize, threshold=sys.maxsize)
+
         output = df.to_csv(
             sep=sep, index=index, quotechar='"', escapechar="\\", quoting=csv.QUOTE_NONNUMERIC
         )

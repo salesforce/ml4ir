@@ -67,6 +67,9 @@ class InteractionModel(keras.Model):
         self.feature_transform_ops = dict()
         self.label_transform_op = None
 
+    def build(self, input_shape):
+        super(InteractionModel, self).build(input_shape)
+
 
 class UnivariateInteractionModel(InteractionModel):
     """Keras layer that applies in-graph transformations to input feature tensors"""
@@ -107,12 +110,23 @@ class UnivariateInteractionModel(InteractionModel):
         self.feature_transform_ops = dict()
         for feature_info in self.all_features:
             feature_node_name = feature_info.get(NODE_NAME, feature_info[NAME])
+
             feature_transform_op = self.__define_feature_transform_op(feature_info, file_io, **kwargs)
             if feature_transform_op:
                 self.feature_transform_ops[feature_node_name] = feature_transform_op
             
         # Define a one-to-one feature transform for the label
         self.label_transform_op = self.__define_feature_transform_op(self.feature_config.get_label(), file_io, **kwargs)
+
+
+    # TODO
+    #  This is a workaround to supress an exception while saving the model which tries to save
+    #  default signature implicitly while saving the model using tfrecord_serving.
+    def _default_save_signature(self):
+        return None
+
+    def build(self, input_shape):
+        super(UnivariateInteractionModel, self).build(input_shape)
     
     def __define_feature_transform_op(self,
                                       feature_info: Dict,
@@ -148,7 +162,7 @@ class UnivariateInteractionModel(InteractionModel):
                 )
         else:
             return None
-    
+
     def call(self, inputs, training=None):
         """
         Apply the feature transform op to each feature
@@ -207,8 +221,8 @@ class UnivariateInteractionModel(InteractionModel):
             the values for all examples of the sequence
             """
             if (
-                self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
-                and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
+                    self.tfrecord_type == TFRecordTypeKey.SEQUENCE_EXAMPLE
+                    and feature_info[TFRECORD_TYPE] == SequenceExampleTypeKey.CONTEXT
             ):
                 if feature_info[TRAINABLE]:
                     feature_tensor = tf.tile(feature_tensor, train_tile_shape)
@@ -223,8 +237,10 @@ class UnivariateInteractionModel(InteractionModel):
                 else:
                     train_features[feature_node_name] = feature_tensor
             else:
+
                 if feature_info[DTYPE] == tf.int64:
                     feature_tensor = tf.cast(feature_tensor, tf.float32)
+
                 metadata_features[feature_node_name] = feature_tensor
 
         return {

@@ -167,7 +167,7 @@ class RelevanceArgParser(ArgumentParser):
         self.add_argument(
             "--monitor_mode",
             type=str,
-            default=None,
+            default="max",
             help="Metric mode to use for monitoring training loop in callbacks",
         )
 

@@ -76,6 +76,12 @@ class DNN(keras.Model):
                                                                          "l1_coeff", 0),
                                                                      l2_coeff=self.model_config[DNNLayerKey.POSITIONAL_BIAS_HANDLER].get("l2_coeff", 0))
 
+    # TODO
+    #  This is a workaround to supress an exception while saving the model which tries to save
+    #  default signature implicitly while saving the model using tfrecord_serving.
+    def _default_save_signature(self):
+        return None
+
     def get_config(self):
         """Get config for the model"""
         config = super().get_config()
@@ -98,7 +104,7 @@ class DNN(keras.Model):
                     try:
                         label_feature_info = feature_config.get_label()
                         vocabulary_keys, vocabulary_ids = get_vocabulary_info(
-                            label_feature_info["feature_layer_info"]["args"], self.file_io)
+                            label_feature_info, self.file_io)
                         layer_args["units"] = len(vocabulary_keys) + OOV
                     except:
                         raise KeyError("We were not able to find information for the output layer of your DNN. "

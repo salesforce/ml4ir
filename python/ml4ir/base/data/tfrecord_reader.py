@@ -255,6 +255,7 @@ class TFRecordParser(object):
                 # the FeatureConfig and functions from PreprocessingMap
                 feature_tensor = self.preprocess_feature(feature_tensor, feature_info)
 
+
                 # Add the processed feature tensor to the features dictionary
                 features_dict[feature_node_name] = feature_tensor
 
@@ -521,18 +522,22 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             Tensor object that can be used as a default tensor if the expected feature
             is missing from the TFRecord
         """
+        default_value = self.feature_config.get_default_value(feature_info)
+        dtype = feature_info["dtype"]
+
         if feature_info.get("tfrecord_type", SequenceExampleTypeKey.CONTEXT) == SequenceExampleTypeKey.CONTEXT:
-            return tf.constant(
-                value=self.feature_config.get_default_value(feature_info), dtype=feature_info["dtype"],
-            )
+            return tf.constant(value=default_value, dtype=dtype)
         else:
-            return tf.fill(
-                value=tf.constant(
-                    value=self.feature_config.get_default_value(feature_info),
-                    dtype=feature_info["dtype"],
-                ),
-                dims=[sequence_size],
-            )
+            if dtype == tf.string:
+                return tf.tile(
+                    tf.constant([default_value], dtype=dtype),
+                    [sequence_size]
+                )
+            else:
+                return tf.fill(
+                    [sequence_size],
+                    tf.constant(value=default_value, dtype=dtype)
+                )
 
     def get_feature(self, feature_info, extracted_features, sequence_size):
         """
@@ -552,7 +557,6 @@ class TFRecordSequenceExampleParser(TFRecordParser):
             feature_info
         """
         extracted_context_features, extracted_sequence_features = extracted_features
-
         default_tensor = self.get_default_tensor(feature_info, sequence_size)
 
         if feature_info["tfrecord_type"] == SequenceExampleTypeKey.CONTEXT:
@@ -638,6 +642,7 @@ class TFRecordSequenceExampleParser(TFRecordParser):
                     )
                 sequence_size = tf.constant(self.max_sequence_size, dtype=tf.int64)
             else:
+                print("mask", mask)
                 mask = tf.squeeze(mask, axis=0)
                 sequence_size = tf.cast(tf.reduce_sum(mask), tf.int64)
 
