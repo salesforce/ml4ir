@@ -106,21 +106,11 @@ class TransformerEncoder(tf.keras.layers.Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
     def call(self, encoder_inputs, attention_mask=None):
-        """Return the output of the encoder.
-        Args:
-          encoder_inputs: A tensor with shape `(batch_size, input_length,
-            hidden_size)`.
-          attention_mask: A mask for the encoder self-attention layer with shape
-            `(batch_size, input_length, input_length)`.
-        Returns:
-          Output of encoder which is a `float32` tensor with shape
-            `(batch_size, input_length, hidden_size)`.
-        """
         for layer_idx in range(self.num_layers):
-            encoder_inputs = self.encoder_layers[layer_idx](
-                [encoder_inputs, attention_mask])
-
+            if attention_mask is not None:
+                encoder_inputs = self.encoder_layers[layer_idx]([encoder_inputs, attention_mask])
+            else:
+                encoder_inputs = self.encoder_layers[layer_idx](encoder_inputs)
         output_tensor = encoder_inputs
         output_tensor = self.output_normalization(output_tensor)
-
         return output_tensor

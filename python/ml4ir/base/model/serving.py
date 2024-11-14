@@ -9,7 +9,24 @@ from ml4ir.base.io.file_io import FileIO
 
 def define_default_signature(model, feature_config):
     """Default serving signature to take each model feature as input and outputs the scores"""
-    raise NotImplementedError
+    data_types = {}
+    shapes = {}
+    for f in model.input_shape:
+        #if feature_config.get_feature_by_node_name(f)["trainable"]:
+        data_types[f] = feature_config.get_feature_by_node_name(f)["dtype"]
+        serving_shape = list(model.input_shape[f])
+        serving_shape[0] = None
+        shapes[f] = serving_shape
+
+    input_signature = {
+        key: tf.TensorSpec(shape=shapes[key], dtype=data_types[key], name=key)
+        for key, shape in model.input_shape.items()
+    }
+
+    @tf.function(input_signature=[input_signature])
+    def _serving_default(inputs):
+        return model(inputs)
+    return _serving_default
 
 
 def define_tfrecord_signature(
@@ -82,19 +99,26 @@ def define_tfrecord_signature(
         required_fields_only=required_fields_only,
         pad_sequence=pad_sequence,
     )
+    #print("tfrecord_parse_fn", tfrecord_parse_fn)
 
     dtype_map = dict()
+    tf_type_map = dict()
     for feature_info in feature_config.get_all_features(include_label=False):
         feature_node_name = feature_info.get("node_name", feature_info["name"])
         dtype_map[feature_node_name] = feature_config.get_dtype(feature_info)
+        tf_type_map[feature_node_name] = feature_info.get("tfrecord_type")
 
-    # Define a serving signature for tfrecord
+    #Define a serving signature for tfrecord
     @tf.function(input_signature=[TensorSpec(shape=[None], dtype=tf.string)])
     def _serve_tfrecord(protos):
+        tf.print("Input proto to _serve_tfrecord:", protos)
         input_size = tf.shape(protos)[0]
+
         features_dict = {
             feature: TensorArray(dtype=dtype_map[feature], size=input_size) for feature in inputs
         }
+
+        print("\nfeatures_dict", features_dict)
 
         # Define loop index
         i = tf.constant(0)
@@ -121,6 +145,9 @@ def define_tfrecord_signature(
         # Convert TensorArray to tensor
         features_dict = {k: v.stack() for k, v in features_dict.items()}
 
+        for key, tensor in features_dict.items():
+            tf.print("Feature:", key, "dtype:", tensor.dtype)
+
         # Run the model to get predictions
         predictions = model(inputs=features_dict)
 
@@ -131,6 +158,8 @@ def define_tfrecord_signature(
         return predictions
 
     return _serve_tfrecord
+
+
 
 
 def define_serving_signatures(

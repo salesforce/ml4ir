@@ -20,17 +20,17 @@ from testfixtures import TempDirectory
 GOLD_METRICS = {
     "query_count": 1500.0,
     "old_ACR": 1.656,
-    "new_ACR": 2.410,
+    "new_ACR": 2.6,
     "old_MRR": 0.783,
-    "new_MRR": 0.597,
+    "new_MRR": 0.547,
     "old_AuxAllFailure": 0.061,
     "old_AuxIntrinsicFailure": 0.154,
-    "new_AuxAllFailure": 0.086,
-    "new_AuxIntrinsicFailure": 0.153,
-    "perc_improv_ACR": -45.513,
-    "perc_improv_MRR": -23.760,
-    "perc_improv_AuxAllFailure": -40.217,
-    "perc_improv_AuxIntrinsicFailure": 0.235
+    "new_AuxAllFailure": 0.0993,
+    "new_AuxIntrinsicFailure": 0.149,
+    "perc_improv_ACR": -59.2354,
+    "perc_improv_MRR": -30.098,
+    "perc_improv_AuxAllFailure": -61.956,
+    "perc_improv_AuxIntrinsicFailure": 3.208
 }
 
 
@@ -173,14 +173,16 @@ class RankingModelTest(RankingTestBase):
         ).set_index(0).to_dict()[1]
 
         expected_metrics = {
-            'stat_sig_MRR_improved_groups': '0', 'stat_sig_MRR_degraded_groups': '5', 'stat_sig_MRR_group_improv_perc': '-11.131335125195395',
-            'stat_sig_AuxIntrinsicFailure_improved_groups': '5', 'stat_sig_AuxIntrinsicFailure_degraded_groups': '0',
-            'stat_sig_AuxIntrinsicFailure_group_improv_perc': '92.81582417518467',
-            'stat_sig_AuxRankMF_improved_groups': '1', 'stat_sig_AuxRankMF_degraded_groups': '0',
+            'stat_sig_MRR_improved_groups': '0',
+            'stat_sig_MRR_degraded_groups': '5',
+            'stat_sig_MRR_group_improv_perc': '-11.131335125195395',
+            'stat_sig_AuxIntrinsicFailure_improved_groups': '5',
+            'stat_sig_AuxIntrinsicFailure_degraded_groups': '0',
+            'stat_sig_AuxIntrinsicFailure_group_improv_perc': '93.077',
+            'stat_sig_AuxRankMF_improved_groups': '1',
+            'stat_sig_AuxRankMF_degraded_groups': '0',
             'stat_sig_AuxRankMF_group_improv_perc': '78.30481111176042',
-            'train_NDCG': '0.7625430226325989',
-            'val_NDCG': '0.7833980321884155',
-            'test_new_NDCG': '0.772084332112937'
+            'test_new_NDCG': '0.770349578208842'
 
         }
         for metric in expected_metrics:

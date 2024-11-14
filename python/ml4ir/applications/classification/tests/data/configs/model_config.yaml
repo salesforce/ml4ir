@@ -17,8 +17,9 @@ layers:
   - type: dense
     name: final_dense
     activation: null
-calibration:
-  key: temperature_scaling
-  args:
-    temperature: 1.5
-    zip_output: True
+# commented out as calibration is not working
+#calibration:
+#  key: temperature_scaling
+#  args:
+#    temperature: 1.5
+#    zip_output: True

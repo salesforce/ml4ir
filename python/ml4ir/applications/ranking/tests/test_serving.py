@@ -1,8 +1,8 @@
 import os
 
 import numpy as np
-import pandas as pd
 import tensorflow as tf
+import keras
 from tensorflow.keras import models as kmodels
 
 from ml4ir.applications.ranking.model.ranking_model import RankingModel
@@ -70,17 +70,13 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Load SavedModel and get the right serving signature
-        default_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "default"), compile=False
-        )
-        assert ServingSignatureKey.DEFAULT in default_model.signatures
-        default_signature = default_model.signatures[ServingSignatureKey.DEFAULT]
+        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final/"+ServingSignatureKey.DEFAULT))
+        default_model_infer = default_model.signatures[ServingSignatureKey.DEFAULT]
 
-        tfrecord_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        tfrecord_model = keras.layers.TFSMLayer(
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
+            call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
-        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
-        tfrecord_signature = tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
 
         # Fetch a single batch for testing
         sequence_example_protos = next(iter(raw_dataset.test))
@@ -88,15 +84,11 @@ class RankingModelTest(RankingTestBase):
         parsed_dataset_batch = parsed_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = pd.concat(model.predict(parsed_dataset_batch), ignore_index=True)[self.args.output_name].values
-        default_signature_predictions = default_signature(**parsed_sequence_examples)[
-            self.args.output_name
-        ]
+        model_predictions = model.predict(parsed_dataset_batch)[self.args.output_name].values
+        default_signature_predictions = default_model_infer(**parsed_sequence_examples)[self.args.output_name]
 
-        # Since we do not pad dummy records in tfrecord serving signature,
-        # we can only predict on a single record at a time
         tfrecord_signature_predictions = [
-            tfrecord_signature(protos=tf.gather(sequence_example_protos, [i]))[
+            tfrecord_model(inputs=tf.gather(sequence_example_protos, [i]))[
                 self.args.output_name
             ]
             for i in range(self.args.batch_size)
@@ -163,12 +155,12 @@ class RankingModelTest(RankingTestBase):
         )
 
         # Load SavedModel and get the right serving signature
-        tfrecord_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        tfrecord_model = keras.layers.TFSMLayer(
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
+            call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
-        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
 
-        return tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
+        return tfrecord_model
 
     def test_model_serving_default(self):
         """
@@ -210,7 +202,7 @@ class RankingModelTest(RankingTestBase):
                 [feature_config.create_dummy_protobuf(num_records=num_records).SerializeToString()]
             )
             try:
-                tfrecord_signature(protos=proto)
+                pred = tfrecord_signature(inputs=proto)[self.args.output_name]
             except Exception:
                 assert False
 
@@ -224,6 +216,6 @@ class RankingModelTest(RankingTestBase):
         )
 
         try:
-            tfrecord_signature(protos=proto)
+            pred = tfrecord_signature(inputs=proto)[self.args.output_name]
         except Exception:
             assert False

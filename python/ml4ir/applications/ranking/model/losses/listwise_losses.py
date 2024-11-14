@@ -243,8 +243,8 @@ class RankOneListNet(SoftmaxCrossEntropy):
         y_pred = tf.gather_nd(y_pred, tf.where(tf.equal(mask, tf.constant(1.0))))
 
         # Reshape the tensors so that we sum the losses from each record
-        y_true = tf.expand_dims(tf.squeeze(y_true), axis=-1)
-        y_pred = tf.expand_dims(tf.squeeze(y_pred), axis=-1)
+        y_true = tf.expand_dims(y_true, axis=-1)
+        y_pred = tf.expand_dims(y_pred, axis=-1)
 
-        # Scale the sum of losses down by number of queries in the batch
+        # Scale the sum of losses down by the number of queries in the batch
         return tf.math.divide(self.loss_fn(y_true, y_pred), batch_size)

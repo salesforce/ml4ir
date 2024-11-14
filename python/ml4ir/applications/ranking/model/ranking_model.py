@@ -60,15 +60,13 @@ class RankingModel(RelevanceModel):
         """
         additional_features[metrics_helper.RankingConstants.NEW_RANK] = prediction_helper.convert_score_to_rank
 
-        # Iterate through all the predictions returned by predict function and yield them
-        for prediction_batch in super().predict(
+        return super().predict(
             test_dataset=test_dataset,
             inference_signature=inference_signature,
             additional_features=additional_features,
             logs_dir=logs_dir,
-            logging_frequency=logging_frequency):
-                yield prediction_batch
-                
+            logging_frequency=logging_frequency,
+        )
 
     def evaluate(
         self,

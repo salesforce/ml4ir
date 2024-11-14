@@ -35,14 +35,14 @@ class ReciprocalRankLayer(layers.Layer):
         kwargs:
             Additional key-value args that will be used for configuring the layer
         """
+        super().__init__(name=name, **kwargs)
         self.k_trainable = k_trainable
-        self.k = tf.Variable(
-            initial_value=float(k),
+        self.k = self.add_weight(
+            initializer=tf.keras.initializers.Constant(value=float(k)),
             trainable=self.k_trainable
         )
         self.ignore_zero_score = ignore_zero_score
         self.scale_range_to_one = scale_range_to_one
-        super().__init__(name=name, **kwargs)
 
     def call(self, inputs, training=None):
         """

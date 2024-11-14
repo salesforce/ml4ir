@@ -1,11 +1,9 @@
 import tensorflow as tf
 from tensorflow.keras import layers
-from tensorflow import feature_column
 
 import copy
 
 from ml4ir.base.features.feature_fns.base import BaseFeatureLayerOp
-from ml4ir.base.features.feature_fns.utils import get_vocabulary_info
 from ml4ir.base.features.feature_fns.utils import VocabLookup, CategoricalDropout
 from ml4ir.base.features.feature_fns.utils import CategoricalIndicesFromVocabularyFile
 from ml4ir.base.io.file_io import FileIO
@@ -145,65 +143,31 @@ class CategoricalEmbeddingWithIndices(BaseFeatureLayerOp):
     EMBEDDING_SIZE = "embedding_size"
 
     def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
-        """
-        Initialize feature layer to convert categorical feature into embedding based on indices
-
-        Parameters
-        ----------
-        feature_info : dict
-            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-        file_io : FileIO object
-            FileIO handler object for reading and writing
-
-        Notes
-        -----
-        Args under feature_layer_info:
-            num_buckets : int
-                Maximum number of categorical values
-            default_value : int
-                default value to be assigned to indices out of the num_buckets range
-            embedding_size : int
-                dimension size of the categorical embedding
-        """
         super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
 
         self.num_buckets = self.feature_layer_args[self.NUM_BUCKETS]
-        self.default_value = self.feature_layer_args.get(self.DEFAULT_VALUE, None)
+        self.default_value = self.feature_layer_args.get(self.DEFAULT_VALUE, 0)
+        if self.default_value is None:
+            self.default_value = 0  # Set a valid default value
         self.embedding_size = self.feature_layer_args[self.EMBEDDING_SIZE]
 
-        categorical_fc = feature_column.categorical_column_with_identity(
-            CATEGORICAL_VARIABLE,
-            num_buckets=self.num_buckets,
-            default_value=self.default_value,
-        )
-        embedding_fc = feature_column.embedding_column(
-            categorical_fc, dimension=self.embedding_size, trainable=True
-        )
-
-        self.embedding_op = layers.DenseFeatures(
-            embedding_fc,
-            name="{}_embedding".format(self.feature_name),
+        # Replace the feature columns with an Embedding layer
+        self.embedding_layer = layers.Embedding(
+            input_dim=self.num_buckets, output_dim=self.embedding_size, mask_zero=False
         )
 
     def call(self, inputs, training=None):
         """
-        Defines the forward pass for the layer on the inputs tensor
-
-        Parameters
-        ----------
-        inputs: tensor
-            Input tensor on which the feature transforms are applied
-        training: boolean
-            Boolean flag indicating if the layer is being used in training mode or not
-
-        Returns
-        -------
-        tf.Tensor
-            Resulting tensor after the forward pass through the feature transform layer
+        Defines the forward pass for the layer on the inputs tensor.
         """
-        embedding = self.embedding_op({CATEGORICAL_VARIABLE: inputs}, training=training)
-        embedding = tf.expand_dims(embedding, axis=1)
-
+        inputs = tf.where(
+            inputs >= self.num_buckets,
+            tf.constant(self.default_value, dtype=inputs.dtype),
+            inputs
+        )
+        embedding = self.embedding_layer(inputs)
+        if len(embedding.shape) == 2:
+            embedding = tf.expand_dims(embedding, axis=1)
         return embedding
 
 
@@ -368,7 +332,7 @@ class CategoricalEmbeddingWithVocabularyFile(BaseFeatureLayerOp):
         self.vocabulary_size = self.categorical_indices_op.vocabulary_size
         self.num_oov_buckets = self.categorical_indices_op.num_oov_buckets
 
-        feature_info_new = copy.deepcopy(feature_info)
+        feature_info_new = dict(feature_info)
         feature_info_new["feature_layer_info"]["args"][self.NUM_BUCKETS] = (
             self.vocabulary_size + self.num_oov_buckets
         )
@@ -486,122 +450,36 @@ class CategoricalEmbeddingWithVocabularyFileAndDropout(BaseFeatureLayerOp):
         return embedding
 
 
-class CategoricalIndicatorWithVocabularyFile(BaseFeatureLayerOp):
-    """
-    Converts a string tensor into a categorical one-hot representation.
-    Works by using a vocabulary file to convert the string tensor into categorical indices
-    and then converting the categories into one-hot representation.
-    """
+class CategoricalIndicatorWithVocabularyFile(layers.Layer):
     LAYER_NAME = "categorical_indicator_with_vocabulary_file"
 
-    VOCABULARY_FILE = "vocabulary_file"
-    MAX_LENGTH = "max_length"
-    NUM_OOV_BUCKETS = "num_oov_buckets"
-
-    def __init__(self, feature_info: dict, file_io: FileIO, **kwargs):
-        """
-        Parameters
-        ----------
-        feature_info : dict
-            Dictionary representing the configuration parameters for the specific feature from the FeatureConfig
-        file_io : FileIO object
-            FileIO handler object for reading and writing
-
-        Notes
-        -----
-        Args under feature_layer_info:
-            vocabulary_file : string
-                path to vocabulary CSV file for the input tensor containing the vocabulary to look-up.
-                uses the "key" named column as vocabulary of the 1st column if no "key" column present.
-            max_length : int
-                max number of rows to consider from the vocabulary file.
-                if null, considers the entire file vocabulary.
-            num_oov_buckets : int, optional
-                number of out of vocabulary buckets/slots to be used to
-                encode strings into categorical indices. If not specified, the default is 1.
-
-        The vocabulary CSV file must contain two columns - key, id,
-        where the key is mapped to one id thereby resulting in a
-        many-to-one vocabulary mapping.
-        If id field is absent, a unique whole number id is assigned by default
-        resulting in a one-to-one mapping
-        """
-        super().__init__(feature_info=feature_info, file_io=file_io, **kwargs)
-
+    def __init__(self, feature_info: dict, file_io: object, **kwargs):
+        super().__init__(**kwargs)
         self.categorical_indices_op = CategoricalIndicesFromVocabularyFile(
-            feature_info=feature_info, file_io=file_io, **kwargs)
+            feature_info=feature_info, file_io=file_io
+        )
         self.vocabulary_size = self.categorical_indices_op.vocabulary_size
         self.num_oov_buckets = self.categorical_indices_op.num_oov_buckets
-        
-        self.categorical_identity_fc = feature_column.categorical_column_with_identity(
-            CATEGORICAL_VARIABLE, num_buckets=self.vocabulary_size + self.num_oov_buckets
-        )
-        self.indicator_fc = feature_column.indicator_column(self.categorical_identity_fc)
 
-        self.categorical_one_hot_op = layers.DenseFeatures(
-            self.indicator_fc,
-            name="{}_one_hot".format(self.feature_name),
+        # Updated to use CategoryEncoding
+        self.category_encoding = tf.keras.layers.CategoryEncoding(
+            num_tokens=self.vocabulary_size + self.num_oov_buckets,
+            output_mode="one_hot",
         )
 
     def call(self, inputs, training=None):
-        """
-        Defines the forward pass for the layer on the inputs tensor
-
-        Parameters
-        ----------
-        inputs: tensor
-            Input tensor on which the feature transforms are applied
-        training: boolean
-            Boolean flag indicating if the layer is being used in training mode or not
-
-        Returns
-        -------
-        tf.Tensor
-            Resulting tensor after the forward pass through the feature transform layer
-        """
-        #
-        ##########################################################################
-        #
-        # NOTE:
-        # Current bug[1] with saving a Keras model when using
-        # feature_column.categorical_column_with_vocabulary_list.
-        # Tracking the issue currently and should be able to upgrade
-        # to current latest stable release 2.2.0 to test.
-        #
-        # Can not use TF2.1.0 due to issue[2] regarding saving Keras models with
-        # custom loss, metric layers
-        #
-        # Can not use TF2.2.0 due to issues[3, 4] regarding incompatibility of
-        # Keras Functional API models and Tensorflow
-        #
-        # References:
-        # [1] https://github.com/tensorflow/tensorflow/issues/31686
-        # [2] https://github.com/tensorflow/tensorflow/issues/36954
-        # [3] https://github.com/tensorflow/probability/issues/519
-        # [4] https://github.com/tensorflow/tensorflow/issues/35138
-        #
-        # CATEGORICAL_VARIABLE = "categorical_variable"
-        # categorical_fc = feature_column.categorical_column_with_vocabulary_list(
-        #     CATEGORICAL_VARIABLE,
-        #     vocabulary_list=vocabulary_list,
-        #     default_value=feature_layer_info["args"].get("default_value", -1),
-        #     num_oov_buckets=feature_layer_info["args"].get("num_oov_buckets", 0),
-        # )
-        #
-        # indicator_fc = feature_column.indicator_column(categorical_fc)
-        #
-        # categorical_one_hot = layers.DenseFeatures(
-        #     indicator_fc,
-        #     name="{}_one_hot".format(feature_info.get("node_name", feature_info["name"])),
-        # )({CATEGORICAL_VARIABLE: feature_tensor})
-        # categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
-        #
-        ##########################################################################
-        #
         categorical_indices = self.categorical_indices_op(inputs, training=training)
-
-        categorical_one_hot = self.categorical_one_hot_op(
-            {CATEGORICAL_VARIABLE: categorical_indices}, training=training)
+        categorical_one_hot = self.category_encoding(categorical_indices)
         categorical_one_hot = tf.expand_dims(categorical_one_hot, axis=1)
-
         return categorical_one_hot
+
+
+# Utility function to extract vocabulary keys
+def get_vocabulary_info(feature_info, file_io):
+    vocab_file_path = feature_info["feature_layer_info"]["args"]["vocabulary_file"]
+    vocab_data = file_io.read_df(vocab_file_path)
+
+    vocabulary_keys = tf.constant(vocab_data['entity'].values, dtype=tf.string)
+    vocabulary_ids = tf.constant(list(vocab_data.index), dtype=tf.int64)
+
+    return vocabulary_keys, vocabulary_ids

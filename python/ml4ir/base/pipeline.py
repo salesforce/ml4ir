@@ -8,7 +8,6 @@ import time
 import ast
 from argparse import Namespace
 from logging import Logger
-from collections import deque
 import pathlib
 from typing import List, Union, Type, Optional
 import copy
@@ -608,16 +607,15 @@ class RelevancePipeline(object):
                 ExecutionModeKey.INFERENCE_EVALUATE_RESAVE,
                 ExecutionModeKey.INFERENCE_RESAVE,
             }:
+
                 # Predict relevance scores
-                # deque will exhaust/drain all batches returned by predict function
-                # this way predict function will run on whole test_dataset
-                deque(relevance_model.predict(
+                relevance_model.predict(
                     test_dataset=relevance_dataset.test,
                     inference_signature=self.args.inference_signature,
                     additional_features={},
                     logs_dir=self.logs_dir_local,
                     logging_frequency=self.args.logging_frequency,
-                ), maxlen=0)
+                )
 
             # Write experiment details to experiment tracking dictionary
             # Add command line script arguments

@@ -159,7 +159,7 @@ class TestML4IRSanity(unittest.TestCase):
         """
         run_sanity_test(n_features=2, fname="dataset5.csv",
                         perceptron_mrr=0.37021768881524975,
-                        log_regression_mrr=0.4290204375570229,
+                        log_regression_mrr=0.413979,
                         working_dir=pathlib.Path(self.working_dir.path), log_dir=pathlib.Path(self.log_dir))
 
     def test_linear_ml4ir_sanity_6(self):

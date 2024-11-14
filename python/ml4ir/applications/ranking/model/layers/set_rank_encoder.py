@@ -51,7 +51,6 @@ class SetRankEncoder(layers.Layer):
     def call(self, inputs, mask=None, training=None):
         """
         Invoke the set transformer encoder (permutation invariant) for the input feature tensor
-
         Parameters
         ----------
         inputs: Tensor object
@@ -63,21 +62,20 @@ class SetRankEncoder(layers.Layer):
             Shape: [batch_size, sequence_len]
         training: bool
             If the layer should be run as training or not
-
         Returns
         -------
         Tensor object
             Set transformer encoder (permutation invariant) output tensor
             Shape: [batch_size, sequence_len, encoding_size]
         """
+
         # Project input from shape
         # [batch_size, sequence_len, num_features] -> [batch_size, sequence_len, encoding_size]
         encoder_inputs = self.input_projection_op(inputs, training=training)
         encoder_inputs = self.projection_dropout_op(encoder_inputs, training=training)
 
         # Compute attention mask if mask is present
-        attention_mask = None
-        if self.requires_mask:
+        if self.requires_mask and mask is not None:
             # Mask encoder inputs after projection
             encoder_inputs = tf.transpose(
                 tf.multiply(
@@ -88,6 +86,11 @@ class SetRankEncoder(layers.Layer):
 
             # Convert 2D mask to 3D mask to be used for attention
             attention_mask = tf.matmul(mask[:, :, tf.newaxis], mask[:, tf.newaxis, :])
+        else:
+            # Create default attention mask (all ones)
+            batch_size = tf.shape(encoder_inputs)[0]
+            sequence_len = tf.shape(encoder_inputs)[1]
+            attention_mask = tf.ones((batch_size, sequence_len, sequence_len), dtype=encoder_inputs.dtype)
 
         encoder_output = self.transformer_encoder(encoder_inputs=encoder_inputs,
                                                   attention_mask=attention_mask,

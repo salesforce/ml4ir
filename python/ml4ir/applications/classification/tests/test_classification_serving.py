@@ -1,8 +1,8 @@
 import os
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import models as kmodels
+import keras
 
 from ml4ir.applications.classification.pipeline import ClassificationPipeline
 from ml4ir.applications.classification.tests.test_base import ClassificationTestBase
@@ -43,17 +43,13 @@ class ClassificationServingTest(ClassificationTestBase):
             required_fields_only=True,
         )
 
-        default_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "default"), compile=False
-        )
-        assert ServingSignatureKey.DEFAULT in default_model.signatures
-        default_signature = default_model.signatures[ServingSignatureKey.DEFAULT]
+        default_model = tf.saved_model.load(os.path.join(self.output_dir, "final/"+ServingSignatureKey.DEFAULT))
+        default_model_infer = default_model.signatures[ServingSignatureKey.DEFAULT]
 
-        tfrecord_model = kmodels.load_model(
-            os.path.join(self.output_dir, "final", "tfrecord"), compile=False
+        tfrecord_model = keras.layers.TFSMLayer(
+            os.path.join(self.output_dir, "final/"+ServingSignatureKey.TFRECORD),
+            call_endpoint=ServingSignatureKey.TFRECORD  # Adjust if your signature has a different name
         )
-        assert ServingSignatureKey.TFRECORD in tfrecord_model.signatures
-        tfrecord_signature = tfrecord_model.signatures[ServingSignatureKey.TFRECORD]
 
         # Fetch a single batch for testing
         sequence_example_protos = next(iter(raw_relevance_dataset.test))
@@ -61,17 +57,17 @@ class ClassificationServingTest(ClassificationTestBase):
         parsed_dataset_batch = parsed_relevance_dataset.test.take(1)
 
         # Use the loaded serving signatures for inference
-        model_predictions = pd.concat(classification_model.predict(parsed_dataset_batch), ignore_index=True)[
+        model_predictions = classification_model.predict(parsed_dataset_batch)[
             self.args.output_name
         ].values
-        default_signature_predictions = default_signature(**parsed_sequence_examples)[
+        default_signature_predictions = default_model_infer(**parsed_sequence_examples)[
             self.args.output_name
         ]
 
         # Since we do not pad dummy records in tfrecord serving signature,
         # we can only predict on a single record at a time
         tfrecord_signature_predictions = [
-            tfrecord_signature(protos=tf.gather(sequence_example_protos, [i]))[
+            tfrecord_model(inputs=tf.gather(sequence_example_protos, [i]))[
                 self.args.output_name
             ]
             for i in range(self.args.batch_size)
