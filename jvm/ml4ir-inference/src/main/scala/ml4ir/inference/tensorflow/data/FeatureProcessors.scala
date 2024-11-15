@@ -7,16 +7,75 @@ import scala.collection.JavaConverters._
 import java.util.function.{Function => JFunction}
 
 import ml4ir.inference.tensorflow.data.FeaturesConfigHelper._
-import org.tensorflow.proto.framework.DataType
+import org.tensorflow.framework.DataType
 import org.tensorflow.types.family.TType
 
 object FeatureProcessors {
   val simpleFloatExtractor: String => (JMap[String, String] => Option[Float]) =
-    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName).map(_.toFloat)
+    //(servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName).map(_.toFloat)
+
+        (servingName: String) => (raw: JMap[String, String]) => {
+      raw.asScala.get(servingName) match {
+        case Some(value) if value != null && value.trim.nonEmpty =>
+          println(s"Attempting to parse float for feature '$servingName' with value '$value'")
+          try {
+            val parsedValue = value.toFloat
+            println(s"Successfully parsed float for feature '$servingName': $parsedValue")
+            Some(parsedValue)
+          } catch {
+            case e: NumberFormatException =>
+              println(s"NumberFormatException for feature '$servingName' with value '$value'")
+              e.printStackTrace()
+              None // or handle as appropriate
+          }
+        case _ =>
+          println(s"\nsimpleFloatExtractor Null or empty value for feature '$servingName'")
+          None
+      }
+    }
+
+
+
+
+
+
   val simpleLongExtractor: String => (JMap[String, String] => Option[Long]) =
-    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName).map(_.toLong)
+    (servingName: String) => (raw: JMap[String, String]) => {
+      raw.asScala.get(servingName) match {
+        case Some(value) if value != null && value.trim.nonEmpty =>
+          println(s"Attempting to parse long for feature '$servingName' with value '$value'")
+          try {
+            val parsedValue = value.toLong
+            println(s"Successfully parsed long for feature '$servingName': $parsedValue")
+            Some(parsedValue)
+          } catch {
+            case e: NumberFormatException =>
+              println(s"NumberFormatException for feature '$servingName' with value '$value'")
+              e.printStackTrace()
+              None // or handle as appropriate
+          }
+        case _ =>
+          println(s"\nsimpleLongExtractor Null or empty value for feature '$servingName'")
+          None
+      }
+    }
+
+
+
+
   val simpleStringExtractor: String => (JMap[String, String] => Option[String]) =
-    (servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName)
+    //(servingName: String) => (raw: JMap[String, String]) => raw.asScala.get(servingName)
+
+    (servingName: String) => (raw: JMap[String, String]) => {
+      val value = raw.asScala.get(servingName).orNull
+      println(s"Extracting string for feature '$servingName' with value '$value'")
+      if (value != null && value.trim.nonEmpty) {
+        Some(value)
+      } else {
+        println(s"\nsimpleStringExtractor Null or empty value for feature '$servingName'")
+        None
+      }
+    }
 
   def toScalaFns(floatFns: JMap[String, JFunction[JFloat, JFloat]],
                  longFns: JMap[String, JFunction[JLong, JLong]],

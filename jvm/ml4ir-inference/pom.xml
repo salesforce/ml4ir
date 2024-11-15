@@ -217,7 +217,13 @@
   <dependencies>
     <dependency>
       <groupId>org.tensorflow</groupId>
-      <artifactId>tensorflow-core-platform</artifactId>
+      <artifactId>tensorflow-core-api</artifactId>
+      <version>1.0.0-rc.2</version>
+    </dependency>
+    <dependency>
+        <groupId>org.tensorflow</groupId>
+        <artifactId>tensorflow-core-platform</artifactId>
+      <version>${tensorflow.core.platform}</version>
     </dependency>
     <dependency>
       <groupId>org.tensorflow</groupId>
