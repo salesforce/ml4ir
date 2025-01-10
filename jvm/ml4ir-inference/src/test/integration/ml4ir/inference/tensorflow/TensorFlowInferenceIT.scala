@@ -232,7 +232,7 @@ class TensorFlowInferenceIT extends TestData {
     def modelName = System.getProperty("runName") + "_ranking"
     val bundlePath = generatedBundleLocation + "models/" + modelName + "/final/serving_tfrecord"
     val predictionPath = generatedBundleLocation + "logs/" + modelName + "/model_predictions.csv"
-    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config.yaml"
+    val featureConfigPath = generatedBundleLocation + "ml4ir/applications/ranking/tests/data/configs/feature_config_integration_test.yaml"
 
 
 
@@ -255,7 +255,7 @@ class TensorFlowInferenceIT extends TestData {
       predictionPath,
       bundlePath,
       featureConfigPath,
-      "serving_tfrecord_protos",
+      "serving_default_protos",
       "StatefulPartitionedCall"
     )
 

@@ -17,12 +17,13 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
-from ml4ir.base.model.serving import define_serving_signatures, define_default_signature
+from ml4ir.base.model.serving import define_serving_signatures, define_default_signature, define_tfrecord_signature
 from ml4ir.base.config.keys import ServingSignatureKey
 from tensorflow import data
 from tensorflow.keras import callbacks, Model
 from tensorflow.keras import metrics as kmetrics
 from tensorflow.keras.optimizers import Optimizer
+from tf_keras.src.export import ExportArchive
 
 
 
@@ -715,11 +716,11 @@ class RelevanceModel:
         if not os.path.exists(model_file):
             os.makedirs(model_file)
 
-        # saving serving_tfrecord
-        tf.saved_model.save(
-            self.model,
-            os.path.join(model_file, ServingSignatureKey.TFRECORD),
-            signatures=define_serving_signatures(
+        export_archive = ExportArchive()
+        export_archive.track(self.model)
+        export_archive.add_endpoint(
+            name=ServingSignatureKey.TFRECORD,
+            fn=define_tfrecord_signature(
                 model=self.model,
                 tfrecord_type=self.tfrecord_type,
                 feature_config=self.feature_config,
@@ -730,14 +731,15 @@ class RelevanceModel:
                 max_sequence_size=self.max_sequence_size,
             )
         )
+        export_archive.write_out(os.path.join(model_file, ServingSignatureKey.TFRECORD))
 
-        # saving default_tfrecord
-        tf.saved_model.save(
-            self.model,
-            os.path.join(model_file, ServingSignatureKey.DEFAULT),
-                signatures={ServingSignatureKey.DEFAULT:
-                                define_default_signature(self.model, self.feature_config)}
+        export_archive_default = ExportArchive()
+        export_archive_default.track(self.model)
+        export_archive_default.add_endpoint(
+            name=ServingSignatureKey.DEFAULT,
+            fn=define_default_signature(self.model, self.feature_config)
         )
+        export_archive_default.write_out(os.path.join(model_file, ServingSignatureKey.DEFAULT))
 
         # Save individual layer weights
         self.file_io.make_directory(os.path.join(model_file, "layers"), clear_dir=True)
