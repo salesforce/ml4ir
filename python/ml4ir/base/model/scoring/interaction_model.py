@@ -116,7 +116,7 @@ class UnivariateInteractionModel(InteractionModel):
                 self.feature_transform_ops[feature_node_name] = feature_transform_op
 
                 if hasattr(feature_transform_op, 'categorical_indices_op'):
-                    self.categorical_indices_op = feature_transform_op.categorical_indices_op
+                    setattr(self, 'categorical_indices_op_' + feature_node_name, feature_transform_op.categorical_indices_op)
 
         # Define a one-to-one feature transform for the label
         self.label_transform_op = self.__define_feature_transform_op(self.feature_config.get_label(), file_io, **kwargs)
