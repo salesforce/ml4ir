@@ -352,7 +352,7 @@ class TensorFlowInferenceIT extends TestData {
     val bundleExecutor = new TFRecordExecutor(
       bundlePath,
       ModelExecutorConfig(
-        queryNodeName = "serving_tfrecord_protos",
+        queryNodeName = "serving_default_protos",
         scoresNodeName = "StatefulPartitionedCall"
       )
     )
