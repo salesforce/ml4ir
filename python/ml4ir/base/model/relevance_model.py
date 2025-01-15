@@ -17,7 +17,7 @@ from ml4ir.base.model.losses.loss_base import RelevanceLossBase
 from ml4ir.base.model.scoring.interaction_model import InteractionModel, UnivariateInteractionModel
 from ml4ir.base.model.scoring.prediction_helper import get_predict_fn
 from ml4ir.base.model.scoring.scoring_model import RelevanceScorer
-from ml4ir.base.model.serving import define_serving_signatures, define_default_signature, define_tfrecord_signature
+from ml4ir.base.model.serving import define_default_signature, define_tfrecord_signature
 from ml4ir.base.config.keys import ServingSignatureKey
 from tensorflow import data
 from tensorflow.keras import callbacks, Model
