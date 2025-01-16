@@ -111,35 +111,35 @@ features:
       required: true
     default_value: ""
     tfrecord_type: context
-  - name: user_context
-    node_name: user_context
-    trainable: true
-    dtype: string
-    shape:
-      - 1
-      - 20
-    log_at_inference: true
-    is_group_metric_key: false
-    preprocessing_info:
-      - fn: split_and_pad_string
-        args:
-          split_char: ","
-          max_length: 20
-    feature_layer_info:
-      type: numeric
-      shape: null
-      fn: categorical_embedding_to_encoding_bilstm
-      args:
-        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
-        embedding_size: 64
-        encoding_size: 64
-        num_oov_buckets: 1
-        max_length: 20
-    serving_info:
-      name: user_context
-      required: true
-    default_value: ""
-    tfrecord_type: context
+#  - name: user_context
+#    node_name: user_context
+#    trainable: true
+#    dtype: string
+#    shape:
+#      - 1
+#      - 20
+#    log_at_inference: true
+#    is_group_metric_key: false
+#    preprocessing_info:
+#      - fn: split_and_pad_string
+#        args:
+#          split_char: ","
+#          max_length: 20
+#    feature_layer_info:
+#      type: numeric
+#      shape: null
+#      fn: categorical_embedding_to_encoding_bilstm
+#      args:
+#        vocabulary_file: ml4ir/applications/classification/tests/data/configs/vocabulary/entity_id.csv
+#        embedding_size: 64
+#        encoding_size: 64
+#        num_oov_buckets: 1
+#        max_length: 20
+#    serving_info:
+#      name: user_context
+#      required: true
+#    default_value: ""
+#    tfrecord_type: context
   - name: code
     node_name: code
     trainable: false

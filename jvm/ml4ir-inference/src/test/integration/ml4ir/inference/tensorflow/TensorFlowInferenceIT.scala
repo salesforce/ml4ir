@@ -165,8 +165,8 @@ class TensorFlowInferenceIT extends TestData {
       //"query_words" ->  cols(2).substring(1, cols(2).length - 1).trim().replace(" ", ","))
 
       val sequence = Map("query_text" -> cols(1),
-      "domain_id" -> cols(3),
-      "user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","))
+      "domain_id" -> cols(3))
+//      "user_context" -> cols(4).substring(1, cols(4).length - 1).trim().replace(" ", ","))
 
       println(s"sequence: $sequence")
       // Function to safely convert string to Float
@@ -180,8 +180,8 @@ class TensorFlowInferenceIT extends TestData {
           }
         }
 
-      val scoresArray = cols(7)
-          .substring(1, cols(7).length - 1)
+      val scoresArray = cols(6)
+          .substring(1, cols(6).length - 1)
           .split("\\s+")
           .map(_.trim)
           .filter(_.nonEmpty)
