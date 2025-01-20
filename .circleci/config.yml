@@ -4,7 +4,7 @@ version: 2.1
 jobs:
   build_test_jvm_integration:
     docker:
-      - image: lastmansleeping/ml4ir:0.2
+      - image: mohazahran/ml4ir:0.5-amd64
     resource_class: large
     steps:
       - checkout
@@ -34,13 +34,14 @@ jobs:
           command: |
             . venv/bin/activate
             cd jvm
+            export TF_USE_LEGACY_KERAS=1
             mvn verify -Pintegration_tests
       - store_test_results:
           path: jvm/ml4ir-inference/target
 
   build_test_python_base:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -59,10 +60,17 @@ jobs:
           paths:
             - "venv"
       - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+      - run:
           name: Run Python tests
           command: |
             . venv/bin/activate
             cd python
+            export TF_USE_LEGACY_KERAS=1
             COVERAGE_FILE=reports/.coverage.base coverage run --include "ml4ir/*" -m pytest ml4ir/base/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - persist_to_workspace:
@@ -74,7 +82,7 @@ jobs:
 
   build_test_python_classification:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -93,10 +101,17 @@ jobs:
           paths:
             - "venv"
       - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+      - run:
           name: Run Python tests
           command: |
             . venv/bin/activate
             cd python
+            export TF_USE_LEGACY_KERAS=1
             COVERAGE_FILE=reports/.coverage.classification coverage run  --include "ml4ir/*" -m pytest ml4ir/applications/classification/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - persist_to_workspace:
@@ -108,7 +123,7 @@ jobs:
 
   build_test_python_ranking:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: large
     steps:
       - checkout
@@ -127,10 +142,17 @@ jobs:
           paths:
             - "venv"
       - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
+      - run:
           name: Run Python tests
           command: |
             . venv/bin/activate
             cd python
+            export TF_USE_LEGACY_KERAS=1
             COVERAGE_FILE=reports/.coverage.ranking coverage run --include "ml4ir/*" -m pytest ml4ir/applications/ranking/tests/ --junitxml=test_results/results.xml
           no_output_timeout: 45m  # Time for running the tests before we timeout
       - persist_to_workspace:
@@ -142,7 +164,7 @@ jobs:
 
   build_test_coverage:
     docker:
-      - image: cimg/python:3.9.7
+      - image: cimg/python:3.11
     resource_class: medium
     steps:
       - checkout
@@ -163,6 +185,12 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: reports
+      - run:
+          name: Update pytest
+          command: |
+            . venv/bin/activate
+            cd python
+            pip install --upgrade twisted pytest pytest-cov pluggy coverage pylint pytest-tap pytest-twisted attrs boto3 botocore click flask itsdangerous Jinja2 MarkupSafe pluggy py pytest requests s3transfer typed-ast urllib3 Werkzeug
       - run:
           name: Run Python Coverage
           command: |
