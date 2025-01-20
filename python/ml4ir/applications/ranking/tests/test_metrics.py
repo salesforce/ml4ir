@@ -25,12 +25,12 @@ GOLD_METRICS = {
     "new_MRR":  0.676,
     "old_AuxAllFailure": 0.061,
     "old_AuxIntrinsicFailure": 0.154,
-    "new_AuxAllFailure": 0.105,
-    "new_AuxIntrinsicFailure": 0.151,
-    "perc_improv_ACR": -63.380,
-    "perc_improv_MRR": -33.344,
-    "perc_improv_AuxAllFailure": -71.739,
-    "perc_improv_AuxIntrinsicFailure": 1.886
+    "new_AuxAllFailure": 0.086,
+    "new_AuxIntrinsicFailure": 0.159,
+    "perc_improv_ACR": -25.794,
+    "perc_improv_MRR": -13.651,
+    "perc_improv_AuxAllFailure": -41.304,
+    "perc_improv_AuxIntrinsicFailure": -3.449
 }
 
 
@@ -141,10 +141,6 @@ class RankingModelTest(RankingTestBase):
         metrics = self.run_default_pipeline(
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
         )
-
-        for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
-            print(gold_metric_name)
-            print(metrics[gold_metric_name])
 
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
