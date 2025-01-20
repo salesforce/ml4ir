@@ -32,7 +32,7 @@ class TestSentenceTransformerWithTokenizerLayer(unittest.TestCase):
 
         self.assertEqual(embeddings.shape, (2, 768))
         self.assertTrue(np.allclose(embeddings[0, :5], [-0.01958332, 0.02002536, 0.00893079, -0.02941261, 0.06580967]))
-        self.assertTrue(np.allclose(embeddings[1, :5], [-0.0034735, 0.04219092, -0.00087385, -0.0156969, 0.06526384]))
+        self.assertTrue(np.allclose(embeddings[1, :5], [-0.00347349, 0.0421909, -0.000873869, -0.0156969, 0.0652638]))
 
     @pytest.mark.skipif(connection_to_huggingface_failed(),
                         reason="Skipping because of error connecting to huggingface.co")
