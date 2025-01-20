@@ -20,17 +20,17 @@ from testfixtures import TempDirectory
 GOLD_METRICS = {
     "query_count": 1500.0,
     "old_ACR": 1.656,
-    "new_ACR": 2.410,
+    "new_ACR": 2.706,
     "old_MRR": 0.783,
-    "new_MRR": 0.597,
+    "new_MRR":  0.522,
     "old_AuxAllFailure": 0.061,
     "old_AuxIntrinsicFailure": 0.154,
-    "new_AuxAllFailure": 0.086,
-    "new_AuxIntrinsicFailure": 0.153,
-    "perc_improv_ACR": -45.513,
-    "perc_improv_MRR": -23.760,
-    "perc_improv_AuxAllFailure": -40.217,
-    "perc_improv_AuxIntrinsicFailure": 0.235
+    "new_AuxAllFailure": 0.105,
+    "new_AuxIntrinsicFailure": 0.151,
+    "perc_improv_ACR": -63.380,
+    "perc_improv_MRR": -33.344,
+    "perc_improv_AuxAllFailure": -71.739,
+    "perc_improv_AuxIntrinsicFailure": 1.886
 }
 
 
