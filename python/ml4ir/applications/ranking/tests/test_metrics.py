@@ -142,12 +142,14 @@ class RankingModelTest(RankingTestBase):
             data_dir=data_dir, data_format="tfrecord", feature_config_path=feature_config_path
         )
 
+        for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
+            print(gold_metric_name)
+            print(metrics[gold_metric_name])
+
         # Compare the metrics to gold metrics
         for gold_metric_name, gold_metric_val in GOLD_METRICS.items():
             assert gold_metric_name in metrics
-            print(gold_metric_name)
-            print(metrics[gold_metric_name])
-#            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
+            assert np.isclose(metrics[gold_metric_name], gold_metric_val, atol=0.05)
 
     def test_stat_sig_evaluation(self):
         # FIXME: Avoid end to end test
