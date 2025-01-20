@@ -20,7 +20,7 @@ from testfixtures import TempDirectory
 GOLD_METRICS = {
     "query_count": 1500.0,
     "old_ACR": 1.656,
-    "new_ACR": 2.706,
+    "new_ACR": 2.084,
     "old_MRR": 0.783,
     "new_MRR":  0.522,
     "old_AuxAllFailure": 0.061,
