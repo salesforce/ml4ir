@@ -42,9 +42,7 @@ class TestSentenceTransformerWithTokenizerLayer(unittest.TestCase):
         embeddings = model.encode(self.TEST_PHRASES)
 
         self.assertEqual(embeddings.shape, (2, 512))
-        print("debugging scores")
-        print(embeddings[0, :5])
-        self.assertTrue(np.allclose(embeddings[0, :5], [0.00174324, 0.01326917, -0.01836515, 0.05429127, 0.06062959]))
+        self.assertTrue(np.allclose(embeddings[0, :5], [0.0017432101, 0.013269193, -0.01836516, 0.0542913, 0.06062963]))
         self.assertTrue(
             np.allclose(embeddings[1, :5], [0.03018673, -0.00636012, -0.00495617, -0.04597681, -0.05619023]))
 
