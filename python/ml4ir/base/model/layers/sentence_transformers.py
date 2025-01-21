@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import os
 import tensorflow as tf
 import torch
 from sentence_transformers.models import Dense as SentenceTransformersDense
@@ -52,6 +53,9 @@ class SentenceTransformerWithTokenizerLayer(Layer):
             # If the sentence_transformer model files are not present, we initialize it to trigger a download
             st_model = SentenceTransformer(model_name_or_path)
 
+            print("printing torch home path")
+            print(torch.hub._get_torch_home())
+            print(list(os.walk(torch.hub._get_torch_home())))
             self.model_name_or_path = Path(
                 torch.hub._get_torch_home()) / "sentence_transformers" / model_name_or_path.replace("/", "_")
             if not self.model_name_or_path.exists():
