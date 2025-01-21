@@ -11,6 +11,15 @@ from sentence_transformers import SentenceTransformer
 # NOTE: We set device CPU for the torch backend so that the sentence-transformers model does not use GPU resources
 torch.device("cpu")
 
+
+class SentenceTransformerLayerKey:
+    """Stores the names of the sentence-transformer model layers"""
+    TRANSFORMER = "sentence_transformers.models.Transformer"
+    POOLING = "sentence_transformers.models.Pooling"
+    DENSE = "sentence_transformers.models.Dense"
+    NORMALIZE = "sentence_transformers.models.Normalize"
+
+
 class SentenceTransformerWithTokenizerLayer(Layer):
     """
     Converts a string tensor into embeddings using sentence transformers
@@ -39,10 +48,60 @@ class SentenceTransformerWithTokenizerLayer(Layer):
         super().__init__(name=name, **kwargs)
 
         self.model_name_or_path = Path(model_name_or_path)
-        self.st_model = SentenceTransformer(model_name_or_path)
-        self.st_model.training = trainable
+        if not Path(model_name_or_path).exists():  # The user provided a model name
+            # If the sentence_transformer model files are not present, we initialize it to trigger a download
+            st_model = SentenceTransformer(model_name_or_path)
+
+            self.model_name_or_path = Path(
+                torch.hub._get_torch_home()) / "sentence_transformers" / model_name_or_path.replace("/", "_")
+            if not self.model_name_or_path.exists():
+                raise FileNotFoundError(
+                    f"{self.model_name_or_path} does not exist. Verify the `model_name_or_path` argument")
+
+            del st_model
+
+        # Load the modules.json config to add custom model layers
+        self.modules = json.load(open(self.model_name_or_path / "modules.json"))
+        self.module_names = [module["name"] for module in self.modules]
 
         self.trainable = trainable
+
+        # Define tokenizer as part of the tensorflow graph
+        self.tokenizer = TFBertTokenizer.from_pretrained(self.model_name_or_path, **kwargs)
+
+        self.transformer_model = None
+        self.dense = None
+        self.apply_dense = False
+        self.normalize_embeddings = False
+        self.pool_embeddings = False
+        for module in self.modules:
+            # Define the transformer model and initialize pretrained weights
+            if module["type"] == SentenceTransformerLayerKey.TRANSFORMER:
+                self.transformer_model = TFAutoModel.from_pretrained(self.model_name_or_path,
+                                                                     from_pt=True,
+                                                                     trainable=self.trainable,
+                                                                     **kwargs)
+
+            # Define mean pooling op
+            if module["type"] == SentenceTransformerLayerKey.POOLING:
+                self.pool_embeddings = True
+
+            # Define normalization op
+            if module["type"] == SentenceTransformerLayerKey.NORMALIZE:
+                self.normalize_embeddings = True
+
+            # Define dense layer if present in the model and initialize pretrained weights
+            if module["type"] == SentenceTransformerLayerKey.DENSE:
+                self.apply_dense = True
+                st_dense = SentenceTransformersDense.load(self.model_name_or_path / module["path"])
+                self.dense = Dense(units=st_dense.get_config_dict()["out_features"],
+                                   kernel_initializer=tf.keras.initializers.Constant(
+                                       st_dense.state_dict()["linear.weight"].T),
+                                   bias_initializer=tf.keras.initializers.Constant(
+                                       st_dense.state_dict()["linear.bias"]),
+                                   activation=st_dense.get_config_dict()["activation_function"].split(".")[-1].lower(),
+                                   trainable=self.trainable)
+                del st_dense
 
     @classmethod
     def mean_pooling(cls, token_embeddings, attention_mask):
@@ -63,7 +122,7 @@ class SentenceTransformerWithTokenizerLayer(Layer):
         embeddings, _ = tf.linalg.normalize(embeddings, 2, axis=1)
         return embeddings
 
-    def encode(self, inputs, training=None):
+    def call(self, inputs, training=None):
         """
         Defines the forward pass for the layer on the inputs tensor
 
@@ -79,5 +138,21 @@ class SentenceTransformerWithTokenizerLayer(Layer):
         tf.Tensor
             Resulting tensor after the forward pass through the feature transform layer
         """
+        # Tokenize string tensors
+        tokens = self.tokenizer(inputs)
+        # NOTE: TFDistilBertModel does not expect the token_type_ids key
+        tokens.pop("token_type_ids", None)
+
         # Apply the modules as configured
-        return self.st_model.encode(inputs, training=self.trainable)
+        embeddings = self.transformer_model(tokens, training=training)
+
+        if self.pool_embeddings:
+            embeddings = self.mean_pooling(embeddings[0], tokens["attention_mask"])
+
+        if self.apply_dense:
+            embeddings = self.dense(embeddings, training=training)
+
+        if self.normalize_embeddings:
+            embeddings = self.normalize(embeddings)
+
+        return embeddings
