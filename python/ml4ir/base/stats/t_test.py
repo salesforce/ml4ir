@@ -458,6 +458,16 @@ def compute_required_sample_size(mean1, mean2, var1, var2, statistical_power, pv
         if denominator == 0:
             return np.inf
         d = np.abs(float(mean1) - float(mean2)) / denominator
+        '''
+         for high d values the call to power_ttest will invoke the c++ boost lib that will throw an exception (below) that will not be caught here.
+         We can temporeary circumvent this behavior by saturating the d value at 4 (for statistical_power == 0.9 and pvalue == 0.1) and return
+         a pre-computed required sample size for this value.
+        
+         Error in function boost::math::itrunc<double>(double): Value 5959970140.0539618 can not be represented in the target integer type.
+         terminate called after throwing an instance of 'boost::wrapexcept<boost::math::rounding_error>
+        '''
+        if d > 4 and statistical_power == 0.9 and pvalue == 0.1:
+            return 2.24
         req_sample_sz = power_ttest(d, n, statistical_power, pvalue, contrast=typ, alternative=alternative)
         return req_sample_sz
     except:
