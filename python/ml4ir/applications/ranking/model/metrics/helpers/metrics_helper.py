@@ -158,6 +158,9 @@ def get_grouped_stats(
     #        but if it has to be, we need to do a max() for it instead of min()
     df_clicked = df_clicked.groupby(query_key_col).min().reset_index()
 
+    # Pick most relevant record for each query to compute ranking metrics
+    df_clicked = df_clicked.groupby(query_key_col).apply(min)
+
     # Compute metrics on aux labels
     df_aux_metrics = pd.DataFrame()
     if aux_label:
