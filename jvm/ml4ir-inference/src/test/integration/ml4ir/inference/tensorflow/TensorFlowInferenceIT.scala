@@ -142,7 +142,7 @@ class TensorFlowInferenceIT extends TestData {
       bundlePath,
       featureConfigPath,
       "serving_tfrecord_protos",
-      "StatefulPartitionedCall_1"
+      "StatefulPartitionedCall"
     )
 
     allScores.foreach {
@@ -201,7 +201,7 @@ class TensorFlowInferenceIT extends TestData {
       bundlePath,
       ModelExecutorConfig(
         queryNodeName = "serving_tfrecord_protos",
-        scoresNodeName = "StatefulPartitionedCall_3"
+        scoresNodeName = "StatefulPartitionedCall"
       )
     )
 

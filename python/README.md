@@ -103,9 +103,10 @@ pip install --upgrade pip
 pip3 install -r requirements.txt
 ```
 
-Set the PYTHONPATH environment variable to point to the python package
+Set the PYTHONPATH environment variable to point to the python package and enable the legacy Keras 2 version.
 ```
 export PYTHONPATH=$PYTHONPATH:`pwd`
+export TF_USE_LEGACY_KERAS=1
 ```
 
 #### Contributing to ml4ir

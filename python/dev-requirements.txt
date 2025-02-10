@@ -9,7 +9,7 @@ pre-commit
 mypy
 
 # Test requirements
-pytest==6.2.1
-pytest-cov==2.11.0
-pytest-html==3.1.1
-testfixtures==6.18.5
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-html==4.1.1
+testfixtures==8.3.0

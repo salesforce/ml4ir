@@ -8,11 +8,11 @@
   <packaging>pom</packaging>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>11</java.version>
     <scalastyle.version>0.7.0</scalastyle.version>
     <scala.version>2.11.12</scala.version>
     <scala.artifact.suffix>2.11</scala.artifact.suffix>
-    <tensorflow.core.version>0.4.2</tensorflow.core.version>
+    <tensorflow.core.version>1.0.0</tensorflow.core.version>
     <tensorflow.proto.version>1.15.0</tensorflow.proto.version>
     <jackson.version>2.10.0</jackson.version>
   </properties>
