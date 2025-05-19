@@ -1,6 +1,7 @@
 import string
 import re
 import tensorflow as tf
+from transformers import AutoTokenizer
 
 from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWithVocabularyFile
 from ml4ir.base.io.file_io import FileIO
@@ -291,6 +292,171 @@ def convert_label_to_clicks(label_vector, dtype):
     cond = tf.math.equal(label_vector, maximum)
     clicks = tf.dtypes.cast(cond, typ)
     return clicks
+
+@tf.function
+def auto_tokenizer(feature_tensor, model_name_or_path="BAAI/bge-reranker-v2-m3", max_length=256, separator="[SEP]"):
+    """
+    Tokenize pre-concatenated query and description using AutoTokenizer.
+    The input tensor should already contain query and description concatenated with a separator.
+    
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        Input tensor containing pre-concatenated query and description separated by [SEP]
+    model_name_or_path : str
+        Name or path of the HuggingFace model
+    max_length : int
+        Maximum sequence length
+    separator : str
+        String used to separate query and description in the input
+
+    Returns
+    -------
+    dict
+        Dictionary containing tokenized inputs with keys:
+        - input_ids: Token IDs for the sequence
+        - attention_mask: Attention mask for the sequence
+        - token_type_ids: Token type IDs for the sequence (if supported by the model)
+    """
+    # Convert tensor to string if needed
+    if isinstance(feature_tensor, tf.Tensor):
+        feature_tensor = feature_tensor.numpy().astype(str)
+    
+    # Split the concatenated tensor
+    parts = tf.strings.split(feature_tensor, separator)
+    queries = parts[:, 0]
+    descriptions = parts[:, 1]
+    
+    # Initialize tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+    
+    # Tokenize
+    tokenized = tokenizer(
+        queries,
+        descriptions,
+        padding='max_length',
+        max_length=max_length,
+        truncation=True,
+        return_tensors="tf"
+    )
+    
+    return tokenized
+
+@tf.function
+def min_max_scale_per_query(feature_tensor, query_ids, min_value=0.0, max_value=1.0):
+    """
+    Scale the feature tensor to the range [0, 1] using min-max scaling per query.
+    
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        Input feature tensor
+    query_ids : Tensor object
+        Query IDs tensor for grouping
+    min_value : float
+        Minimum value in the original range
+    max_value : float
+        Maximum value in the original range
+        
+    Returns
+    -------
+    Tensor object
+        Scaled tensor in range [0, 1]
+    """
+    # Get unique query IDs and their counts
+    unique_query_ids, _, counts = tf.unique_with_counts(query_ids)
+    
+    # Initialize output tensor
+    scaled_tensor = tf.zeros_like(feature_tensor, dtype=tf.float32)
+    
+    # Process each query group
+    def process_query(query_idx):
+        query_id = unique_query_ids[query_idx]
+        count = counts[query_idx]
+        
+        # Get indices for this query
+        query_mask = tf.equal(query_ids, query_id)
+        query_indices = tf.where(query_mask)
+        
+        # Get values for this query
+        query_values = tf.gather_nd(feature_tensor, query_indices)
+        
+        # Clip values to the specified range
+        clipped = tf.clip_by_value(query_values, min_value, max_value)
+        
+        # Get min and max for this query
+        query_min = tf.reduce_min(clipped)
+        query_max = tf.reduce_max(clipped)
+        
+        # Scale to [0, 1] for this query
+        query_scaled = (clipped - query_min) / (query_max - query_min + 1e-6)
+        
+        # Update the output tensor
+        scaled_tensor = tf.tensor_scatter_nd_update(
+            scaled_tensor,
+            query_indices,
+            query_scaled
+        )
+        
+        return scaled_tensor
+    
+    # Process all queries
+    for i in tf.range(tf.shape(unique_query_ids)[0]):
+        scaled_tensor = process_query(i)
+    
+    return scaled_tensor
+
+@tf.function
+def replace_default_value(feature_tensor, default_value=-1.0, replacement_value=0.0):
+    """
+    Replace default values in the feature tensor with a replacement value.
+    
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        Input feature tensor
+    default_value : float
+        The default value to replace
+    replacement_value : float
+        The value to use as replacement
+        
+    Returns
+    -------
+    Tensor object
+        Tensor with default values replaced
+    """
+    return tf.where(
+        tf.equal(feature_tensor, default_value),
+        tf.ones_like(feature_tensor) * replacement_value,
+        feature_tensor
+    )
+
+@tf.function
+def min_max_scale(feature_tensor, min_value=0.0, max_value=1.0):
+    """
+    Scale the feature tensor to the range [0, 1] using min-max scaling.
+    
+    Parameters
+    ----------
+    feature_tensor : Tensor object
+        Input feature tensor
+    min_value : float
+        Minimum value in the original range
+    max_value : float
+        Maximum value in the original range
+        
+    Returns
+    -------
+    Tensor object
+        Scaled tensor in range [0, 1]
+    """
+    # Clip values to the specified range
+    clipped = tf.clip_by_value(feature_tensor, min_value, max_value)
+    
+    # Scale to [0, 1]
+    scaled = (clipped - min_value) / (max_value - min_value)
+    
+    return scaled
 
 ##########################################
 # Add any new preprocessing functions here
