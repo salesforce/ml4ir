@@ -93,6 +93,30 @@ def write_from_files(
     write_from_df(df, tfrecord_file, feature_config, tfrecord_type, logger)
 
 
+
+def safe_get_sequence_example_proto(group, context_features, sequence_features):
+    """
+    Attempts to generate a SequenceExample proto for a group, catching any exceptions.
+
+    Args:
+        group: The group of data to process (as in the original apply function).
+        context_features: Context feature configuration.
+        sequence_features: Sequence feature configuration.
+
+    Returns:
+        A SequenceExample proto if successful, otherwise None.
+    """
+    try:
+        proto = get_sequence_example_proto(
+            group=group,
+            context_features=context_features,
+            sequence_features=sequence_features,
+        )
+        return proto
+    except Exception as e:
+        print(f"Error processing group:\n{group}\nError: {e}")
+        return None
+
 def write_from_df(
         df: DataFrame,
         tfrecord_file: str,
@@ -134,8 +158,15 @@ def write_from_df(
             # Group pandas dataframe on query_id/query key and
             # convert each group to a single sequence example proto
             context_feature_names = feature_config.get_context_features(key="name")
+            # protos = df.groupby(context_feature_names).apply(
+            #     lambda g: get_sequence_example_proto(
+            #         group=g,
+            #         context_features=feature_config.get_context_features(),
+            #         sequence_features=feature_config.get_sequence_features(),
+            #     )
+            # )
             protos = df.groupby(context_feature_names).apply(
-                lambda g: get_sequence_example_proto(
+                lambda g: safe_get_sequence_example_proto(
                     group=g,
                     context_features=feature_config.get_context_features(),
                     sequence_features=feature_config.get_sequence_features(),

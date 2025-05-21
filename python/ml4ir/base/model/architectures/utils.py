@@ -4,6 +4,7 @@ import json
 import sys
 
 import tensorflow as tf
+import keras
 
 from ml4ir.base.model.layers import *
 from ml4ir.applications.ranking.model.layers import *
@@ -59,8 +60,14 @@ def instantiate_keras_layer(layer_type: str, layer_args: Dict) -> tf.keras.layer
         Instance of layer_type configured with the layer_args
     """
     try:
+        # if "Multiply" in layer_type:
+        #     return get_keras_layer_subclasses()[layer_type]()
+        # if "Add" in layer_type:
+        #     return get_keras_layer_subclasses()[layer_type]()
         return get_keras_layer_subclasses()[layer_type](**layer_args)
     except KeyError:
         raise KeyError(f"Layer type: '{layer_type}' "
                        f"is not supported or not found in subclasses of "
                        f"keras.layers.Layer: '{json.dumps(get_keras_layer_subclasses(), indent=4)}'")
+    except:
+        return get_keras_layer_subclasses()[layer_type]()

@@ -182,6 +182,10 @@ def get_grouped_stats(
     df_clicked[RankingConstants.OLD_ACR] = df_clicked[old_rank_col]
     df_clicked[RankingConstants.NEW_ACR] = df_clicked[new_rank_col]
 
+    if np.isinf(df_clicked[RankingConstants.OLD_MRR]).any().any():
+        rows_with_inf = np.isinf(df_clicked[RankingConstants.OLD_MRR])
+        df_clicked = df_clicked[~rows_with_inf]
+
     if group_keys:
         # group df by group_keys
         df_grouped_batch = df_clicked.groupby(group_keys)
