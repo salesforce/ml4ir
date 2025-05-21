@@ -4,10 +4,18 @@ from tensorflow.keras import layers
 from typing import Dict, List, Optional, Union, Any
 import networkx as nx
 
+from ml4ir.base.config.keys import FeatureTypeKey
 from ml4ir.base.features.feature_config import FeatureConfig
+from ml4ir.base.features.feature_fns.categorical import get_vocabulary_info
+from ml4ir.applications.ranking.config.keys import PositionalBiasHandler
 from ml4ir.base.io.file_io import FileIO
-from ml4ir.base.model.architectures.layer_factory import get_keras_layer_subclasses, instantiate_keras_layer
+from ml4ir.base.model.layers.fixed_additive_positional_bias import FixedAdditivePositionalBias
+from ml4ir.base.model.architectures.utils import get_keras_layer_subclasses, instantiate_keras_layer
+from ml4ir.applications.ranking.model.layers.set_rank_encoder import SetRankEncoder
+from ml4ir.applications.ranking.model.layers.normalization import QueryNormalization
+from ml4ir.applications.ranking.model.layers.sequence_classifier import SequenceClassifier
 
+OOV = 1
 
 class ComplexDNNLayerKey:
     """Constants for ComplexDNN layer configuration keys"""
@@ -76,6 +84,12 @@ class ComplexDNNOperation:
     ATTENTION = "attention"
     TRANSFORMER = "transformer"
     
+    # ML4IR specific layers
+    SET_RANK_ENCODER = "set_rank_encoder"
+    QUERY_NORMALIZATION = "query_norm"
+    FIXED_ADDITIVE_POSITIONAL_BIAS = "fixed_additive_positional_bias"
+    SEQUENCE_CLASSIFIER = "sequence_classifier"
+    
     # Custom layers
     CUSTOM = "custom"
 
@@ -140,9 +154,10 @@ class ComplexDNN(keras.Model):
         """
         graph = nx.DiGraph()
         
-        # Add input nodes
-        for input_name in self.feature_config.get_all_features(include_label=False):
-            graph.add_node(input_name, type="input")
+        # Add input nodes - get feature names from feature config
+        for feature_info in self.feature_config.get_all_features(include_label=False):
+            input_name = feature_info["name"]
+            graph.add_node(input_name, type="input", config=None)
         
         # Process each layer configuration
         for layer_config in self.model_config[ComplexDNNLayerKey.LAYERS]:
@@ -161,10 +176,12 @@ class ComplexDNN(keras.Model):
     def _register_layers(self):
         """Register all layers with the model"""
         for node in self.execution_order:
-            if self.network_graph.nodes[node]["type"] != "input":
-                layer_config = self.network_graph.nodes[node]["config"]
-                layer = self._create_layer(layer_config)
-                setattr(self, f"layer_{node}", layer)
+            node_data = self.network_graph.nodes[node]
+            if node_data.get("type") != "input":
+                layer_config = node_data.get("config")
+                if layer_config is not None:
+                    layer = self._create_layer(layer_config)
+                    setattr(self, f"layer_{node}", layer)
 
     def _create_layer(self, layer_config: dict) -> keras.layers.Layer:
         """
@@ -192,6 +209,16 @@ class ComplexDNN(keras.Model):
             return layers.Dropout(**layer_args)
         elif layer_type == ComplexDNNOperation.ACTIVATION:
             return layers.Activation(**layer_args)
+            
+        # ML4IR specific layers
+        elif layer_type == ComplexDNNOperation.SET_RANK_ENCODER:
+            return SetRankEncoder(**layer_args)
+        elif layer_type == ComplexDNNOperation.QUERY_NORMALIZATION:
+            return QueryNormalization(**layer_args)
+        elif layer_type == ComplexDNNOperation.FIXED_ADDITIVE_POSITIONAL_BIAS:
+            return FixedAdditivePositionalBias(**layer_args)
+        elif layer_type == ComplexDNNOperation.SEQUENCE_CLASSIFIER:
+            return SequenceClassifier(**layer_args)
             
         # Convolutional layers
         elif layer_type == ComplexDNNOperation.CONV1D:
@@ -358,7 +385,7 @@ class ComplexDNN(keras.Model):
         Parameters
         ----------
         inputs: dict
-            Dictionary of input tensors
+            Dictionary of input tensors with keys 'train' and 'metadata'
         training: bool
             Whether the model is in training mode
             
@@ -368,28 +395,36 @@ class ComplexDNN(keras.Model):
             Output tensor
         """
         # Initialize layer outputs with input tensors
-        self.layer_outputs = {name: tensor for name, tensor in inputs.items()}
+        train_features = inputs[FeatureTypeKey.TRAIN]
+        metadata_features = inputs[FeatureTypeKey.METADATA]
+        
+        # Store input tensors in layer_outputs
+        self.layer_outputs = {}
+        for feature_name, tensor in train_features.items():
+            self.layer_outputs[feature_name] = tensor
         
         # Process layers in topological order
         for node in self.execution_order:
-            if self.network_graph.nodes[node]["type"] != "input":
-                layer_config = self.network_graph.nodes[node]["config"]
-                layer = getattr(self, f"layer_{node}")
-                
-                # Get input tensors for this layer
-                layer_inputs = [
-                    self.layer_outputs[input_name]
-                    for input_name in layer_config.get(ComplexDNNLayerKey.INPUTS, [])
-                ]
-                
-                # Apply layer operation
-                if len(layer_inputs) == 1:
-                    output = layer(layer_inputs[0], training=training)
-                else:
-                    output = layer(layer_inputs, training=training)
-                
-                # Store output
-                self.layer_outputs[node] = output
+            node_data = self.network_graph.nodes[node]
+            if node_data.get("type") != "input":
+                layer_config = node_data.get("config")
+                if layer_config is not None:
+                    layer = getattr(self, f"layer_{node}")
+                    
+                    # Get input tensors for this layer
+                    layer_inputs = [
+                        self.layer_outputs[input_name]
+                        for input_name in layer_config.get(ComplexDNNLayerKey.INPUTS, [])
+                    ]
+                    
+                    # Apply layer operation
+                    if len(layer_inputs) == 1:
+                        output = layer(layer_inputs[0], training=training)
+                    else:
+                        output = layer(layer_inputs, training=training)
+                    
+                    # Store output
+                    self.layer_outputs[node] = output
         
         # Return the output of the last layer
         return self.layer_outputs[self.execution_order[-1]] 

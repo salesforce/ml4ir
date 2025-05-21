@@ -293,55 +293,6 @@ def convert_label_to_clicks(label_vector, dtype):
     clicks = tf.dtypes.cast(cond, typ)
     return clicks
 
-@tf.function
-def auto_tokenizer(feature_tensor, model_name_or_path="BAAI/bge-reranker-v2-m3", max_length=256, separator="[SEP]"):
-    """
-    Tokenize pre-concatenated query and description using AutoTokenizer.
-    The input tensor should already contain query and description concatenated with a separator.
-    
-    Parameters
-    ----------
-    feature_tensor : Tensor object
-        Input tensor containing pre-concatenated query and description separated by [SEP]
-    model_name_or_path : str
-        Name or path of the HuggingFace model
-    max_length : int
-        Maximum sequence length
-    separator : str
-        String used to separate query and description in the input
-
-    Returns
-    -------
-    dict
-        Dictionary containing tokenized inputs with keys:
-        - input_ids: Token IDs for the sequence
-        - attention_mask: Attention mask for the sequence
-        - token_type_ids: Token type IDs for the sequence (if supported by the model)
-    """
-    # Convert tensor to string if needed
-    if isinstance(feature_tensor, tf.Tensor):
-        feature_tensor = feature_tensor.numpy().astype(str)
-    
-    # Split the concatenated tensor
-    parts = tf.strings.split(feature_tensor, separator)
-    queries = parts[:, 0]
-    descriptions = parts[:, 1]
-    
-    # Initialize tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-    
-    # Tokenize
-    tokenized = tokenizer(
-        queries,
-        descriptions,
-        padding='max_length',
-        max_length=max_length,
-        truncation=True,
-        return_tensors="tf"
-    )
-    
-    return tokenized
-
 ##########################################
 # Add any new preprocessing functions here
 ##########################################
