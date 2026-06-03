@@ -384,7 +384,10 @@ class AutoDagNetwork(keras.Model):
                         outputs[node.name] = node.layer(layer_input, training=training)
                 else:
                     # NOTE: Arguments are passed to the layer in the order they were specified in the model config
-                    outputs[node.name] = node.layer(*layer_input, training=training)
+                    try:
+                        outputs[node.name] = node.layer(*layer_input, training=training)
+                    except:
+                        outputs[node.name] = node.layer(layer_input, training=training)
 
         # Collapse extra dimensions
         output_layer = self.output_node
@@ -393,5 +396,6 @@ class AutoDagNetwork(keras.Model):
             scores = tf.squeeze(model_output, axis=-1)
         else:
             scores = model_output
+            scores = tf.squeeze(model_output, axis=-1)
 
         return scores

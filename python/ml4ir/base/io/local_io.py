@@ -96,6 +96,36 @@ class LocalIO(FileIO):
                 engine="c",
                 na_filter=na_filter
             )
+            df.dropna(how='all', inplace=True)
+
+            df['clicked'] = df['clicked'].replace({'True': 1.0, 'False': 0.0})
+            df['clicked'] = pd.to_numeric(df['clicked'], errors='coerce')
+            df['clicked'] = df['clicked'].astype(float)
+
+            df['ranking_pos'] = pd.to_numeric(df['ranking_pos'], errors='coerce')
+            df['ranking_pos'] = df['ranking_pos'].astype(float)
+            #df['ranking_pos'] = pd.to_numeric(df['ranking_pos'], errors='coerce').astype('Int64')
+
+            df['pv_s'] = pd.to_numeric(df['pv_s'], errors='coerce')
+            df['pv_s'] = df['pv_s'].astype(float)
+
+            df['pv_mask'] = pd.to_numeric(df['pv_mask'], errors='coerce')
+            df['pv_mask'] = df['pv_mask'].astype(float)
+
+            df['age_mask'] = pd.to_numeric(df['age_mask'], errors='coerce')
+            df['age_mask'] = df['age_mask'].astype(float)
+
+            df['age_days'] = pd.to_numeric(df['age_days'], errors='coerce')
+            df['age_days'] = df['age_days'].astype(float)
+
+            df['bge_ce'] = pd.to_numeric(df['bge_ce'], errors='coerce')
+            df['bge_ce'] = df['bge_ce'].astype(float)
+
+
+
+
+
+
 
         except Exception as e:
             self.log("Error while reading : {}\n{}".format(fp, e), mode=logging.WARN)
