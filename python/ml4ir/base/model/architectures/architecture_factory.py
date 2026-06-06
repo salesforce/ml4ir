@@ -2,6 +2,7 @@ from ml4ir.base.config.keys import ArchitectureKey
 from ml4ir.base.features.feature_config import FeatureConfig
 from ml4ir.base.model.architectures.dnn import DNN
 from ml4ir.base.model.architectures.auto_dag_network import AutoDagNetwork
+from ml4ir.base.model.architectures.complex_dnn import ComplexDNN
 
 
 def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io):
@@ -13,6 +14,8 @@ def get_architecture(model_config: dict, feature_config: FeatureConfig, file_io)
         return AutoDagNetwork(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.DNN:
         return DNN(model_config, feature_config, file_io)
+    elif architecture_key == ArchitectureKey.COMPLEX_DNN:
+        return ComplexDNN(model_config, feature_config, file_io)
     elif architecture_key == ArchitectureKey.LINEAR:
         # Validate the model config
         num_dense_layers = len([l for l in model_config["layers"] if l["type"] == "dense"])

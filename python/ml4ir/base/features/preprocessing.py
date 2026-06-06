@@ -1,6 +1,7 @@
 import string
 import re
 import tensorflow as tf
+from transformers import AutoTokenizer
 
 from ml4ir.base.features.feature_fns.categorical import CategoricalIndicatorWithVocabularyFile
 from ml4ir.base.io.file_io import FileIO
