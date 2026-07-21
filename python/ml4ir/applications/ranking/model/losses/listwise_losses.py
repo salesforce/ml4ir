@@ -184,6 +184,45 @@ class AuxiliarySoftmaxCrossEntropy(SoftmaxCrossEntropy):
                             y_pred=tf.math.multiply(y_pred, mask))
 
 
+class KL_Divergence(SoftmaxCrossEntropy):
+
+    def call(self, inputs, y_true, y_pred, training=None):
+        """
+        Get the KL divergence loss
+
+        Parameters
+        ----------
+        inputs: dict of dict of tensors
+            Dictionary of input feature tensors
+        y_true: tensor
+            True labels
+        y_pred: tensor
+            Predicted scores
+        training: boolean
+            Boolean indicating whether the layer is being used in training mode
+
+        Returns
+        -------
+        tensor
+            Scalar basic kl divergence loss tensor
+
+        Notes
+        -----
+        - Uses `mask` field to exclude padded records from contributing to the loss
+        """
+        mask = tf.cast(inputs[FeatureTypeKey.MASK], y_pred.dtype)
+        y_true = tf.cast(y_true, y_pred.dtype)
+
+        # Convert y_true to a probability distribution
+        y_true_softmax = self.final_activation_op({
+            FeatureTypeKey.METADATA: {
+                FeatureTypeKey.MASK: mask
+            },
+            FeatureTypeKey.LOGITS: y_true
+        }, training=training)
+
+        return tf.keras.losses.KLD(tf.math.multiply(y_true_softmax, mask), tf.math.multiply(y_pred, mask))
+        
 class RankOneListNet(SoftmaxCrossEntropy):
 
     def __init__(self,

@@ -11,6 +11,7 @@ class LossKey(Key):
 
     AUX_ONE_HOT_CROSS_ENTROPY = "aux_one_hot_cross_entropy"
     AUX_SOFTMAX_CROSS_ENTROPY = "aux_softmax_cross_entropy"
+    KL_DIVERGENCE = "kl_divergence"
 
 
 class ScoringTypeKey(Key):
